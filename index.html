@@ -343,6 +343,14 @@ function toggleSidebar(){
 function logout(){
     if(autoRefreshTimer)clearInterval(autoRefreshTimer);
     localStorage.removeItem(SESSION_KEY);
+    
+    // Clear all saved PINs so the next login requires authentication again
+    Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('user_pin_')) {
+            localStorage.removeItem(key);
+        }
+    });
+
     try{if(html5QrCode&&html5QrCode.isScanning)html5QrCode.stop();}catch(e){}
     location.reload();
 }
@@ -1556,7 +1564,6 @@ function filterTeamMembers(query) {
     });
 }
 
-// BULLETPROOF SCAN PROCESSOR WITH POST FALLBACK
 async function onScanSuccess(decodedText){
     if (isProcessingScan) return;
     isProcessingScan = true;
