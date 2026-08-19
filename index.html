@@ -256,6 +256,59 @@ const SESSION_KEY = 'noon_session_' + currentRoleParam;
 
 let html5QrCode=null; let scannerFacingMode='environment'; let currentUser=null; let currentScannedID=null; let currentScanAction='check_in'; let currentAdminFilter='all'; let autoRefreshTimer=null; let globalAdminData=[]; let checkedPrintIds=new Set(); let liveStream=null; let currentFacingMode='environment'; let targetPhotoType=''; let capturedImages={iqama:null,selfie:null,imeiphoto:null,vehicle:null,fmpoc:null}; let teamList=[]; let currentTeamCounter=1; let isProcessingScan = false; let userSecurityPin = null; let lockedPassesData = null;
 
+function confirmPinCreate() {
+    let pin = document.getElementById('new-pin-input').value.trim();
+    if(pin.length !== 4) return alert("Please enter a valid 4-digit PIN.");
+    userSecurityPin = pin;
+    let email = currentUser.email;
+    if(currentUser.role === 'admin') { const ei = document.getElementById('req-admin-email'); if(ei && ei.value) email = ei.value.toLowerCase().trim(); }
+    localStorage.setItem('user_pin_' + email, pin);
+    document.getElementById('pin-create-modal').classList.add('hidden');
+    submitRequest();
+}
+function closePinCreate() { document.getElementById('pin-create-modal').classList.add('hidden'); }
+
+function processAndRenderPasses(data, email, isSilent) {
+    let backendPin = null;
+    if (Array.isArray(data)) {
+        for(let i=data.length-1; i>=0; i--) {
+            if(data[i].HostName && data[i].HostName.includes('||PIN:')) { backendPin = data[i].HostName.split('||PIN:')[1]; break; }
+        }
+    }
+    let localPin = localStorage.getItem('user_pin_' + email);
+    if (backendPin && backendPin !== localPin) {
+        if (!isSilent) {
+            lockedPassesData = data;
+            document.getElementById('pin-verify-modal').classList.remove('hidden');
+            document.getElementById('pin-error-msg').classList.add('hidden');
+            document.getElementById('verify-pin-input').value = '';
+        }
+        return; 
+    } else if (backendPin && backendPin === localPin) { userSecurityPin = backendPin; }
+    renderMyPasses(data);
+}
+
+function confirmPinVerify() {
+    let pin = document.getElementById('verify-pin-input').value.trim();
+    let email = currentUser.email;
+    if(currentUser.role === 'admin') { const ei = document.getElementById('req-admin-email'); if(ei && ei.value) email = ei.value.toLowerCase().trim(); }
+    let backendPin = null;
+    for(let i=lockedPassesData.length-1; i>=0; i--) {
+        if(lockedPassesData[i].HostName && lockedPassesData[i].HostName.includes('||PIN:')) { backendPin = lockedPassesData[i].HostName.split('||PIN:')[1]; break; }
+    }
+    if (pin === backendPin) {
+        userSecurityPin = pin;
+        localStorage.setItem('user_pin_' + email, pin);
+        document.getElementById('pin-verify-modal').classList.add('hidden');
+        renderMyPasses(lockedPassesData);
+    } else { document.getElementById('pin-error-msg').classList.remove('hidden'); }
+}
+function closePinVerify() {
+    document.getElementById('pin-verify-modal').classList.add('hidden');
+    const listDiv = document.getElementById('my-passes-list');
+    if(listDiv) listDiv.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">Passes locked. <button class="btn-primary btn-sm" style="width:auto; padding:4px 10px; margin-left:10px;" onclick="loadMyPasses(true, false)">UNLOCK</button></p>';
+}
+
 const dict={
     en:{"guard":"🛡️ Guard","visitor_ops":"📋 Visitor/Ops","admin":"⚙️ Admin","name":"Name","noon_id":"Noon ID","select_guard_loc":"Select Guard Location...","login_gate":"LOGIN TO GATE","your_full_name":"Your Full Name","your_email":"Your Gmail / Email","login_portal":"LOGIN TO PORTAL","admin_name":"Admin Name","admin_email":"Admin Gmail","admin_password":"Admin Password","login_admin":"LOGIN AS ADMIN","system_admin":"System Admin","visitor_portal":"Visitor Portal","gate_scanner":"Gate Scanner","admin_dashboard":"Admin Dashboard","logout":"LOGOUT","visitor_contractor_portal":"Visitor & Contractor Portal","submit_new_request":"Submit New Request","type":"Type","visitor":"Visitor","contractor":"Contractor","req_email_ph":"Email Address (For Pass Tracking)","req_vname_ph":"Visitor / Contractor Full Name","visit_date":"Visit Date / Validity (From - To)","slp_ticket":"SLP Ticket No.","contact_no":"Contact No.","invited_by":"Invited by Whom","vehicle_plate":"Vehicle Plate / Picture","live_camera":"📷 Live Camera","contract_exp":"Contract Expiration (From - To)","project_name":"Project Name","company_name":"Company / Contractor Name","project_manager":"Project Manager","fm_poc":"FM POC Name / Details","upload_iqama":"Upload Iqama/ID Copy","upload_selfie":"Upload Selfie Photo","submit_approval":"Submit for Approval","my_passes":"My Passes","refresh":"Refresh","fetching":"Fetching your passes...","start_camera":"START CAMERA SCANNER","name_label":"Name:","type_label":"Type:","location_label":"Location:","confirm_action":"CONFIRM ACTION","access_approvals":"📋 Access Approvals","history":"Access & Gate History","guard_approvals":"🛡️ Guard Approvals","analytics":"📊 Analytics","all_time":"All Time","today":"Today","weekly":"Weekly","monthly":"Monthly","6months":"6 Months","1year":"1 Year","custom":"Custom","to":"TO","apply":"APPLY","pending_req":"Pending Requests","active_req":"Active Requests","print_selected":"🖨️ PRINT SELECTED","val_period":"Validity Period","name_header":"Name","type_header":"Type","facility_header":"Facility","action":"Action","access_history":"Access & Gate History","final_status":"Final Status","check_in":"Check-In","check_out":"Check-Out","scanned_by":"Scanned By","live_gate":"Live Gate Operations","check_in_time":"Check-In Time","check_out_time":"Check-Out Time","visitor_name":"Visitor Name","date_analytics":"📅 Date Analytics","type_analytics":"👤 Type Analytics","facility_analytics":"🏢 Facility Analytics","status_analytics":"✅ Status Analytics","detailed_record":"Detailed Record View","extend_pass":"Extend Pass Validity","new_start_date":"New Visit / Start Date","new_end_date":"New End Date","save_extension":"SAVE EXTENSION","capture":"📸 CAPTURE","flip_cam":"🔄 FLIP CAM","cancel":"❌ CANCEL","click_to_close":"Click anywhere to close","btn_approve":"Approve","btn_reject":"Reject","btn_extend":"📅 EXTEND","btn_view":"🔍 VIEW DATA","btn_print":"🖨️ PRINT PASS","btn_checkout":"🚪 CHECK OUT","lbl_host_name":"Host Name","lbl_host_email":"Host Email","lbl_validity":"Validity Period","lbl_iqama":"IQAMA/ID COPY","lbl_selfie":"SELFIE PHOTO","lbl_vehicle":"VEHICLE PLATE","status_approved":"Approved","status_pending":"Pending","status_rejected":"Rejected","status_expired":"EXPIRED","status_completed":"COMPLETED","msg_no_pending":"No pending requests found in this timeframe.","msg_no_active":"No active requests found in this timeframe.","msg_no_history":"No history found in this timeframe.","msg_no_gate":"No gate operations found in this timeframe.","msg_enter_email":"Enter an Email Address on the left to view passes.","msg_loading":"Loading requests...","msg_inside":"Inside Facility","msg_admin_select_loc":"Admin: Please select a facility first.","btn_add_team":"➕ ADD TEAM MEMBER","camera_scanner_btn":"📷 CAMERA SCANNER","hardware_gun_btn":"🔌 HARDWARE GUN","hw_scanner_ready":"HARDWARE SCANNER READY","hw_scanner_inst":"Point your handheld gun scanner at the QR code and trigger.","awaiting_scan":"Awaiting hardware scan...","save_qr":"⬇️ SAVE QR CODE","allowed":"ALLOWED","pass_validated":"Pass Validated","denied":"DENIED","admin_select_fac":"Admin: Please select a facility first.","pending":"PENDING","awaiting_admin":"Pass is awaiting Admin approval","not_approved":"Pass not approved by Admin","wrong_facility":"WRONG FACILITY","wrong_fac_msg":"Wrong Facility","invalid_date":"INVALID DATE","not_valid_today":"Pass is not valid for today","expired":"EXPIRED","contractor_expired":"Contractor Pass Expired","check_out":"CHECK OUT","scanning_out":"Scanning Out.<br><span style='color:#000; font-size:14px; font-weight:bold;'>⚠️ TAKE ID CARD FROM LEAD.</span>","select_all_members":"SELECT ALL MEMBERS","lead":"Lead","device_photos_all":"DEVICE & PHOTOS FOR ALL","device_label":"Device","iqama_id":"IQAMA / ID","selfie":"SELFIE","device_screen":"DEVICE SCREEN","vehicle":"VEHICLE"},
     ar:{"guard":"🛡️ الحارس","visitor_ops":"📋 الزوار/العمليات","admin":"⚙️ الإدارة","name":"الاسم","noon_id":"الرقم الوظيفي (Noon ID)","select_guard_loc":"اختر موقع الحارس...","login_gate":"الدخول للبوابة","your_full_name":"الاسم الكامل","your_email":"البريد الإلكتروني","login_portal":"تسجيل الدخول للبوابة","admin_name":"اسم المشرف","admin_email":"بريد المشرف","admin_password":"كلمة المرور","login_admin":"دخول كمسؤول","system_admin":"إدارة النظام","visitor_portal":"بوابة الزوار","gate_scanner":"ماسح البوابة","admin_dashboard":"لوحة التحكم","logout":"تسجيل خروج","visitor_contractor_portal":"بوابة الزوار والمقاولين","submit_new_request":"تقديم طلب جديد","type":"النوع","visitor":"زائر","contractor":"مقاول","req_email_ph":"البريد الإلكتروني (لتتبع التصريح)","req_vname_ph":"الاسم الكامل للزائر/المقاول","visit_date":"تاريخ الزيارة / الصلاحية (من - إلى)","slp_ticket":"رقم تذكرة SLP","contact_no":"رقم الاتصال","invited_by":"بدعوة من","vehicle_plate":"صورة / لوحة السيارة","live_camera":"📷 كاميرا مباشرة","contract_exp":"صلاحية العقد (من - إلى)","project_name":"اسم المشروع","company_name":"اسم الشركة / المقاول","project_manager":"مدير المشروع","fm_poc":"اسم/تفاصيل مسؤول المرافق (FM POC)","upload_iqama":"رفع صورة الهوية/الإقامة","upload_selfie":"رفع صورة شخصية","submit_approval":"إرسال للموافقة","my_passes":"تصاريحي","refresh":"تحديث","fetching":"جاري جلب التصاريح...","start_camera":"تشغيل ماسح الكاميرا","name_label":"الاسم:","type_label":"النوع:","location_label":"الموقع:","confirm_action":"تأكيد الإجراء","access_approvals":"📋 موافقات الدخول","history":"سجل الدخول والبوابة","guard_approvals":"🛡️ عمليات البوابة","analytics":"📊 الإحصائيات","all_time":"الكل","today":"اليوم","weekly":"أسبوعي","monthly":"شهري","6months":"٦ أشهر","1year":"سنة","custom":"مخصص","to":"إلى","apply":"تطبيق","pending_req":"الطلبات المعلقة","active_req":"الطلبات النشطة","print_selected":"🖨️ طباعة المحدد","val_period":"فترة الصلاحية","name_header":"الاسم","type_header":"النوع","facility_header":"المنشأة","action":"الإجراء","access_history":"سجل الدخول والبوابة","final_status":"الحالة النهائية","check_in":"دخول","check_out":"خروج","scanned_by":"تم المسح بواسطة","live_gate":"عمليات البوابة المباشرة","check_in_time":"وقت الدخول","check_out_time":"وقت الخروج","visitor_name":"اسم الزائر","date_analytics":"📅 إحصائيات التواريخ","type_analytics":"👤 إحصائيات الأنواع","facility_analytics":"🏢 إحصائيات المنشآت","status_analytics":"✅ إحصائيات الحالات","detailed_record":"عرض السجل التفصيلي","extend_pass":"تمديد صلاحية التصريح","new_start_date":"تاريخ الزيارة/البداية الجديد","new_end_date":"تاريخ النهاية الجديد","save_extension":"حفظ التمديد","capture":"📸 التقاط","flip_cam":"🔄 قلب الكاميرا","cancel":"❌ إلغاء","click_to_close":"انقر في أي مكان للإغلاق","btn_approve":"موافقة","btn_reject":"رفض","btn_extend":"📅 تمديد","btn_view":"🔍 عرض البيانات","btn_print":"🖨️ طباعة","btn_checkout":"🚪 خروج","lbl_host_name":"اسم المضيف","lbl_host_email":"بريد المضيف","lbl_validity":"فترة الصلاحية","lbl_iqama":"صورة الهوية/الإقامة","lbl_selfie":"الصورة الشخصية","lbl_vehicle":"لوحة السيارة","status_approved":"مقبول","status_pending":"قيد الانتظار","status_rejected":"مرفوض","status_expired":"منتهي","status_completed":"مكتمل","msg_no_pending":"لا توجد طلبات معلقة في هذه الفترة.","msg_no_active":"لا توجد طلبات نشطة في هذه الفترة.","msg_no_history":"لا يوجد سجل في هذه الفترة.","msg_no_gate":"لا توجد عمليات بوابة في هذه الفترة.","msg_enter_email":"أدخل بريداً إلكترونياً لعرض التصاريح.","msg_loading":"جاري التحميل...","msg_inside":"داخل المنشأة","msg_admin_select_loc":"المشرف: يرجى تحديد المنشأة أولاً من القائمة العلوية.","btn_add_team":"➕ إضافة عضو للفريق","camera_scanner_btn":"📷 ماسح الكاميرا","hardware_gun_btn":"🔌 ماسح الباركود اليدوي","hw_scanner_ready":"ماسح الباركود جاهز","hw_scanner_inst":"قم بتوجيه الماسح الضوئي نحو رمز الاستجابة السريعة (QR).","awaiting_scan":"بانتظار المسح...","save_qr":"⬇️ حفظ الرمز","allowed":"مسموح","pass_validated":"تم التحقق من التصريح","denied":"مرفوض","admin_select_fac":"المشرف: يرجى تحديد المنشأة أولاً.","pending":"قيد الانتظار","awaiting_admin":"التصريح بانتظار موافقة المشرف","not_approved":"لم تتم الموافقة على التصريح","wrong_facility":"منشأة خاطئة","wrong_fac_msg":"منشأة خاطئة","invalid_date":"تاريخ غير صالح","not_valid_today":"التصريح غير صالح لهذا اليوم","expired":"منتهي","contractor_expired":"تصريح المقاول منتهي","check_out":"تسجيل خروج","scanning_out":"تسجيل الخروج.<br><span style='color:#000; font-size:14px; font-weight:bold;'>⚠️ خذ بطاقة الهوية من القائد.</span>","select_all_members":"تحديد جميع الأعضاء","lead":"القائد","device_photos_all":"الأجهزة والصور للجميع","device_label":"الجهاز","iqama_id":"الإقامة / الهوية","selfie":"الصورة الشخصية","device_screen":"شاشة الجهاز","vehicle":"المركبة"}
@@ -304,84 +357,6 @@ function hardRefreshApp() {
         sessionStorage.clear();
         window.location.reload(true);
     }
-}
-
-function confirmPinCreate() {
-    let pin = document.getElementById('new-pin-input').value.trim();
-    if(pin.length !== 4) return alert("Please enter a valid 4-digit PIN.");
-    userSecurityPin = pin;
-    let targetEmail = currentUser.email;
-    if(currentUser.role==='admin'){
-        const ei=document.getElementById('req-admin-email');
-        if(ei&&ei.value) targetEmail=ei.value.toLowerCase().trim();
-    }
-    localStorage.setItem('user_pin_' + targetEmail, pin);
-    document.getElementById('pin-create-modal').classList.add('hidden');
-    submitRequest();
-}
-
-function closePinCreate() {
-    document.getElementById('pin-create-modal').classList.add('hidden');
-}
-
-function processAndRenderPasses(data, email, isSilent) {
-    let backendPin = null;
-    if (Array.isArray(data)) {
-        for(let i=data.length-1; i>=0; i--) {
-            if(data[i].HostName && data[i].HostName.includes('||PIN:')) {
-                backendPin = data[i].HostName.split('||PIN:')[1];
-                break;
-            }
-        }
-    }
-
-    let localPin = localStorage.getItem('user_pin_' + email);
-    
-    if (backendPin && backendPin !== localPin) {
-        if (!isSilent) {
-            lockedPassesData = data;
-            document.getElementById('pin-verify-modal').classList.remove('hidden');
-            document.getElementById('pin-error-msg').classList.add('hidden');
-            document.getElementById('verify-pin-input').value = '';
-        }
-        return; 
-    } else if (backendPin && backendPin === localPin) {
-        userSecurityPin = backendPin;
-    }
-
-    renderMyPasses(data);
-}
-
-function confirmPinVerify() {
-    let pin = document.getElementById('verify-pin-input').value.trim();
-    let email = currentUser.email;
-    if(currentUser.role === 'admin') {
-        const ei = document.getElementById('req-admin-email');
-        if(ei && ei.value) email = ei.value.toLowerCase().trim();
-    }
-
-    let backendPin = null;
-    for(let i=lockedPassesData.length-1; i>=0; i--) {
-        if(lockedPassesData[i].HostName && lockedPassesData[i].HostName.includes('||PIN:')) {
-            backendPin = lockedPassesData[i].HostName.split('||PIN:')[1];
-            break;
-        }
-    }
-
-    if (pin === backendPin) {
-        userSecurityPin = pin;
-        localStorage.setItem('user_pin_' + email, pin);
-        document.getElementById('pin-verify-modal').classList.add('hidden');
-        renderMyPasses(lockedPassesData);
-    } else {
-        document.getElementById('pin-error-msg').classList.remove('hidden');
-    }
-}
-
-function closePinVerify() {
-    document.getElementById('pin-verify-modal').classList.add('hidden');
-    const listDiv = document.getElementById('my-passes-list');
-    if(listDiv) listDiv.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">Passes locked. <button class="btn-primary btn-sm" style="width:auto; padding:4px 10px; margin-left:10px;" onclick="loadMyPasses(true, false)">UNLOCK</button></p>';
 }
 
 function toggleDateFields(){
@@ -863,7 +838,7 @@ async function submitRequest(){
 
     if(!startDateVal || !endDateVal) return alert("Visit/Validity dates (From - To) are required.");
 
-    // PIN Checks
+    // --- PIN SYSTEM HOOK ---
     let cachedKey='cached_passes_'+hMail;
     let existingPasses = [];
     try{ existingPasses = JSON.parse(localStorage.getItem(cachedKey)) || []; }catch(e){}
@@ -887,6 +862,7 @@ async function submitRequest(){
     }
 
     hName = hName + "||PIN:" + userSecurityPin;
+    // --- END PIN HOOK ---
 
     const tempId = 'NOON-' + Math.floor(100000 + Math.random() * 900000);
 
@@ -1237,7 +1213,6 @@ async function loadAdminData(isSilent=false){
     }
 }
 
-// OPTIMISTIC ADMIN STATUS UPDATE (INSTANT ROW REMOVAL & CACHE CLEAR)
 async function updateStatus(id,newStatus){
     if(autoRefreshTimer) clearInterval(autoRefreshTimer);
     if(!confirm(`Mark ${id} as ${newStatus}?`)){
@@ -1245,21 +1220,18 @@ async function updateStatus(id,newStatus){
         return;
     }
     
-    // 1. INSTANT LOCAL UPDATE
     if(Array.isArray(globalAdminData)){
         let item = globalAdminData.find(x => String(x.UniqueID) === String(id));
         if(item) {
             item.Status = newStatus;
             localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData));
             renderAdminData(globalAdminData);
-            
             if(item.HostEmail) {
                 localStorage.removeItem('cached_passes_' + String(item.HostEmail).toLowerCase().trim());
             }
         }
     }
 
-    // 2. BACKEND SYNC
     try{
         const res=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'update_status',id:id,newStatus:newStatus})});
         if(!res.ok)throw new Error("HTTP error");
@@ -1285,7 +1257,6 @@ async function adminCheckOut(id){
             item.CheckOutTime = new Date().toISOString();
             localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData));
             renderAdminData(globalAdminData);
-            
             if(item.HostEmail) {
                 localStorage.removeItem('cached_passes_' + String(item.HostEmail).toLowerCase().trim());
             }
@@ -1726,5 +1697,143 @@ async function onScanSuccess(decodedText){
         if(searchFilterBox) searchFilterBox.classList.remove('hidden');
         if(teamSec) {
             teamSec.classList.remove('hidden');
-            let attHtml = `<div style="text-align: left; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 8px; border: 1px solid rgbaI encountered an error doing what you asked. Could you try again?
+            let attHtml = `<div style="text-align: left; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">`;
+            attHtml += `<label style="display:flex; align-items:center; gap:10px; color:var(--noon-yellow); font-weight:bold; margin-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px; cursor:pointer;"><input type="checkbox" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)" onchange="document.querySelectorAll('.att-chk').forEach(c=>c.checked=this.checked)"> ${t('select_all_members')}</label><div id="team-members-list-container" style="display:flex; flex-direction:column; gap:12px;">`;
             
+            let safeImei = data.ImeiNumber ? String(data.ImeiNumber).trim() : '';
+            let leadDevStr = safeImei && safeImei !== 'None' && safeImei !== '' ? `<br><span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;font-weight:bold;">${safeImei}</span>` : '';
+            
+            let leadSearchStr = String(data.VisitorName + " " + safeImei + " lead " + data.UniqueID).toLowerCase();
+
+            attHtml += `<label class="team-member-scan-row" data-search="${leadSearchStr}" style="display:flex; align-items:center; justify-content:space-between; color:white; background:rgba(255,255,255,0.08); padding:12px; border-radius:8px; cursor:pointer; border: 1px solid rgba(255,255,255,0.05);"><div style="display:flex; align-items:center; gap:10px;"><img src="${data.IqamaURL}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"><img src="${data.SelfieBase64||data.SelfieURL}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"> <div><span style="font-size:13px;font-weight:600;">${t('lead')} (${data.VisitorName})</span>${leadDevStr}</div></div><input type="checkbox" class="att-chk" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)"></label>`;
+            
+            teamData.forEach(m => {
+                let mSearchStr = String(m.name + " " + m.iqamaText + " " + m.device).toLowerCase();
+                let devHtml = m.device && m.device !== 'None' && m.device.trim() !== '' ? `<br><span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;font-weight:bold;">${m.device}</span>` : '';
+                attHtml += `<label class="team-member-scan-row" data-search="${mSearchStr}" style="display:flex; align-items:center; justify-content:space-between; color:white; background:rgba(255,255,255,0.08); padding:12px; border-radius:8px; cursor:pointer; border: 1px solid rgba(255,255,255,0.05);"><div style="display:flex; align-items:center; gap:10px;"><img src="${m.iqama}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"><img src="${m.selfie}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"> <div><span style="font-size:13px;font-weight:600;">${m.name}</span><br><span style="font-size:10px;color:rgba(255,255,255,0.6);">ID: ${m.iqamaText}</span>${devHtml}</div></div><input type="checkbox" class="att-chk" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)"></label>`;
+            });
+            attHtml += `</div></div>`;
+            teamSec.innerHTML = attHtml;
+        }
+
+        if(detailsPrev){
+            let cardsHtml = '';
+            
+            let safeImei = data.ImeiNumber ? String(data.ImeiNumber).trim() : '';
+            let hasLeadDevice = safeImei && safeImei !== 'None' && safeImei !== '';
+            
+            if (hasLeadDevice) {
+                let leadSearchStr = String(data.VisitorName + " " + safeImei + " lead " + data.UniqueID).toLowerCase();
+                cardsHtml += `<div class="device-photo-card" data-search="${leadSearchStr}" style="margin-bottom:15px; text-align:left; padding:10px; background:rgba(255,255,255,0.05); border-radius:6px; border:1px solid rgba(255,255,255,0.1);">`;
+                cardsHtml += `<strong style="display:block; color:white; margin-bottom:8px;">${t('lead')} (${data.VisitorName}) - ${t('device_label')}: <span style="color:var(--noon-yellow)">${safeImei}</span></strong>`;
+                cardsHtml += `<div style="display:flex; gap:10px; flex-wrap:wrap;">`;
+                if(data.IqamaURL && data.IqamaURL !== 'No File') cardsHtml += `<div><strong style="font-size:10px; display:block; color:rgba(255,255,255,0.7); margin-bottom:4px;">${t('iqama_id')}</strong><img src="${data.IqamaURL}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; cursor:zoom-in; border:2px solid rgba(255,255,255,0.2);" onclick="openFullscreenImage(this.src)"></div>`;
+                if(data.SelfieURL && data.SelfieURL !== 'No File') cardsHtml += `<div><strong style="font-size:10px; display:block; color:rgba(255,255,255,0.7); margin-bottom:4px;">${t('selfie')}</strong><img src="${data.SelfieURL}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; cursor:zoom-in; border:2px solid rgba(255,255,255,0.2);" onclick="openFullscreenImage(this.src)"></div>`;
+                if(data.ImeiPhotoURL && data.ImeiPhotoURL !== 'No File') cardsHtml += `<div><strong style="font-size:10px; display:block; color:rgba(255,255,255,0.7); margin-bottom:4px;">${t('device_screen')}</strong><img src="${data.ImeiPhotoURL}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; cursor:zoom-in; border:2px solid rgba(255,255,255,0.2);" onclick="openFullscreenImage(this.src)"></div>`;
+                if(data.VehiclePlateNo && (data.VehiclePlateNo.startsWith('http')||data.VehiclePlateNo.startsWith('data:image'))) cardsHtml += `<div><strong style="font-size:10px; display:block; color:rgba(255,255,255,0.7); margin-bottom:4px;">${t('vehicle')}</strong><img src="${data.VehiclePlateNo}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; cursor:zoom-in; border:2px solid rgba(255,255,255,0.2);" onclick="openFullscreenImage(this.src)"></div>`;
+                cardsHtml += `</div></div>`;
+            }
+
+            teamData.forEach(m => {
+                let mDevStr = m.device && m.device !== 'None' && m.device.trim() !== '' ? m.device : 'None';
+                if (mDevStr !== 'None') {
+                    let mSearchStr = String(m.name + " " + m.iqamaText + " " + m.device).toLowerCase();
+                    cardsHtml += `<div class="device-photo-card" data-search="${mSearchStr}" style="margin-bottom:15px; text-align:left; padding:10px; background:rgba(255,255,255,0.05); border-radius:6px; border:1px solid rgba(255,255,255,0.1);">`;
+                    cardsHtml += `<strong style="display:block; color:white; margin-bottom:8px;">${m.name} - ${t('device_label')}: <span style="color:var(--noon-yellow)">${mDevStr}</span></strong>`;
+                    cardsHtml += `<div style="display:flex; gap:10px; flex-wrap:wrap;">`;
+                    if(m.iqama && m.iqama !== 'No File') cardsHtml += `<div><strong style="font-size:10px; display:block; color:rgba(255,255,255,0.7); margin-bottom:4px;">${t('iqama_id')}</strong><img src="${m.iqama}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; cursor:zoom-in; border:2px solid rgba(255,255,255,0.2);" onclick="openFullscreenImage(this.src)"></div>`;
+                    if(m.selfie && m.selfie !== 'No File') cardsHtml += `<div><strong style="font-size:10px; display:block; color:rgba(255,255,255,0.7); margin-bottom:4px;">${t('selfie')}</strong><img src="${m.selfie}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; cursor:zoom-in; border:2px solid rgba(255,255,255,0.2);" onclick="openFullscreenImage(this.src)"></div>`;
+                    if(m.devicePhoto && m.devicePhoto !== 'No File') cardsHtml += `<div><strong style="font-size:10px; display:block; color:rgba(255,255,255,0.7); margin-bottom:4px;">${t('device_screen')}</strong><img src="${m.devicePhoto}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; cursor:zoom-in; border:2px solid rgba(255,255,255,0.2);" onclick="openFullscreenImage(this.src)"></div>`;
+                    cardsHtml += `</div></div>`;
+                }
+            });
+
+            if (cardsHtml !== '') {
+                let previewHtml = `<div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; font-size: 13px; font-weight: normal; margin-bottom: 15px; margin-top:20px;">`;
+                previewHtml += `<div style="margin-bottom:8px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px;"><strong style="color:var(--noon-yellow); text-transform:uppercase;">${t('device_photos_all')}</strong></div>`;
+                previewHtml += cardsHtml;
+                previewHtml += `</div>`;
+                detailsPrev.innerHTML = previewHtml;
+                detailsPrev.classList.remove('hidden');
+            } else {
+                detailsPrev.innerHTML = "";
+                detailsPrev.classList.add('hidden');
+            }
+        }
+
+        const hcSec = document.getElementById('guard-headcount-section');
+        if(hcSec) hcSec.classList.add('hidden');
+        if(selfieImg) selfieImg.style.display='none';
+    }
+
+    const hcSec = document.getElementById('guard-headcount-section');
+    if (allowAction) {
+        if(hcSec) hcSec.classList.add('hidden'); 
+        if(confirmBtn) {
+            confirmBtn.classList.remove('hidden');
+            if (isInside) {
+                confirmBtn.innerText = t("btn_checkout");
+                confirmBtn.className = "btn-primary btn-warning";
+                confirmBtn.style.color = "#000";
+            } else {
+                confirmBtn.innerText = t("confirm_action");
+                confirmBtn.className = "btn-primary btn-success";
+                confirmBtn.style.color = "#fff";
+            }
+        }
+    } else {
+        if(confirmBtn) confirmBtn.classList.add('hidden');
+        if(hcSec) hcSec.classList.add('hidden');
+    }
+
+    showScanResult(scanState, scanMsg, scanColor, isFullscreen);
+}
+
+async function confirmAction(){
+    const btn=document.getElementById('btn-confirm-action');
+    let hcVal=1;
+    const teamSec = document.getElementById('guard-team-section');
+    if(teamSec && !teamSec.classList.contains('hidden')) {
+        const chks = document.querySelectorAll('.att-chk');
+        if(chks.length > 0) {
+            hcVal = document.querySelectorAll('.att-chk:checked').length;
+            if(hcVal === 0) return alert("Please select at least one person.");
+        } else {
+            const hcInput = document.getElementById('guard-headcount');
+            if(hcInput && !hcInput.parentElement.classList.contains('hidden')){
+                hcVal = hcInput.value;
+                if(!hcVal||hcVal<1) return alert("Please enter the number of workers present.");
+            }
+        }
+    }
+    
+    btn.innerText="SAVING & REFRESHING...";
+    btn.disabled=true;
+
+    const gInfo = `${currentUser.name} (${currentUser.location})`;
+    const payload = JSON.stringify({ action: currentScanAction, id: currentScannedID, guardInfo: gInfo, headCount: hcVal });
+    
+    try {
+        const res = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: payload
+        });
+        if(res.ok) {
+            window.location.reload();
+        } else {
+            alert("Sync failed. Please try again.");
+            btn.innerText = t("confirm_action");
+            btn.disabled = false;
+            isProcessingScan = false;
+        }
+    } catch(e) {
+        alert("Network error. Please try again.");
+        btn.innerText = t("confirm_action");
+        btn.disabled = false;
+        isProcessingScan = false;
+    }
+}
+</script>
+</body>
+</html>
