@@ -268,25 +268,37 @@ function confirmPinCreate() {
     document.getElementById('pin-create-modal').classList.add('hidden');
     submitRequest();
 }
+
 function closePinCreate() { document.getElementById('pin-create-modal').classList.add('hidden'); }
 
 function processAndRenderPasses(data, email, isSilent) {
+    if (currentUser && currentUser.role === 'admin') {
+        renderMyPasses(data);
+        return;
+    }
+
     let backendPin = null;
     if (Array.isArray(data)) {
         for(let i=data.length-1; i>=0; i--) {
             if(data[i].HostName && data[i].HostName.includes('||PIN:')) { backendPin = data[i].HostName.split('||PIN:')[1]; break; }
         }
     }
+    
     let localPin = localStorage.getItem('user_pin_' + email);
+    
     if (backendPin && backendPin !== localPin) {
-        if (!isSilent) {
-            lockedPassesData = data;
+        lockedPassesData = data;
+        if (!isSilent || !document.getElementById('pin-verify-modal').classList.contains('hidden') === false) {
             document.getElementById('pin-verify-modal').classList.remove('hidden');
             document.getElementById('pin-error-msg').classList.add('hidden');
             document.getElementById('verify-pin-input').value = '';
         }
+        const listDiv = document.getElementById('my-passes-list');
+        if(listDiv) listDiv.innerHTML = '<p style="color:var(--text-muted);font-size:13px; margin-top:20px; text-align:center;">Passes locked. <button class="btn-primary btn-sm" style="width:auto; padding:4px 10px; margin-left:10px;" onclick="loadMyPasses(true, false)">UNLOCK</button></p>';
         return; 
-    } else if (backendPin && backendPin === localPin) { userSecurityPin = backendPin; }
+    } else if (backendPin && backendPin === localPin) { 
+        userSecurityPin = backendPin; 
+    }
     renderMyPasses(data);
 }
 
@@ -305,10 +317,11 @@ function confirmPinVerify() {
         renderMyPasses(lockedPassesData);
     } else { document.getElementById('pin-error-msg').classList.remove('hidden'); }
 }
+
 function closePinVerify() {
     document.getElementById('pin-verify-modal').classList.add('hidden');
     const listDiv = document.getElementById('my-passes-list');
-    if(listDiv) listDiv.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">Passes locked. <button class="btn-primary btn-sm" style="width:auto; padding:4px 10px; margin-left:10px;" onclick="loadMyPasses(true, false)">UNLOCK</button></p>';
+    if(listDiv) listDiv.innerHTML = '<p style="color:var(--text-muted);font-size:13px; margin-top:20px; text-align:center;">Passes locked. <button class="btn-primary btn-sm" style="width:auto; padding:4px 10px; margin-left:10px;" onclick="loadMyPasses(true, false)">UNLOCK</button></p>';
 }
 
 const dict={
@@ -850,17 +863,19 @@ async function submitRequest(){
         }
     }
 
-    if (backendPin) {
-        userSecurityPin = backendPin;
-        localStorage.setItem('user_pin_' + hMail, backendPin);
+    if (currentUser && currentUser.role === 'admin') {
+        if (backendPin) hName = hName + "||PIN:" + backendPin;
+    } else {
+        if (backendPin) {
+            userSecurityPin = backendPin;
+            localStorage.setItem('user_pin_' + hMail, backendPin);
+        }
+        if (!userSecurityPin) {
+            document.getElementById('pin-create-modal').classList.remove('hidden');
+            return;
+        }
+        hName = hName + "||PIN:" + userSecurityPin;
     }
-
-    if (!userSecurityPin) {
-        document.getElementById('pin-create-modal').classList.remove('hidden');
-        return;
-    }
-
-    hName = hName + "||PIN:" + userSecurityPin;
 
     const tempId = 'NOON-' + Math.floor(100000 + Math.random() * 900000);
 
@@ -985,7 +1000,7 @@ function renderMyPasses(data){
                 <div class="qr-box" id="qr-${pass.UniqueID}" style="background:white;padding:10px;border-radius:6px;display:inline-block;min-width:140px;min-height:140px;"></div>
                 <div style="margin-top:15px;" id="save-btn-container-${pass.UniqueID}">
                     <button class="btn-primary btn-outline btn-sm" style="margin-bottom:8px;" onclick="downloadQR('${pass.UniqueID}')" data-i18n="save_qr">${t('save_qr')}</button>
-                    <br><button class="btn-primary btn-warning btn-sm" style="color:#000;" onclick="openAddMoreModal('${pass.UniqueID}')">➕ Add More People</button>
+                    <br><button class="btn-primary btn-warning btn-sm" style="color:#000;" onclick="openAddMoreModal('${pass.UniqueID}')">➕ ${t('add_more_people')}</button>
                 </div>
             </div>`;
         }
@@ -1295,6 +1310,24 @@ async function submitExtendPass(){
     }catch(e){alert('Error.')}finally{btn.innerText=t("save_extension");btn.disabled=false}
 }
 
+async function adminResetPin(email) {
+    if(!confirm(`Reset PIN for ${email}? They will be prompted to create a new one next time.`)) return;
+    try {
+        const res = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'reset_pin', email: email })
+        });
+        localStorage.removeItem('cached_admin_data');
+        localStorage.removeItem('cached_passes_' + email);
+        alert("PIN Reset Successful.");
+        closeViewRecord();
+        loadAdminData(true);
+    } catch(e) {
+        alert("Error resetting PIN");
+    }
+}
+
 function openViewRecord(id){
     const r=globalAdminData.find(x=>String(x.UniqueID)===String(id));if(!r)return;
     let rType = String(r.Type || '');
@@ -1302,8 +1335,15 @@ function openViewRecord(id){
     let actualPin = (r.HostName || '').includes('||PIN:') ? (r.HostName || '').split('||PIN:')[1] : null;
 
     let h=`<div><strong>${t('lbl_host_name')}</strong>${displayHostName}</div>`;
+    
     if (currentUser && currentUser.role === 'admin' && actualPin) {
-        h += `<div><strong>ACCOUNT PIN</strong><span style="color:var(--danger); font-weight:bold; font-size:14px;">${actualPin}</span></div>`;
+        h += `<div style="margin-bottom:10px;"><strong>ACCOUNT PIN</strong>
+              <div style="display:flex; gap:10px; align-items:center; margin-top:5px;">
+                <span id="admin-view-pin" style="color:var(--danger); font-weight:bold; font-size:16px; letter-spacing: 2px; background:rgba(0,0,0,0.3); padding:4px 10px; border-radius:4px;">****</span>
+                <button onclick="document.getElementById('admin-view-pin').innerText='${actualPin}'; this.style.display='none';" class="btn-primary btn-outline btn-sm" style="width:auto; padding:4px 10px; font-size:11px;">👁️ SHOW</button>
+                <button onclick="adminResetPin('${r.HostEmail}')" class="btn-primary btn-danger btn-sm" style="width:auto; padding:4px 10px; font-size:11px;">🔄 RESET</button>
+              </div>
+              </div>`;
     }
     
     h+=`<div><strong>${t('lbl_host_email')}</strong>${r.HostEmail||'-'}</div><div><strong>${t('visitor_name')}</strong>${r.VisitorName||'-'}</div><div><strong>${t('type_header')}</strong>${t(rType.toLowerCase())||'-'}</div><div><strong>${t('location_label')}</strong>${r.Location||'-'}</div><div><strong>${t('lbl_validity')}</strong>${rType==='Visitor'?formatToDDMMYYYY(r.StartDate):formatToDDMMYYYY(r.StartDate)+' - '+formatToDDMMYYYY(r.EndDate||r.StartDate)}</div><div><strong>${t('slp_ticket')}</strong>${r.SlpTicketNo||'-'}</div><div><strong>${t('contact_no')}</strong>${r.ContactNo||'-'}</div><div><strong>IMEI NUMBER</strong>${r.ImeiNumber||'-'}</div>`;
@@ -1868,100 +1908,6 @@ async function confirmAction(){
         btn.disabled = false;
         isProcessingScan = false;
     }
-}
-
-let addMorePassId = null;
-let addMoreTeamList = [];
-
-function openAddMoreModal(passId) {
-    addMorePassId = passId;
-    addMoreTeamList = [];
-    renderAddTeamRoster();
-    document.getElementById('add-more-modal').classList.remove('hidden');
-}
-
-function closeAddMoreModal() { document.getElementById('add-more-modal').classList.add('hidden'); }
-
-function toggleAddTeamDeviceInput() {
-    let type = document.getElementById('req-add-team-device-type').value;
-    let group = document.getElementById('req-add-team-device-id-group');
-    let input = document.getElementById('req-add-team-device-id');
-    let tDev = document.getElementById('req-add-team-imeiphoto');
-    if(type === 'None') {
-        group.classList.add('hidden'); input.value = ''; if(tDev) tDev.value = '';
-        clearCapturedData('add_team_imeiphoto');
-    } else { group.classList.remove('hidden'); input.placeholder = type === 'Mobile' ? 'IMEI Number' : 'Serial Number'; }
-}
-
-async function saveAddTeamMember() {
-    let iB64='',sB64='',tDevB64='',ii=document.getElementById('req-add-team-iqama'),si=document.getElementById('req-add-team-selfie'),tName=document.getElementById('req-add-team-name'),tIqama=document.getElementById('req-add-team-iqamatext');
-    let devType=document.getElementById('req-add-team-device-type').value, devId=document.getElementById('req-add-team-device-id').value;
-    let tDev=document.getElementById('req-add-team-imeiphoto');
-
-    if(!tName || !tName.value.trim()) return alert("Provide Name.");
-    if(!tIqama || !tIqama.value.trim()) return alert("Provide Iqama/ID.");
-
-    if(devType !== 'None') {
-        if(!devId.trim()) return alert("Provide IMEI/Serial number.");
-        if(capturedImages.add_team_imeiphoto) tDevB64=capturedImages.add_team_imeiphoto.split(',')[1];
-        else if(tDev&&tDev.files.length>0){let f=await getBase64(tDev.files[0]); tDevB64=f.split(',')[1]}
-        else return alert("Provide Device Screen photo.");
-    }
-    if(capturedImages.add_team_iqama)iB64=capturedImages.add_team_iqama.split(',')[1];
-    else if(ii&&ii.files.length>0){let f=await getBase64(ii.files[0]);iB64=f.split(',')[1]}
-    else return alert("Provide Iqama photo.");
-
-    if(capturedImages.add_team_selfie)sB64=capturedImages.add_team_selfie.split(',')[1];
-    else if(si&&si.files.length>0){let f=await getBase64(si.files[0]);sB64=f.split(',')[1]}
-    else return alert("Provide Selfie photo.");
-
-    addMoreTeamList.push({ iqama:"data:image/jpeg;base64,"+iB64, selfie:"data:image/jpeg;base64,"+sB64, rawIqama:iB64, rawSelfie:sB64, rawDevicePhoto:tDevB64, name: tName.value.trim() + " [NEW]", iqamaText: tIqama.value.trim(), deviceType: devType, deviceId: devId.trim() });
-    
-    renderAddTeamRoster();
-    if(ii)ii.value="";if(si)si.value="";if(tName)tName.value="";if(tIqama)tIqama.value="";
-    document.getElementById('req-add-team-device-type').value = "None"; document.getElementById('req-add-team-device-id').value = ""; 
-    toggleAddTeamDeviceInput();
-    clearCapturedData('add_team_iqama');clearCapturedData('add_team_selfie');clearCapturedData('add_team_imeiphoto');
-}
-
-function renderAddTeamRoster(){
-    const div=document.getElementById('add-team-roster-display');
-    if(addMoreTeamList.length>0){
-        div.classList.remove('hidden');let h='';
-        addMoreTeamList.forEach((m,idx)=>{
-            let cleanName = m.name.replace('[NEW]', '').trim();
-            let devHtml = m.deviceType !== 'None' ? `<span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">${m.deviceType}</span>` : '';
-            let imgsHtml = `<img src="${m.iqama}" class="team-member-img" onclick="openFullscreenImage(this.src)"><img src="${m.selfie}" class="team-member-img" onclick="openFullscreenImage(this.src)">`;
-            h+=`<div class="team-member-row"><span style="color:white;font-size:13px;font-weight:bold;">${cleanName} ${devHtml}</span><div style="display:flex;gap:10px;">${imgsHtml}<button type="button" style="background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:16px;" onclick="addMoreTeamList.splice(${idx},1);renderAddTeamRoster();">❌</button></div></div>`;
-        });
-        div.innerHTML=h;
-    }else div.classList.add('hidden');
-}
-
-async function submitAddMorePeople() {
-    if(addMoreTeamList.length === 0) return alert("Please add at least one person to the list first.");
-    if(!confirm("WARNING: This will reset the pass status back to PENDING. Do you want to proceed?")) return;
-
-    let btn = document.getElementById('btn-submit-add-more');
-    btn.innerText = "SUBMITTING..."; btn.disabled = true;
-
-    let cleanTeam = [];
-    addMoreTeamList.forEach(m => {
-        let devStr = m.deviceType !== 'None' ? `${m.deviceType} (${m.deviceId})` : 'None';
-        cleanTeam.push({ iqama: m.rawIqama, selfie: m.rawSelfie, devicePhoto: m.rawDevicePhoto, name: m.name, iqamaText: m.iqamaText, deviceString: devStr });
-    });
-
-    try {
-        const payload = { action: 'add_team_members', id: addMorePassId, team: cleanTeam };
-        const res = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
-        let json = await res.json();
-        
-        if (json.status === 'success') {
-            closeAddMoreModal(); loadMyPasses(true, true);
-            alert("People added successfully! The pass is now PENDING approval.");
-        } else throw new Error(json.message);
-    } catch(e) { alert("Upload failed. Try again. Error: " + e.message);
-    } finally { btn.innerText = "SUBMIT & SEND FOR APPROVAL"; btn.disabled = false; }
 }
 </script>
 </body>
