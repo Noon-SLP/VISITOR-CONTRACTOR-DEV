@@ -256,9 +256,9 @@ const urlParams = new URLSearchParams(window.location.search);
 const currentRoleParam = urlParams.get('role') || 'default';
 const SESSION_KEY = 'noon_session_' + currentRoleParam;
 
-let html5QrCode=null; let scannerFacingMode='environment'; let currentUser=null; let currentScannedID=null; let currentScanAction='check_in'; let currentAdminFilter='all'; let autoRefreshTimer=null; let globalAdminData=[]; let checkedPrintIds=new Set(); let liveStream=null; let currentFacingMode='environment'; let targetPhotoType=''; let capturedImages={iqama:null,selfie:null,imeiphoto:null,vehicle:null,fmpoc:null}; let teamList=[]; let currentTeamCounter=1; let isProcessingScan = false; let userSecurityPin = null; let lockedPassesData = null;
+let html5QrCode=null; let scannerFacingMode='environment'; let currentUser=null; let currentScannedID=null; let currentScanAction='check_in'; let currentAdminFilter='all'; let autoRefreshTimer=null; let globalAdminData=[]; let checkedPrintIds=new Set(); let liveStream=null; let currentFacingMode='environment'; let targetPhotoType=''; let capturedImages={iqama:null,selfie:null,imeiphoto:null,vehicle:null,fmpoc:null}; let teamList=[]; let currentTeamCounter=1; let isProcessingScan = false; let userSecurityPin = null; let lockedPassesData = null; let pinCreateMode = 'submit';
 
-function confirmPinCreate() {
+async function confirmPinCreate() {
     let pin = document.getElementById('new-pin-input').value.trim();
     if(pin.length !== 4) return alert("Please enter a valid 4-digit PIN.");
     userSecurityPin = pin;
@@ -266,7 +266,19 @@ function confirmPinCreate() {
     if(currentUser.role === 'admin') { const ei = document.getElementById('req-admin-email'); if(ei && ei.value) email = ei.value.toLowerCase().trim(); }
     localStorage.setItem('user_pin_' + email, pin);
     document.getElementById('pin-create-modal').classList.add('hidden');
-    submitRequest();
+    
+    if (pinCreateMode === 'reset') {
+        try {
+            await fetch(SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: 'update_pin', email: email, pin: pin })
+            });
+        } catch(e) {}
+        renderMyPasses(lockedPassesData);
+    } else {
+        submitRequest();
+    }
 }
 
 function closePinCreate() { document.getElementById('pin-create-modal').classList.add('hidden'); }
@@ -288,16 +300,32 @@ function processAndRenderPasses(data, email, isSilent) {
     
     if (backendPin && backendPin !== localPin) {
         lockedPassesData = data;
-        if (!isSilent || !document.getElementById('pin-verify-modal').classList.contains('hidden') === false) {
-            document.getElementById('pin-verify-modal').classList.remove('hidden');
-            document.getElementById('pin-error-msg').classList.add('hidden');
-            document.getElementById('verify-pin-input').value = '';
+        const verifyModal = document.getElementById('pin-verify-modal');
+        if (!isSilent || !verifyModal.classList.contains('hidden')) {
+            if(verifyModal.classList.contains('hidden')) {
+                verifyModal.classList.remove('hidden');
+                document.getElementById('pin-error-msg').classList.add('hidden');
+                document.getElementById('verify-pin-input').value = '';
+            }
         }
         const listDiv = document.getElementById('my-passes-list');
         if(listDiv) listDiv.innerHTML = '<p style="color:var(--text-muted);font-size:13px; margin-top:20px; text-align:center;">Passes locked. <button class="btn-primary btn-sm" style="width:auto; padding:4px 10px; margin-left:10px;" onclick="loadMyPasses(true, false)">UNLOCK</button></p>';
         return; 
     } else if (backendPin && backendPin === localPin) { 
         userSecurityPin = backendPin; 
+    } else if (!backendPin && Array.isArray(data) && data.length > 0) {
+        lockedPassesData = data;
+        const createModal = document.getElementById('pin-create-modal');
+        if (!isSilent || !createModal.classList.contains('hidden')) {
+            if(createModal.classList.contains('hidden')) {
+                pinCreateMode = 'reset';
+                createModal.classList.remove('hidden');
+                document.getElementById('new-pin-input').value = '';
+            }
+        }
+        const listDiv = document.getElementById('my-passes-list');
+        if(listDiv) listDiv.innerHTML = '<p style="color:var(--text-muted);font-size:13px; margin-top:20px; text-align:center;">Passes locked. Awaiting new PIN.</p>';
+        return;
     }
     renderMyPasses(data);
 }
@@ -871,6 +899,7 @@ async function submitRequest(){
             localStorage.setItem('user_pin_' + hMail, backendPin);
         }
         if (!userSecurityPin) {
+            pinCreateMode = 'submit';
             document.getElementById('pin-create-modal').classList.remove('hidden');
             return;
         }
@@ -1558,357 +1587,4 @@ function showScanResult(d,rHtml,cClass,isContractor=false){
     
     if(cClass==="bg-red"){
         setTimeout(()=>{
-            if (document.getElementById('r-decision').innerText === d) {
-                sr.className = 'scan-result-card hidden';
-                isProcessingScan = false;
-                try{if(html5QrCode)html5QrCode.resume();}catch(e){}
-            }
-        },3500);
-    }
-}
-
-window.closeScanResult = function() {
-    isProcessingScan = false;
-    const sr = document.getElementById('scan-result');
-    if(sr) sr.className = 'scan-result-card hidden';
-    try{if(html5QrCode) html5QrCode.resume();}catch(e){}
-    const gunInput = document.getElementById('gun-scan-input');
-    if(gunInput && !document.getElementById('gun-scanner-container').classList.contains('hidden')) {
-        gunInput.focus();
-        gunInput.value = "";
-    }
-}
-
-function filterTeamMembers(query) {
-    let q = query.toLowerCase();
-    
-    let rows = document.querySelectorAll('.team-member-scan-row');
-    rows.forEach(row => {
-        if(row.innerText.toLowerCase().includes(q)) {
-            row.style.display = 'flex';
-        } else {
-            row.style.display = 'none';
-        }
-    });
-
-    let deviceCards = document.querySelectorAll('.device-photo-card');
-    deviceCards.forEach(card => {
-        if(card.getAttribute('data-search').includes(q)) {
-            card.style.display = 'block';
-        } else {
-            card.style.display = 'none';
-        }
-    });
-}
-
-// BULLETPROOF SCAN PROCESSOR WITH POST FALLBACK
-async function onScanSuccess(decodedText){
-    if (isProcessingScan) return;
-    isProcessingScan = true;
-
-    try{if(html5QrCode && html5QrCode.isScanning)html5QrCode.pause();}catch(e){}
-    
-    let rawText = String(decodedText).toUpperCase();
-    let exactMatch = rawText.match(/NOON-\d+/);
-    decodedText = exactMatch ? exactMatch[0] : rawText.replace(/\s+/g, '').trim();
-
-    if (!decodedText) { isProcessingScan = false; return; }
-
-    const resultCard=document.getElementById('scan-result'),selfieImg=document.getElementById('r-selfie'),confirmBtn=document.getElementById('btn-confirm-action'),teamSec=document.getElementById('guard-team-section'),detailsPrev=document.getElementById('guard-details-preview'),topInfoBox=document.getElementById('scan-result-top-info');
-    
-    if(resultCard){
-        resultCard.className = 'scan-result-card hidden'; 
-        void resultCard.offsetWidth; 
-        resultCard.classList.remove('hidden');
-        resultCard.classList.add('bg-blue'); 
-        if(decodedText) resultCard.classList.add('fullscreen-scan');
-    }
-    
-    if(confirmBtn)confirmBtn.classList.add('hidden');if(teamSec)teamSec.classList.add('hidden');
-    const rDecision=document.getElementById('r-decision'),rReason=document.getElementById('r-reason');
-    if(rDecision)rDecision.innerText=t("fetching");if(rReason)rReason.innerHTML="";
-    if(selfieImg){selfieImg.style.display='none';selfieImg.src=""}
-    if(teamSec) teamSec.innerHTML = "";
-    if(detailsPrev) detailsPrev.innerHTML = "";
-    if(topInfoBox) topInfoBox.innerHTML = "";
-    
-    const searchFilterBox=document.getElementById('guard-search-filter-container'); 
-    if(searchFilterBox) {
-        searchFilterBox.classList.add('hidden');
-        document.getElementById('team-search-filter').value = "";
-    }
-
-    currentScannedID=decodedText;
-
-    let data = null;
-
-    try{
-        const res=await fetch(SCRIPT_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'get_single', id: decodedText })
-        });
-        if(res.ok) {
-            let resData = await res.json();
-            if(resData && !resData.error) data = resData;
-        }
-    } catch(err) {}
-
-    if(!data && Array.isArray(globalAdminData)){
-        let cachedMatch = globalAdminData.find(x => String(x.UniqueID).toUpperCase() === String(decodedText).toUpperCase());
-        if(cachedMatch) data = cachedMatch;
-    }
-
-    if(!data || data.error) {
-        showScanResult(t("denied"),t("invalid_date"),"bg-red", false);
-        return;
-    }
-
-    let dType = String(data.Type || '');
-    let dStatus = String(data.Status || '');
-    let dLoc = String(data.Location || '');
-
-    const todayStr=formatToDDMMYYYY(new Date()),startStr=formatToDDMMYYYY(data.StartDate),todayNum=new Date().setHours(0,0,0,0);
-    let startObj=parseFlexibleDate(data.StartDate),startNum=startObj?startObj.setHours(0,0,0,0):todayNum;
-    let endObj=parseFlexibleDate(data.EndDate),endNum=endObj?endObj.setHours(0,0,0,0):startNum;
-    const isCheckedOut=!!data.CheckOutTime,isInside=!!data.CheckInTime&&!data.CheckOutTime;
-
-    let scanState = t("allowed"), scanMsg = t("pass_validated"), scanColor = "bg-green";
-    let allowAction = true;
-
-    if(currentUser.role==='admin'&&!currentUser.location) { scanState=t("denied"); scanMsg=t("admin_select_fac"); scanColor="bg-red"; allowAction=false; }
-    else if(dStatus === 'Pending') { scanState=t("pending"); scanMsg=t("awaiting_admin"); scanColor="bg-yellow"; allowAction=false; }
-    else if(dStatus !== 'Approved') { scanState=t("denied"); scanMsg=t("not_approved"); scanColor="bg-red"; allowAction=false; }
-    else if(dLoc !== currentUser.location) { scanState=t("wrong_facility"); scanMsg=t("wrong_fac_msg")+" ("+dLoc+")"; scanColor="bg-red"; allowAction=false; }
-    else if(dType === 'Visitor' && startStr !== todayStr) { scanState=t("invalid_date"); scanMsg=t("not_valid_today"); scanColor="bg-red"; allowAction=false; }
-    else if(dType === 'Contractor' && (todayNum < startNum || todayNum > endNum)) { scanState=t("expired"); scanMsg=t("contractor_expired"); scanColor="bg-red"; allowAction=false; }
-
-    let isFullscreen = (dType === 'Contractor' || dType === 'Visitor');
-
-    if(allowAction) {
-        if(isInside) {
-            currentScanAction = 'check_out';
-            scanState = t("check_out");
-            scanMsg = t("scanning_out");
-            scanColor = "bg-blue";
-        } else {
-            currentScanAction = 'check_in';
-        }
-    }
-
-    let teamData=[],maxWorkers=1;
-    let tMembers = String(data.TeamMembers || '');
-    if(tMembers.trim()!==""){
-        let lines = tMembers.split('\n\n');
-        lines.forEach((block, idx)=>{
-            let nameMatch = block.match(/Name:\s*(.*?)\s*\|/);
-            let iqamaMatch = block.match(/Iqama:\s*(.*?)(?:\s*\||\n)/);
-            let deviceMatch = block.match(/Device:\s*(.*?)(?:\n|$)/);
-            let extractedUrls = block.match(/https?:\/\/[^\s\|]+/g) || [];
-            
-            if(extractedUrls.length >= 2){
-                let nameRaw = nameMatch ? nameMatch[1].trim() : 'Team Member ' + (idx+1);
-                let isNew = nameRaw.includes('[NEW]');
-                let cleanName = nameRaw.replace('[NEW]', '').trim();
-
-                teamData.push({
-                    person: idx+1,
-                    name: cleanName,
-                    isNew: isNew,
-                    iqamaText: iqamaMatch ? iqamaMatch[1].trim() : 'N/A',
-                    device: deviceMatch ? deviceMatch[1].trim() : 'None',
-                    iqama: extractedUrls[0],
-                    selfie: extractedUrls[1],
-                    devicePhoto: extractedUrls.length > 2 ? extractedUrls[2] : 'No File'
-                });
-            }
-        });
-        maxWorkers = teamData.length + 1;
-    }
-
-    if(topInfoBox){
-        let topInfo = `<div style="background: rgba(0,0,0,0.5); padding: 20px; border-radius: 10px; text-align: start; font-size: 14px; line-height: 1.8; margin-bottom:15px; border: 1px solid rgba(255,255,255,0.1);">`;
-        
-        topInfo += `<p><strong style="color:rgba(255,255,255,0.8); display:inline-block; width:130px;">${t('total_people')}:</strong> <span style="color:var(--noon-yellow); font-weight:bold; font-size:16px;">${maxWorkers}</span></p>`;
-
-        if(dType === 'Contractor') {
-            topInfo += `<p><strong style="color:rgba(255,255,255,0.8); display:inline-block; width:130px;">${t('project_name')}:</strong> <span style="color:#fff; font-weight:bold; font-size:15px;">${data.ProjectName || 'N/A'}</span></p>`;
-            topInfo += `<p><strong style="color:rgba(255,255,255,0.8); display:inline-block; width:130px;">${t('project_manager')}:</strong> <span style="color:#fff; font-weight:bold; font-size:15px;">${data.ProjectManager || 'N/A'}</span></p>`;
-            topInfo += `<p><strong style="color:rgba(255,255,255,0.8); display:inline-block; width:130px;">${t('location_label')}</strong> <span style="color:#fff; font-weight:bold; font-size:15px;">${dLoc}</span></p>`;
-            topInfo += `<p><strong style="color:rgba(255,255,255,0.8); display:inline-block; width:130px;">${t('fm_poc')}:</strong> <span style="color:#fff; font-weight:bold; font-size:15px;">${data.FmPoc || 'N/A'}</span></p>`;
-            topInfo += `<p><strong style="color:rgba(255,255,255,0.8); display:inline-block; width:130px;">${t('type_label')}</strong> <span style="color:var(--noon-yellow); font-weight:bold; font-size:15px;">${t('contractor')}</span></p>`;
-        } else {
-            topInfo += `<p><strong style="color:rgba(255,255,255,0.8); display:inline-block; width:130px;">${t('name_label')}</strong> <span style="color:#fff; font-weight:bold; font-size:15px;">${data.VisitorName}</span></p>`;
-            topInfo += `<p><strong style="color:rgba(255,255,255,0.8); display:inline-block; width:130px;">${t('type_label')}</strong> <span style="color:var(--noon-yellow); font-weight:bold; font-size:15px;">${t('visitor')}</span></p>`;
-            topInfo += `<p><strong style="color:rgba(255,255,255,0.8); display:inline-block; width:130px;">${t('location_label')}</strong> <span style="color:#fff; font-weight:bold; font-size:15px;">${dLoc}</span></p>`;
-        }
-        topInfo += `</div>`;
-        topInfoBox.innerHTML = topInfo;
-    }
-
-    if(dType === 'Contractor' || dType === 'Visitor'){
-        if(searchFilterBox) searchFilterBox.classList.remove('hidden');
-        if(teamSec) {
-            teamSec.classList.remove('hidden');
-            let attHtml = `<div style="text-align: left; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">`;
-            attHtml += `<label style="display:flex; align-items:center; gap:10px; color:var(--noon-yellow); font-weight:bold; margin-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px; cursor:pointer;"><input type="checkbox" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)" onchange="document.querySelectorAll('.att-chk').forEach(c=>c.checked=this.checked)"> ${t('select_all_members')}</label><div id="team-members-list-container" style="display:flex; flex-direction:column; gap:12px;">`;
-            
-            let safeImei = data.ImeiNumber ? String(data.ImeiNumber).trim() : '';
-            let leadDevStr = safeImei && safeImei !== 'None' && safeImei !== '' ? `<br><span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;font-weight:bold;">${safeImei}</span>` : '';
-            
-            let leadSearchStr = String(data.VisitorName + " " + safeImei + " lead " + data.UniqueID).toLowerCase();
-
-            attHtml += `<label class="team-member-scan-row" data-search="${leadSearchStr}" style="display:flex; align-items:center; justify-content:space-between; color:white; background:rgba(255,255,255,0.08); padding:12px; border-radius:8px; cursor:pointer; border: 1px solid rgba(255,255,255,0.05);"><div style="display:flex; align-items:center; gap:10px;"><img src="${data.IqamaURL}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"><img src="${data.SelfieBase64||data.SelfieURL}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"> <div><span style="font-size:13px;font-weight:600;">${t('lead')} (${data.VisitorName})</span>${leadDevStr}</div></div><input type="checkbox" class="att-chk" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)"></label>`;
-            
-            let origTeam = teamData.filter(m => !m.isNew);
-            let addedTeam = teamData.filter(m => m.isNew);
-
-            origTeam.forEach(m => {
-                let mSearchStr = String(m.name + " " + m.iqamaText + " " + m.device).toLowerCase();
-                let devHtml = m.device && m.device !== 'None' && m.device.trim() !== '' ? `<br><span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;font-weight:bold;">${m.device}</span>` : '';
-                attHtml += `<label class="team-member-scan-row" data-search="${mSearchStr}" style="display:flex; align-items:center; justify-content:space-between; color:white; background:rgba(255,255,255,0.08); padding:12px; border-radius:8px; cursor:pointer; border: 1px solid rgba(255,255,255,0.05);"><div style="display:flex; align-items:center; gap:10px;"><img src="${m.iqama}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"><img src="${m.selfie}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"> <div><span style="font-size:13px;font-weight:600;">${m.name}</span><br><span style="font-size:10px;color:rgba(255,255,255,0.6);">ID: ${m.iqamaText}</span>${devHtml}</div></div><input type="checkbox" class="att-chk" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)"></label>`;
-            });
-
-            if (addedTeam.length > 0) {
-                attHtml += `<div style="margin-top:10px; margin-bottom:5px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:5px;"><strong style="color:var(--success); text-transform:uppercase;">${t('new_members_added')}</strong></div>`;
-                addedTeam.forEach(m => {
-                    let mSearchStr = String(m.name + " " + m.iqamaText + " " + m.device).toLowerCase();
-                    let devHtml = m.device && m.device !== 'None' && m.device.trim() !== '' ? `<br><span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;font-weight:bold;">${m.device}</span>` : '';
-                    let newBadge = `<span style="background:var(--success); color:white; font-size:10px; padding:2px 5px; border-radius:4px; margin-left:5px; font-weight:bold;">${t('new_badge')}</span>`;
-                    
-                    attHtml += `<label class="team-member-scan-row" data-search="${mSearchStr}" style="display:flex; align-items:center; justify-content:space-between; color:white; background:rgba(255,255,255,0.08); padding:12px; border-radius:8px; cursor:pointer; border: 1px solid rgba(255,255,255,0.05);"><div style="display:flex; align-items:center; gap:10px;"><img src="${m.iqama}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"><img src="${m.selfie}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"> <div><span style="font-size:13px;font-weight:600;">${m.name}${newBadge}</span><br><span style="font-size:10px;color:rgba(255,255,255,0.6);">ID: ${m.iqamaText}</span>${devHtml}</div></div><input type="checkbox" class="att-chk" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)"></label>`;
-                });
-            }
-
-            attHtml += `</div></div>`;
-            teamSec.innerHTML = attHtml;
-        }
-
-        if(detailsPrev){
-            let cardsHtml = '';
-            
-            let safeImei = data.ImeiNumber ? String(data.ImeiNumber).trim() : '';
-            let hasLeadDevice = safeImei && safeImei !== 'None' && safeImei !== '';
-            
-            if (hasLeadDevice) {
-                let leadSearchStr = String(data.VisitorName + " " + safeImei + " lead " + data.UniqueID).toLowerCase();
-                cardsHtml += `<div class="device-photo-card" data-search="${leadSearchStr}" style="margin-bottom:15px; text-align:left; padding:10px; background:rgba(255,255,255,0.05); border-radius:6px; border:1px solid rgba(255,255,255,0.1);">`;
-                cardsHtml += `<strong style="display:block; color:white; margin-bottom:8px;">${t('lead')} (${data.VisitorName}) - ${t('device_label')}: <span style="color:var(--noon-yellow)">${safeImei}</span></strong>`;
-                cardsHtml += `<div style="display:flex; gap:10px; flex-wrap:wrap;">`;
-                if(data.IqamaURL && data.IqamaURL !== 'No File') cardsHtml += `<div><strong style="font-size:10px; display:block; color:rgba(255,255,255,0.7); margin-bottom:4px;">${t('iqama_id')}</strong><img src="${data.IqamaURL}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; cursor:zoom-in; border:2px solid rgba(255,255,255,0.2);" onclick="openFullscreenImage(this.src)"></div>`;
-                if(data.SelfieURL && data.SelfieURL !== 'No File') cardsHtml += `<div><strong style="font-size:10px; display:block; color:rgba(255,255,255,0.7); margin-bottom:4px;">${t('selfie')}</strong><img src="${data.SelfieURL}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; cursor:zoom-in; border:2px solid rgba(255,255,255,0.2);" onclick="openFullscreenImage(this.src)"></div>`;
-                if(data.ImeiPhotoURL && data.ImeiPhotoURL !== 'No File') cardsHtml += `<div><strong style="font-size:10px; display:block; color:rgba(255,255,255,0.7); margin-bottom:4px;">${t('device_screen')}</strong><img src="${data.ImeiPhotoURL}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; cursor:zoom-in; border:2px solid rgba(255,255,255,0.2);" onclick="openFullscreenImage(this.src)"></div>`;
-                if(data.VehiclePlateNo && (data.VehiclePlateNo.startsWith('http')||data.VehiclePlateNo.startsWith('data:image'))) cardsHtml += `<div><strong style="font-size:10px; display:block; color:rgba(255,255,255,0.7); margin-bottom:4px;">${t('vehicle')}</strong><img src="${data.VehiclePlateNo}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; cursor:zoom-in; border:2px solid rgba(255,255,255,0.2);" onclick="openFullscreenImage(this.src)"></div>`;
-                cardsHtml += `</div></div>`;
-            }
-
-            teamData.forEach(m => {
-                let mDevStr = m.device && m.device !== 'None' && m.device.trim() !== '' ? m.device : 'None';
-                if (mDevStr !== 'None') {
-                    let mSearchStr = String(m.name + " " + m.iqamaText + " " + m.device).toLowerCase();
-                    cardsHtml += `<div class="device-photo-card" data-search="${mSearchStr}" style="margin-bottom:15px; text-align:left; padding:10px; background:rgba(255,255,255,0.05); border-radius:6px; border:1px solid rgba(255,255,255,0.1);">`;
-                    cardsHtml += `<strong style="display:block; color:white; margin-bottom:8px;">${m.name} ${m.isNew ? `<span style="color:var(--success)">[${t('new_badge')}]</span>` : ''} - ${t('device_label')}: <span style="color:var(--noon-yellow)">${mDevStr}</span></strong>`;
-                    cardsHtml += `<div style="display:flex; gap:10px; flex-wrap:wrap;">`;
-                    if(m.iqama && m.iqama !== 'No File') cardsHtml += `<div><strong style="font-size:10px; display:block; color:rgba(255,255,255,0.7); margin-bottom:4px;">${t('iqama_id')}</strong><img src="${m.iqama}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; cursor:zoom-in; border:2px solid rgba(255,255,255,0.2);" onclick="openFullscreenImage(this.src)"></div>`;
-                    if(m.selfie && m.selfie !== 'No File') cardsHtml += `<div><strong style="font-size:10px; display:block; color:rgba(255,255,255,0.7); margin-bottom:4px;">${t('selfie')}</strong><img src="${m.selfie}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; cursor:zoom-in; border:2px solid rgba(255,255,255,0.2);" onclick="openFullscreenImage(this.src)"></div>`;
-                    if(m.devicePhoto && m.devicePhoto !== 'No File') cardsHtml += `<div><strong style="font-size:10px; display:block; color:rgba(255,255,255,0.7); margin-bottom:4px;">${t('device_screen')}</strong><img src="${m.devicePhoto}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; cursor:zoom-in; border:2px solid rgba(255,255,255,0.2);" onclick="openFullscreenImage(this.src)"></div>`;
-                    cardsHtml += `</div></div>`;
-                }
-            });
-
-            if (cardsHtml !== '') {
-                let previewHtml = `<div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; font-size: 13px; font-weight: normal; margin-bottom: 15px; margin-top:20px;">`;
-                previewHtml += `<div style="margin-bottom:8px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px;"><strong style="color:var(--noon-yellow); text-transform:uppercase;">${t('device_photos_all')}</strong></div>`;
-                previewHtml += cardsHtml;
-                previewHtml += `</div>`;
-                detailsPrev.innerHTML = previewHtml;
-                detailsPrev.classList.remove('hidden');
-            } else {
-                detailsPrev.innerHTML = "";
-                detailsPrev.classList.add('hidden');
-            }
-        }
-
-        const hcSec = document.getElementById('guard-headcount-section');
-        if(hcSec) hcSec.classList.add('hidden');
-        if(selfieImg) selfieImg.style.display='none';
-        
-        let addedTeam = teamData.filter(m => m.isNew);
-        if(addedTeam.length > 0 && allowAction) {
-            setTimeout(() => {
-                alert(t('notice_new_people'));
-            }, 300);
-        }
-    }
-
-    const hcSec = document.getElementById('guard-headcount-section');
-    if (allowAction) {
-        if(hcSec) hcSec.classList.add('hidden'); 
-        if(confirmBtn) {
-            confirmBtn.classList.remove('hidden');
-            if (isInside) {
-                confirmBtn.innerText = t("btn_checkout");
-                confirmBtn.className = "btn-primary btn-warning";
-                confirmBtn.style.color = "#000";
-            } else {
-                confirmBtn.innerText = t("confirm_action");
-                confirmBtn.className = "btn-primary btn-success";
-                confirmBtn.style.color = "#fff";
-            }
-        }
-    } else {
-        if(confirmBtn) confirmBtn.classList.add('hidden');
-        if(hcSec) hcSec.classList.add('hidden');
-    }
-
-    showScanResult(scanState, scanMsg, scanColor, isFullscreen);
-}
-
-async function confirmAction(){
-    const btn=document.getElementById('btn-confirm-action');
-    let hcVal=1;
-    const teamSec = document.getElementById('guard-team-section');
-    if(teamSec && !teamSec.classList.contains('hidden')) {
-        const chks = document.querySelectorAll('.att-chk');
-        if(chks.length > 0) {
-            hcVal = document.querySelectorAll('.att-chk:checked').length;
-            if(hcVal === 0) return alert("Please select at least one person.");
-        } else {
-            const hcInput = document.getElementById('guard-headcount');
-            if(hcInput && !hcInput.parentElement.classList.contains('hidden')){
-                hcVal = hcInput.value;
-                if(!hcVal||hcVal<1) return alert("Please enter the number of workers present.");
-            }
-        }
-    }
-    
-    btn.innerText="SAVING & REFRESHING...";
-    btn.disabled=true;
-
-    const gInfo = `${currentUser.name} (${currentUser.location})`;
-    const payload = JSON.stringify({ action: currentScanAction, id: currentScannedID, guardInfo: gInfo, headCount: hcVal });
-    
-    try {
-        const res = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: payload
-        });
-        if(res.ok) {
-            window.location.reload();
-        } else {
-            alert("Sync failed. Please try again.");
-            btn.innerText = t("confirm_action");
-            btn.disabled = false;
-            isProcessingScan = false;
-        }
-    } catch(e) {
-        alert("Network error. Please try again.");
-        btn.innerText = t("confirm_action");
-        btn.disabled = false;
-        isProcessingScan = false;
-    }
-}
-</script>
-</body>
-</html>
+            if (document.getElementById('r-decisionI encountered an error doing what you asked. Could you try again?
