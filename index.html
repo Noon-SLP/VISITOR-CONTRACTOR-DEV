@@ -38,6 +38,8 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
 <div id="pin-verify-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 350px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">Security PIN Required</h3><button onclick="closePinVerify()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; display: flex; flex-direction: column; gap: 15px; text-align:center;"><p style="color:var(--text-muted); font-size:13px;">Please enter your 4-digit PIN to unlock and view your passes.</p><input type="password" id="verify-pin-input" class="input-field" placeholder="****" maxlength="4" style="text-align:center; font-size:24px; letter-spacing:10px;" oninput="this.value=this.value.replace(/[^0-9]/g,'')"><p id="pin-error-msg" class="hidden" style="color:var(--danger); font-size:12px; margin:0;">Incorrect PIN.</p><button class="btn-primary" onclick="confirmPinVerify()">UNLOCK</button></div></div></div>
 <div id="add-more-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 500px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;" data-i18n="add_more_people">➕ Add More People</h3><button onclick="closeAddMoreModal()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; display: flex; flex-direction: column; gap: 15px;"><p style="color:var(--danger); font-size:12px; font-weight:bold; margin-bottom:5px;" data-i18n="add_more_warning">⚠️ WARNING: Submitting this will change the pass status back to PENDING. It cannot be used until the Admin approves it again.</p><div id="add-team-roster-display" class="team-roster hidden"></div><div id="add-team-entry-box" style="border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; background: rgba(255,255,255,0.02);"><div class="input-group" style="margin-bottom: 15px;"><input type="text" id="req-add-team-name" class="input-field" data-i18n="full_name_ph" placeholder="Full Name"></div><div class="input-group" style="margin-bottom: 15px;"><input type="text" id="req-add-team-iqamatext" class="input-field" data-i18n="iqama_id_ph" placeholder="Iqama / ID Number"></div><div class="input-group" style="margin-bottom: 15px;"><label style="font-size: 11px; color:var(--noon-yellow);" data-i18n="device_type_label">Device Type</label><select id="req-add-team-device-type" class="input-field" onchange="toggleAddTeamDeviceInput()"><option value="None" data-i18n="no_device">No Device</option><option value="Mobile">Mobile</option><option value="Laptop">Laptop</option></select></div><div class="input-group hidden" id="req-add-team-device-id-group" style="margin-bottom: 15px;"><input type="text" id="req-add-team-device-id" class="input-field" placeholder="IMEI / Serial Number"><label style="font-size: 11px; margin-top:10px;" data-i18n="upload_device_photo">Upload Device Photo/Screen</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_imeiphoto')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-add-team-imeiphoto" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_imeiphoto')"></div><img id="preview-add_team_imeiphoto" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div><div class="input-group"><label style="font-size: 11px;" data-i18n="upload_iqama">Upload Iqama/ID Copy</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_iqama')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-add-team-iqama" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_iqama')"></div><img id="preview-add_team_iqama" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div><div class="input-group" style="margin-bottom: 15px;"><label style="font-size: 11px;" data-i18n="upload_selfie">Upload Selfie Photo</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_selfie')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-add-team-selfie" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_selfie')"></div><img id="preview-add_team_selfie" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div><button type="button" class="btn-primary btn-success" style="font-size: 12px;" onclick="saveAddTeamMember()" data-i18n="save_person_list">✅ SAVE PERSON TO LIST</button></div><button id="btn-submit-add-more" class="btn-primary" onclick="submitAddMorePeople()" data-i18n="submit_send_approval">SUBMIT & SEND FOR APPROVAL</button></div></div></div>
 
+<div id="admin-gate-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 400px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">🚪 GATE ACTION</h3><button onclick="closeAdminGateModal()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; display: flex; flex-direction: column; gap: 15px; text-align: center;"><p style="color:var(--text-muted); font-size:13px; margin-bottom:10px;">Select an action for pass <strong id="admin-gate-id-display" style="color:white;"></strong></p><input type="hidden" id="admin-gate-id"><button class="btn-primary btn-success" style="font-size: 14px; padding: 14px;" onclick="submitAdminGateAction('check_in')">✅ CHECK IN</button><button class="btn-primary btn-warning" style="font-size: 14px; padding: 14px; color:#000;" onclick="submitAdminGateAction('check_out')">🚪 CHECK OUT</button></div></div></div>
+
 <div id="login-view"><div class="login-top-controls"><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 16px;" onclick="hardRefreshApp()" title="Hard Refresh Cache">🔄</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 16px;" onclick="toggleFullScreen()" title="Fullscreen">⛶</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 12px;" onclick="toggleLang()">عربي / EN</button></div><div class="login-container"><div class="logo-box"></div><div style="text-align:center;margin-bottom:25px;"><h2 style="color:var(--noon-yellow);font-size:24px;margin-bottom:6px;letter-spacing:1px;">NOON SLP</h2><p style="color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="visitor_contractor_portal">Visitor & Contractor Portal</p></div>
 <div class="role-tabs" id="role-tabs" style="display:none;"><div class="role-tab active" id="tab-guard" onclick="switchLoginTab('guard')" data-i18n="guard">🛡️ Guard</div><div class="role-tab" id="tab-admin" onclick="switchLoginTab('admin')" data-i18n="admin">⚙️ Admin</div></div>
 <div id="login-guard" class="hidden"><div class="input-group"><input type="text" id="lg-name" class="input-field t-ph" data-i18n="name" placeholder="Name"></div><div class="input-group"><input type="text" id="lg-id" class="input-field t-ph" data-i18n="noon_id" placeholder="Noon ID"></div><div class="input-group"><select id="lg-location" class="input-field"><option value="" data-i18n="select_guard_loc">Select Guard Location...</option><option value="RUH01">RUH01</option><option value="JED01">JED01</option></select></div><button class="btn-primary" onclick="login('guard')" data-i18n="login_gate">LOGIN TO GATE</button></div><div id="login-ops"><div class="input-group"><input type="text" id="lo-name" class="input-field t-ph" data-i18n="your_full_name" placeholder="Your Full Name"></div><div class="input-group"><input type="email" id="lo-mail" class="input-field t-ph" data-i18n="your_email" placeholder="Your Gmail / Email"></div><button class="btn-primary" onclick="login('ops')" data-i18n="login_portal">LOGIN TO PORTAL</button></div>
@@ -987,7 +989,7 @@ function renderAdminData(data){
                 }else if(rStatus==='Approved'){
                     const isChecked=checkedPrintIds.has(row.UniqueID)?'checked':'';
                     let cbHtml=`<input type="checkbox" class="print-checkbox row-checkbox" value="${row.UniqueID}" data-name="${rVisitorName}" data-type="${rType}" data-location="${rLocation}" data-status="${rStatus}" data-date="${dateStr}" ${isChecked} onchange="handlePrintCheckbox(this)">`;
-                    let actionBtns=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;"><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="printQR('${rVisitorName}','${rType}','${rLocation}','${row.UniqueID}','${rStatus}','${dateStr}')">${t('btn_print')}</button><button class="btn-primary btn-warning btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;color:#000;" onclick="adminLogCheckOut('${row.UniqueID}')">🚪 LOG CHECK-OUT</button><button class="btn-primary btn-danger btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="adminRevokePass('${row.UniqueID}')">🚫 REVOKE PASS</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button></div>`;
+                    let actionBtns=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;"><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="printQR('${rVisitorName}','${rType}','${rLocation}','${row.UniqueID}','${rStatus}','${dateStr}')">${t('btn_print')}</button><button class="btn-primary btn-warning btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;color:#000;" onclick="openAdminGateModal('${row.UniqueID}')">🚪 GATE ACTION</button><button class="btn-primary btn-danger btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="adminRevokePass('${row.UniqueID}')">🚫 REVOKE PASS</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button></div>`;
                     hActive+=`<tr ${rowStyle}><td>${cbHtml}</td><td style="color:var(--text-muted);">${finalDateStr}</td><td><strong>${rVisitorName}</strong><br><span style="font-size:10px;color:var(--text-muted);">Email: ${rHostEmail}</span></td><td>${t(rType.toLowerCase())}</td><td>${rLocation}</td><td>${actionBtns}</td></tr>`;
                     activeCount++;
                 }
@@ -1076,21 +1078,51 @@ async function updateStatus(id,newStatus){
     }catch(e){}finally { startAutoRefresh(currentUser.role); }
 }
 
-async function adminLogCheckOut(id){
-    if(autoRefreshTimer) clearInterval(autoRefreshTimer);
-    if(!confirm(`Log check-out for pass ${id} without ending its overall validity?`)){ startAutoRefresh(currentUser.role); return; }
-    if(Array.isArray(globalAdminData)){
-        let item = globalAdminData.find(x => String(x.UniqueID) === String(id));
-        if(item) {
-            item.CheckOutTime = new Date().toISOString(); localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData)); renderAdminData(globalAdminData);
+function openAdminGateModal(id){
+    const gi = document.getElementById('admin-gate-id'), gd = document.getElementById('admin-gate-id-display'), gm = document.getElementById('admin-gate-modal');
+    if(gi) gi.value = id;
+    if(gd) gd.innerText = id;
+    if(gm) gm.classList.remove('hidden');
+}
+
+function closeAdminGateModal(){
+    const gm = document.getElementById('admin-gate-modal');
+    if(gm) gm.classList.add('hidden');
+}
+
+async function submitAdminGateAction(actionType) {
+    const id = document.getElementById('admin-gate-id').value;
+    if(!id) return;
+    
+    let item = globalAdminData.find(x => String(x.UniqueID) === String(id));
+    if(item) {
+        const isInside = !!item.CheckInTime && !item.CheckOutTime;
+        const isOutside = !item.CheckInTime || (!!item.CheckInTime && !!item.CheckOutTime);
+        const actor = item.ScannedByGuard || 'Unknown';
+        
+        if (actionType === 'check_in' && isInside) {
+            return alert("This pass is already checked IN by:\n" + actor);
+        }
+        if (actionType === 'check_out' && isOutside) {
+            return alert("This pass is already checked OUT by:\n" + actor);
         }
     }
+    
+    if(!confirm(`Proceed to ${actionType === 'check_in' ? 'Check In' : 'Check Out'} pass ${id}?`)) return;
+    
+    if(autoRefreshTimer) clearInterval(autoRefreshTimer);
     try{
         const adminInfo=`Admin: ${currentUser.name} (${currentUser.email})`;
-        const res=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'check_out',id:id,guardInfo:adminInfo,headCount:1})});
+        const res=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:actionType,id:id,guardInfo:adminInfo,headCount:1})});
         if(!res.ok)throw new Error("HTTP error");
-        localStorage.removeItem('cached_admin_data'); setTimeout(()=>{loadAdminData(true)},1000);
-    }catch(e){}finally{ startAutoRefresh(currentUser.role); }
+        localStorage.removeItem('cached_admin_data'); 
+        closeAdminGateModal();
+        setTimeout(()=>{loadAdminData(true)},1000);
+    }catch(e){
+        alert("Action failed.");
+    }finally{ 
+        startAutoRefresh(currentUser.role); 
+    }
 }
 
 async function adminRevokePass(id){
@@ -1355,7 +1387,15 @@ async function onScanSuccess(decodedText){
     let isFullscreen = (dType === 'Contractor' || dType === 'Visitor');
 
     if(allowAction) {
-        if(isInside) { currentScanAction = 'check_out'; scanState = t("check_out"); scanMsg = t("scanning_out"); scanColor = "bg-blue"; } 
+        if(isInside) { 
+            currentScanAction = 'check_out'; 
+            scanState = t("check_out"); 
+            scanMsg = t("scanning_out"); 
+            scanColor = "bg-blue"; 
+            if (data.ScannedByGuard && String(data.ScannedByGuard).toLowerCase().includes('admin')) {
+                scanMsg = `Checked in by: <span style="color:var(--noon-yellow); font-weight:bold;">${data.ScannedByGuard}</span><br><span style="font-size:14px; font-weight:normal;">Do you want to check out?</span>`;
+            }
+        } 
         else { currentScanAction = 'check_in'; }
     }
 
@@ -1393,7 +1433,6 @@ async function onScanSuccess(decodedText){
         if(teamSec) {
             teamSec.classList.remove('hidden');
             let attHtml = `<div style="text-align: left; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);"><label style="display:flex; align-items:center; gap:10px; color:var(--noon-yellow); font-weight:bold; margin-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px; cursor:pointer;"><input type="checkbox" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)" onchange="document.querySelectorAll('.att-chk').forEach(c=>c.checked=this.checked)"> ${t('select_all_members')}</label><div id="team-members-list-container" style="display:flex; flex-direction:column; gap:12px;">`;
-            
             let safeImei = data.ImeiNumber ? String(data.ImeiNumber).trim() : '';
             let leadDevStr = safeImei && safeImei !== 'None' && safeImei !== '' ? `<br><span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;font-weight:bold;">${safeImei}</span>` : '';
             let leadSearchStr = String(data.VisitorName + " " + safeImei + " lead " + data.UniqueID).toLowerCase();
