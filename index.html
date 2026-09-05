@@ -202,7 +202,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
     <div id="dashboard-admin" class="dashboard hidden" style="padding-top: 0;">
       <header class="admin-header-top" style="margin: 0 -2.5vw 20px -2.5vw;">
         <div class="admin-brand-horizontal"><h1 data-i18n="system_admin">System Administration</h1></div>
-        <div class="admin-user-info header-controls"><span style="font-size: 12px; color: var(--text-muted); margin-inline-end: 10px;" id="header-admin-name">Admin Session</span><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 16px;" onclick="hardRefreshApp()" title="Hard Refresh Cache">🔄</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 16px;" onclick="toggleFullScreen()" title="Fullscreen">⛶</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 12px;" onclick="toggleLang()">عربي / EN</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 16px; font-size: 12px;" onclick="logout()" data-i18n="logout">LOGOUT</button></div>
+        <div class="admin-user-info header-controls"><span style="font-size: 12px; color: var(--text-muted); margin-inline-end: 10px;" id="header-admin-name">Admin Session</span><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 16px;" onclick="hardRefreshApp()" title="Hard Refresh Cache">🔄</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 16px; font-size: 16px;" onclick="toggleFullScreen()" title="Fullscreen">⛶</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 12px;" onclick="toggleLang()">عربي / EN</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 16px; font-size: 12px;" onclick="logout()" data-i18n="logout">LOGOUT</button></div>
       </header>
       <ul class="admin-nav-horizontal"><li id="nav-approvals" class="active" onclick="switchAdminTab('approvals')" data-i18n="access_approvals">📋 Access Approvals</li><li id="nav-history" onclick="switchAdminTab('history')" data-i18n="history">🕰️ History</li><li id="nav-guard-approvals" onclick="switchAdminTab('guard-approvals')" data-i18n="guard_approvals">🛡️ Guard Approvals</li><li id="nav-analytics" onclick="switchAdminTab('analytics')" data-i18n="analytics">📊 Analytics</li></ul>
       <div class="admin-filter-bar" id="admin-global-filter"><div style="display: flex; gap: 5px;"><button class="btn-filter active" onclick="setAdminFilter('all', this)" data-i18n="all_time">All Time</button><button class="btn-filter" onclick="setAdminFilter('today', this)" data-i18n="today">Today</button><button class="btn-filter" onclick="setAdminFilter('weekly', this)" data-i18n="weekly">Weekly</button><button class="btn-filter" onclick="setAdminFilter('monthly', this)" data-i18n="monthly">Monthly</button><button class="btn-filter" onclick="setAdminFilter('6months', this)" data-i18n="6months">6 Months</button><button class="btn-filter" onclick="setAdminFilter('year', this)" data-i18n="1year">1 Year</button><button class="btn-filter" onclick="setAdminFilter('custom', this)" data-i18n="custom">Custom</button></div><div id="custom-date-picker" class="hidden" style="display: flex; align-items: center; gap: 10px;"><input type="date" id="filter-start" class="input-field" style="padding: 8px; width: 140px; font-size: 12px;"><span style="color: var(--text-muted); font-size: 12px;" data-i18n="to">TO</span><input type="date" id="filter-end" class="input-field" style="padding: 8px; width: 140px; font-size: 12px;"><button class="btn-primary" style="width: auto; padding: 8px 16px; font-size: 12px;" onclick="renderAdminData(globalAdminData)" data-i18n="apply">APPLY</button></div></div>
@@ -247,8 +247,11 @@ async function confirmPinCreate() {
     if(currentUser.role === 'admin') { const ei = document.getElementById('req-admin-email'); if(ei && ei.value) email = ei.value.toLowerCase().trim(); }
     localStorage.setItem('user_pin_' + email, pin);
     document.getElementById('pin-create-modal').classList.add('hidden');
+    
+    fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'update_pin', email: email, pin: pin }) }).catch(e=>{});
+    
     if (pinCreateMode === 'reset') {
-        try { await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'update_pin', email: email, pin: pin }) }); } catch(e) {}
+        setTimeout(() => loadMyPasses(true, true), 1000);
         renderMyPasses(lockedPassesData);
     } else submitRequest();
 }
@@ -270,13 +273,6 @@ function processAndRenderPasses(data, email, isSilent) {
         });
     }
 
-    if(!hasActive){
-        localStorage.removeItem('user_pin_' + email);
-        userSecurityPin = null;
-        renderMyPasses(data);
-        return;
-    }
-
     let backendPin = null;
     if(Array.isArray(data)){
         for(let i=data.length-1; i>=0; i--){
@@ -286,26 +282,47 @@ function processAndRenderPasses(data, email, isSilent) {
     
     let localPin = localStorage.getItem('user_pin_' + email);
 
+    if(!hasActive && data.length > 0){
+        localStorage.removeItem('user_pin_' + email);
+        userSecurityPin = null;
+        if (backendPin) {
+            fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'reset_pin', email: email }) }).catch(e=>{});
+        }
+        renderMyPasses(data);
+        return;
+    }
+
+    if (!hasActive && data.length === 0) {
+        renderMyPasses(data);
+        return;
+    }
+
+    if (!backendPin && localPin) {
+        backendPin = localPin;
+        fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'update_pin', email: email, pin: localPin }) }).catch(e=>{});
+    }
+
     if(backendPin && backendPin !== localPin){
         lockedPassesData = data; const verifyModal = document.getElementById('pin-verify-modal');
-        if(!isSilent || !verifyModal.classList.contains('hidden')){
-            if(verifyModal.classList.contains('hidden')){
-                verifyModal.classList.remove('hidden'); document.getElementById('pin-error-msg').classList.add('hidden'); document.getElementById('verify-pin-input').value = '';
-            }
+        if(!isSilent && verifyModal){
+            verifyModal.classList.remove('hidden'); document.getElementById('pin-error-msg').classList.add('hidden'); document.getElementById('verify-pin-input').value = '';
         }
         const listDiv = document.getElementById('my-passes-list');
         if(listDiv) listDiv.innerHTML = '<p style="color:var(--text-muted);font-size:13px;margin-top:20px;text-align:center;">Passes locked. <button class="btn-primary btn-sm" style="width:auto;padding:4px 10px;margin-left:10px;" onclick="loadMyPasses(true,false)">UNLOCK</button></p>';
         return; 
-    } else if(backendPin && backendPin === localPin) { userSecurityPin = backendPin; } 
-    else if(!backendPin && Array.isArray(data) && data.length > 0) {
+    }
+    
+    if(!backendPin && !localPin && Array.isArray(data) && data.length > 0) {
         lockedPassesData = data; const createModal = document.getElementById('pin-create-modal');
-        if(!isSilent || !createModal.classList.contains('hidden')){
-            if(createModal.classList.contains('hidden')){ pinCreateMode = 'reset'; createModal.classList.remove('hidden'); document.getElementById('new-pin-input').value = ''; }
+        if(!isSilent && createModal){
+            pinCreateMode = 'reset'; createModal.classList.remove('hidden'); document.getElementById('new-pin-input').value = '';
         }
         const listDiv = document.getElementById('my-passes-list');
         if(listDiv) listDiv.innerHTML = '<p style="color:var(--text-muted);font-size:13px;margin-top:20px;text-align:center;">Passes locked. Awaiting new PIN.</p>';
         return;
     }
+
+    userSecurityPin = backendPin || localPin;
     renderMyPasses(data);
 }
 
@@ -508,11 +525,13 @@ function renderTeamRoster(){
         div.classList.remove('hidden');let h='';
         teamList.forEach((m,idx)=>{
             let devHtml = m.deviceType !== 'None' ? `<span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">${m.deviceType}</span>` : '';
+            
             let imgsHtml = `<img src="${m.iqama}" class="team-member-img" onclick="openFullscreenImage(this.src)" title="Iqama"><img src="${m.selfie}" class="team-member-img" onclick="openFullscreenImage(this.src)" title="Selfie">`;
             if (m.rawDevicePhoto && m.rawDevicePhoto !== 'No File') {
                 let devPhotoUri = "data:image/jpeg;base64," + m.rawDevicePhoto;
                 imgsHtml += `<img src="${devPhotoUri}" class="team-member-img" onclick="openFullscreenImage(this.src)" title="Device Screen">`;
             }
+
             h+=`<div class="team-member-row"><span style="color:white;font-size:13px;font-weight:bold;">${m.name} <span style="font-size:11px;color:var(--text-muted);">(ID: ${m.iqamaText})</span>${devHtml}</span><div style="display:flex;gap:10px;">${imgsHtml}<button type="button" style="background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:16px;" onclick="removeTeamMember(${idx})">❌</button></div></div>`;
         });
         div.innerHTML=h;
@@ -1078,15 +1097,17 @@ async function adminCheckOut(id){
 function openExtendPass(id,type){
     const ei=document.getElementById('extend-id'),et=document.getElementById('extend-type'),eg=document.getElementById('extend-end-group'),em=document.getElementById('extend-pass-modal');
     if(ei)ei.value=id;if(et)et.value=type;
-    if(eg){if(type==='Visitor')eg.classList.add('hidden');else eg.classList.remove('hidden')}
+    if(eg)eg.classList.remove('hidden');
     if(em)em.classList.remove('hidden');
 }
 
 function closeExtendPass(){const em=document.getElementById('extend-pass-modal');if(em)em.classList.add('hidden')}
 
 async function submitExtendPass(){
-    const id=document.getElementById('extend-id').value,type=document.getElementById('extend-type').value,ns=document.getElementById('extend-start').value,ei=document.getElementById('extend-end'),ne=type==='Visitor'?ns:(ei?ei.value:ns),btn=document.getElementById('btn-submit-extend');
-    if(!ns||(type==='Contractor'&&!ne))return alert('Please select dates.');
+    const id=document.getElementById('extend-id').value,type=document.getElementById('extend-type').value,ns=document.getElementById('extend-start').value,ei=document.getElementById('extend-end');
+    const ne=ei?ei.value:'';
+    const btn=document.getElementById('btn-submit-extend');
+    if(!ns||!ne)return alert('Please select both Start and End dates.');
     if(!confirm(`Extend pass ${id}?`))return;
     btn.innerText='SAVING...';btn.disabled=true;
     try{
@@ -1110,8 +1131,10 @@ function openViewRecord(id){
     let rType = String(r.Type || ''); let displayHostName = (r.HostName || '-').split('||PIN:')[0]; let actualPin = (r.HostName || '').includes('||PIN:') ? (r.HostName || '').split('||PIN:')[1] : null;
     let h=`<div><strong>${t('lbl_host_name')}</strong>${displayHostName}</div>`;
     
-    if (currentUser && currentUser.role === 'admin' && actualPin) {
-        h += `<div style="margin-bottom:10px;"><strong>ACCOUNT PIN</strong><div style="display:flex; gap:10px; align-items:center; margin-top:5px;"><span id="admin-view-pin" style="color:var(--danger); font-weight:bold; font-size:16px; letter-spacing: 2px; background:rgba(0,0,0,0.3); padding:4px 10px; border-radius:4px;">****</span><button onclick="document.getElementById('admin-view-pin').innerText='${actualPin}'; this.style.display='none';" class="btn-primary btn-outline btn-sm" style="width:auto; padding:4px 10px; font-size:11px;">👁️ SHOW</button><button onclick="adminResetPin('${r.HostEmail}')" class="btn-primary btn-danger btn-sm" style="width:auto; padding:4px 10px; font-size:11px;">🔄 RESET</button></div></div>`;
+    if (currentUser && currentUser.role === 'admin') {
+        let pinDisplay = actualPin ? actualPin : 'NOT SET';
+        let actionBtn = actualPin ? `<button onclick="adminResetPin('${r.HostEmail}')" class="btn-primary btn-danger btn-sm" style="width:auto; padding:4px 10px; font-size:11px;">🔄 RESET</button>` : '';
+        h += `<div style="margin-bottom:10px;"><strong>ACCOUNT PIN</strong><div style="display:flex; gap:10px; align-items:center; margin-top:5px;"><span id="admin-view-pin" style="color:${actualPin?'var(--danger)':'var(--text-muted)'}; font-weight:bold; font-size:16px; letter-spacing: 2px; background:rgba(0,0,0,0.3); padding:4px 10px; border-radius:4px;">****</span><button onclick="document.getElementById('admin-view-pin').innerText='${pinDisplay}'; this.style.display='none';" class="btn-primary btn-outline btn-sm" style="width:auto; padding:4px 10px; font-size:11px;">👁️ SHOW</button>${actionBtn}</div></div>`;
     }
     
     h+=`<div><strong>${t('lbl_host_email')}</strong>${r.HostEmail||'-'}</div><div><strong>${t('visitor_name')}</strong>${r.VisitorName||'-'}</div><div><strong>${t('type_header')}</strong>${t(rType.toLowerCase())||'-'}</div><div><strong>${t('location_label')}</strong>${r.Location||'-'}</div><div><strong>${t('lbl_validity')}</strong>${rType==='Visitor'?formatToDDMMYYYY(r.StartDate):formatToDDMMYYYY(r.StartDate)+' - '+formatToDDMMYYYY(r.EndDate||r.StartDate)}</div><div><strong>${t('slp_ticket')}</strong>${r.SlpTicketNo||'-'}</div><div><strong>${t('contact_no')}</strong>${r.ContactNo||'-'}</div><div><strong>IMEI NUMBER</strong>${r.ImeiNumber||'-'}</div>`;
