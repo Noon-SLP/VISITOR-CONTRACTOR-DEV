@@ -120,13 +120,31 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
               </div>
               <div class="input-group" style="margin-bottom: 15px;"><input type="text" id="req-team-name" class="input-field t-ph" data-i18n="full_name_ph" placeholder="Full Name"></div>
               <div class="input-group" style="margin-bottom: 15px;"><input type="text" id="req-team-iqamatext" class="input-field t-ph" data-i18n="iqama_id_ph" placeholder="Iqama / ID Number"></div>
-              <div class="input-group" style="margin-bottom: 15px;"><label style="font-size: 11px; color:var(--noon-yellow);" data-i18n="device_type_label">Device Type</label><select id="req-team-device-type" class="input-field" onchange="toggleTeamDeviceInput()"><option value="None" data-i18n="no_device">No Device</option><option value="Mobile">Mobile</option><option value="Laptop">Laptop</option></select></div>
-              <div class="input-group hidden" id="req-team-device-id-group" style="margin-bottom: 15px;"><input type="text" id="req-team-device-id" class="input-field" placeholder="IMEI / Serial Number"><label style="font-size: 11px; margin-top:10px;" data-i18n="upload_device_photo">Upload Device Photo/Screen</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('team_imeiphoto')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-team-imeiphoto" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('team_imeiphoto')"></div><img id="preview-team_imeiphoto" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div>
+              
+              <div class="input-group" style="margin-bottom: 15px;">
+                  <label style="font-size: 11px; color:var(--noon-yellow);" data-i18n="device_type_label">Device Type</label>
+                  <select id="req-team-device-type" class="input-field" onchange="toggleTeamDeviceInput()">
+                      <option value="None" data-i18n="no_device">No Device</option>
+                      <option value="Mobile">Mobile</option>
+                      <option value="Laptop">Laptop</option>
+                  </select>
+              </div>
+              <div class="input-group hidden" id="req-team-device-id-group" style="margin-bottom: 15px;">
+                  <input type="text" id="req-team-device-id" class="input-field" placeholder="IMEI / Serial Number">
+                  <label style="font-size: 11px; margin-top:10px;" data-i18n="upload_device_photo">Upload Device Photo/Screen</label>
+                  <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                      <button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('team_imeiphoto')" data-i18n="live_camera">📷 Live Camera</button>
+                      <input type="file" id="req-team-imeiphoto" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('team_imeiphoto')">
+                  </div>
+                  <img id="preview-team_imeiphoto" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)">
+              </div>
+
               <div class="input-group"><label style="font-size: 11px;" data-i18n="upload_iqama">Upload Iqama/ID Copy</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('team_iqama')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-team-iqama" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('team_iqama')"></div><img id="preview-team_iqama" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div>
               <div class="input-group" style="margin-bottom: 15px;"><label style="font-size: 11px;" data-i18n="upload_selfie">Upload Selfie Photo</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('team_selfie')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-team-selfie" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('team_selfie')"></div><img id="preview-team_selfie" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div>
               <button type="button" class="btn-primary btn-success" style="font-size: 12px;" onclick="saveCurrentTeamMember()" data-i18n="save_add_next">✅ SAVE & ADD NEXT</button>
             </div>
           </div>
+
           <button class="btn-primary" id="btn-submit-req" onclick="submitRequest()" style="margin-top: 15px;" data-i18n="submit_approval">Submit for Approval</button>
         </div>
         <div class="ops-card text-center">
@@ -142,6 +160,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
         <div class="header-controls"><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 16px;" onclick="hardRefreshApp()" title="Hard Refresh Cache">🔄</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 16px;" onclick="toggleFullScreen()" title="Fullscreen">⛶</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 12px;" onclick="toggleLang()">عربي / EN</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 16px; font-size: 12px;" onclick="logout()" data-i18n="logout">LOGOUT</button></div>
       </div>
       <div style="max-width: 450px; margin: 0 auto;">
+        
         <div id="admin-manual-search-box" class="hidden" style="background:var(--card-bg); padding:20px; border-radius:12px; border:1px solid var(--border-color); margin-bottom:20px;">
             <p style="color:var(--noon-yellow); font-weight:bold; margin-bottom:10px; font-size:13px; text-transform:uppercase;">Manual Pass Search</p>
             <div style="display:flex; gap:10px;">
@@ -150,15 +169,18 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
             </div>
             <div id="manual-search-results" style="margin-top:10px; text-align:left;"></div>
         </div>
+
         <div style="display:flex; gap:10px; margin-bottom: 20px;">
             <button class="btn-primary" id="btn-mode-camera" onclick="switchScanMode('camera')" style="font-size: 14px; padding: 14px; flex:1;" data-i18n="camera_scanner_btn">📷 CAMERA SCANNER</button>
             <button class="btn-primary btn-outline" id="btn-mode-gun" onclick="switchScanMode('gun')" style="font-size: 14px; padding: 14px; flex:1;" data-i18n="hardware_gun_btn">🔌 HARDWARE GUN</button>
         </div>
+
         <div id="gun-scanner-container" class="hidden" style="background:var(--card-bg); padding:25px; border-radius:12px; border:1px solid var(--border-color); margin-bottom:20px;">
             <p style="color:var(--noon-yellow); font-weight:bold; margin-bottom:10px; font-size:14px;" data-i18n="hw_scanner_ready">HARDWARE SCANNER READY</p>
             <p style="color:var(--text-muted); font-size:12px; margin-bottom:15px;" data-i18n="hw_scanner_inst">Point your handheld gun scanner at the QR code and trigger.</p>
             <input type="text" id="gun-scan-input" class="input-field t-ph" data-i18n="awaiting_scan" placeholder="Awaiting hardware scan..." style="font-size:16px; font-weight:bold; text-align:center; border-color:var(--noon-yellow);" onkeydown="handleGunScan(event)" autofocus>
         </div>
+
         <div id="camera-mode-wrapper" class="hidden">
             <button class="btn-primary mb-4" id="btn-start-scan" onclick="startScanner()" style="font-size: 16px; padding: 18px;" data-i18n="start_camera">START CAMERA SCANNER</button>
             <div id="reader-container" class="hidden">
@@ -169,20 +191,27 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
                 </div>
             </div>
         </div>
+
         <div id="scan-result" class="scan-result-card hidden" style="position:relative;"><button onclick="closeScanResult()" style="position:absolute;top:10px;right:15px;background:transparent;border:none;color:white;font-size:26px;cursor:pointer;z-index:10;">&times;</button>
           <h1 id="r-decision" style="font-size: 38px; margin-bottom: 10px; letter-spacing: 1px;">-</h1>
           <p id="r-reason" style="font-size: 16px; margin-bottom: 20px; font-weight: 500;"></p>
+          
           <div id="scan-result-top-info"></div>
+          
           <div id="guard-search-filter-container" class="hidden" style="margin-bottom:15px; text-align:left;">
               <input type="text" id="team-search-filter" class="input-field" placeholder="Search team by name or ID..." onkeyup="filterTeamMembers(this.value)" style="border-color: rgba(255,255,255,0.2); width:100%; background:rgba(0,0,0,0.5); color:white; font-size:15px; padding:16px;">
           </div>
+          
           <div id="guard-team-section" class="hidden" style="margin-bottom: 15px;"></div>
+          
           <div id="guard-details-preview" style="margin-bottom:15px; text-align:left;"></div>
+          
           <div id="guard-headcount-section" class="hidden" style="margin-top: 20px; text-align: left;"><div class="input-group" style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px;"><label style="color: white; font-weight: bold;">Number of Workers Present Today:</label><input type="number" id="guard-headcount" class="input-field" placeholder="E.g., 8" style="font-size: 18px; font-weight: bold; text-align: center;"></div></div>
           <button id="btn-confirm-action" class="btn-primary btn-success hidden" style="margin-top: 25px; padding: 16px; font-size: 16px;" onclick="confirmAction()" data-i18n="confirm_action">CONFIRM ACTION</button>
         </div>
       </div>
     </div>
+
     <div id="dashboard-admin" class="dashboard hidden" style="padding-top: 0;">
       <header class="admin-header-top" style="margin: 0 -2.5vw 20px -2.5vw;">
         <div class="admin-brand-horizontal"><h1 data-i18n="system_admin">System Administration</h1></div>
@@ -190,20 +219,24 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
       </header>
       <ul class="admin-nav-horizontal"><li id="nav-approvals" class="active" onclick="switchAdminTab('approvals')" data-i18n="access_approvals">📋 Access Approvals</li><li id="nav-history" onclick="switchAdminTab('history')" data-i18n="history">🕰️ History</li><li id="nav-guard-approvals" onclick="switchAdminTab('guard-approvals')" data-i18n="guard_approvals">🛡️ Guard Approvals</li><li id="nav-analytics" onclick="switchAdminTab('analytics')" data-i18n="analytics">📊 Analytics</li></ul>
       <div class="admin-filter-bar" id="admin-global-filter"><div style="display: flex; gap: 5px;"><button class="btn-filter active" onclick="setAdminFilter('all', this)" data-i18n="all_time">All Time</button><button class="btn-filter" onclick="setAdminFilter('today', this)" data-i18n="today">Today</button><button class="btn-filter" onclick="setAdminFilter('weekly', this)" data-i18n="weekly">Weekly</button><button class="btn-filter" onclick="setAdminFilter('monthly', this)" data-i18n="monthly">Monthly</button><button class="btn-filter" onclick="setAdminFilter('6months', this)" data-i18n="6months">6 Months</button><button class="btn-filter" onclick="setAdminFilter('year', this)" data-i18n="1year">1 Year</button><button class="btn-filter" onclick="setAdminFilter('custom', this)" data-i18n="custom">Custom</button></div><div id="custom-date-picker" class="hidden" style="display: flex; align-items: center; gap: 10px;"><input type="date" id="filter-start" class="input-field" style="padding: 8px; width: 140px; font-size: 12px;"><span style="color: var(--text-muted); font-size: 12px;" data-i18n="to">TO</span><input type="date" id="filter-end" class="input-field" style="padding: 8px; width: 140px; font-size: 12px;"><button class="btn-primary" style="width: auto; padding: 8px 16px; font-size: 12px;" onclick="renderAdminData(globalAdminData)" data-i18n="apply">APPLY</button></div></div>
+      
       <div id="admin-sec-approvals" class="admin-card admin-section">
         <div class="admin-card-title"><span data-i18n="pending_req">Pending Requests</span></div>
         <div style="overflow-x: auto;"><table><thead><tr><th data-i18n="val_period">Validity Period</th><th data-i18n="name_header">Name</th><th data-i18n="type_header">Type</th><th data-i18n="facility_header">Facility</th><th data-i18n="action">Action</th></tr></thead><tbody id="admin-table-pending"><tr><td colspan="5" class="text-center" style="padding: 30px;" data-i18n="loading">Loading requests...</td></tr></tbody></table></div>
         <div class="admin-card-title" style="margin-top: 15px; border-top: 1px solid var(--border-color);"><span data-i18n="active_req">Active Requests</span><button class="btn-primary" style="width: auto; padding: 6px 12px; font-size: 11px;" onclick="printSelected()" data-i18n="print_selected">🖨️ PRINT SELECTED</button></div>
         <div style="overflow-x: auto;"><table><thead><tr><th style="width: 30px;"><input type="checkbox" id="selectAllCheckbox" class="print-checkbox" onclick="toggleSelectAll(this)"></th><th data-i18n="val_period">Validity Period</th><th data-i18n="name_header">Name</th><th data-i18n="type_header">Type</th><th data-i18n="facility_header">Facility</th><th data-i18n="action">Action</th></tr></thead><tbody id="admin-table-active"><tr><td colspan="6" class="text-center" style="padding: 30px;" data-i18n="loading">Loading requests...</td></tr></tbody></table></div>
       </div>
+
       <div id="admin-sec-history" class="admin-card admin-section hidden">
         <div class="admin-card-title" data-i18n="access_history">Access & Gate History</div>
         <div style="overflow-x: auto;"><table><thead><tr><th data-i18n="val_period">Validity Period</th><th data-i18n="name_header">Name</th><th data-i18n="type_header">Type</th><th data-i18n="facility_header">Facility</th><th data-i18n="final_status">Final Status</th><th data-i18n="check_in">Check-In</th><th data-i18n="check_out">Check-Out</th><th data-i18n="scanned_by">Scanned By</th><th data-i18n="action">Action</th></tr></thead><tbody id="admin-table-history"><tr><td colspan="9" class="text-center" style="padding: 30px;" data-i18n="no_history">No history found.</td></tr></tbody></table></div>
       </div>
+
       <div id="admin-sec-guard-approvals" class="admin-card admin-section hidden">
         <div class="admin-card-title" data-i18n="live_gate">Live Gate Operations</div>
         <div style="overflow-x: auto;"><table><thead><tr><th data-i18n="check_in_time">Time</th><th>Action</th><th data-i18n="visitor_name">Visitor Name</th><th data-i18n="type_header">Type</th><th data-i18n="facility_header">Facility</th><th>Headcount</th><th data-i18n="scanned_by">Scanned By</th></tr></thead><tbody id="admin-table-guard-approvals"><tr><td colspan="7" class="text-center" style="padding: 30px;" data-i18n="no_gate_ops">No gate operations found.</td></tr></tbody></table></div>
       </div>
+
       <div id="admin-sec-analytics" class="admin-section hidden">
         <div class="analytics-grid">
           <div class="analytics-box"><div class="analytics-box-title" data-i18n="date_analytics">📅 Date Analytics</div><div id="stat-date"></div></div>
@@ -215,6 +248,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
     </div>
   </main>
 </div>
+
 <script>
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbzFQCv1Ng_n-U13NiMLz1Z2ldPzore4YBlnc6Iu4w5kkOSzaoNkPz80QlbD7PDOwld1_A/exec';
 const urlParams = new URLSearchParams(window.location.search);
@@ -478,8 +512,13 @@ function renderTeamRoster(){
         div.classList.remove('hidden');let h='';
         teamList.forEach((m,idx)=>{
             let devHtml = m.deviceType !== 'None' ? `<span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">${m.deviceType}</span>` : '';
+            
             let imgsHtml = `<img src="${m.iqama}" class="team-member-img" onclick="openFullscreenImage(this.src)" title="Iqama"><img src="${m.selfie}" class="team-member-img" onclick="openFullscreenImage(this.src)" title="Selfie">`;
-            if (m.rawDevicePhoto && m.rawDevicePhoto !== 'No File') imgsHtml += `<img src="data:image/jpeg;base64,${m.rawDevicePhoto}" class="team-member-img" onclick="openFullscreenImage(this.src)" title="Device Screen">`;
+            if (m.rawDevicePhoto && m.rawDevicePhoto !== 'No File') {
+                let devPhotoUri = "data:image/jpeg;base64," + m.rawDevicePhoto;
+                imgsHtml += `<img src="${devPhotoUri}" class="team-member-img" onclick="openFullscreenImage(this.src)" title="Device Screen">`;
+            }
+
             h+=`<div class="team-member-row"><span style="color:white;font-size:13px;font-weight:bold;">${m.name} <span style="font-size:11px;color:var(--text-muted);">(ID: ${m.iqamaText})</span>${devHtml}</span><div style="display:flex;gap:10px;">${imgsHtml}<button type="button" style="background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:16px;" onclick="removeTeamMember(${idx})">❌</button></div></div>`;
         });
         div.innerHTML=h;
@@ -821,22 +860,34 @@ function renderMyPasses(data){
         const todayNum=new Date().setHours(0,0,0,0); let endObj=parseFlexibleDate(pass.EndDate)||parseFlexibleDate(pass.StartDate);
         let endNum=endObj?endObj.setHours(0,0,0,0):todayNum;
         const isDone=safeType==='Visitor'&&!!pass.CheckOutTime,isExp=todayNum>endNum,isComp=isDone||isExp;
+        
         let st=t(safeStatus==='Approved'?'status_approved':safeStatus==='Rejected'?'status_rejected':'status_pending');
         let sc=(safeStatus==='Approved'?'var(--success)':safeStatus==='Rejected'?'var(--danger)':'var(--noon-yellow)');
         if(isComp){st=t(isExp?'status_expired':'status_completed');sc='var(--text-muted)'}
+        
         const valText=`(${formatToDDMMYYYY(pass.StartDate)} - ${formatToDDMMYYYY(pass.EndDate||pass.StartDate)})`;
         h+=`<div class="pass-item" id="pass-card-${pass.UniqueID}"><div class="pass-header"><div><strong style="color:white;font-size:14px;">${pass.VisitorName}</strong><br><span style="font-size:11px;color:var(--text-muted);">${t(safeType.toLowerCase())} • ${safeLoc}</span><br><span style="font-size:10px;color:var(--noon-yellow);">${valText}</span></div><div style="text-align:right;"><span style="font-size:11px;font-weight:bold;color:${sc};text-transform:uppercase;">${st}</span><br><span style="font-size:10px;color:var(--text-muted);">${pass.UniqueID}</span></div></div>`;
-        if(!isComp) {
+        
+        if(!isComp && safeStatus !== 'Rejected') {
             h+=`<div style="text-align:center;margin-top:10px;"><div class="qr-box" id="qr-${pass.UniqueID}" style="background:white;padding:10px;border-radius:6px;display:inline-block;min-width:140px;min-height:140px;"></div><div style="margin-top:15px;" id="save-btn-container-${pass.UniqueID}"><button class="btn-primary btn-outline btn-sm" style="margin-bottom:8px;" onclick="downloadQR('${pass.UniqueID}')" data-i18n="save_qr">${t('save_qr')}</button><br><button class="btn-primary btn-warning btn-sm" style="color:#000;" onclick="openAddMoreModal('${pass.UniqueID}')">➕ ${t('add_more_people')}</button></div></div>`;
-        } else h+=`<div style="text-align:center;margin-top:15px;font-size:12px;color:var(--text-muted);"><em>${isExp?t("status_expired"):t("check_out_time")+': '+formatTime(pass.CheckOutTime)}</em></div>`;
+        } else if (safeStatus === 'Rejected') {
+            h+=`<div style="text-align:center;margin-top:15px;font-size:12px;color:var(--danger);font-weight:bold;"><em>${t("status_rejected")} - Access Denied</em></div>`;
+        } else {
+            h+=`<div style="text-align:center;margin-top:15px;font-size:12px;color:var(--text-muted);"><em>${isExp?t("status_expired"):t("check_out_time")+': '+formatTime(pass.CheckOutTime)}</em></div>`;
+        }
         h+=`</div>`;
     });
     listDiv.innerHTML=h;
+    
     displayData.forEach(pass=>{
+        let safeStatus = String(pass.Status || 'Pending');
         const todayNum=new Date().setHours(0,0,0,0); let endObj=parseFlexibleDate(pass.EndDate)||parseFlexibleDate(pass.StartDate);
         let endNum=endObj?endObj.setHours(0,0,0,0):todayNum; let safeType = String(pass.Type || '');
         const isDone = safeType==='Visitor'&&!!pass.CheckOutTime, isExp=todayNum>endNum, isComp=isDone||isExp;
-        if(!isComp){ setTimeout(() => { const qre=document.getElementById(`qr-${pass.UniqueID}`); if(qre) { qre.innerHTML = ""; try { new QRCode(qre, {text: String(pass.UniqueID), width:120, height:120, colorDark:"#000", colorLight:"#fff", correctLevel: QRCode.CorrectLevel.H}); } catch(err) {} } }, 200); }
+        
+        if(!isComp && safeStatus !== 'Rejected'){ 
+            setTimeout(() => { const qre=document.getElementById(`qr-${pass.UniqueID}`); if(qre) { qre.innerHTML = ""; try { new QRCode(qre, {text: String(pass.UniqueID), width:120, height:120, colorDark:"#000", colorLight:"#fff", correctLevel: QRCode.CorrectLevel.H}); } catch(err) {} } }, 200); 
+        }
     });
 }
 
