@@ -987,7 +987,7 @@ function renderAdminData(data){
                 }else if(rStatus==='Approved'){
                     const isChecked=checkedPrintIds.has(row.UniqueID)?'checked':'';
                     let cbHtml=`<input type="checkbox" class="print-checkbox row-checkbox" value="${row.UniqueID}" data-name="${rVisitorName}" data-type="${rType}" data-location="${rLocation}" data-status="${rStatus}" data-date="${dateStr}" ${isChecked} onchange="handlePrintCheckbox(this)">`;
-                    let actionBtns=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;"><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="printQR('${rVisitorName}','${rType}','${rLocation}','${row.UniqueID}','${rStatus}','${dateStr}')">${t('btn_print')}</button><button class="btn-primary btn-warning btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;color:#000;" onclick="adminCheckOut('${row.UniqueID}')">${t('btn_checkout')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button></div>`;
+                    let actionBtns=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;"><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="printQR('${rVisitorName}','${rType}','${rLocation}','${row.UniqueID}','${rStatus}','${dateStr}')">${t('btn_print')}</button><button class="btn-primary btn-warning btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;color:#000;" onclick="adminLogCheckOut('${row.UniqueID}')">🚪 LOG CHECK-OUT</button><button class="btn-primary btn-danger btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="adminRevokePass('${row.UniqueID}')">🚫 REVOKE PASS</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button></div>`;
                     hActive+=`<tr ${rowStyle}><td>${cbHtml}</td><td style="color:var(--text-muted);">${finalDateStr}</td><td><strong>${rVisitorName}</strong><br><span style="font-size:10px;color:var(--text-muted);">Email: ${rHostEmail}</span></td><td>${t(rType.toLowerCase())}</td><td>${rLocation}</td><td>${actionBtns}</td></tr>`;
                     activeCount++;
                 }
@@ -1076,9 +1076,26 @@ async function updateStatus(id,newStatus){
     }catch(e){}finally { startAutoRefresh(currentUser.role); }
 }
 
-async function adminCheckOut(id){
+async function adminLogCheckOut(id){
     if(autoRefreshTimer) clearInterval(autoRefreshTimer);
-    if(!confirm(`Force check-out for pass ${id}?`)){ startAutoRefresh(currentUser.role); return; }
+    if(!confirm(`Log check-out for pass ${id} without ending its overall validity?`)){ startAutoRefresh(currentUser.role); return; }
+    if(Array.isArray(globalAdminData)){
+        let item = globalAdminData.find(x => String(x.UniqueID) === String(id));
+        if(item) {
+            item.CheckOutTime = new Date().toISOString(); localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData)); renderAdminData(globalAdminData);
+        }
+    }
+    try{
+        const adminInfo=`Admin: ${currentUser.name} (${currentUser.email})`;
+        const res=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'check_out',id:id,guardInfo:adminInfo,headCount:1})});
+        if(!res.ok)throw new Error("HTTP error");
+        localStorage.removeItem('cached_admin_data'); setTimeout(()=>{loadAdminData(true)},1000);
+    }catch(e){}finally{ startAutoRefresh(currentUser.role); }
+}
+
+async function adminRevokePass(id){
+    if(autoRefreshTimer) clearInterval(autoRefreshTimer);
+    if(!confirm(`Revoke pass ${id} completely? This will kill the QR code permanently.`)){ startAutoRefresh(currentUser.role); return; }
     if(Array.isArray(globalAdminData)){
         let item = globalAdminData.find(x => String(x.UniqueID) === String(id));
         if(item) {
