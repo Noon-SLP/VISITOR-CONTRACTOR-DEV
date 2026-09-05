@@ -30,6 +30,8 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
 </style></head>
 <body class="sidebar-minimized" dir="ltr"> 
 <div id="splash" class="splash-screen"><div class="splash-logo"></div><h1 style="color:var(--noon-yellow);font-size:26px;letter-spacing:2px;margin:0;font-weight:700;">WELCOME TO NOON SLP</h1><p style="color:var(--text-muted);font-size:12px;margin-top:12px;text-transform:uppercase;letter-spacing:1.5px;">Security & Loss Prevention</p></div>
+
+<!-- MODALS START (Ensured Only One Copy Exists) -->
 <div id="fullscreen-image-modal" class="popup-modal hidden" onclick="this.classList.add('hidden')" style="z-index: 9999999; cursor: zoom-out;"><img id="fullscreen-img" src="" style="max-width: 95vw; max-height: 95vh; border-radius: 8px; object-fit: contain;"><div style="position: absolute; bottom: 20px; color: white; background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 20px;" data-i18n="click_to_close">Click anywhere to close</div></div>
 <div id="view-record-modal" class="popup-modal hidden"><div class="record-modal-box"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;" data-i18n="detailed_record">Detailed Record View</h3><button onclick="closeViewRecord()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div id="view-record-content" class="record-modal-content"></div></div></div>
 <div id="extend-pass-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 400px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;" data-i18n="extend_pass">Extend Pass Validity</h3><button onclick="closeExtendPass()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; display: flex; flex-direction: column; gap: 15px;"><input type="hidden" id="extend-id"><input type="hidden" id="extend-type"><div class="input-group" id="extend-start-group"><label style="color: var(--noon-yellow); font-size: 13px;" data-i18n="new_start_date">New Visit / Start Date</label><input type="date" id="extend-start" class="input-field"></div><div class="input-group" id="extend-end-group"><label style="color: var(--noon-yellow); font-size: 13px;" data-i18n="new_end_date">New End Date</label><input type="date" id="extend-end" class="input-field"></div><button id="btn-submit-extend" class="btn-primary" onclick="submitExtendPass()" data-i18n="save_extension">SAVE EXTENSION</button></div></div></div>
@@ -37,8 +39,8 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
 <div id="pin-create-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 350px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">Set Security PIN</h3><button onclick="closePinCreate()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; display: flex; flex-direction: column; gap: 15px; text-align:center;"><p style="color:var(--text-muted); font-size:13px;">Create a 4-digit PIN to secure your passes. You will need this to view your QR codes on other devices.</p><input type="password" id="new-pin-input" class="input-field" placeholder="****" maxlength="4" style="text-align:center; font-size:24px; letter-spacing:10px;" oninput="this.value=this.value.replace(/[^0-9]/g,'')"><button class="btn-primary" onclick="confirmPinCreate()">SAVE PIN</button></div></div></div>
 <div id="pin-verify-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 350px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">Security PIN Required</h3><button onclick="closePinVerify()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; display: flex; flex-direction: column; gap: 15px; text-align:center;"><p style="color:var(--text-muted); font-size:13px;">Please enter your 4-digit PIN to unlock and view your passes.</p><input type="password" id="verify-pin-input" class="input-field" placeholder="****" maxlength="4" style="text-align:center; font-size:24px; letter-spacing:10px;" oninput="this.value=this.value.replace(/[^0-9]/g,'')"><p id="pin-error-msg" class="hidden" style="color:var(--danger); font-size:12px; margin:0;">Incorrect PIN.</p><button class="btn-primary" onclick="confirmPinVerify()">UNLOCK</button></div></div></div>
 <div id="add-more-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 500px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;" data-i18n="add_more_people">➕ Add More People</h3><button onclick="closeAddMoreModal()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; display: flex; flex-direction: column; gap: 15px;"><p style="color:var(--danger); font-size:12px; font-weight:bold; margin-bottom:5px;" data-i18n="add_more_warning">⚠️ WARNING: Submitting this will change the pass status back to PENDING. It cannot be used until the Admin approves it again.</p><div id="add-team-roster-display" class="team-roster hidden"></div><div id="add-team-entry-box" style="border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; background: rgba(255,255,255,0.02);"><div class="input-group" style="margin-bottom: 15px;"><input type="text" id="req-add-team-name" class="input-field" data-i18n="full_name_ph" placeholder="Full Name"></div><div class="input-group" style="margin-bottom: 15px;"><input type="text" id="req-add-team-iqamatext" class="input-field" data-i18n="iqama_id_ph" placeholder="Iqama / ID Number"></div><div class="input-group" style="margin-bottom: 15px;"><label style="font-size: 11px; color:var(--noon-yellow);" data-i18n="device_type_label">Device Type</label><select id="req-add-team-device-type" class="input-field" onchange="toggleAddTeamDeviceInput()"><option value="None" data-i18n="no_device">No Device</option><option value="Mobile">Mobile</option><option value="Laptop">Laptop</option></select></div><div class="input-group hidden" id="req-add-team-device-id-group" style="margin-bottom: 15px;"><input type="text" id="req-add-team-device-id" class="input-field" placeholder="IMEI / Serial Number"><label style="font-size: 11px; margin-top:10px;" data-i18n="upload_device_photo">Upload Device Photo/Screen</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_imeiphoto')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-add-team-imeiphoto" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_imeiphoto')"></div><img id="preview-add_team_imeiphoto" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div><div class="input-group"><label style="font-size: 11px;" data-i18n="upload_iqama">Upload Iqama/ID Copy</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_iqama')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-add-team-iqama" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_iqama')"></div><img id="preview-add_team_iqama" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div><div class="input-group" style="margin-bottom: 15px;"><label style="font-size: 11px;" data-i18n="upload_selfie">Upload Selfie Photo</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_selfie')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-add-team-selfie" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_selfie')"></div><img id="preview-add_team_selfie" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div><button type="button" class="btn-primary btn-success" style="font-size: 12px;" onclick="saveAddTeamMember()" data-i18n="save_person_list">✅ SAVE PERSON TO LIST</button></div><button id="btn-submit-add-more" class="btn-primary" onclick="submitAddMorePeople()" data-i18n="submit_send_approval">SUBMIT & SEND FOR APPROVAL</button></div></div></div>
-
 <div id="admin-gate-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 400px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">🚪 GATE ACTION</h3><button onclick="closeAdminGateModal()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; display: flex; flex-direction: column; gap: 15px; text-align: center;"><p style="color:var(--text-muted); font-size:13px; margin-bottom:10px;">Select an action for pass <strong id="admin-gate-id-display" style="color:white;"></strong></p><input type="hidden" id="admin-gate-id"><button class="btn-primary btn-success" style="font-size: 14px; padding: 14px;" onclick="submitAdminGateAction('check_in')">✅ CHECK IN</button><button class="btn-primary btn-warning" style="font-size: 14px; padding: 14px; color:#000;" onclick="submitAdminGateAction('check_out')">🚪 CHECK OUT</button></div></div></div>
+<!-- MODALS END -->
 
 <div id="login-view"><div class="login-top-controls"><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 16px;" onclick="hardRefreshApp()" title="Hard Refresh Cache">🔄</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 16px;" onclick="toggleFullScreen()" title="Fullscreen">⛶</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 12px;" onclick="toggleLang()">عربي / EN</button></div><div class="login-container"><div class="logo-box"></div><div style="text-align:center;margin-bottom:25px;"><h2 style="color:var(--noon-yellow);font-size:24px;margin-bottom:6px;letter-spacing:1px;">NOON SLP</h2><p style="color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="visitor_contractor_portal">Visitor & Contractor Portal</p></div>
 <div class="role-tabs" id="role-tabs" style="display:none;"><div class="role-tab active" id="tab-guard" onclick="switchLoginTab('guard')" data-i18n="guard">🛡️ Guard</div><div class="role-tab" id="tab-admin" onclick="switchLoginTab('admin')" data-i18n="admin">⚙️ Admin</div></div>
@@ -246,16 +248,22 @@ async function confirmPinCreate() {
     if(pin.length !== 4) return alert("Please enter a valid 4-digit PIN.");
     userSecurityPin = pin;
     let email = currentUser.email;
-    if(currentUser.role === 'admin') { const ei = document.getElementById('req-admin-email'); if(ei && ei.value) email = ei.value.toLowerCase().trim(); }
+    if(currentUser.role === 'admin') { 
+        const ei = document.getElementById('req-admin-email'); 
+        if(ei && ei.value) email = ei.value.toLowerCase().trim(); 
+    }
     localStorage.setItem('user_pin_' + email, pin);
     document.getElementById('pin-create-modal').classList.add('hidden');
     
-    fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'update_pin', email: email, pin: pin }) }).catch(e=>{});
-    
     if (pinCreateMode === 'reset') {
+        try {
+            await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'update_pin', email: email, pin: pin }) });
+        } catch(e) {}
         setTimeout(() => loadMyPasses(true, true), 1000);
         renderMyPasses(lockedPassesData);
-    } else submitRequest();
+    } else {
+        submitRequest();
+    }
 }
 
 function closePinCreate() { document.getElementById('pin-create-modal').classList.add('hidden'); }
@@ -812,14 +820,19 @@ async function submitRequest(){
     
     let localPin = localStorage.getItem('user_pin_' + hMail);
 
-    if (!localPin && !userSecurityPin) { 
-        pinCreateMode = 'submit'; 
-        document.getElementById('pin-create-modal').classList.remove('hidden'); 
-        return; 
+    if (currentUser && currentUser.role === 'admin') {
+        if (userSecurityPin || localPin) {
+            hName = hName + "||PIN:" + (userSecurityPin || localPin);
+        }
+    } else {
+        if (!localPin && !userSecurityPin) { 
+            pinCreateMode = 'submit'; 
+            document.getElementById('pin-create-modal').classList.remove('hidden'); 
+            return; 
+        }
+        let activePin = userSecurityPin || localPin;
+        hName = hName + "||PIN:" + activePin;
     }
-
-    let activePin = userSecurityPin || localPin;
-    hName = hName + "||PIN:" + activePin;
 
     const tempId = 'NOON-' + Math.floor(100000 + Math.random() * 900000);
     let tempPass = { UniqueID: tempId, VisitorName: vName, Type: type, Location: document.getElementById('req-location').value, StartDate: startDateVal, EndDate: endDateVal, Status: 'Pending', HostEmail: hMail };
