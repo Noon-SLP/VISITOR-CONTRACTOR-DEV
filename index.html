@@ -157,7 +157,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
     <div id="dashboard-guard" class="dashboard hidden text-center">
       <div class="header">
         <h2><span data-i18n="gate_scanner">Gate Scanner</span> <span id="guard-loc-text" style="color: var(--text-muted); font-size: 18px;">(<span id="guard-loc-display"></span>)</span><select id="admin-guard-loc" class="input-field hidden" style="width: auto; padding: 6px 12px; font-size: 14px; margin: 0; min-width: 150px;" onchange="updateAdminGuardLoc()"><option value="" data-i18n="select_guard_loc">Select Guard Location...</option><option value="RUH01">RUH01</option><option value="JED01">JED01</option></select></h2>
-        <div class="header-controls"><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 16px;" onclick="hardRefreshApp()" title="Hard Refresh Cache">🔄</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 16px;" onclick="toggleFullScreen()" title="Fullscreen">⛶</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 12px;" onclick="toggleLang()">عربي / EN</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 16px; font-size: 12px;" onclick="logout()" data-i18n="logout">LOGOUT</button></div>
+        <div class="header-controls"><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 16px;" onclick="hardRefreshApp()" title="Hard Refresh Cache">🔄</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 16px;" onclick="toggleFullScreen()" title="Fullscreen">⛶</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 12px;" onclick="toggleLang()">عربي / EN</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 16px; font-size: 12px;" onclick="logout()" data-i18n="logout">LOGOUT</button></div>
       </div>
       <div style="max-width: 450px; margin: 0 auto;">
         <div id="admin-manual-search-box" class="hidden" style="background:var(--card-bg); padding:20px; border-radius:12px; border:1px solid var(--border-color); margin-bottom:20px;">
@@ -270,7 +270,7 @@ function processAndRenderPasses(data, email, isSilent) {
             let safeType = String(p.Type||''); let safeStatus = String(p.Status||'Pending');
             let endObj = parseFlexibleDate(p.EndDate)||parseFlexibleDate(p.StartDate);
             let endNum = endObj ? endObj.setHours(0,0,0,0) : todayNum;
-            let isComp = (safeType==='Visitor'&&!!p.CheckOutTime) || (todayNum>endNum) || safeStatus==='Rejected' || safeStatus==='Completed';
+            let isComp = (todayNum>endNum) || safeStatus==='Rejected' || safeStatus==='Completed';
             if(!isComp) hasActive = true;
         });
     }
@@ -872,11 +872,11 @@ function renderMyPasses(data){
         let safeType = String(pass.Type || ''); let safeStatus = String(pass.Status || 'Pending'); let safeLoc = String(pass.Location || '');
         const todayNum=new Date().setHours(0,0,0,0); let endObj=parseFlexibleDate(pass.EndDate)||parseFlexibleDate(pass.StartDate);
         let endNum=endObj?endObj.setHours(0,0,0,0):todayNum;
-        const isDone=safeType==='Visitor'&&!!pass.CheckOutTime,isExp=todayNum>endNum,isComp=isDone||isExp;
+        const isExp=todayNum>endNum,isComp=isExp || safeStatus==='Completed';
         
-        let st=t(safeStatus==='Approved'?'status_approved':safeStatus==='Rejected'?'status_rejected':'status_pending');
-        let sc=(safeStatus==='Approved'?'var(--success)':safeStatus==='Rejected'?'var(--danger)':'var(--noon-yellow)');
-        if(isComp){st=t(isExp?'status_expired':'status_completed');sc='var(--text-muted)'}
+        let st=t(safeStatus==='Approved'?'status_approved':safeStatus==='Rejected'?'status_rejected':safeStatus==='Completed'?'status_completed':'status_pending');
+        let sc=(safeStatus==='Approved'?'var(--success)':safeStatus==='Rejected'?'var(--danger)':safeStatus==='Completed'?'var(--text-muted)':'var(--noon-yellow)');
+        if(isExp && safeStatus!=='Rejected' && safeStatus!=='Completed'){st=t('status_expired');sc='var(--text-muted)'}
         
         const valText=`(${formatToDDMMYYYY(pass.StartDate)} - ${formatToDDMMYYYY(pass.EndDate||pass.StartDate)})`;
         h+=`<div class="pass-item" id="pass-card-${pass.UniqueID}"><div class="pass-header"><div><strong style="color:white;font-size:14px;">${pass.VisitorName}</strong><br><span style="font-size:11px;color:var(--text-muted);">${t(safeType.toLowerCase())} • ${safeLoc}</span><br><span style="font-size:10px;color:var(--noon-yellow);">${valText}</span></div><div style="text-align:right;"><span style="font-size:11px;font-weight:bold;color:${sc};text-transform:uppercase;">${st}</span><br><span style="font-size:10px;color:var(--text-muted);">${pass.UniqueID}</span></div></div>`;
@@ -885,8 +885,10 @@ function renderMyPasses(data){
             h+=`<div style="text-align:center;margin-top:10px;"><div class="qr-box" id="qr-${pass.UniqueID}" style="background:white;padding:10px;border-radius:6px;display:inline-block;min-width:140px;min-height:140px;"></div><div style="margin-top:15px;" id="save-btn-container-${pass.UniqueID}"><button class="btn-primary btn-outline btn-sm" style="margin-bottom:8px;" onclick="downloadQR('${pass.UniqueID}')" data-i18n="save_qr">${t('save_qr')}</button><br><button class="btn-primary btn-warning btn-sm" style="color:#000;" onclick="openAddMoreModal('${pass.UniqueID}')">➕ ${t('add_more_people')}</button></div></div>`;
         } else if (safeStatus === 'Rejected') {
             h+=`<div style="text-align:center;margin-top:15px;font-size:12px;color:var(--danger);font-weight:bold;"><em>${t("status_rejected")} - Access Denied</em></div>`;
+        } else if (safeStatus === 'Completed') {
+            h+=`<div style="text-align:center;margin-top:15px;font-size:12px;color:var(--text-muted);font-weight:bold;"><em>PASS REVOKED / COMPLETED</em></div>`;
         } else {
-            h+=`<div style="text-align:center;margin-top:15px;font-size:12px;color:var(--text-muted);"><em>${isExp?t("status_expired"):t("check_out_time")+': '+formatTime(pass.CheckOutTime)}</em></div>`;
+            h+=`<div style="text-align:center;margin-top:15px;font-size:12px;color:var(--text-muted);"><em>${t("status_expired")}</em></div>`;
         }
         h+=`</div>`;
     });
@@ -896,7 +898,7 @@ function renderMyPasses(data){
         let safeStatus = String(pass.Status || 'Pending');
         const todayNum=new Date().setHours(0,0,0,0); let endObj=parseFlexibleDate(pass.EndDate)||parseFlexibleDate(pass.StartDate);
         let endNum=endObj?endObj.setHours(0,0,0,0):todayNum; let safeType = String(pass.Type || '');
-        const isDone = safeType==='Visitor'&&!!pass.CheckOutTime, isExp=todayNum>endNum, isComp=isDone||isExp;
+        const isExp=todayNum>endNum, isComp=isExp || safeStatus==='Completed';
         
         if(!isComp && safeStatus !== 'Rejected'){ 
             setTimeout(() => { const qre=document.getElementById(`qr-${pass.UniqueID}`); if(qre) { qre.innerHTML = ""; try { new QRCode(qre, {text: String(pass.UniqueID), width:120, height:120, colorDark:"#000", colorLight:"#fff", correctLevel: QRCode.CorrectLevel.H}); } catch(err) {} } }, 200); 
@@ -953,8 +955,8 @@ function renderAdminData(data){
         let rType = String(row.Type || ''); let rLocation = String(row.Location || ''); let rStatus = String(row.Status || 'Pending');
         let rVisitorName = String(row.VisitorName || ''); let rHostEmail = String(row.HostEmail || '');
         let endDateObj=new Date((parseFlexibleDate(row.EndDate)||parseFlexibleDate(row.StartDate)||new Date()).getTime()); endDateObj.setHours(23,59,59,999);
-        const isVisitorDone=rType==='Visitor'&&!!row.CheckOutTime; const isExpired=endDateObj<today;
-        const isHistory = isExpired || rStatus==='Rejected' || isVisitorDone || rStatus==='Completed';
+        const isExpired=endDateObj<today;
+        const isHistory = isExpired || rStatus==='Rejected' || rStatus==='Completed';
         const inRange=isDateInRange(row.StartDate,currentAdminFilter,fStart,fEnd);
         const dateStr=rType==='Visitor'?formatToDDMMYYYY(row.StartDate):`${formatToDDMMYYYY(row.StartDate)} - ${formatToDDMMYYYY(row.EndDate||row.StartDate)}`;
 
@@ -974,7 +976,7 @@ function renderAdminData(data){
                 let finalStatus=rStatus,sColor='var(--noon-yellow)';
                 if(rStatus==='Rejected'){finalStatus=t('status_rejected');sColor='var(--danger)'}
                 else if(isExpired){finalStatus=t('status_expired');sColor='var(--danger)'}
-                else if(isVisitorDone||rStatus==='Completed'){finalStatus=t('status_completed');sColor='var(--success)'}
+                else if(rStatus==='Completed'){finalStatus=t('status_completed');sColor='var(--success)'}
                 else{finalStatus=t('status_approved');sColor='var(--success)'}
                 let historyActionBtns=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;"><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button></div>`;
                 hHistory+=`<tr><td style="color:var(--text-muted);">${dateStr}</td><td><strong>${rVisitorName}</strong><br><span style="font-size:10px;color:var(--text-muted);">Email: ${rHostEmail}</span></td><td>${t(rType.toLowerCase())}</td><td>${rLocation}</td><td style="font-weight:600;color:${sColor}">${finalStatus}</td><td style="color:var(--text-muted);font-size:11px;">${row.CheckInTime?formatTime(row.CheckInTime):'-'}</td><td style="color:var(--text-muted);font-size:11px;">${row.CheckOutTime?formatTime(row.CheckOutTime):'-'}</td><td style="color:var(--noon-yellow);font-size:11px;">${String(row.ScannedByGuard||'-')}</td><td>${historyActionBtns}</td></tr>`;
