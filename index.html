@@ -57,6 +57,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
     <nav class="sidebar-nav">
       <a href="#" id="nav-sidebar-ops" onclick="switchMainView('ops')"><span class="icon">📝</span><span class="nav-text" data-i18n="visitor_portal">Visitor Portal</span></a>
       <a href="#" id="nav-sidebar-guard" onclick="switchMainView('guard')"><span class="icon">🛡️</span><span class="nav-text" data-i18n="gate_scanner">Gate Scanner</span></a>
+      
       <a href="#" id="nav-sidebar-admin" class="admin-tab hidden" onclick="switchMainView('admin')"><span class="icon">⚙️</span><span class="nav-text" data-i18n="admin_dashboard">Admin Dashboard</span></a>
       <a href="#" id="nav-sidebar-active" class="admin-tab hidden" onclick="switchMainView('active')"><span class="icon">🟢</span><span class="nav-text">Active in Facility</span></a>
       <a href="#" id="nav-sidebar-history" class="admin-tab hidden" onclick="switchMainView('history')"><span class="icon">🕰️</span><span class="nav-text">History</span></a>
@@ -228,6 +229,12 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
             <button class="btn-filter" onclick="setAdminFilter('year', this)" data-i18n="1year">1 Year</button>
             <button class="btn-filter" onclick="setAdminFilter('custom', this)" data-i18n="custom">Custom</button>
         </div>
+        <div id="custom-date-picker" class="custom-date-picker hidden" style="display: flex; align-items: center; gap: 10px;">
+            <input type="date" id="filter-start" class="input-field" style="padding: 8px; width: 140px; font-size: 12px;">
+            <span style="color: var(--text-muted); font-size: 12px;" data-i18n="to">TO</span>
+            <input type="date" id="filter-end" class="input-field" style="padding: 8px; width: 140px; font-size: 12px;">
+            <button class="btn-primary" style="width: auto; padding: 8px 16px; font-size: 12px;" onclick="renderAdminData(globalAdminData)" data-i18n="apply">APPLY</button>
+        </div>
       </div>
       <div id="admin-sec-approvals" class="admin-card admin-section">
         <div class="admin-card-title"><span data-i18n="pending_req">Pending Requests</span></div>
@@ -301,7 +308,19 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
       <div class="admin-card">
         <div style="overflow-x: auto;">
           <table>
-            <thead><tr><th data-i18n="val_period">Validity Period</th><th data-i18n="name_header">Name</th><th data-i18n="type_header">Type</th><th data-i18n="facility_header">Facility</th><th data-i18n="final_status">Final Status</th><th data-i18n="check_in">Check-In</th><th data-i18n="check_out">Check-Out</th><th data-i18n="scanned_by">Scanned By</th><th data-i18n="action">Action</th></tr></thead>
+            <thead>
+              <tr>
+                <th data-i18n="visitor_name">Visitor Name</th>
+                <th data-i18n="type_header">Type</th>
+                <th data-i18n="location_label">Location</th>
+                <th data-i18n="invited_by">Invited By</th>
+                <th data-i18n="check_in_time">Check-In Time</th>
+                <th data-i18n="check_out_time">Check-Out Time</th>
+                <th>Duration</th>
+                <th data-i18n="scanned_by">Scanned By</th>
+                <th data-i18n="action">Action</th>
+              </tr>
+            </thead>
             <tbody id="admin-table-history">
               <tr><td colspan="9" class="text-center" style="padding: 30px;" data-i18n="no_history">No history found.</td></tr>
             </tbody>
@@ -846,20 +865,21 @@ async function performManualSearch() {
         if(matches.length === 0) {
             resDiv.innerHTML = '<p style="color:var(--danger); font-size:12px;">No passes found.</p>';
         } else {
-            let h = ''; const todayStr = formatToDDMMYYYY(new Date()); const todayNum = new Date().setHours(0,0,0,0);
+            let h = ''; const todayNum = new Date().setHours(0,0,0,0);
             matches.forEach(m => {
                 let dType = String(m.Type || ''); let dStatus = String(m.Status || 'Pending'); let dLoc = String(m.Location || '');
-                let startStr = formatToDDMMYYYY(m.StartDate); let startObj = parseFlexibleDate(m.StartDate);
+                let startObj = parseFlexibleDate(m.StartDate);
                 let startNum = startObj ? startObj.setHours(0,0,0,0) : todayNum;
                 let endObj = parseFlexibleDate(m.EndDate); let endNum = endObj ? endObj.setHours(0,0,0,0) : startNum;
                 let displayStatus = dStatus; let sc = 'var(--noon-yellow)';
+                
                 if (currentUser && currentUser.role === 'admin' && !currentUser.location) { displayStatus = "NO FACILITY SELECTED"; sc = "var(--danger)"; }
                 else if (dStatus === 'Pending') { displayStatus = "PENDING"; sc = "var(--noon-yellow)"; }
                 else if (dStatus !== 'Approved') { displayStatus = "DENIED"; sc = "var(--danger)"; }
                 else if (currentUser && dLoc !== currentUser.location) { displayStatus = "WRONG FACILITY"; sc = "var(--danger)"; }
-                else if (dType === 'Visitor' && startStr !== todayStr) { displayStatus = "INVALID DATE"; sc = "var(--danger)"; }
-                else if (dType === 'Contractor' && (todayNum < startNum || todayNum > endNum)) { displayStatus = "EXPIRED"; sc = "var(--danger)"; }
+                else if (todayNum < startNum || todayNum > endNum) { displayStatus = todayNum > endNum ? "EXPIRED" : "INVALID DATE"; sc = "var(--danger)"; }
                 else { displayStatus = "APPROVED"; sc = "var(--success)"; }
+                
                 h += `<div style="background:var(--input-bg); border:1px solid var(--border-color); padding:10px; border-radius:6px; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;"><div><strong style="color:white;font-size:13px;">${m.VisitorName}</strong><br><span style="font-size:11px;color:var(--text-muted);">${m.UniqueID} | ${m.Type} | ${m.Location}</span><br><span style="font-size:10px;color:${sc};font-weight:bold;text-transform:uppercase;">${displayStatus}</span></div><button class="btn-primary btn-sm" style="width:auto; padding:6px 15px;" onclick="document.getElementById('manual-search-results').innerHTML=''; onScanSuccess('${m.UniqueID}')">OPEN</button></div>`;
             });
             resDiv.innerHTML = h;
@@ -1139,8 +1159,36 @@ function renderAdminData(data){
                 else if(isExpired){finalStatus=t('status_expired');sColor='var(--danger)'}
                 else if(rStatus==='Completed'){finalStatus=t('status_completed');sColor='var(--success)'}
                 else{finalStatus=t('status_approved');sColor='var(--success)'}
+                
                 let historyActionBtns=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;"><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button></div>`;
-                hHistory+=`<tr><td style="color:var(--text-muted);">${dateStr}</td><td><strong>${rVisitorName}</strong><br><span style="font-size:10px;color:var(--text-muted);">Email: ${rHostEmail}</span></td><td>${t(rType.toLowerCase())}</td><td>${rLocation}</td><td style="font-weight:600;color:${sColor}">${finalStatus}</td><td style="color:var(--text-muted);font-size:11px;">${row.CheckInTime?formatTime(row.CheckInTime):'-'}</td><td style="color:var(--text-muted);font-size:11px;">${row.CheckOutTime?formatTime(row.CheckOutTime):'-'}</td><td style="color:var(--noon-yellow);font-size:11px;">${String(row.ScannedByGuard||'-')}</td><td>${historyActionBtns}</td></tr>`;
+                
+                let durHtml = '-';
+                if (row.CheckInTime && row.CheckOutTime) {
+                    let ci = new Date(row.CheckInTime).getTime();
+                    let co = new Date(row.CheckOutTime).getTime();
+                    let diffMins = Math.floor((co - ci) / 60000);
+                    if (diffMins < 0) diffMins = 0;
+                    let h = Math.floor(diffMins / 60);
+                    let m = diffMins % 60;
+                    durHtml = `<span style="color:var(--noon-yellow); font-weight:bold;">${h}h ${m}m</span>`;
+                }
+
+                let invitedBy = row.InvitedBy || row.HostEmail || '-';
+                let guardHtml = `🛡️ ${row.ScannedByGuard || '-'}`;
+                let typeHtml = `<strong style="color:var(--noon-yellow);">${t(rType.toLowerCase())}</strong>`;
+                let statusBadge = `<span style="background:${sColor}20; color:${sColor}; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">${finalStatus}</span>`;
+
+                hHistory+=`<tr>
+                    <td><strong>${rVisitorName}</strong><br>${statusBadge}</td>
+                    <td>${typeHtml}</td>
+                    <td>${rLocation}</td>
+                    <td>${invitedBy}</td>
+                    <td style="color:var(--text-muted);font-size:11px;">${row.CheckInTime?formatTime(row.CheckInTime):'-'}</td>
+                    <td style="color:var(--text-muted);font-size:11px;">${row.CheckOutTime?formatTime(row.CheckOutTime):'-'}</td>
+                    <td>${durHtml}</td>
+                    <td style="color:var(--text-main); font-weight:600;">${guardHtml}</td>
+                    <td>${historyActionBtns}</td>
+                </tr>`;
                 historyCount++;
             }
         }else{
@@ -1535,7 +1583,7 @@ async function onScanSuccess(decodedText){
     if(!data || data.error) { showScanResult(t("denied"),t("invalid_date"),"bg-red", false); return; }
 
     let dType = String(data.Type || ''); let dStatus = String(data.Status || ''); let dLoc = String(data.Location || '');
-    const todayStr=formatToDDMMYYYY(new Date()),startStr=formatToDDMMYYYY(data.StartDate),todayNum=new Date().setHours(0,0,0,0);
+    const todayNum=new Date().setHours(0,0,0,0);
     let startObj=parseFlexibleDate(data.StartDate),startNum=startObj?startObj.setHours(0,0,0,0):todayNum;
     let endObj=parseFlexibleDate(data.EndDate),endNum=endObj?endObj.setHours(0,0,0,0):startNum;
     const isCheckedOut=!!data.CheckOutTime,isInside=!!data.CheckInTime&&!data.CheckOutTime;
@@ -1545,8 +1593,7 @@ async function onScanSuccess(decodedText){
     else if(dStatus === 'Pending') { scanState=t("pending"); scanMsg=t("awaiting_admin"); scanColor="bg-yellow"; allowAction=false; }
     else if(dStatus !== 'Approved') { scanState=t("denied"); scanMsg=t("not_approved"); scanColor="bg-red"; allowAction=false; }
     else if(dLoc !== currentUser.location) { scanState=t("wrong_facility"); scanMsg=t("wrong_fac_msg")+" ("+dLoc+")"; scanColor="bg-red"; allowAction=false; }
-    else if(dType === 'Visitor' && startStr !== todayStr) { scanState=t("invalid_date"); scanMsg=t("not_valid_today"); scanColor="bg-red"; allowAction=false; }
-    else if(dType === 'Contractor' && (todayNum < startNum || todayNum > endNum)) { scanState=t("expired"); scanMsg=t("contractor_expired"); scanColor="bg-red"; allowAction=false; }
+    else if(todayNum < startNum || todayNum > endNum) { scanState = todayNum > endNum ? t("expired") : t("invalid_date"); scanMsg = todayNum > endNum ? t("expired") : t("not_valid_today"); scanColor="bg-red"; allowAction=false; }
 
     let isFullscreen = (dType === 'Contractor' || dType === 'Visitor');
 
