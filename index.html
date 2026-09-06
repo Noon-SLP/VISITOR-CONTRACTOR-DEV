@@ -14,7 +14,7 @@ body[dir="rtl"]{font-family:'Inter','Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
 .btn-primary{width:100%;padding:14px;background-color:var(--noon-yellow);color:#000;font-weight:700;font-size:14px;border:none;border-radius:6px;cursor:pointer;text-transform:uppercase;transition:0.2s}.btn-outline{background:transparent;color:var(--noon-yellow);border:1px solid var(--noon-yellow)}.btn-success{background:var(--success);color:white;border:none}.btn-danger{background:var(--danger);color:white;border:none}.btn-warning{background:var(--noon-yellow);color:#000;border:none}.btn-sm{padding:6px 12px;font-size:12px;border-radius:4px}
 #app-layout{display:flex;width:100vw;height:100vh;overflow:hidden}.sidebar{width:240px;background:var(--sidebar-bg);border-inline-end:1px solid var(--border-color);display:flex;flex-direction:column;transition:width 0.3s;z-index:100}.sidebar.minimized{width:75px}.sidebar-header{display:flex;align-items:center;justify-content:space-between;padding:20px;border-bottom:1px solid var(--border-color)}.sidebar.minimized .sidebar-brand{display:none}.sidebar-brand h1{font-size:16px;color:var(--noon-yellow);margin-bottom:2px}.sidebar-brand p{font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px}.toggle-btn{background:transparent;color:white;border:none;font-size:20px;cursor:pointer;padding:5px}.sidebar-nav{flex:1;padding:20px 0;display:flex;flex-direction:column;gap:5px}.sidebar-nav a{display:flex;align-items:center;padding:12px 20px;color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:600;border-left:3px solid transparent;transition:0.2s}.sidebar-nav a:hover,.sidebar-nav a.active{background:rgba(255,199,0,0.05);color:var(--noon-yellow);border-left:3px solid var(--noon-yellow)}.sidebar-nav a .icon{font-size:18px;min-width:35px}.sidebar.minimized .nav-text{display:none}.sidebar-footer{padding:20px;border-top:1px solid var(--border-color);text-align:center}.sidebar.minimized .sidebar-footer{padding:20px 10px}
 #main-content{flex:1;height:100vh;overflow-y:auto;position:relative;background-image:radial-gradient(circle at center,rgba(20,22,28,0.4) 0%,rgba(5,5,7,0.95) 100%),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100' viewBox='0 0 56 100'%3E%3Cpath d='M28 66L0 50L0 16L28 0L56 16L56 50L28 66ZM28 100L0 84L0 50L28 66L56 50L56 84L28 100Z' fill='none' stroke='%2322262f' stroke-width='1.5'/%3E%3Cpath d='M28 0L28 33M0 16L28 33M56 16L28 33M0 50L28 66M56 50L28 66' fill='none' stroke='%23151820' stroke-width='1'/%3E%3C/svg%3E")}
-.dashboard{width:100%;padding:20px;margin:0 auto}.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;padding-bottom:15px;border-bottom:1px solid var(--border-color);flex-wrap:wrap;gap:15px}.header h2{color:var(--noon-yellow);font-size:22px;margin:0;display:flex;align-items:center;gap:15px}.header-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}#dashboard-ops{max-width:950px;margin-top:20px}#dashboard-guard{max-width:600px;margin-top:20px}#dashboard-admin{max-width:100%;padding:30px 2.5vw;padding-top:0}#dashboard-whatsnew{max-width:100%;padding:30px 2.5vw;padding-top:0}
+.dashboard{width:100%;padding:20px;margin:0 auto}.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;padding-bottom:15px;border-bottom:1px solid var(--border-color);flex-wrap:wrap;gap:15px}.header h2{color:var(--noon-yellow);font-size:22px;margin:0;display:flex;align-items:center;gap:15px}.header-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}#dashboard-ops{max-width:950px;margin-top:20px}#dashboard-guard{max-width:600px;margin-top:20px}#dashboard-admin, #dashboard-whatsnew, #dashboard-active, #dashboard-history {max-width:100%;padding:30px 2.5vw;padding-top:0}
 .ops-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}.ops-card{background:var(--card-bg);padding:24px;border-radius:12px;border:1px solid var(--border-color);box-shadow:0 10px 30px rgba(0,0,0,0.5)}.pass-item{background:var(--input-bg);padding:15px;border-radius:8px;border:1px solid var(--border-color);margin-bottom:12px;text-align:start;position:relative;overflow:hidden}.pass-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:10px}.qr-box{background:white;padding:10px;border-radius:6px;display:inline-block;margin-top:10px}
 #reader{width:100%;border:none;border-radius:12px;overflow:hidden;background:var(--card-bg);box-shadow:0 10px 40px rgba(0,0,0,0.6)}
 .scan-result-card{padding:30px;border-radius:12px;text-align:center;margin-top:25px;color:white;font-weight:bold;box-shadow:0 10px 30px rgba(0,0,0,0.4)}.bg-green{background-color:var(--success)}.bg-red{background-color:var(--danger)}.bg-blue{background-color:#3b82f6}.bg-yellow{background-color:var(--noon-yellow);color:#000 !important}.bg-yellow h1, .bg-yellow p{color:#000 !important}.visitor-photo{width:160px;height:160px;border-radius:12px;object-fit:cover;border:3px solid white;margin:0 auto 20px auto;display:none;box-shadow:0 8px 25px rgba(0,0,0,0.5)}
@@ -26,7 +26,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
 .popup-modal{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.9);z-index:99999;display:flex;justify-content:center;align-items:center;padding:20px}.record-modal-box{background:var(--card-bg);width:100%;max-width:650px;border-radius:12px;border:1px solid var(--border-color);display:flex;flex-direction:column;max-height:90vh;box-shadow:0 15px 40px rgba(0,0,0,0.7)}.record-modal-header{padding:20px;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.2)}.record-modal-content{padding:25px;overflow-y:auto;font-size:13px;line-height:1.6;display:grid;grid-template-columns:1fr 1fr;gap:20px;color:var(--text-main)}.record-modal-content div{background:rgba(255,255,255,0.02);padding:12px;border-radius:6px;border:1px solid rgba(255,255,255,0.05)}.record-modal-content strong{color:var(--noon-yellow);display:block;font-size:11px;text-transform:uppercase;margin-bottom:4px;letter-spacing:0.5px}.record-img-box{grid-column:span 2;display:flex;flex-wrap:wrap;gap:15px}.record-img-box div{flex:1;min-width:180px;display:flex;flex-direction:column}.record-img-box img{width:100%;border-radius:8px;border:1px solid var(--border-color);object-fit:cover;margin-top:5px;cursor:pointer;transition:0.2s}.record-img-box img:hover{filter:brightness(1.2);box-shadow:0 0 15px rgba(255,199,0,0.3)}#camera-video-stream{width:100%;max-width:500px;max-height:70vh;background:#000;border-radius:12px;border:2px solid var(--noon-yellow);object-fit:cover}.cam-controls{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;justify-content:center}.print-checkbox{width:18px;height:18px;cursor:pointer;accent-color:var(--noon-yellow)}
 .splash-screen{position:fixed;top:0;left:0;width:100vw;height:100vh;background:var(--bg-dark);z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.6s ease;opacity:1}.splash-screen.fade-out{opacity:0;pointer-events:none}@keyframes pulse-glow{0%{box-shadow:0 0 0 0 rgba(255,199,0,0.4)}70%{box-shadow:0 0 0 20px rgba(255,199,0,0)}100%{box-shadow:0 0 0 0 rgba(255,199,0,0)}}.splash-logo{width:160px;height:160px;background-color:#12151c;background-image:url('logo.jpeg');background-size:contain;background-position:center;background-repeat:no-repeat;border-radius:18px;margin-bottom:30px;animation:pulse-glow 2s infinite}
 @media (max-width:1024px){.ops-grid{grid-template-columns:1fr}}
-@media (max-width:900px){.sidebar{position:fixed;height:100vh;transform:translateX(0)}.sidebar.minimized{transform:translateX(-100%);width:240px}body[dir="rtl"] .sidebar.minimized{transform:translateX(100%)}.dashboard{padding:4vw;margin-top:10px}.admin-header-top{flex-direction:column;height:auto;padding:15px;align-items:stretch;gap:15px;margin:0 -4vw 20px -4vw !important}.admin-brand-horizontal{margin-right:0;text-align:center;width:100%}.admin-nav-horizontal{flex-wrap:wrap;justify-content:center;gap:5px;width:100%}.admin-nav-horizontal li{padding:10px;font-size:11px;flex:1 1 auto;text-align:center}.admin-user-info{justify-content:center;width:100%}.admin-filter-bar{flex-direction:column;align-items:stretch;gap:10px}.admin-filter-bar > div{flex-wrap:wrap;justify-content:center;width:100%}#custom-date-picker{flex-direction:column;align-items:stretch;width:100%}table th,table td{padding:10px}.record-modal-content{grid-template-columns:1fr}#main-content{transition:margin-left 0.3s,margin-right 0.3s}body:not(.sidebar-minimized) #main-content{margin-inline-start:240px}}
+@media (max-width:900px){.sidebar{position:fixed;height:100vh;transform:translateX(0)}.sidebar.minimized{transform:translateX(-100%);width:240px}body[dir="rtl"] .sidebar.minimized{transform:translateX(100%)}.dashboard{padding:4vw;margin-top:10px}.admin-header-top{flex-direction:column;height:auto;padding:15px;align-items:stretch;gap:15px;margin:0 -4vw 20px -4vw !important}.admin-brand-horizontal{margin-right:0;text-align:center;width:100%}.admin-nav-horizontal{flex-wrap:wrap;justify-content:center;gap:5px;width:100%}.admin-nav-horizontal li{padding:10px;font-size:11px;flex:1 1 auto;text-align:center}.admin-user-info{justify-content:center;width:100%}.admin-filter-bar{flex-direction:column;align-items:stretch;gap:10px}.admin-filter-bar > div{flex-wrap:wrap;justify-content:center;width:100%}#custom-date-picker,#history-custom-date-picker{flex-direction:column;align-items:stretch;width:100%}table th,table td{padding:10px}.record-modal-content{grid-template-columns:1fr}#main-content{transition:margin-left 0.3s,margin-right 0.3s}body:not(.sidebar-minimized) #main-content{margin-inline-start:240px}}
 </style></head>
 <body class="sidebar-minimized" dir="ltr"> 
 <div id="splash" class="splash-screen"><div class="splash-logo"></div><h1 style="color:var(--noon-yellow);font-size:26px;letter-spacing:2px;margin:0;font-weight:700;">WELCOME TO NOON SLP</h1><p style="color:var(--text-muted);font-size:12px;margin-top:12px;text-transform:uppercase;letter-spacing:1.5px;">Security & Loss Prevention</p></div>
@@ -57,8 +57,10 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
     <nav class="sidebar-nav">
       <a href="#" id="nav-sidebar-ops" onclick="switchMainView('ops')"><span class="icon">📝</span><span class="nav-text" data-i18n="visitor_portal">Visitor Portal</span></a>
       <a href="#" id="nav-sidebar-guard" onclick="switchMainView('guard')"><span class="icon">🛡️</span><span class="nav-text" data-i18n="gate_scanner">Gate Scanner</span></a>
-      <a href="#" id="nav-sidebar-admin" class="active" onclick="switchMainView('admin')"><span class="icon">⚙️</span><span class="nav-text" data-i18n="admin_dashboard">Admin Dashboard</span></a>
-      <a href="#" id="nav-sidebar-whatsnew" onclick="switchMainView('whatsnew')"><span class="icon">📢</span><span class="nav-text" data-i18n="whats_new">What's New</span></a>
+      <a href="#" id="nav-sidebar-admin" class="admin-tab hidden" onclick="switchMainView('admin')"><span class="icon">⚙️</span><span class="nav-text" data-i18n="admin_dashboard">Admin Dashboard</span></a>
+      <a href="#" id="nav-sidebar-active" class="admin-tab hidden" onclick="switchMainView('active')"><span class="icon">🟢</span><span class="nav-text">Active in Facility</span></a>
+      <a href="#" id="nav-sidebar-history" class="admin-tab hidden" onclick="switchMainView('history')"><span class="icon">🕰️</span><span class="nav-text">History</span></a>
+      <a href="#" id="nav-sidebar-whatsnew" class="admin-tab hidden" onclick="switchMainView('whatsnew')"><span class="icon">📢</span><span class="nav-text" data-i18n="whats_new">What's New</span></a>
     </nav>
     <div class="sidebar-footer"><div id="sidebar-user-name" style="font-size: 12px; color: var(--noon-yellow); font-weight: bold; margin-bottom: 0;" class="nav-text">Admin</div></div>
   </aside>
@@ -211,17 +213,27 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
         <div class="admin-brand-horizontal"><h1 data-i18n="system_admin">System Administration</h1></div>
         <div class="admin-user-info header-controls"><span style="font-size: 12px; color: var(--text-muted); margin-inline-end: 10px;" id="header-admin-name">Admin Session</span><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 16px;" onclick="hardRefreshApp()" title="Hard Refresh Cache">🔄</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 16px; font-size: 16px;" onclick="toggleFullScreen()" title="Fullscreen">⛶</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 12px;" onclick="toggleLang()">عربي / EN</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 16px; font-size: 12px;" onclick="logout()" data-i18n="logout">LOGOUT</button></div>
       </header>
-      <ul class="admin-nav-horizontal"><li id="nav-approvals" class="active" onclick="switchAdminTab('approvals')" data-i18n="access_approvals">📋 Access Approvals</li><li id="nav-history" onclick="switchAdminTab('history')" data-i18n="history">🕰️ History</li><li id="nav-guard-approvals" onclick="switchAdminTab('guard-approvals')" data-i18n="guard_approvals">🛡️ Guard Approvals</li><li id="nav-analytics" onclick="switchAdminTab('analytics')" data-i18n="analytics">📊 Analytics</li></ul>
-      <div class="admin-filter-bar" id="admin-global-filter"><div style="display: flex; gap: 5px;"><button class="btn-filter active" onclick="setAdminFilter('all', this)" data-i18n="all_time">All Time</button><button class="btn-filter" onclick="setAdminFilter('today', this)" data-i18n="today">Today</button><button class="btn-filter" onclick="setAdminFilter('weekly', this)" data-i18n="weekly">Weekly</button><button class="btn-filter" onclick="setAdminFilter('monthly', this)" data-i18n="monthly">Monthly</button><button class="btn-filter" onclick="setAdminFilter('6months', this)" data-i18n="6months">6 Months</button><button class="btn-filter" onclick="setAdminFilter('year', this)" data-i18n="1year">1 Year</button><button class="btn-filter" onclick="setAdminFilter('custom', this)" data-i18n="custom">Custom</button></div><div id="custom-date-picker" class="hidden" style="display: flex; align-items: center; gap: 10px;"><input type="date" id="filter-start" class="input-field" style="padding: 8px; width: 140px; font-size: 12px;"><span style="color: var(--text-muted); font-size: 12px;" data-i18n="to">TO</span><input type="date" id="filter-end" class="input-field" style="padding: 8px; width: 140px; font-size: 12px;"><button class="btn-primary" style="width: auto; padding: 8px 16px; font-size: 12px;" onclick="renderAdminData(globalAdminData)" data-i18n="apply">APPLY</button></div></div>
+      <ul class="admin-nav-horizontal">
+        <li id="nav-approvals" class="active" onclick="switchAdminTab('approvals')" data-i18n="access_approvals">📋 Access Approvals</li>
+        <li id="nav-guard-approvals" onclick="switchAdminTab('guard-approvals')" data-i18n="guard_approvals">🛡️ Guard Approvals</li>
+        <li id="nav-analytics" onclick="switchAdminTab('analytics')" data-i18n="analytics">📊 Analytics</li>
+      </ul>
+      <div class="admin-filter-bar" id="admin-global-filter">
+        <div style="display: flex; gap: 5px;">
+            <button class="btn-filter active" onclick="setAdminFilter('all', this)" data-i18n="all_time">All Time</button>
+            <button class="btn-filter" onclick="setAdminFilter('today', this)" data-i18n="today">Today</button>
+            <button class="btn-filter" onclick="setAdminFilter('weekly', this)" data-i18n="weekly">Weekly</button>
+            <button class="btn-filter" onclick="setAdminFilter('monthly', this)" data-i18n="monthly">Monthly</button>
+            <button class="btn-filter" onclick="setAdminFilter('6months', this)" data-i18n="6months">6 Months</button>
+            <button class="btn-filter" onclick="setAdminFilter('year', this)" data-i18n="1year">1 Year</button>
+            <button class="btn-filter" onclick="setAdminFilter('custom', this)" data-i18n="custom">Custom</button>
+        </div>
+      </div>
       <div id="admin-sec-approvals" class="admin-card admin-section">
         <div class="admin-card-title"><span data-i18n="pending_req">Pending Requests</span></div>
         <div style="overflow-x: auto;"><table><thead><tr><th data-i18n="val_period">Validity Period</th><th data-i18n="name_header">Name</th><th data-i18n="type_header">Type</th><th data-i18n="facility_header">Facility</th><th data-i18n="action">Action</th></tr></thead><tbody id="admin-table-pending"><tr><td colspan="5" class="text-center" style="padding: 30px;" data-i18n="loading">Loading requests...</td></tr></tbody></table></div>
         <div class="admin-card-title" style="margin-top: 15px; border-top: 1px solid var(--border-color);"><span data-i18n="active_req">Active Requests</span><button class="btn-primary" style="width: auto; padding: 6px 12px; font-size: 11px;" onclick="printSelected()" data-i18n="print_selected">🖨️ PRINT SELECTED</button></div>
         <div style="overflow-x: auto;"><table><thead><tr><th style="width: 30px;"><input type="checkbox" id="selectAllCheckbox" class="print-checkbox" onclick="toggleSelectAll(this)"></th><th data-i18n="val_period">Validity Period</th><th data-i18n="name_header">Name</th><th data-i18n="type_header">Type</th><th data-i18n="facility_header">Facility</th><th data-i18n="action">Action</th></tr></thead><tbody id="admin-table-active"><tr><td colspan="6" class="text-center" style="padding: 30px;" data-i18n="loading">Loading requests...</td></tr></tbody></table></div>
-      </div>
-      <div id="admin-sec-history" class="admin-card admin-section hidden">
-        <div class="admin-card-title" data-i18n="access_history">Access & Gate History</div>
-        <div style="overflow-x: auto;"><table><thead><tr><th data-i18n="val_period">Validity Period</th><th data-i18n="name_header">Name</th><th data-i18n="type_header">Type</th><th data-i18n="facility_header">Facility</th><th data-i18n="final_status">Final Status</th><th data-i18n="check_in">Check-In</th><th data-i18n="check_out">Check-Out</th><th data-i18n="scanned_by">Scanned By</th><th data-i18n="action">Action</th></tr></thead><tbody id="admin-table-history"><tr><td colspan="9" class="text-center" style="padding: 30px;" data-i18n="no_history">No history found.</td></tr></tbody></table></div>
       </div>
       <div id="admin-sec-guard-approvals" class="admin-card admin-section hidden">
         <div class="admin-card-title" data-i18n="live_gate">Live Gate Operations</div>
@@ -233,6 +245,67 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
           <div class="analytics-box"><div class="analytics-box-title" data-i18n="type_analytics">👤 Type Analytics</div><div id="stat-type"></div></div>
           <div class="analytics-box"><div class="analytics-box-title" data-i18n="facility_analytics">🏢 Facility Analytics</div><div id="stat-facility"></div></div>
           <div class="analytics-box"><div class="analytics-box-title" data-i18n="status_analytics">✅ Status Analytics</div><div id="stat-status"></div></div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="dashboard-active" class="dashboard hidden" style="padding-top: 0;">
+      <header class="admin-header-top" style="margin: 0 -2.5vw 20px -2.5vw;">
+        <div class="admin-brand-horizontal"><h1>🟢 Active in Facility</h1></div>
+        <div class="admin-user-info header-controls"><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 16px;" onclick="hardRefreshApp()" title="Hard Refresh Cache">🔄</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 16px; font-size: 16px;" onclick="toggleFullScreen()" title="Fullscreen">⛶</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 12px;" onclick="toggleLang()">عربي / EN</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 16px; font-size: 12px;" onclick="logout()" data-i18n="logout">LOGOUT</button></div>
+      </header>
+      <div class="admin-card">
+        <div style="overflow-x: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th data-i18n="visitor_name">Visitor Name</th>
+                <th data-i18n="type_header">Type</th>
+                <th data-i18n="location_label">Location</th>
+                <th data-i18n="invited_by">Invited By</th>
+                <th data-i18n="check_in_time">Check-In Time</th>
+                <th>Duration</th>
+                <th data-i18n="scanned_by">Scanned By</th>
+              </tr>
+            </thead>
+            <tbody id="admin-table-active-facility">
+              <tr><td colspan="7" class="text-center" style="padding: 30px;">Loading live facility data...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="dashboard-history" class="dashboard hidden" style="padding-top: 0;">
+      <header class="admin-header-top" style="margin: 0 -2.5vw 20px -2.5vw;">
+        <div class="admin-brand-horizontal"><h1>🕰️ History</h1></div>
+        <div class="admin-user-info header-controls"><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 16px;" onclick="hardRefreshApp()" title="Hard Refresh Cache">🔄</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 16px; font-size: 16px;" onclick="toggleFullScreen()" title="Fullscreen">⛶</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 12px;" onclick="toggleLang()">عربي / EN</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 16px; font-size: 12px;" onclick="logout()" data-i18n="logout">LOGOUT</button></div>
+      </header>
+      <div class="admin-filter-bar">
+        <div style="display: flex; gap: 5px;">
+            <button class="btn-filter active" onclick="setAdminFilter('all', this)" data-i18n="all_time">All Time</button>
+            <button class="btn-filter" onclick="setAdminFilter('today', this)" data-i18n="today">Today</button>
+            <button class="btn-filter" onclick="setAdminFilter('weekly', this)" data-i18n="weekly">Weekly</button>
+            <button class="btn-filter" onclick="setAdminFilter('monthly', this)" data-i18n="monthly">Monthly</button>
+            <button class="btn-filter" onclick="setAdminFilter('6months', this)" data-i18n="6months">6 Months</button>
+            <button class="btn-filter" onclick="setAdminFilter('year', this)" data-i18n="1year">1 Year</button>
+            <button class="btn-filter" onclick="setAdminFilter('custom', this)" data-i18n="custom">Custom</button>
+        </div>
+        <div id="history-custom-date-picker" class="custom-date-picker hidden" style="display: flex; align-items: center; gap: 10px;">
+            <input type="date" id="history-filter-start" class="input-field" style="padding: 8px; width: 140px; font-size: 12px;">
+            <span style="color: var(--text-muted); font-size: 12px;" data-i18n="to">TO</span>
+            <input type="date" id="history-filter-end" class="input-field" style="padding: 8px; width: 140px; font-size: 12px;">
+            <button class="btn-primary" style="width: auto; padding: 8px 16px; font-size: 12px;" onclick="renderAdminData(globalAdminData)" data-i18n="apply">APPLY</button>
+        </div>
+      </div>
+      <div class="admin-card">
+        <div style="overflow-x: auto;">
+          <table>
+            <thead><tr><th data-i18n="val_period">Validity Period</th><th data-i18n="name_header">Name</th><th data-i18n="type_header">Type</th><th data-i18n="facility_header">Facility</th><th data-i18n="final_status">Final Status</th><th data-i18n="check_in">Check-In</th><th data-i18n="check_out">Check-Out</th><th data-i18n="scanned_by">Scanned By</th><th data-i18n="action">Action</th></tr></thead>
+            <tbody id="admin-table-history">
+              <tr><td colspan="9" class="text-center" style="padding: 30px;" data-i18n="no_history">No history found.</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -715,6 +788,9 @@ function initApp(){
             if(han)han.innerText=currentUser.name;if(sun)sun.innerText=currentUser.name;if(na)na.classList.remove('hidden');
             if(glt)glt.classList.add('hidden');if(agl){agl.classList.remove('hidden');agl.value=currentUser.location||'';currentUser.location=agl.value||''}
             if(msb)msb.classList.remove('hidden');
+            
+            document.querySelectorAll('.admin-tab').forEach(el => el.classList.remove('hidden'));
+            
             loadAdminData(false);switchMainView('admin');
         }else if(currentUser){
             const vn=document.getElementById('req-vname'),ag=document.getElementById('admin-email-group'),sb=document.getElementById('sidebar'),mc=document.getElementById('main-content');
@@ -976,19 +1052,37 @@ function switchAdminTab(tName){
 
 function setAdminFilter(range,btnElement){
     document.querySelectorAll('.btn-filter').forEach(b=>b.classList.remove('active'));
-    if(btnElement)btnElement.classList.add('active');
-    currentAdminFilter=range;const picker=document.getElementById('custom-date-picker');
-    if(range==='custom'){if(picker)picker.classList.remove('hidden')}
-    else{if(picker)picker.classList.add('hidden');renderAdminData(globalAdminData)}
+    if(btnElement){
+        const text = btnElement.innerText;
+        document.querySelectorAll('.btn-filter').forEach(b => { if(b.innerText === text) b.classList.add('active'); });
+    }
+    currentAdminFilter=range;
+    
+    let p1 = document.getElementById('custom-date-picker');
+    let p2 = document.getElementById('history-custom-date-picker');
+    if(range === 'custom') { 
+        if(p1) p1.classList.remove('hidden'); 
+        if(p2) p2.classList.remove('hidden'); 
+    } else { 
+        if(p1) p1.classList.add('hidden'); 
+        if(p2) p2.classList.add('hidden'); 
+    }
+    
+    if(range !== 'custom') renderAdminData(globalAdminData);
 }
 
 function renderAdminData(data){
     if(!Array.isArray(data)){ data = []; } globalAdminData=data;
-    const tPending=document.getElementById('admin-table-pending'),tActive=document.getElementById('admin-table-active'),tHistory=document.getElementById('admin-table-history'),tGuard=document.getElementById('admin-table-guard-approvals');
-    let hPending='',hActive='',hHistory='',hGuard='';
+    const tPending=document.getElementById('admin-table-pending'),tActive=document.getElementById('admin-table-active'),tHistory=document.getElementById('admin-table-history'),tGuard=document.getElementById('admin-table-guard-approvals'),tActiveFacility=document.getElementById('admin-table-active-facility');
+    let hPending='',hActive='',hHistory='',hGuard='',hActiveFacility='';
     const today=new Date();today.setHours(0,0,0,0); const tomorrow=new Date(today.getTime());tomorrow.setDate(tomorrow.getDate()+1);
-    const si=document.getElementById('filter-start'),ei=document.getElementById('filter-end'); const fStart=si?si.value:'',fEnd=ei?ei.value:'';
-    let pendingCount=0,activeCount=0,historyCount=0,guardCount=0; let aDate={},aType={},aFacility={},aStatus={};
+    
+    let si = document.getElementById('filter-start'), ei = document.getElementById('filter-end');
+    let siH = document.getElementById('history-filter-start'), eiH = document.getElementById('history-filter-end');
+    let fStart = (si && si.value) ? si.value : (siH && siH.value ? siH.value : '');
+    let fEnd = (ei && ei.value) ? ei.value : (eiH && eiH.value ? eiH.value : '');
+    
+    let pendingCount=0,activeCount=0,historyCount=0,guardCount=0,activeFacilityCount=0; let aDate={},aType={},aFacility={},aStatus={};
 
     data.forEach(row=>{
         if(!row||!row.UniqueID)return;
@@ -1010,6 +1104,33 @@ function renderAdminData(data){
         if(startD&&startD.getTime()===today.getTime()&&!isHistory){ rowStyle='style="background: rgba(16, 185, 129, 0.1);"'; dateBadge=`<br><span style="display:inline-block;margin-top:4px;background:var(--success);color:#000;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;">TODAY</span>`; }
         else if(startD&&startD.getTime()===tomorrow.getTime()&&!isHistory){ rowStyle='style="background: rgba(59, 130, 246, 0.1);"'; dateBadge=`<br><span style="display:inline-block;margin-top:4px;background:#3b82f6;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;">TOMORROW</span>`; }
         const finalDateStr=dateStr+dateBadge;
+        
+        const isInside = !!row.CheckInTime && !row.CheckOutTime;
+        if(isInside) {
+            let durHtml = '-';
+            if(row.CheckInTime) {
+                let ci = new Date(row.CheckInTime).getTime();
+                let now = new Date().getTime();
+                let diffMins = Math.floor((now - ci) / 60000);
+                let h = Math.floor(diffMins / 60);
+                let m = diffMins % 60;
+                durHtml = `<span style="color:var(--noon-yellow); font-weight:bold;">${h}h ${m}m</span>`;
+            }
+            let typeHtml = `<strong style="color:var(--noon-yellow);">${t(rType.toLowerCase())}</strong>`;
+            let invitedBy = row.InvitedBy || row.HostEmail || '-';
+            let guardHtml = `🛡️ ${row.ScannedByGuard || '-'}`;
+            
+            hActiveFacility += `<tr>
+                <td><strong>${rVisitorName}</strong></td>
+                <td>${typeHtml}</td>
+                <td>${rLocation}</td>
+                <td>${invitedBy}</td>
+                <td style="color:var(--text-muted);font-size:11px;">${formatTime(row.CheckInTime)}</td>
+                <td>${durHtml}</td>
+                <td style="color:var(--text-main); font-weight:600;">${guardHtml}</td>
+            </tr>`;
+            activeFacilityCount++;
+        }
 
         if(isHistory){
             if(inRange){
@@ -1074,6 +1195,7 @@ function renderAdminData(data){
     if(tActive){if(activeCount===0)hActive=`<tr><td colspan="6" class="text-center" style="padding:30px;">${t("msg_no_active")}</td></tr>`;tActive.innerHTML=hActive}
     if(tHistory){if(historyCount===0)hHistory=`<tr><td colspan="9" class="text-center" style="padding:30px;">${t("msg_no_history")}</td></tr>`;tHistory.innerHTML=hHistory}
     if(tGuard){if(guardCount===0)hGuard=`<tr><td colspan="7" class="text-center" style="padding:30px;">${t("msg_no_gate")}</td></tr>`;tGuard.innerHTML=hGuard}
+    if(tActiveFacility){if(activeFacilityCount===0)hActiveFacility=`<tr><td colspan="7" class="text-center" style="padding:30px;">No one is currently inside.</td></tr>`;tActiveFacility.innerHTML=hActiveFacility}
 
     const st=document.getElementById('stat-type');if(st)st.innerHTML=Object.keys(aType).map(k=>`<div class="stat-row"><span>${t(k.toLowerCase())}</span><span class="stat-val">${aType[k]}</span></div>`).join('')||'<div class="stat-row"><span>-</span></div>';
     const sf=document.getElementById('stat-facility');if(sf)sf.innerHTML=Object.keys(aFacility).map(k=>`<div class="stat-row"><span>${k}</span><span class="stat-val">${aFacility[k]}</span></div>`).join('')||'<div class="stat-row"><span>-</span></div>';
