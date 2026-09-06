@@ -14,7 +14,7 @@ body[dir="rtl"]{font-family:'Inter','Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
 .btn-primary{width:100%;padding:14px;background-color:var(--noon-yellow);color:#000;font-weight:700;font-size:14px;border:none;border-radius:6px;cursor:pointer;text-transform:uppercase;transition:0.2s}.btn-outline{background:transparent;color:var(--noon-yellow);border:1px solid var(--noon-yellow)}.btn-success{background:var(--success);color:white;border:none}.btn-danger{background:var(--danger);color:white;border:none}.btn-warning{background:var(--noon-yellow);color:#000;border:none}.btn-sm{padding:6px 12px;font-size:12px;border-radius:4px}
 #app-layout{display:flex;width:100vw;height:100vh;overflow:hidden}.sidebar{width:240px;background:var(--sidebar-bg);border-inline-end:1px solid var(--border-color);display:flex;flex-direction:column;transition:width 0.3s;z-index:100}.sidebar.minimized{width:75px}.sidebar-header{display:flex;align-items:center;justify-content:space-between;padding:20px;border-bottom:1px solid var(--border-color)}.sidebar.minimized .sidebar-brand{display:none}.sidebar-brand h1{font-size:16px;color:var(--noon-yellow);margin-bottom:2px}.sidebar-brand p{font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px}.toggle-btn{background:transparent;color:white;border:none;font-size:20px;cursor:pointer;padding:5px}.sidebar-nav{flex:1;padding:20px 0;display:flex;flex-direction:column;gap:5px}.sidebar-nav a{display:flex;align-items:center;padding:12px 20px;color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:600;border-left:3px solid transparent;transition:0.2s}.sidebar-nav a:hover,.sidebar-nav a.active{background:rgba(255,199,0,0.05);color:var(--noon-yellow);border-left:3px solid var(--noon-yellow)}.sidebar-nav a .icon{font-size:18px;min-width:35px}.sidebar.minimized .nav-text{display:none}.sidebar-footer{padding:20px;border-top:1px solid var(--border-color);text-align:center}.sidebar.minimized .sidebar-footer{padding:20px 10px}
 #main-content{flex:1;height:100vh;overflow-y:auto;position:relative;background-image:radial-gradient(circle at center,rgba(20,22,28,0.4) 0%,rgba(5,5,7,0.95) 100%),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100' viewBox='0 0 56 100'%3E%3Cpath d='M28 66L0 50L0 16L28 0L56 16L56 50L28 66ZM28 100L0 84L0 50L28 66L56 50L56 84L28 100Z' fill='none' stroke='%2322262f' stroke-width='1.5'/%3E%3Cpath d='M28 0L28 33M0 16L28 33M56 16L28 33M0 50L28 66M56 50L28 66' fill='none' stroke='%23151820' stroke-width='1'/%3E%3C/svg%3E")}
-.dashboard{width:100%;padding:20px;margin:0 auto}.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;padding-bottom:15px;border-bottom:1px solid var(--border-color);flex-wrap:wrap;gap:15px}.header h2{color:var(--noon-yellow);font-size:22px;margin:0;display:flex;align-items:center;gap:15px}.header-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}#dashboard-ops{max-width:950px;margin-top:20px}#dashboard-guard{max-width:600px;margin-top:20px}#dashboard-admin, #dashboard-whatsnew {max-width:100%;padding:30px 2.5vw;padding-top:0}
+.dashboard{width:100%;padding:20px;margin:0 auto}.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;padding-bottom:15px;border-bottom:1px solid var(--border-color);flex-wrap:wrap;gap:15px}.header h2{color:var(--noon-yellow);font-size:22px;margin:0;display:flex;align-items:center;gap:15px}.header-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}#dashboard-ops{max-width:950px;margin-top:20px}#dashboard-guard{max-width:600px;margin-top:20px}#dashboard-admin, #dashboard-whatsnew, #dashboard-history {max-width:100%;padding:30px 2.5vw;padding-top:0}
 .ops-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}.ops-card{background:var(--card-bg);padding:24px;border-radius:12px;border:1px solid var(--border-color);box-shadow:0 10px 30px rgba(0,0,0,0.5)}.pass-item{background:var(--input-bg);padding:15px;border-radius:8px;border:1px solid var(--border-color);margin-bottom:12px;text-align:start;position:relative;overflow:hidden}.pass-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:10px}.qr-box{background:white;padding:10px;border-radius:6px;display:inline-block;margin-top:10px}
 #reader{width:100%;border:none;border-radius:12px;overflow:hidden;background:var(--card-bg);box-shadow:0 10px 40px rgba(0,0,0,0.6)}
 .scan-result-card{padding:30px;border-radius:12px;text-align:center;margin-top:25px;color:white;font-weight:bold;box-shadow:0 10px 30px rgba(0,0,0,0.4)}.bg-green{background-color:var(--success)}.bg-red{background-color:var(--danger)}.bg-blue{background-color:#3b82f6}.bg-yellow{background-color:var(--noon-yellow);color:#000 !important}.bg-yellow h1, .bg-yellow p{color:#000 !important}.visitor-photo{width:160px;height:160px;border-radius:12px;object-fit:cover;border:3px solid white;margin:0 auto 20px auto;display:none;box-shadow:0 8px 25px rgba(0,0,0,0.5)}
@@ -26,7 +26,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
 .popup-modal{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.9);z-index:99999;display:flex;justify-content:center;align-items:center;padding:20px}.record-modal-box{background:var(--card-bg);width:100%;max-width:650px;border-radius:12px;border:1px solid var(--border-color);display:flex;flex-direction:column;max-height:90vh;box-shadow:0 15px 40px rgba(0,0,0,0.7)}.record-modal-header{padding:20px;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.2)}.record-modal-content{padding:25px;overflow-y:auto;font-size:13px;line-height:1.6;display:grid;grid-template-columns:1fr 1fr;gap:20px;color:var(--text-main)}.record-modal-content div{background:rgba(255,255,255,0.02);padding:12px;border-radius:6px;border:1px solid rgba(255,255,255,0.05)}.record-modal-content strong{color:var(--noon-yellow);display:block;font-size:11px;text-transform:uppercase;margin-bottom:4px;letter-spacing:0.5px}.record-img-box{grid-column:span 2;display:flex;flex-wrap:wrap;gap:15px}.record-img-box div{flex:1;min-width:180px;display:flex;flex-direction:column}.record-img-box img{width:100%;border-radius:8px;border:1px solid var(--border-color);object-fit:cover;margin-top:5px;cursor:pointer;transition:0.2s}.record-img-box img:hover{filter:brightness(1.2);box-shadow:0 0 15px rgba(255,199,0,0.3)}#camera-video-stream{width:100%;max-width:500px;max-height:70vh;background:#000;border-radius:12px;border:2px solid var(--noon-yellow);object-fit:cover}.cam-controls{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;justify-content:center}.print-checkbox{width:18px;height:18px;cursor:pointer;accent-color:var(--noon-yellow)}
 .splash-screen{position:fixed;top:0;left:0;width:100vw;height:100vh;background:var(--bg-dark);z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.6s ease;opacity:1}.splash-screen.fade-out{opacity:0;pointer-events:none}@keyframes pulse-glow{0%{box-shadow:0 0 0 0 rgba(255,199,0,0.4)}70%{box-shadow:0 0 0 20px rgba(255,199,0,0)}100%{box-shadow:0 0 0 0 rgba(255,199,0,0)}}.splash-logo{width:160px;height:160px;background-color:#12151c;background-image:url('logo.jpeg');background-size:contain;background-position:center;background-repeat:no-repeat;border-radius:18px;margin-bottom:30px;animation:pulse-glow 2s infinite}
 @media (max-width:1024px){.ops-grid{grid-template-columns:1fr}}
-@media (max-width:900px){.sidebar{position:fixed;height:100vh;transform:translateX(0)}.sidebar.minimized{transform:translateX(-100%);width:240px}body[dir="rtl"] .sidebar.minimized{transform:translateX(100%)}.dashboard{padding:4vw;margin-top:10px}.admin-header-top{flex-direction:column;height:auto;padding:15px;align-items:stretch;gap:15px;margin:0 -4vw 20px -4vw !important}.admin-brand-horizontal{margin-right:0;text-align:center;width:100%}.admin-nav-horizontal{flex-wrap:wrap;justify-content:center;gap:5px;width:100%}.admin-nav-horizontal li{padding:10px;font-size:11px;flex:1 1 auto;text-align:center}.admin-user-info{justify-content:center;width:100%}.admin-filter-bar{flex-direction:column;align-items:stretch;gap:10px}.admin-filter-bar > div{flex-wrap:wrap;justify-content:center;width:100%}#custom-date-picker{flex-direction:column;align-items:stretch;width:100%}table th,table td{padding:10px}.record-modal-content{grid-template-columns:1fr}#main-content{transition:margin-left 0.3s,margin-right 0.3s}body:not(.sidebar-minimized) #main-content{margin-inline-start:240px}}
+@media (max-width:900px){.sidebar{position:fixed;height:100vh;transform:translateX(0)}.sidebar.minimized{transform:translateX(-100%);width:240px}body[dir="rtl"] .sidebar.minimized{transform:translateX(100%)}.dashboard{padding:4vw;margin-top:10px}.admin-header-top{flex-direction:column;height:auto;padding:15px;align-items:stretch;gap:15px;margin:0 -4vw 20px -4vw !important}.admin-brand-horizontal{margin-right:0;text-align:center;width:100%}.admin-nav-horizontal{flex-wrap:wrap;justify-content:center;gap:5px;width:100%}.admin-nav-horizontal li{padding:10px;font-size:11px;flex:1 1 auto;text-align:center}.admin-user-info{justify-content:center;width:100%}.admin-filter-bar{flex-direction:column;align-items:stretch;gap:10px}.admin-filter-bar > div{flex-wrap:wrap;justify-content:center;width:100%}#custom-date-picker,#history-custom-date-picker{flex-direction:column;align-items:stretch;width:100%}table th,table td{padding:10px}.record-modal-content{grid-template-columns:1fr}#main-content{transition:margin-left 0.3s,margin-right 0.3s}body:not(.sidebar-minimized) #main-content{margin-inline-start:240px}}
 </style></head>
 <body class="sidebar-minimized" dir="ltr"> 
 <div id="splash" class="splash-screen"><div class="splash-logo"></div><h1 style="color:var(--noon-yellow);font-size:26px;letter-spacing:2px;margin:0;font-weight:700;">WELCOME TO NOON SLP</h1><p style="color:var(--text-muted);font-size:12px;margin-top:12px;text-transform:uppercase;letter-spacing:1.5px;">Security & Loss Prevention</p></div>
@@ -39,6 +39,33 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
 <div id="pin-verify-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 350px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">Security PIN Required</h3><button onclick="closePinVerify()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; display: flex; flex-direction: column; gap: 15px; text-align:center;"><p style="color:var(--text-muted); font-size:13px;">Please enter your 4-digit PIN to unlock and view your passes.</p><input type="password" id="verify-pin-input" class="input-field" placeholder="****" maxlength="4" style="text-align:center; font-size:24px; letter-spacing:10px;" oninput="this.value=this.value.replace(/[^0-9]/g,'')"><p id="pin-error-msg" class="hidden" style="color:var(--danger); font-size:12px; margin:0;">Incorrect PIN.</p><button class="btn-primary" onclick="confirmPinVerify()">UNLOCK</button></div></div></div>
 <div id="add-more-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 500px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;" data-i18n="add_more_people">➕ Add More People</h3><button onclick="closeAddMoreModal()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; display: flex; flex-direction: column; gap: 15px;"><p style="color:var(--danger); font-size:12px; font-weight:bold; margin-bottom:5px;" data-i18n="add_more_warning">⚠️ WARNING: Submitting this will change the pass status back to PENDING. It cannot be used until the Admin approves it again.</p><div id="add-team-roster-display" class="team-roster hidden"></div><div id="add-team-entry-box" style="border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; background: rgba(255,255,255,0.02);"><div class="input-group" style="margin-bottom: 15px;"><input type="text" id="req-add-team-name" class="input-field" data-i18n="full_name_ph" placeholder="Full Name"></div><div class="input-group" style="margin-bottom: 15px;"><input type="text" id="req-add-team-iqamatext" class="input-field" data-i18n="iqama_id_ph" placeholder="Iqama / ID Number"></div><div class="input-group" style="margin-bottom: 15px;"><label style="font-size: 11px; color:var(--noon-yellow);" data-i18n="device_type_label">Device Type</label><select id="req-add-team-device-type" class="input-field" onchange="toggleAddTeamDeviceInput()"><option value="None" data-i18n="no_device">No Device</option><option value="Mobile">Mobile</option><option value="Laptop">Laptop</option></select></div><div class="input-group hidden" id="req-add-team-device-id-group" style="margin-bottom: 15px;"><input type="text" id="req-add-team-device-id" class="input-field" placeholder="IMEI / Serial Number"><label style="font-size: 11px; margin-top:10px;" data-i18n="upload_device_photo">Upload Device Photo/Screen</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_imeiphoto')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-add-team-imeiphoto" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_imeiphoto')"></div><img id="preview-add_team_imeiphoto" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div><div class="input-group"><label style="font-size: 11px;" data-i18n="upload_iqama">Upload Iqama/ID Copy</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_iqama')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-add-team-iqama" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_iqama')"></div><img id="preview-add_team_iqama" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div><div class="input-group" style="margin-bottom: 15px;"><label style="font-size: 11px;" data-i18n="upload_selfie">Upload Selfie Photo</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_selfie')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-add-team-selfie" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_selfie')"></div><img id="preview-add_team_selfie" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div><button type="button" class="btn-primary btn-success" style="font-size: 12px;" onclick="saveAddTeamMember()" data-i18n="save_person_list">✅ SAVE PERSON TO LIST</button></div><button id="btn-submit-add-more" class="btn-primary" onclick="submitAddMorePeople()" data-i18n="submit_send_approval">SUBMIT & SEND FOR APPROVAL</button></div></div></div>
 <div id="admin-gate-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 400px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">🚪 GATE ACTION</h3><button onclick="closeAdminGateModal()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; display: flex; flex-direction: column; gap: 15px; text-align: center;"><p style="color:var(--text-muted); font-size:13px; margin-bottom:10px;">Select an action for pass <strong id="admin-gate-id-display" style="color:white;"></strong></p><input type="hidden" id="admin-gate-id"><button class="btn-primary btn-success" style="font-size: 14px; padding: 14px;" onclick="submitAdminGateAction('check_in')">✅ CHECK IN</button><button class="btn-primary btn-warning" style="font-size: 14px; padding: 14px; color:#000;" onclick="submitAdminGateAction('check_out')">🚪 CHECK OUT</button></div></div></div>
+
+<!-- TIMELINE MODAL -->
+<div id="timeline-modal" class="popup-modal hidden">
+    <div class="record-modal-box" style="max-width: 700px;">
+        <div class="record-modal-header">
+            <h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">📜 Access Timeline</h3>
+            <button onclick="closeTimeline()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
+        </div>
+        <div style="padding: 25px; overflow-y: auto; max-height: 70vh;">
+            <h4 id="timeline-pass-name" style="color: white; margin-bottom: 20px; font-size: 15px;"></h4>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Check-In</th>
+                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Check-Out</th>
+                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Duration</th>
+                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Guard</th>
+                        </tr>
+                    </thead>
+                    <tbody id="timeline-table-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div id="login-view"><div class="login-top-controls"><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 16px;" onclick="hardRefreshApp()" title="Hard Refresh Cache">🔄</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 16px;" onclick="toggleFullScreen()" title="Fullscreen">⛶</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 12px;" onclick="toggleLang()">عربي / EN</button></div><div class="login-container"><div class="logo-box"></div><div style="text-align:center;margin-bottom:25px;"><h2 style="color:var(--noon-yellow);font-size:24px;margin-bottom:6px;letter-spacing:1px;">NOON SLP</h2><p style="color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="visitor_contractor_portal">Visitor & Contractor Portal</p></div>
 <div class="role-tabs" id="role-tabs" style="display:none;"><div class="role-tab active" id="tab-guard" onclick="switchLoginTab('guard')" data-i18n="guard">🛡️ Guard</div><div class="role-tab" id="tab-admin" onclick="switchLoginTab('admin')" data-i18n="admin">⚙️ Admin</div></div>
@@ -248,7 +275,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
                 <th data-i18n="name_header">Name</th>
                 <th data-i18n="type_header">Type</th>
                 <th data-i18n="facility_header">Facility</th>
-                <th data-i18n="check_in_time">Check-In</th>
+                <th data-i18n="check_in">Check-In</th>
                 <th>Duration</th>
                 <th data-i18n="action">Action</th>
               </tr>
@@ -268,15 +295,12 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
                 <th data-i18n="type_header">Type</th>
                 <th data-i18n="facility_header">Facility</th>
                 <th data-i18n="final_status">Final Status</th>
-                <th data-i18n="check_in">Check-In</th>
-                <th data-i18n="check_out">Check-Out</th>
-                <th>Duration</th>
-                <th data-i18n="scanned_by">Scanned By</th>
+                <th>Total Visits</th>
                 <th data-i18n="action">Action</th>
               </tr>
             </thead>
             <tbody id="admin-table-history">
-              <tr><td colspan="10" class="text-center" style="padding: 30px;" data-i18n="no_history">No history found.</td></tr>
+              <tr><td colspan="7" class="text-center" style="padding: 30px;" data-i18n="no_history">No history found.</td></tr>
             </tbody>
           </table>
         </div>
@@ -315,11 +339,38 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
                 <li style="margin-bottom:10px;"><strong>Guard Scanner:</strong> Added vehicle plate view and multi-day check-in status.</li>
             </ul>
         </div>
-        
       </div>
     </div>
   </main>
 </div>
+
+<!-- TIMELINE MODAL -->
+<div id="timeline-modal" class="popup-modal hidden">
+    <div class="record-modal-box" style="max-width: 700px;">
+        <div class="record-modal-header">
+            <h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">📜 Access Timeline</h3>
+            <button onclick="closeTimeline()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
+        </div>
+        <div style="padding: 25px; overflow-y: auto; max-height: 70vh;">
+            <h4 id="timeline-pass-name" style="color: white; margin-bottom: 20px; font-size: 15px;"></h4>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Check-In</th>
+                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Check-Out</th>
+                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Duration</th>
+                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Guard</th>
+                        </tr>
+                    </thead>
+                    <tbody id="timeline-table-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbzFQCv1Ng_n-U13NiMLz1Z2ldPzore4YBlnc6Iu4w5kkOSzaoNkPz80QlbD7PDOwld1_A/exec';
 const urlParams = new URLSearchParams(window.location.search);
@@ -1054,6 +1105,112 @@ function setAdminFilter(range,btnElement){
     if(range !== 'custom') renderAdminData(globalAdminData);
 }
 
+function parseLogs(row) {
+    let visits = [];
+    let gLogs = String(row.GateLogs || "");
+    
+    if (!gLogs.trim() && row.CheckInTime) {
+        visits.push({
+            in: new Date(row.CheckInTime),
+            out: row.CheckOutTime ? new Date(row.CheckOutTime) : null,
+            guardIn: row.ScannedByGuard || 'Unknown',
+            guardOut: row.ScannedByGuard || 'Unknown'
+        });
+        return visits;
+    }
+    
+    if (gLogs.startsWith("[")) {
+        try {
+            let logs = JSON.parse(gLogs);
+            let currentVisit = null;
+            logs.forEach(l => {
+                if (l.action === 'IN') {
+                    currentVisit = { in: new Date(l.time), out: null, guardIn: l.guard || 'Unknown', guardOut: '' };
+                    visits.push(currentVisit);
+                } else if (l.action === 'OUT') {
+                    if (currentVisit && !currentVisit.out) {
+                        currentVisit.out = new Date(l.time);
+                        currentVisit.guardOut = l.guard || 'Unknown';
+                    } else {
+                        visits.push({ in: null, out: new Date(l.time), guardIn: '', guardOut: l.guard || 'Unknown' });
+                    }
+                }
+            });
+        } catch(e) {}
+    } else {
+        let lines = gLogs.split("\n");
+        let currentVisit = null;
+        lines.forEach(line => {
+            let m = line.match(/(IN|OUT)\s*\((\d+)\)\s*at\s*(.+?)\s*by\s*(.*)/);
+            if(m) {
+                let action = m[1], time = new Date(m[3]), guard = m[4];
+                if (action === 'IN') {
+                    currentVisit = { in: time, out: null, guardIn: guard, guardOut: '' };
+                    visits.push(currentVisit);
+                } else {
+                    if(currentVisit && !currentVisit.out) {
+                        currentVisit.out = time;
+                        currentVisit.guardOut = guard;
+                    } else {
+                        visits.push({ in: null, out: time, guardIn: '', guardOut: guard });
+                    }
+                }
+            }
+        });
+    }
+    return visits;
+}
+
+function openTimeline(id) {
+    let row = globalAdminData.find(x => String(x.UniqueID) === String(id));
+    if(!row) return;
+    
+    let passName = row.VisitorName || 'Unknown Pass';
+    document.getElementById('timeline-pass-name').innerText = passName + " (" + id + ")";
+    
+    let visits = parseLogs(row);
+    let tbody = document.getElementById('timeline-table-body');
+    let h = '';
+    
+    if(visits.length === 0) {
+        h = `<tr><td colspan="4" class="text-center" style="padding:20px; color:var(--text-muted);">No scan logs found for this pass.</td></tr>`;
+    } else {
+        visits.reverse().forEach(v => {
+            let inStr = v.in ? formatTime(v.in) : '-';
+            let outStr = v.out ? formatTime(v.out) : '<span style="color:var(--success);font-weight:bold;">Currently Inside</span>';
+            
+            let durStr = '-';
+            if (v.in) {
+                let endT = v.out ? v.out.getTime() : new Date().getTime();
+                let startT = v.in.getTime();
+                let diffMins = Math.floor((endT - startT) / 60000);
+                if(diffMins < 0) diffMins = 0;
+                let hs = Math.floor(diffMins / 60);
+                let ms = diffMins % 60;
+                durStr = `<span style="color:var(--noon-yellow);font-weight:bold;">${hs}h ${ms}m</span>`;
+            }
+            
+            let gStr = v.guardIn;
+            if(v.guardOut && v.guardOut !== v.guardIn) gStr += ` / ${v.guardOut}`;
+            
+            h += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <td style="color:white; font-size:12px;">${inStr}</td>
+                <td style="color:var(--text-muted); font-size:12px;">${outStr}</td>
+                <td style="font-size:12px;">${durStr}</td>
+                <td style="color:var(--text-muted); font-size:11px;">🛡️ ${gStr}</td>
+            </tr>`;
+        });
+    }
+    
+    tbody.innerHTML = h;
+    document.getElementById('timeline-modal').classList.remove('hidden');
+}
+
+function closeTimeline() {
+    document.getElementById('timeline-modal').classList.add('hidden');
+}
+
+
 function renderAdminData(data){
     if(!Array.isArray(data)){ data = []; } globalAdminData=data;
     const tPending=document.getElementById('admin-table-pending'),tActive=document.getElementById('admin-table-active'),tHistory=document.getElementById('admin-table-history'),tGuard=document.getElementById('admin-table-guard-approvals');
@@ -1072,6 +1229,10 @@ function renderAdminData(data){
         let rVisitorName = String(row.VisitorName || ''); let rHostEmail = String(row.HostEmail || '');
         let endDateObj=new Date((parseFlexibleDate(row.EndDate)||parseFlexibleDate(row.StartDate)||new Date()).getTime()); endDateObj.setHours(23,59,59,999);
         const isExpired=endDateObj<today;
+        
+        let visits = parseLogs(row);
+        let isInside = visits.length > 0 && visits[visits.length - 1].in && !visits[visits.length - 1].out;
+        
         const isHistory = isExpired || rStatus==='Rejected' || rStatus==='Completed';
         const inRange=isDateInRange(row.StartDate,currentAdminFilter,fStart,fEnd);
         const dateStr=rType==='Visitor'?formatToDDMMYYYY(row.StartDate):`${formatToDDMMYYYY(row.StartDate)} - ${formatToDDMMYYYY(row.EndDate||row.StartDate)}`;
@@ -1087,7 +1248,7 @@ function renderAdminData(data){
         else if(startD&&startD.getTime()===tomorrow.getTime()&&!isHistory){ rowStyle='style="background: rgba(59, 130, 246, 0.1);"'; dateBadge=`<br><span style="display:inline-block;margin-top:4px;background:#3b82f6;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;">TOMORROW</span>`; }
         const finalDateStr=dateStr+dateBadge;
 
-        if(isHistory){
+        if (visits.length > 0 || isHistory) {
             if(inRange){
                 let finalStatus=rStatus,sColor='var(--noon-yellow)';
                 if(rStatus==='Rejected'){finalStatus=t('status_rejected');sColor='var(--danger)'}
@@ -1095,38 +1256,26 @@ function renderAdminData(data){
                 else if(rStatus==='Completed'){finalStatus=t('status_completed');sColor='var(--success)'}
                 else{finalStatus=t('status_approved');sColor='var(--success)'}
                 
-                let historyActionBtns=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;"><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button></div>`;
+                let timelineBtn = visits.length > 0 ? `<button class="btn-primary btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;color:#000;" onclick="openTimeline('${row.UniqueID}')">📜 TIMELINE</button>` : '';
+                let historyActionBtns=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;">${timelineBtn}<button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button></div>`;
                 
-                let durHtml = '-';
-                if (row.CheckInTime && row.CheckOutTime) {
-                    let ci = new Date(row.CheckInTime).getTime();
-                    let co = new Date(row.CheckOutTime).getTime();
-                    let diffMins = Math.floor((co - ci) / 60000);
-                    if (diffMins < 0) diffMins = 0;
-                    let h = Math.floor(diffMins / 60);
-                    let m = diffMins % 60;
-                    durHtml = `<span style="color:var(--noon-yellow); font-weight:bold;">${h}h ${m}m</span>`;
-                }
-
-                let invitedBy = row.InvitedBy || row.HostEmail || '-';
-                let guardHtml = `🛡️ ${row.ScannedByGuard || '-'}`;
                 let typeHtml = `<strong style="color:var(--noon-yellow);">${t(rType.toLowerCase())}</strong>`;
                 let statusBadge = `<span style="background:${sColor}20; color:${sColor}; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">${finalStatus}</span>`;
 
                 hHistory+=`<tr>
+                    <td style="color:var(--text-muted);">${dateStr}</td>
                     <td><strong>${rVisitorName}</strong><br>${statusBadge}</td>
                     <td>${typeHtml}</td>
                     <td>${rLocation}</td>
-                    <td>${invitedBy}</td>
-                    <td style="color:var(--text-muted);font-size:11px;">${row.CheckInTime?formatTime(row.CheckInTime):'-'}</td>
-                    <td style="color:var(--text-muted);font-size:11px;">${row.CheckOutTime?formatTime(row.CheckOutTime):'-'}</td>
-                    <td>${durHtml}</td>
-                    <td style="color:var(--text-main); font-weight:600;">${guardHtml}</td>
+                    <td style="font-weight:600;color:${sColor}">${finalStatus}</td>
+                    <td style="color:var(--text-main);font-weight:bold;">${visits.length} Visit(s)</td>
                     <td>${historyActionBtns}</td>
                 </tr>`;
                 historyCount++;
             }
-        }else{
+        }
+        
+        if (!isHistory) {
             if(inRange){
                 if(rStatus==='Pending'){
                     let actionBtns=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;"><button class="btn-primary btn-success btn-sm" style="width:auto;white-space:nowrap;" onclick="updateStatus('${row.UniqueID}','Approved')">${t('btn_approve')}</button><button class="btn-primary btn-danger btn-sm" style="width:auto;white-space:nowrap;" onclick="updateStatus('${row.UniqueID}','Rejected')">${t('btn_reject')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button></div>`;
@@ -1139,18 +1288,18 @@ function renderAdminData(data){
                     
                     let ciTime = '-';
                     let durHtml = '-';
-                    const isInside = !!row.CheckInTime && !row.CheckOutTime;
-                    if (row.CheckInTime) {
-                        ciTime = formatTime(row.CheckInTime);
-                        if (isInside) {
-                            let ci = new Date(row.CheckInTime).getTime();
-                            let now = new Date().getTime();
-                            let diffMins = Math.floor((now - ci) / 60000);
-                            if(diffMins < 0) diffMins = 0;
-                            let h = Math.floor(diffMins / 60);
-                            let m = diffMins % 60;
-                            durHtml = `<span style="color:var(--noon-yellow); font-weight:bold;">${h}h ${m}m</span>`;
-                        }
+                    
+                    if (isInside) {
+                        let activeVisit = visits[visits.length - 1];
+                        ciTime = formatTime(activeVisit.in);
+                        
+                        let ci = activeVisit.in.getTime();
+                        let now = new Date().getTime();
+                        let diffMins = Math.floor((now - ci) / 60000);
+                        if(diffMins < 0) diffMins = 0;
+                        let h = Math.floor(diffMins / 60);
+                        let m = diffMins % 60;
+                        durHtml = `<span style="color:var(--noon-yellow); font-weight:bold;">${h}h ${m}m</span>`;
                     }
                     
                     hActive+=`<tr ${rowStyle}>
@@ -1167,6 +1316,7 @@ function renderAdminData(data){
                 }
             }
         }
+        
         if(inRange){
             let logFound=false; let gLogs = String(row.GateLogs || "");
             if(gLogs.trim()!==""){
@@ -1202,7 +1352,7 @@ function renderAdminData(data){
 
     if(tPending){if(pendingCount===0)hPending=`<tr><td colspan="5" class="text-center" style="padding:30px;">${t("msg_no_pending")}</td></tr>`;tPending.innerHTML=hPending}
     if(tActive){if(activeCount===0)hActive=`<tr><td colspan="8" class="text-center" style="padding:30px;">${t("msg_no_active")}</td></tr>`;tActive.innerHTML=hActive}
-    if(tHistory){if(historyCount===0)hHistory=`<tr><td colspan="10" class="text-center" style="padding:30px;">${t("msg_no_history")}</td></tr>`;tHistory.innerHTML=hHistory}
+    if(tHistory){if(historyCount===0)hHistory=`<tr><td colspan="7" class="text-center" style="padding:30px;">${t("msg_no_history")}</td></tr>`;tHistory.innerHTML=hHistory}
     if(tGuard){if(guardCount===0)hGuard=`<tr><td colspan="7" class="text-center" style="padding:30px;">${t("msg_no_gate")}</td></tr>`;tGuard.innerHTML=hGuard}
 
     const st=document.getElementById('stat-type');if(st)st.innerHTML=Object.keys(aType).map(k=>`<div class="stat-row"><span>${t(k.toLowerCase())}</span><span class="stat-val">${aType[k]}</span></div>`).join('')||'<div class="stat-row"><span>-</span></div>';
@@ -1268,14 +1418,14 @@ async function submitAdminGateAction(actionType) {
     
     let item = globalAdminData.find(x => String(x.UniqueID) === String(id));
     if(item) {
-        const isInside = !!item.CheckInTime && !item.CheckOutTime;
-        const isOutside = !item.CheckInTime || (!!item.CheckInTime && !!item.CheckOutTime);
+        let visits = parseLogs(item);
+        const isInside = visits.length > 0 && visits[visits.length - 1].in && !visits[visits.length - 1].out;
         const actor = item.ScannedByGuard || 'Unknown';
         
         if (actionType === 'check_in' && isInside) {
             return alert("This pass is already checked IN by:\n" + actor);
         }
-        if (actionType === 'check_out' && isOutside) {
+        if (actionType === 'check_out' && !isInside) {
             return alert("This pass is already checked OUT by:\n" + actor);
         }
     }
@@ -1546,7 +1696,9 @@ async function onScanSuccess(decodedText){
     const todayNum=new Date().setHours(0,0,0,0);
     let startObj=parseFlexibleDate(data.StartDate),startNum=startObj?startObj.setHours(0,0,0,0):todayNum;
     let endObj=parseFlexibleDate(data.EndDate),endNum=endObj?endObj.setHours(0,0,0,0):startNum;
-    const isCheckedOut=!!data.CheckOutTime,isInside=!!data.CheckInTime&&!data.CheckOutTime;
+    
+    let visits = parseLogs(data);
+    const isInside = visits.length > 0 && visits[visits.length - 1].in && !visits[visits.length - 1].out;
 
     let scanState = t("allowed"), scanMsg = t("pass_validated"), scanColor = "bg-green"; let allowAction = true;
     if(currentUser.role==='admin'&&!currentUser.location) { scanState=t("denied"); scanMsg=t("admin_select_fac"); scanColor="bg-red"; allowAction=false; }
