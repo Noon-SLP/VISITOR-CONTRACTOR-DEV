@@ -26,7 +26,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
 .popup-modal{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.9);z-index:99999;display:flex;justify-content:center;align-items:center;padding:20px}.record-modal-box{background:var(--card-bg);width:100%;max-width:650px;border-radius:12px;border:1px solid var(--border-color);display:flex;flex-direction:column;max-height:90vh;box-shadow:0 15px 40px rgba(0,0,0,0.7)}.record-modal-header{padding:20px;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.2)}.record-modal-content{padding:25px;overflow-y:auto;font-size:13px;line-height:1.6;display:grid;grid-template-columns:1fr 1fr;gap:20px;color:var(--text-main)}.record-modal-content div{background:rgba(255,255,255,0.02);padding:12px;border-radius:6px;border:1px solid rgba(255,255,255,0.05)}.record-modal-content strong{color:var(--noon-yellow);display:block;font-size:11px;text-transform:uppercase;margin-bottom:4px;letter-spacing:0.5px}.record-img-box{grid-column:span 2;display:flex;flex-wrap:wrap;gap:15px}.record-img-box div{flex:1;min-width:180px;display:flex;flex-direction:column}.record-img-box img{width:100%;border-radius:8px;border:1px solid var(--border-color);object-fit:cover;margin-top:5px;cursor:pointer;transition:0.2s}.record-img-box img:hover{filter:brightness(1.2);box-shadow:0 0 15px rgba(255,199,0,0.3)}#camera-video-stream{width:100%;max-width:500px;max-height:70vh;background:#000;border-radius:12px;border:2px solid var(--noon-yellow);object-fit:cover}.cam-controls{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;justify-content:center}.print-checkbox{width:18px;height:18px;cursor:pointer;accent-color:var(--noon-yellow)}
 .splash-screen{position:fixed;top:0;left:0;width:100vw;height:100vh;background:var(--bg-dark);z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.6s ease;opacity:1}.splash-screen.fade-out{opacity:0;pointer-events:none}@keyframes pulse-glow{0%{box-shadow:0 0 0 0 rgba(255,199,0,0.4)}70%{box-shadow:0 0 0 20px rgba(255,199,0,0)}100%{box-shadow:0 0 0 0 rgba(255,199,0,0)}}.splash-logo{width:160px;height:160px;background-color:#12151c;background-image:url('logo.jpeg');background-size:contain;background-position:center;background-repeat:no-repeat;border-radius:18px;margin-bottom:30px;animation:pulse-glow 2s infinite}
 @media (max-width:1024px){.ops-grid{grid-template-columns:1fr}}
-@media (max-width:900px){.sidebar{position:fixed;height:100vh;transform:translateX(0)}.sidebar.minimized{transform:translateX(-100%);width:240px}body[dir="rtl"] .sidebar.minimized{transform:translateX(100%)}.dashboard{padding:4vw;margin-top:10px}.admin-header-top{flex-direction:column;height:auto;padding:15px;align-items:stretch;gap:15px;margin:0 -4vw 20px -4vw !important}.admin-brand-horizontal{margin-right:0;text-align:center;width:100%}.admin-nav-horizontal{flex-wrap:wrap;justify-content:center;gap:5px;width:100%}.admin-nav-horizontal li{padding:10px;font-size:11px;flex:1 1 auto;text-align:center}.admin-user-info{justify-content:center;width:100%}.admin-filter-bar{flex-direction:column;align-items:stretch;gap:10px}.admin-filter-bar > div{flex-wrap:wrap;justify-content:center;width:100%}#custom-date-picker,#history-custom-date-picker{flex-direction:column;align-items:stretch;width:100%}table th,table td{padding:10px}.record-modal-content{grid-template-columns:1fr}#main-content{transition:margin-left 0.3s,margin-right 0.3s}body:not(.sidebar-minimized) #main-content{margin-inline-start:240px}}
+@media (max-width:900px){.sidebar{position:fixed;height:100vh;transform:translateX(0)}.sidebar.minimized{transform:translateX(-100%);width:240px}body[dir="rtl"] .sidebar.minimized{transform:translateX(100%)}.dashboard{padding:4vw;margin-top:10px}.admin-header-top{flex-direction:column;height:auto;padding:15px;align-items:stretch;gap:15px;margin:0 -4vw 20px -4vw !important}.admin-brand-horizontal{margin-right:0;text-align:center;width:100%}.admin-nav-horizontal{flex-wrap:wrap;justify-content:center;gap:5px;width:100%}.admin-nav-horizontal li{padding:10px;font-size:11px;flex:1 1 auto;text-align:center}.admin-user-info{justify-content:center;width:100%}.admin-filter-bar{flex-direction:column;align-items:stretch;gap:10px}.admin-filter-bar > div{flex-wrap:wrap;justify-content:center;width:100%}#custom-date-picker{flex-direction:column;align-items:stretch;width:100%}table th,table td{padding:10px}.record-modal-content{grid-template-columns:1fr}#main-content{transition:margin-left 0.3s,margin-right 0.3s}body:not(.sidebar-minimized) #main-content{margin-inline-start:240px}}
 </style></head>
 <body class="sidebar-minimized" dir="ltr"> 
 <div id="splash" class="splash-screen"><div class="splash-logo"></div><h1 style="color:var(--noon-yellow);font-size:26px;letter-spacing:2px;margin:0;font-weight:700;">WELCOME TO NOON SLP</h1><p style="color:var(--text-muted);font-size:12px;margin-top:12px;text-transform:uppercase;letter-spacing:1.5px;">Security & Loss Prevention</p></div>
@@ -240,6 +240,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
       </header>
       <ul class="admin-nav-horizontal">
         <li id="nav-approvals" class="active" onclick="switchAdminTab('approvals')" data-i18n="access_approvals">📋 Access Approvals</li>
+        <li id="nav-history" onclick="switchAdminTab('history')" data-i18n="history">🕰️ History</li>
         <li id="nav-guard-approvals" onclick="switchAdminTab('guard-approvals')" data-i18n="guard_approvals">🛡️ Guard Approvals</li>
         <li id="nav-analytics" onclick="switchAdminTab('analytics')" data-i18n="analytics">📊 Analytics</li>
       </ul>
@@ -279,6 +280,27 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
               </tr>
             </thead>
             <tbody id="admin-table-active"><tr><td colspan="8" class="text-center" style="padding: 30px;" data-i18n="loading">Loading requests...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="admin-sec-history" class="admin-card admin-section hidden">
+        <div class="admin-card-title" data-i18n="access_history">Access & Gate History</div>
+        <div style="overflow-x: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th data-i18n="val_period">Validity Period</th>
+                <th data-i18n="name_header">Name</th>
+                <th data-i18n="type_header">Type</th>
+                <th data-i18n="facility_header">Facility</th>
+                <th data-i18n="final_status">Final Status</th>
+                <th>Total Visits</th>
+                <th data-i18n="action">Action</th>
+              </tr>
+            </thead>
+            <tbody id="admin-table-history">
+              <tr><td colspan="7" class="text-center" style="padding: 30px;" data-i18n="no_history">No history found.</td></tr>
+            </tbody>
           </table>
         </div>
       </div>
@@ -1073,13 +1095,10 @@ function setAdminFilter(range,btnElement){
     currentAdminFilter=range;
     
     let p1 = document.getElementById('custom-date-picker');
-    let p2 = document.getElementById('history-custom-date-picker');
     if(range === 'custom') { 
         if(p1) p1.classList.remove('hidden'); 
-        if(p2) p2.classList.remove('hidden'); 
     } else { 
         if(p1) p1.classList.add('hidden'); 
-        if(p2) p2.classList.add('hidden'); 
     }
     
     if(range !== 'custom') renderAdminData(globalAdminData);
@@ -1197,9 +1216,8 @@ function renderAdminData(data){
     const today=new Date();today.setHours(0,0,0,0); const tomorrow=new Date(today.getTime());tomorrow.setDate(tomorrow.getDate()+1);
     
     let si = document.getElementById('filter-start'), ei = document.getElementById('filter-end');
-    let siH = document.getElementById('history-filter-start'), eiH = document.getElementById('history-filter-end');
-    let fStart = (si && si.value) ? si.value : (siH && siH.value ? siH.value : '');
-    let fEnd = (ei && ei.value) ? ei.value : (eiH && eiH.value ? eiH.value : '');
+    let fStart = (si && si.value) ? si.value : '';
+    let fEnd = (ei && ei.value) ? ei.value : '';
     
     let pendingCount=0,activeCount=0,historyCount=0,guardCount=0; let aDate={},aType={},aFacility={},aStatus={};
 
@@ -1215,7 +1233,10 @@ function renderAdminData(data){
         
         const isHistory = isExpired || rStatus==='Rejected' || rStatus==='Completed';
         const inRange=isDateInRange(row.StartDate,currentAdminFilter,fStart,fEnd);
-        const dateStr=rType==='Visitor'?formatToDDMMYYYY(row.StartDate):`${formatToDDMMYYYY(row.StartDate)} - ${formatToDDMMYYYY(row.EndDate||row.StartDate)}`;
+        
+        let formattedStart = formatToDDMMYYYY(row.StartDate);
+        let formattedEnd = formatToDDMMYYYY(row.EndDate || row.StartDate);
+        const dateStr = (formattedStart === formattedEnd) ? formattedStart : `${formattedStart} - ${formattedEnd}`;
 
         if(inRange){
             aType[rType]=(aType[rType]||0)+1;aFacility[rLocation]=(aFacility[rLocation]||0)+1;aStatus[rStatus]=(aStatus[rStatus]||0)+1;
@@ -1223,9 +1244,20 @@ function renderAdminData(data){
         }
 
         let startD=parseFlexibleDate(row.StartDate);if(startD){startD=new Date(startD.getTime());startD.setHours(0,0,0,0)}
+        let endD=parseFlexibleDate(row.EndDate || row.StartDate);if(endD){endD=new Date(endD.getTime());endD.setHours(0,0,0,0)}
+
+        let isMultiDay = (startD && endD && endD.getTime() > startD.getTime());
+
         let rowStyle='',dateBadge='';
-        if(startD&&startD.getTime()===today.getTime()&&!isHistory){ rowStyle='style="background: rgba(16, 185, 129, 0.1);"'; dateBadge=`<br><span style="display:inline-block;margin-top:4px;background:var(--success);color:#000;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;">TODAY</span>`; }
-        else if(startD&&startD.getTime()===tomorrow.getTime()&&!isHistory){ rowStyle='style="background: rgba(59, 130, 246, 0.1);"'; dateBadge=`<br><span style="display:inline-block;margin-top:4px;background:#3b82f6;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;">TOMORROW</span>`; }
+        if(startD&&startD.getTime()===today.getTime()&&!isHistory){ rowStyle='style="background: rgba(16, 185, 129, 0.1);"'; dateBadge+=`<span style="display:inline-block;margin-top:4px;background:var(--success);color:#000;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;margin-right:5px;">TODAY</span>`; }
+        else if(startD&&startD.getTime()===tomorrow.getTime()&&!isHistory){ rowStyle='style="background: rgba(59, 130, 246, 0.1);"'; dateBadge+=`<span style="display:inline-block;margin-top:4px;background:#3b82f6;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;margin-right:5px;">TOMORROW</span>`; }
+        
+        if (isMultiDay && !isHistory) {
+            rowStyle = 'style="background: rgba(139, 92, 246, 0.15);"';
+            dateBadge += `<span style="display:inline-block;margin-top:4px;background:#8b5cf6;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;letter-spacing:0.5px;">MULTI-DAY</span>`;
+        }
+
+        if(dateBadge !== '') dateBadge = '<br>' + dateBadge;
         const finalDateStr=dateStr+dateBadge;
 
         if (visits.length > 0 || isHistory) {
@@ -1240,11 +1272,11 @@ function renderAdminData(data){
                 let historyActionBtns=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;">${timelineBtn}<button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button></div>`;
                 
                 let typeHtml = `<strong style="color:var(--noon-yellow);">${t(rType.toLowerCase())}</strong>`;
-                let statusBadge = `<span style="background:${sColor}20; color:${sColor}; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">${finalStatus}</span>`;
+                let statusBadgeHistory = `<span style="background:${sColor}20; color:${sColor}; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">${finalStatus}</span>`;
 
                 hHistory+=`<tr>
                     <td style="color:var(--text-muted);">${dateStr}</td>
-                    <td><strong>${rVisitorName}</strong><br>${statusBadge}</td>
+                    <td><strong>${rVisitorName}</strong><br>${statusBadgeHistory}</td>
                     <td>${typeHtml}</td>
                     <td>${rLocation}</td>
                     <td style="font-weight:600;color:${sColor}">${finalStatus}</td>
