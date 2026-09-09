@@ -26,7 +26,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
 .popup-modal{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.9);z-index:99999;display:flex;justify-content:center;align-items:center;padding:20px}.record-modal-box{background:var(--card-bg);width:100%;max-width:650px;border-radius:12px;border:1px solid var(--border-color);display:flex;flex-direction:column;max-height:90vh;box-shadow:0 15px 40px rgba(0,0,0,0.7)}.record-modal-header{padding:20px;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.2)}.record-modal-content{padding:25px;overflow-y:auto;font-size:13px;line-height:1.6;display:grid;grid-template-columns:1fr 1fr;gap:20px;color:var(--text-main)}.record-modal-content div{background:rgba(255,255,255,0.02);padding:12px;border-radius:6px;border:1px solid rgba(255,255,255,0.05)}.record-modal-content strong{color:var(--noon-yellow);display:block;font-size:11px;text-transform:uppercase;margin-bottom:4px;letter-spacing:0.5px}.record-img-box{grid-column:span 2;display:flex;flex-wrap:wrap;gap:15px}.record-img-box div{flex:1;min-width:180px;display:flex;flex-direction:column}.record-img-box img{width:100%;border-radius:8px;border:1px solid var(--border-color);object-fit:cover;margin-top:5px;cursor:pointer;transition:0.2s}.record-img-box img:hover{filter:brightness(1.2);box-shadow:0 0 15px rgba(255,199,0,0.3)}#camera-video-stream{width:100%;max-width:500px;max-height:70vh;background:#000;border-radius:12px;border:2px solid var(--noon-yellow);object-fit:cover}.cam-controls{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;justify-content:center}.print-checkbox{width:18px;height:18px;cursor:pointer;accent-color:var(--noon-yellow)}
 .splash-screen{position:fixed;top:0;left:0;width:100vw;height:100vh;background:var(--bg-dark);z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.6s ease;opacity:1}.splash-screen.fade-out{opacity:0;pointer-events:none}@keyframes pulse-glow{0%{box-shadow:0 0 0 0 rgba(255,199,0,0.4)}70%{box-shadow:0 0 0 20px rgba(255,199,0,0)}100%{box-shadow:0 0 0 0 rgba(255,199,0,0)}}.splash-logo{width:160px;height:160px;background-color:#12151c;background-image:url('logo.jpeg');background-size:contain;background-position:center;background-repeat:no-repeat;border-radius:18px;margin-bottom:30px;animation:pulse-glow 2s infinite}
 @media (max-width:1024px){.ops-grid{grid-template-columns:1fr}}
-@media (max-width:900px){.sidebar{position:fixed;height:100vh;transform:translateX(0)}.sidebar.minimized{transform:translateX(-100%);width:240px}body[dir="rtl"] .sidebar.minimized{transform:translateX(100%)}.dashboard{padding:4vw;margin-top:10px}.admin-header-top{flex-direction:column;height:auto;padding:15px;align-items:stretch;gap:15px;margin:0 -4vw 20px -4vw !important}.admin-brand-horizontal{margin-right:0;text-align:center;width:100%}.admin-nav-horizontal{flex-wrap:wrap;justify-content:center;gap:5px;width:100%}.admin-nav-horizontal li{padding:10px;font-size:11px;flex:1 1 auto;text-align:center}.admin-user-info{justify-content:center;width:100%}.admin-filter-bar{flex-direction:column;align-items:stretch;gap:10px}.admin-filter-bar > div{flex-wrap:wrap;justify-content:center;width:100%}#custom-date-picker{flex-direction:column;align-items:stretch;width:100%}table th,table td{padding:10px}.record-modal-content{grid-template-columns:1fr}#main-content{transition:margin-left 0.3s,margin-right 0.3s}body:not(.sidebar-minimized) #main-content{margin-inline-start:240px}}
+@media (max-width:900px){.sidebar{position:fixed;height:100vh;transform:translateX(0)}.sidebar.minimized{transform:translateX(-100%);width:240px}body[dir="rtl"] .sidebar.minimized{transform:translateX(100%)}.dashboard{padding:4vw;margin-top:10px}.admin-header-top{flex-direction:column;height:auto;padding:15px;align-items:stretch;gap:15px;margin:0 -4vw 20px -4vw !important}.admin-brand-horizontal{margin-right:0;text-align:center;width:100%}.admin-nav-horizontal{flex-wrap:wrap;justify-content:center;gap:5px;width:100%}.admin-nav-horizontal li{padding:10px;font-size:11px;flex:1 1 auto;text-align:center}.admin-user-info{justify-content:center;width:100%}.admin-filter-bar{flex-direction:column;align-items:stretch;gap:10px}.admin-filter-bar > div{flex-wrap:wrap;justify-content:center;width:100%}#custom-date-picker,#history-custom-date-picker{flex-direction:column;align-items:stretch;width:100%}table th,table td{padding:10px}.record-modal-content{grid-template-columns:1fr}#main-content{transition:margin-left 0.3s,margin-right 0.3s}body:not(.sidebar-minimized) #main-content{margin-inline-start:240px}}
 </style></head>
 <body class="sidebar-minimized" dir="ltr"> 
 <div id="splash" class="splash-screen"><div class="splash-logo"></div><h1 style="color:var(--noon-yellow);font-size:26px;letter-spacing:2px;margin:0;font-weight:700;">WELCOME TO NOON SLP</h1><p style="color:var(--text-muted);font-size:12px;margin-top:12px;text-transform:uppercase;letter-spacing:1.5px;">Security & Loss Prevention</p></div>
@@ -39,33 +39,6 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
 <div id="pin-verify-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 350px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">Security PIN Required</h3><button onclick="closePinVerify()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; display: flex; flex-direction: column; gap: 15px; text-align:center;"><p style="color:var(--text-muted); font-size:13px;">Please enter your 4-digit PIN to unlock and view your passes.</p><input type="password" id="verify-pin-input" class="input-field" placeholder="****" maxlength="4" style="text-align:center; font-size:24px; letter-spacing:10px;" oninput="this.value=this.value.replace(/[^0-9]/g,'')"><p id="pin-error-msg" class="hidden" style="color:var(--danger); font-size:12px; margin:0;">Incorrect PIN.</p><button class="btn-primary" onclick="confirmPinVerify()">UNLOCK</button></div></div></div>
 <div id="add-more-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 500px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;" data-i18n="add_more_people">➕ Add More People</h3><button onclick="closeAddMoreModal()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; display: flex; flex-direction: column; gap: 15px;"><p style="color:var(--danger); font-size:12px; font-weight:bold; margin-bottom:5px;" data-i18n="add_more_warning">⚠️ WARNING: Submitting this will change the pass status back to PENDING. It cannot be used until the Admin approves it again.</p><div id="add-team-roster-display" class="team-roster hidden"></div><div id="add-team-entry-box" style="border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; background: rgba(255,255,255,0.02);"><div class="input-group" style="margin-bottom: 15px;"><input type="text" id="req-add-team-name" class="input-field" data-i18n="full_name_ph" placeholder="Full Name"></div><div class="input-group" style="margin-bottom: 15px;"><input type="text" id="req-add-team-iqamatext" class="input-field" data-i18n="iqama_id_ph" placeholder="Iqama / ID Number"></div><div class="input-group" style="margin-bottom: 15px;"><label style="font-size: 11px; color:var(--noon-yellow);" data-i18n="device_type_label">Device Type</label><select id="req-add-team-device-type" class="input-field" onchange="toggleAddTeamDeviceInput()"><option value="None" data-i18n="no_device">No Device</option><option value="Mobile">Mobile</option><option value="Laptop">Laptop</option></select></div><div class="input-group hidden" id="req-add-team-device-id-group" style="margin-bottom: 15px;"><input type="text" id="req-add-team-device-id" class="input-field" placeholder="IMEI / Serial Number"><label style="font-size: 11px; margin-top:10px;" data-i18n="upload_device_photo">Upload Device Photo/Screen</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_imeiphoto')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-add-team-imeiphoto" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_imeiphoto')"></div><img id="preview-add_team_imeiphoto" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div><div class="input-group"><label style="font-size: 11px;" data-i18n="upload_iqama">Upload Iqama/ID Copy</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_iqama')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-add-team-iqama" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_iqama')"></div><img id="preview-add_team_iqama" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div><div class="input-group" style="margin-bottom: 15px;"><label style="font-size: 11px;" data-i18n="upload_selfie">Upload Selfie Photo</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_selfie')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-add-team-selfie" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_selfie')"></div><img id="preview-add_team_selfie" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div><button type="button" class="btn-primary btn-success" style="font-size: 12px;" onclick="saveAddTeamMember()" data-i18n="save_person_list">✅ SAVE PERSON TO LIST</button></div><button id="btn-submit-add-more" class="btn-primary" onclick="submitAddMorePeople()" data-i18n="submit_send_approval">SUBMIT & SEND FOR APPROVAL</button></div></div></div>
 <div id="admin-gate-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 400px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">🚪 GATE ACTION</h3><button onclick="closeAdminGateModal()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; display: flex; flex-direction: column; gap: 15px; text-align: center;"><p style="color:var(--text-muted); font-size:13px; margin-bottom:10px;">Select an action for pass <strong id="admin-gate-id-display" style="color:white;"></strong></p><input type="hidden" id="admin-gate-id"><button class="btn-primary btn-success" style="font-size: 14px; padding: 14px;" onclick="submitAdminGateAction('check_in')">✅ CHECK IN</button><button class="btn-primary btn-warning" style="font-size: 14px; padding: 14px; color:#000;" onclick="submitAdminGateAction('check_out')">🚪 CHECK OUT</button></div></div></div>
-
-<!-- TIMELINE MODAL -->
-<div id="timeline-modal" class="popup-modal hidden">
-    <div class="record-modal-box" style="max-width: 700px;">
-        <div class="record-modal-header">
-            <h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">📜 Access Timeline</h3>
-            <button onclick="closeTimeline()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
-        </div>
-        <div style="padding: 25px; overflow-y: auto; max-height: 70vh;">
-            <h4 id="timeline-pass-name" style="color: white; margin-bottom: 20px; font-size: 15px;"></h4>
-            <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr>
-                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Check-In</th>
-                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Check-Out</th>
-                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Duration</th>
-                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Guard</th>
-                        </tr>
-                    </thead>
-                    <tbody id="timeline-table-body">
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
 
 <div id="login-view"><div class="login-top-controls"><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 16px;" onclick="hardRefreshApp()" title="Hard Refresh Cache">🔄</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 16px;" onclick="toggleFullScreen()" title="Fullscreen">⛶</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 12px;" onclick="toggleLang()">عربي / EN</button></div><div class="login-container"><div class="logo-box"></div><div style="text-align:center;margin-bottom:25px;"><h2 style="color:var(--noon-yellow);font-size:24px;margin-bottom:6px;letter-spacing:1px;">NOON SLP</h2><p style="color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="visitor_contractor_portal">Visitor & Contractor Portal</p></div>
 <div class="role-tabs" id="role-tabs" style="display:none;"><div class="role-tab active" id="tab-guard" onclick="switchLoginTab('guard')" data-i18n="guard">🛡️ Guard</div><div class="role-tab" id="tab-admin" onclick="switchLoginTab('admin')" data-i18n="admin">⚙️ Admin</div></div>
@@ -293,16 +266,14 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
                 <th data-i18n="name_header">Name</th>
                 <th data-i18n="type_header">Type</th>
                 <th data-i18n="facility_header">Facility</th>
-                <th data-i18n="final_status">Final Status</th>
                 <th data-i18n="check_in">Check-In</th>
                 <th data-i18n="check_out">Check-Out</th>
                 <th>Duration</th>
                 <th data-i18n="scanned_by">Scanned By</th>
-                <th data-i18n="action">Action</th>
               </tr>
             </thead>
             <tbody id="admin-table-history">
-              <tr><td colspan="10" class="text-center" style="padding: 30px;" data-i18n="no_history">No history found.</td></tr>
+              <tr><td colspan="8" class="text-center" style="padding: 30px;" data-i18n="no_history">No history found.</td></tr>
             </tbody>
           </table>
         </div>
@@ -346,40 +317,13 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
   </main>
 </div>
 
-<!-- TIMELINE MODAL -->
-<div id="timeline-modal" class="popup-modal hidden">
-    <div class="record-modal-box" style="max-width: 700px;">
-        <div class="record-modal-header">
-            <h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">📜 Access Timeline</h3>
-            <button onclick="closeTimeline()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
-        </div>
-        <div style="padding: 25px; overflow-y: auto; max-height: 70vh;">
-            <h4 id="timeline-pass-name" style="color: white; margin-bottom: 20px; font-size: 15px;"></h4>
-            <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr>
-                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Check-In</th>
-                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Check-Out</th>
-                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Duration</th>
-                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Guard</th>
-                        </tr>
-                    </thead>
-                    <tbody id="timeline-table-body">
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script>
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbzFQCv1Ng_n-U13NiMLz1Z2ldPzore4YBlnc6Iu4w5kkOSzaoNkPz80QlbD7PDOwld1_A/exec';
 const urlParams = new URLSearchParams(window.location.search);
 const currentRoleParam = urlParams.get('role') || 'default';
 const SESSION_KEY = 'noon_session_' + currentRoleParam;
 
-let html5QrCode=null; let scannerFacingMode='environment'; let currentUser=null; let currentScannedID=null; let currentScanAction='check_in'; let currentAdminFilter='all'; let autoRefreshTimer=null; let globalAdminData=[]; let checkedPrintIds=new Set(); let liveStream=null; let currentFacingMode='environment'; let targetPhotoType=''; let capturedImages={iqama:null,selfie:null,imeiphoto:null,vehicle:null,fmpoc:null}; let teamList=[]; let currentTeamCounter=1; let isProcessingScan = false; let userSecurityPin = null; let lockedPassesData = null; let pinCreateMode = 'submit';
+let html5QrCode=null; let scannerFacingMode='environment'; let currentUser=null; let currentScannedID=null; let currentScanAction='check_in'; let currentAdminFilter='all'; let autoRefreshTimer=null; let globalAdminData=[]; let globalHistoryData=[]; let checkedPrintIds=new Set(); let liveStream=null; let currentFacingMode='environment'; let targetPhotoType=''; let capturedImages={iqama:null,selfie:null,imeiphoto:null,vehicle:null,fmpoc:null}; let teamList=[]; let currentTeamCounter=1; let isProcessingScan = false; let userSecurityPin = null; let lockedPassesData = null; let pinCreateMode = 'submit';
 
 async function confirmPinCreate() {
     let pin = document.getElementById('new-pin-input').value.trim();
@@ -498,7 +442,7 @@ function closePinVerify() {
 
 const dict={
     en:{"guard":"🛡️ Guard","visitor_ops":"📋 Visitor/Ops","admin":"⚙️ Admin","name":"Name","noon_id":"Noon ID","select_guard_loc":"Select Guard Location...","login_gate":"LOGIN TO GATE","your_full_name":"Your Full Name","your_email":"Your Gmail / Email","login_portal":"LOGIN TO PORTAL","admin_name":"Admin Name","admin_email":"Admin Gmail","admin_password":"Admin Password","login_admin":"LOGIN AS ADMIN","system_admin":"System Admin","visitor_portal":"Visitor Portal","gate_scanner":"Gate Scanner","admin_dashboard":"Admin Dashboard","whats_new":"What's New","logout":"LOGOUT","visitor_contractor_portal":"Visitor & Contractor Portal","submit_new_request":"Submit New Request","type":"Type","visitor":"Visitor","contractor":"Contractor","req_email_ph":"Email Address (For Pass Tracking)","req_vname_ph":"Visitor / Contractor Full Name","iqama_id_ph":"Lead Iqama / ID Number","visit_date":"Visit Date / Validity (From - To)","slp_ticket":"SLP Ticket No.","contact_no":"Contact No.","invited_by":"Invited by Whom","vehicle_plate":"Vehicle Plate / Picture","live_camera":"📷 Live Camera","contract_exp":"Contract Expiration (From - To)","project_name":"Project Name","company_name":"Company / Contractor Name","project_manager":"Project Manager","fm_poc":"FM POC Name / Details","upload_iqama":"Upload Iqama/ID Copy","upload_selfie":"Upload Selfie Photo","submit_approval":"Submit for Approval","my_passes":"My Passes","refresh":"Refresh","fetching":"Fetching your passes...","start_camera":"START CAMERA SCANNER","name_label":"Name:","type_label":"Type:","location_label":"Location:","confirm_action":"CONFIRM ACTION","access_approvals":"📋 Access Approvals","history":"🕰️ History","guard_approvals":"🛡️ Guard Approvals","analytics":"📊 Analytics","all_time":"All Time","today":"Today","weekly":"Weekly","monthly":"Monthly","6months":"6 Months","1year":"1 Year","custom":"Custom","to":"TO","apply":"APPLY","pending_req":"Pending Requests","active_req":"Active Requests","print_selected":"🖨️ PRINT SELECTED","val_period":"Validity Period","name_header":"Name","type_header":"Type","facility_header":"Facility","action":"Action","access_history":"Access & Gate History","final_status":"Final Status","check_in":"Check-In","check_out":"Check-Out","scanned_by":"Scanned By","live_gate":"Live Gate Operations","check_in_time":"Check-In Time","check_out_time":"Check-Out Time","visitor_name":"Visitor Name","date_analytics":"📅 Date Analytics","type_analytics":"👤 Type Analytics","facility_analytics":"🏢 Facility Analytics","status_analytics":"✅ Status Analytics","detailed_record":"Detailed Record View","extend_pass":"Extend Pass Validity","new_start_date":"New Visit / Start Date","new_end_date":"New End Date","save_extension":"SAVE EXTENSION","capture":"📸 CAPTURE","flip_cam":"🔄 FLIP CAM","cancel":"❌ CANCEL","click_to_close":"Click anywhere to close","btn_approve":"Approve","btn_reject":"Reject","btn_extend":"📅 EXTEND","btn_view":"🔍 VIEW DATA","btn_print":"🖨️ PRINT PASS","btn_checkout":"🚪 CHECK OUT","lbl_host_name":"Host Name","lbl_host_email":"Host Email","lbl_validity":"Validity Period","lbl_iqama":"IQAMA/ID COPY","lbl_selfie":"SELFIE PHOTO","lbl_vehicle":"VEHICLE PLATE","status_approved":"Approved","status_pending":"Pending","status_rejected":"Rejected","status_expired":"EXPIRED","status_completed":"COMPLETED","msg_no_pending":"No pending requests found in this timeframe.","msg_no_active":"No active requests found in this timeframe.","msg_no_history":"No history found in this timeframe.","msg_no_gate":"No gate operations found in this timeframe.","msg_enter_email":"Enter an Email Address on the left to view passes.","msg_loading":"Loading requests...","msg_inside":"Inside Facility","msg_admin_select_loc":"Admin: Please select a facility first.","btn_add_team":"➕ ADD TEAM MEMBER","camera_scanner_btn":"📷 CAMERA SCANNER","hardware_gun_btn":"🔌 HARDWARE GUN","hw_scanner_ready":"HARDWARE SCANNER READY","hw_scanner_inst":"Point your handheld gun scanner at the QR code and trigger.","awaiting_scan":"Awaiting hardware scan...","save_qr":"⬇️ SAVE QR CODE","allowed":"ALLOWED","pass_validated":"Pass Validated","denied":"DENIED","admin_select_fac":"Admin: Please select a facility first.","pending":"PENDING","awaiting_admin":"Pass is awaiting Admin approval","not_approved":"Pass not approved by Admin","wrong_facility":"WRONG FACILITY","wrong_fac_msg":"Wrong Facility","invalid_date":"INVALID DATE","not_valid_today":"Pass is not valid for today","expired":"EXPIRED","contractor_expired":"Contractor Pass Expired","check_out":"CHECK OUT","scanning_out":"Scanning Out.<br><span style='color:#000; font-size:14px; font-weight:bold;'>⚠️ TAKE ID CARD FROM LEAD.</span>","select_all_members":"SELECT ALL MEMBERS","lead":"Lead","device_photos_all":"DEVICE & PHOTOS FOR ALL","device_label":"Device","iqama_id":"IQAMA / ID","selfie":"SELFIE","device_screen":"DEVICE SCREEN","vehicle":"VEHICLE","add_more_people":"➕ Add More People","add_more_warning":"⚠️ WARNING: Submitting this will change the pass status back to PENDING. It cannot be used until the Admin approves it again.","device_type_label":"Device Type","no_device":"No Device","upload_device_photo":"Upload Device Photo/Screen","full_name_ph":"Full Name","save_person_list":"✅ SAVE PERSON TO LIST","submit_send_approval":"SUBMIT & SEND FOR APPROVAL","save_add_next":"✅ SAVE & ADD NEXT","lead_device_details":"Lead Device Details & Photo Screen","max_devices_note":"* Note: A maximum of 10 members are allowed to bring devices (Mobile/Laptop).", "total_people":"Total People", "new_members_added":"➕ NEW MEMBERS ADDED", "new_badge":"NEW", "notice_new_people":"NOTICE: New people have been added to this pass!"},
-    ar:{"guard":"🛡️ الحارس","visitor_ops":"📋 الزوار/العمليات","admin":"⚙️ الإدارة","name":"الاسم","noon_id":"الرقم الوظيفي (Noon ID)","select_guard_loc":"اختر موقع الحارس...","login_gate":"الدخول للبوابة","your_full_name":"الاسم الكامل","your_email":"البريد الإلكتروني","login_portal":"تسجيل الدخول للبوابة","admin_name":"اسم المشرف","admin_email":"بريد المشرف","admin_password":"كلمة المرور","login_admin":"دخول كمسؤول","system_admin":"إدارة النظام","visitor_portal":"بوابة الزوار","gate_scanner":"ماسح البوابة","admin_dashboard":"لوحة التحكم","whats_new":"ما الجديد","logout":"تسجيل خروج","visitor_contractor_portal":"بوابة الزوار والمقاولين","submit_new_request":"تقديم طلب جديد","type":"النوع","visitor":"زائر","contractor":"مقاول","req_email_ph":"البريد الإلكتروني (لتتبع التصريح)","req_vname_ph":"الاسم الكامل للزائر/المقاول","iqama_id_ph":"رقم الهوية / الإقامة للقائد","visit_date":"تاريخ الزيارة / الصلاحية (من - إلى)","slp_ticket":"رقم تذكرة SLP","contact_no":"رقم الاتصال","invited_by":"بدعوة من","vehicle_plate":"صورة / لوحة السيارة","live_camera":"📷 كاميرا مباشرة","contract_exp":"صلاحية العقد (من - إلى)","project_name":"اسم المشروع","company_name":"اسم الشركة / المقاول","project_manager":"مدير المشروع","fm_poc":"اسم/تفاصيل مسؤول المرافق (FM POC)","upload_iqama":"رفع صورة الهوية/الإقامة","upload_selfie":"رفع صورة شخصية","submit_approval":"إرسال للموافقة","my_passes":"تصاريحي","refresh":"تحديث","fetching":"جاري جلب التصاريح...","start_camera":"تشغيل ماسح الكاميرا","name_label":"الاسم:","type_label":"النوع:","location_label":"الموقع:","confirm_action":"تأكيد الإجراء","access_approvals":"📋 موافقات الدخول","history":"🕰️ السجل","guard_approvals":"🛡️ عمليات البوابة","analytics":"📊 الإحصائيات","all_time":"الكل","today":"اليوم","weekly":"أسبوعي","monthly":"شهري","6months":"٦ أشهر","1year":"سنة","custom":"مخصص","to":"إلى","apply":"تطبيق","pending_req":"الطلبات المعلقة","active_req":"الطلبات النشطة","print_selected":"🖨️ طباعة المحدد","val_period":"فترة الصلاحية","name_header":"الاسم","type_header":"النوع","facility_header":"المنشأة","action":"الإجراء","access_history":"سجل الدخول والبوابة","final_status":"الحالة النهائية","check_in":"دخول","check_out":"خروج","scanned_by":"تم المسح بواسطة","live_gate":"عمليات البوابة المباشرة","check_in_time":"وقت الدخول","check_out_time":"وقت الخروج","visitor_name":"اسم الزائر","date_analytics":"📅 إحصائيات التواريخ","type_analytics":"👤 إحصائيات الأنواع","facility_analytics":"🏢 إحصائيات المنشآت","status_analytics":"✅ إحصائيات الحالات","detailed_record":"عرض السجل التفصيلي","extend_pass":"تمديد صلاحية التصريح","new_start_date":"تاريخ الزيارة/البداية الجديد","new_end_date":"تاريخ النهاية الجديد","save_extension":"حفظ التمديد","capture":"📸 التقاط","flip_cam":"🔄 قلب الكاميرا","cancel":"❌ إلغاء","click_to_close":"انقر في أي مكان للإغلاق","btn_approve":"موافقة","btn_reject":"رفض","btn_extend":"📅 تمديد","btn_view":"🔍 عرض البيانات","btn_print":"🖨️ طباعة","btn_checkout":"🚪 خروج","lbl_host_name":"اسم المضيف","lbl_host_email":"بريد المضيف","lbl_validity":"فترة الصلاحية","lbl_iqama":"صورة الهوية/الإقامة","lbl_selfie":"الصورة الشخصية","lbl_vehicle":"لوحة السيارة","status_approved":"مقبول","status_pending":"قيد الانتظار","status_rejected":"مرفوض","status_expired":"منتهي","status_completed":"مكتمل","msg_no_pending":"لا توجد طلبات معلقة في هذه الفترة.","msg_no_active":"لا توجد طلبات نشطة في هذه الفترة.","msg_no_history":"لا يوجد سجل في هذه الفترة.","msg_no_gate":"لا توجد عمليات بوابة في هذه الفترة.","msg_enter_email":"أدخل بريداً إلكترونياً لعرض التصاريح.","msg_loading":"جاري التحميل...","msg_inside":"داخل المنشأة","msg_admin_select_loc":"المشرف: يرجى تحديد المنشأة أولاً من القائمة العلوية.","btn_add_team":"➕ إضافة عضو للفريق","camera_scanner_btn":"📷 ماسح الكاميرا","hardware_gun_btn":"🔌 ماسح الباركود اليدوي","hw_scanner_ready":"ماسح الباركود جاهز","hw_scanner_inst":"قم بتوجيه الماسح الضوئي نحو رمز الاستجابة السريعة (QR).","awaiting_scan":"بانتظار المسح...","save_qr":"⬇️ حفظ الرمز","allowed":"مسموح","pass_validated":"تم التحقق من التصريح","denied":"مرفوض","admin_select_fac":"المشرف: يرجى تحديد المنشأة أولاً.","pending":"قيد الانتظار","awaiting_admin":"التصريح بانتظار موافقة المشرف","not_approved":"لم تتم الموافقة على التصريح","wrong_facility":"منشأة خاطئة","wrong_fac_msg":"منشأة خاطئة","invalid_date":"تاريخ غير صالح","not_valid_today":"التصريح غير صالح لهذا اليوم","expired":"منتهي","contractor_expired":"تصريح المقاول منتهي","check_out":"تسجيل خروج","scanning_out":"تسجيل الخروج.<br><span style='color:#000; font-size:14px; font-weight:bold;'>⚠️ خذ بطاقة الهوية من القائد.</span>","select_all_members":"تحديد جميع الأعضاء","lead":"القائد","device_photos_all":"الأجهزة والصور للجميع","device_label":"الجهاز","iqama_id":"الإقامة / الهوية","selfie":"الصورة الشخصية","device_screen":"شاشة الجهاز","vehicle":"المركبة","add_more_people":"➕ إضافة المزيد من الأشخاص","add_more_warning":"⚠️ تحذير: سيؤدي هذا إلى إعادة حالة التصريح إلى قيد الانتظار. لا يمكن استخدامه حتى يوافق عليه المشرف مرة أخرى.","device_type_label":"نوع الجهاز","no_device":"لا يوجد جهاز","upload_device_photo":"رفع صورة الجهاز/الشاشة","full_name_ph":"الاسم الكامل","save_person_list":"✅ حفظ الشخص في القائمة","submit_send_approval":"إرسال وطلب الموافقة","save_add_next":"✅ حفظ وإضافة التالي","lead_device_details":"تفاصيل جهاز القائد وصورة الشاشة","max_devices_note":"* ملاحظة: يُسمح لـ 10 أعضاء كحد أقصى بإحضار أجهزة (هاتف/كمبيوتر محمول).", "total_people":"إجمالي الأشخاص", "new_members_added":"➕ أعضاء جدد مضافون", "new_badge":"جديد", "notice_new_people":"تنبيه: تم إضافة أشخاص جدد إلى هذا التصريح!"}
+    ar:{"guard":"🛡️ الحارس","visitor_ops":"📋 الزوار/العمليات","admin":"⚙️ الإدارة","name":"الاسم","noon_id":"الرقم الوظيفي (Noon ID)","select_guard_loc":"اختر موقع الحارس...","login_gate":"الدخول للبوابة","your_full_name":"الاسم الكامل","your_email":"البريد الإلكتروني","login_portal":"تسجيل الدخول للبوابة","admin_name":"اسم المشرف","admin_email":"بريد المشرف","admin_password":"كلمة المرور","login_admin":"دخول كمسؤول","system_admin":"إدارة النظام","visitor_portal":"بوابة الزوار","gate_scanner":"ماسح البوابة","admin_dashboard":"لوحة التحكم","whats_new":"ما الجديد","logout":"تسجيل خروج","visitor_contractor_portal":"بوابة الزوار والمقاولين","submit_new_request":"تقديم طلب جديد","type":"النوع","visitor":"زائر","contractor":"مقاول","req_email_ph":"البريد الإلكتروني (لتتبع التصريح)","req_vname_ph":"الاسم الكامل للزائر/المقاول","iqama_id_ph":"رقم الهوية / الإقامة للقائد","visit_date":"تاريخ الزيارة / الصلاحية (من - إلى)","slp_ticket":"رقم تذكرة SLP","contact_no":"رقم الاتصال","invited_by":"بدعوة من","vehicle_plate":"صورة / لوحة السيارة","live_camera":"📷 كاميرا مباشرة","contract_exp":"صلاحية العقد (من - إلى)","project_name":"اسم المشروع","company_name":"اسم الشركة / المقاول","project_manager":"مدير المشروع","fm_poc":"اسم/تفاصيل مسؤول المرافق (FM POC)","upload_iqama":"رفع صورة الهوية/الإقامة","upload_selfie":"رفع صورة شخصية","submit_approval":"إرسال للموافقة","my_passes":"تصاريحي","refresh":"تحديث","fetching":"جاري جلب التصاريح...","start_camera":"تشغيل ماسح الكاميرا","name_label":"الاسم:","type_label":"النوع:","location_label":"الموقع:","confirm_action":"تأكيد الإجراء","access_approvals":"📋 موافقات الدخول","history":"🕰️ السجل","guard_approvals":"🛡️ عمليات البوابة","analytics":"📊 الإحصائيات","all_time":"الكل","today":"اليوم","weekly":"أسبوعي","monthly":"شهري","6months":"٦ أشهر","1year":"سنة","custom":"مخصص","to":"إلى","apply":"تطبيق","pending_req":"الطلبات المعلقة","active_req":"الطلبات النشطة","print_selected":"🖨️ طباعة المحدد","val_period":"فترة الصلاحية","name_header":"الاسم","type_header":"النوع","facility_header":"المنشأة","action":"الإجراء","access_history":"سجل الدخول والبوابة","final_status":"الحالة النهائية","check_in":"دخول","check_out":"خروج","scanned_by":"تم المسح بواسطة","live_gate":"عمليات البوابة المباشرة","check_in_time":"وقت الدخول","check_out_time":"وقت الخروج","visitor_name":"اسم الزائر","date_analytics":"📅 إحصائيات التواريخ","type_analytics":"👤 إحصائيات الأنواع","facility_analytics":"🏢 إحصائيات المنشآت","status_analytics":"✅ إحصائيات الحالات","detailed_record":"عرض السجل التفصيلي","extend_pass":"تمديد صلاحية التصريح","new_start_date":"تاريخ الزيارة/البداية الجديد","new_end_date":"تاريخ النهاية الجديد","save_extension":"حفظ التمديد","capture":"📸 التقاط","flip_cam":"🔄 قلب الكاميرا","cancel":"❌ إلغاء","click_to_close":"انقر في أي مكان للإغلاق","btn_approve":"موافقة","btn_reject":"رفض","btn_extend":"📅 تمديد","btn_view":"🔍 عرض البيانات","btn_print":"🖨️ طباعة","btn_checkout":"🚪 خروج","lbl_host_name":"اسم المضيف","lbl_host_email":"بريد المضيف","lbl_validity":"فترة الصلاحية","lbl_iqama":"صورة الهوية/الإقامة","lbl_selfie":"الصورة الشخصية","lbl_vehicle":"لوحة السيارة","status_approved":"مقبول","status_pending":"قيد الانتظار","status_rejected":"مرفوض","status_expired":"منتهي","status_completed":"مكتمل","msg_no_pending":"لا توجد طلبات معلقة في هذه الفترة.","msg_no_active":"لا توجد طلبات نشطة في هذه الفترة.","msg_no_history":"لا يوجد سجل في هذه الفترة.","msg_no_gate":"لا توجد عمليات بوابة في هذه الفترة.","msg_enter_email":"أدخل بريداً إلكترونياً لعرض التصاريح.","msg_loading":"جاري التحميل...","msg_inside":"داخل المنشأة","msg_admin_select_loc":"المشرف: يرجى تحديد المنشأة أولاً من القائمة العلوية.","btn_add_team":"➕ إضافة عضو للفريق","camera_scanner_btn":"📷 ماسح الكاميرا","hardware_gun_btn":"🔌 ماسح الباركود اليدوي","hw_scanner_ready":"ماسح الباركود جاهز","hw_scanner_inst":"قم بتوجيه الماسح الضوئي نحو رمز الاستجابة السريعة (QR).","awaiting_scan":"بانتظار المسح...","save_qr":"⬇️ حفظ الرمز","allowed":"مسموح","pass_validated":"تم التحقق من التصريح","denied":"مرفوض","admin_select_fac":"المشرف: يرجى تحديد المنشأة أولاً.","pending":"قيد الانتظار","awaiting_admin":"التصريح بانتظار موافقة المشرف","not_approved":"لم تتم الموافقة على التصريح","wrong_facility":"منشأة خاطئة","wrong_fac_msg":"منشأة خاطئة","invalid_date":"تاريخ غير صالح","not_valid_today":"التصريح غير صالح لهذا اليوم","expired":"منتهي","contractor_expired":"تصريح المقاول منتهي","check_out":"تسجيل خروج","scanning_out":"تسجيل الخروج.<br><span style='color:#000; font-size:14px; font-weight:bold;'>⚠️ خذ بطاقة الهوية من القائد.</span>","select_all_members":"تحديد جميع الأعضاء","lead":"القائد","device_photos_all":"الأجهزة والصور للجميع","device_label":"الجهاز","iqama_id":"الإقامة / الهوية","selfie":"الصورة الشخصية","device_screen":"شاشة الجهاز","vehicle":"المركبة","add_more_people":"➕ إضافة المزيد من الأشخاص","add_more_warning":"⚠️ تحذير: سيؤدي هذا إلى إعادة حالة التصريح إلى قيد الانتظار. لا يمكن استخدامه حتى يوافق عليه المشرف مرة أخرى.","device_type_label":"نوع الجهاز","no_device":"لا يوجد جهاز","upload_device_photo":"Upload Device Photo/Screen","full_name_ph":"الاسم الكامل","save_person_list":"✅ حفظ الشخص في القائمة","submit_send_approval":"إرسال وطلب الموافقة","save_add_next":"✅ حفظ وإضافة التالي","lead_device_details":"تفاصيل جهاز القائد وصورة الشاشة","max_devices_note":"* ملاحظة: يُسمح لـ 10 أعضاء كحد أقصى بإحضار أجهزة (هاتف/كمبيوتر محمول).", "total_people":"إجمالي الأشخاص", "new_members_added":"➕ أعضاء جدد مضافون", "new_badge":"جديد", "notice_new_people":"تنبيه: تم إضافة أشخاص جدد إلى هذا التصريح!"}
 };
 
 let currentLang='en';
@@ -508,7 +452,7 @@ function t(k){return dict[currentLang]?.[k]||dict['en'][k]||k||'';}
 function updateUI(){
     document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.getAttribute('data-i18n');if(t(k))el.innerHTML=t(k)});
     document.querySelectorAll('.t-ph').forEach(el=>{const k=el.getAttribute('data-i18n');if(t(k))el.placeholder=t(k)});
-    if(currentUser&&currentUser.role==='admin')renderAdminData(globalAdminData);
+    if(currentUser&&currentUser.role==='admin')renderAdminData(globalAdminData, globalHistoryData);
 }
 
 function toggleFullScreen(){
@@ -1104,116 +1048,13 @@ function setAdminFilter(range,btnElement){
         if(p1) p1.classList.add('hidden'); 
     }
     
-    if(range !== 'custom') renderAdminData(globalAdminData);
+    if(range !== 'custom') renderAdminData(globalAdminData, globalHistoryData);
 }
 
-function parseLogs(row) {
-    let visits = [];
-    let gLogs = String(row.GateLogs || "");
-    
-    if (!gLogs.trim() && row.CheckInTime) {
-        visits.push({
-            in: new Date(row.CheckInTime),
-            out: row.CheckOutTime ? new Date(row.CheckOutTime) : null,
-            guardIn: row.ScannedByGuard || 'Unknown',
-            guardOut: row.ScannedByGuard || 'Unknown'
-        });
-        return visits;
-    }
-    
-    if (gLogs.startsWith("[")) {
-        try {
-            let logs = JSON.parse(gLogs);
-            let currentVisit = null;
-            logs.forEach(l => {
-                if (l.action === 'IN') {
-                    currentVisit = { in: new Date(l.time), out: null, guardIn: l.guard || 'Unknown', guardOut: '' };
-                    visits.push(currentVisit);
-                } else if (l.action === 'OUT') {
-                    if (currentVisit && !currentVisit.out) {
-                        currentVisit.out = new Date(l.time);
-                        currentVisit.guardOut = l.guard || 'Unknown';
-                    } else {
-                        visits.push({ in: null, out: new Date(l.time), guardIn: '', guardOut: l.guard || 'Unknown' });
-                    }
-                }
-            });
-        } catch(e) {}
-    } else {
-        let lines = gLogs.split("\n");
-        let currentVisit = null;
-        lines.forEach(line => {
-            let m = line.match(/(IN|OUT)\s*\((\d+)\)\s*at\s*(.+?)\s*by\s*(.*)/);
-            if(m) {
-                let action = m[1], time = new Date(m[3]), guard = m[4];
-                if (action === 'IN') {
-                    currentVisit = { in: time, out: null, guardIn: guard, guardOut: '' };
-                    visits.push(currentVisit);
-                } else {
-                    if(currentVisit && !currentVisit.out) {
-                        currentVisit.out = time;
-                        currentVisit.guardOut = guard;
-                    } else {
-                        visits.push({ in: null, out: time, guardIn: '', guardOut: guard });
-                    }
-                }
-            }
-        });
-    }
-    return visits;
-}
-
-function openTimeline(id) {
-    let row = globalAdminData.find(x => String(x.UniqueID) === String(id));
-    if(!row) return;
-    
-    let passName = row.VisitorName || 'Unknown Pass';
-    document.getElementById('timeline-pass-name').innerText = passName + " (" + id + ")";
-    
-    let visits = parseLogs(row);
-    let tbody = document.getElementById('timeline-table-body');
-    let h = '';
-    
-    if(visits.length === 0) {
-        h = `<tr><td colspan="4" class="text-center" style="padding:20px; color:var(--text-muted);">No scan logs found for this pass.</td></tr>`;
-    } else {
-        visits.reverse().forEach(v => {
-            let inStr = v.in ? formatTime(v.in) : '-';
-            let outStr = v.out ? formatTime(v.out) : '<span style="color:var(--success);font-weight:bold;">Currently Inside</span>';
-            
-            let durStr = '-';
-            if (v.in) {
-                let endT = v.out ? v.out.getTime() : new Date().getTime();
-                let startT = v.in.getTime();
-                let diffMins = Math.floor((endT - startT) / 60000);
-                if(diffMins < 0) diffMins = 0;
-                let hs = Math.floor(diffMins / 60);
-                let ms = diffMins % 60;
-                durStr = `<span style="color:var(--noon-yellow);font-weight:bold;">${hs}h ${ms}m</span>`;
-            }
-            
-            let gStr = v.guardIn;
-            if(v.guardOut && v.guardOut !== v.guardIn) gStr += ` / ${v.guardOut}`;
-            
-            h += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                <td style="color:white; font-size:12px;">${inStr}</td>
-                <td style="color:var(--text-muted); font-size:12px;">${outStr}</td>
-                <td style="font-size:12px;">${durStr}</td>
-                <td style="color:var(--text-muted); font-size:11px;">🛡️ ${gStr}</td>
-            </tr>`;
-        });
-    }
-    
-    tbody.innerHTML = h;
-    document.getElementById('timeline-modal').classList.remove('hidden');
-}
-
-function closeTimeline() {
-    document.getElementById('timeline-modal').classList.add('hidden');
-}
-
-function renderAdminData(data){
+function renderAdminData(data, historyData = []){
     if(!Array.isArray(data)){ data = []; } globalAdminData=data;
+    if(!Array.isArray(historyData)){ historyData = []; } globalHistoryData=historyData;
+    
     const tPending=document.getElementById('admin-table-pending'),tActive=document.getElementById('admin-table-active'),tHistory=document.getElementById('admin-table-history'),tGuard=document.getElementById('admin-table-guard-approvals');
     let hPending='',hActive='',hHistory='',hGuard='';
     const today=new Date();today.setHours(0,0,0,0); const tomorrow=new Date(today.getTime());tomorrow.setDate(tomorrow.getDate()+1);
@@ -1224,6 +1065,53 @@ function renderAdminData(data){
     
     let pendingCount=0,activeCount=0,historyCount=0,guardCount=0; let aDate={},aType={},aFacility={},aStatus={};
 
+    // HISTORY RENDER LOGIC
+    let dayCounts = {};
+    let safeHistory = [...globalHistoryData];
+    
+    safeHistory.forEach(r => {
+        let inTime = r["Check-In"];
+        if(inTime && inTime !== '-') {
+            let dObj = new Date(inTime);
+            if(!isNaN(dObj.getTime())) {
+                let dKey = r["Name"] + "_" + formatToDDMMYYYY(dObj);
+                if(!dayCounts[dKey]) dayCounts[dKey] = 0;
+                dayCounts[dKey]++;
+                r._dateKey = dKey;
+                r._visitNum = dayCounts[dKey];
+            }
+        }
+    });
+
+    safeHistory.reverse().forEach(r => {
+        let inTime = r["Check-In"];
+        if(!isDateInRange(inTime, currentAdminFilter, fStart, fEnd)) return;
+
+        let badge = '';
+        if(r._dateKey) {
+            let total = dayCounts[r._dateKey];
+            if(total > 1) {
+                badge = `<br><span style="color:var(--noon-yellow);font-size:9px;font-weight:bold;letter-spacing:0.5px;text-transform:uppercase;">VISIT ${r._visitNum} OF ${total}</span>`;
+            } else {
+                badge = `<br><span style="color:var(--text-muted);font-size:9px;font-weight:bold;letter-spacing:0.5px;text-transform:uppercase;">VISIT 1 OF 1</span>`;
+            }
+        }
+
+        hHistory += `<tr>
+            <td style="color:var(--text-muted);">${r["Validity Period"] || '-'}</td>
+            <td><strong>${r["Name"] || '-'}</strong>${badge}</td>
+            <td><strong style="color:var(--noon-yellow);">${t(String(r["Type"] || '').toLowerCase()) || r["Type"] || '-'}</strong></td>
+            <td>${r["Facility"] || '-'}</td>
+            <td style="color:var(--text-main);font-size:11px;">${r["Check-In"] || '-'}</td>
+            <td style="color:var(--text-main);font-size:11px;">${r["Check-Out"] || '-'}</td>
+            <td style="font-size:12px;"><span style="color:var(--noon-yellow);font-weight:bold;">${r["Duration"] || '-'}</span></td>
+            <td style="color:var(--text-muted);font-size:11px;">🛡️ ${r["Scanned By"] || '-'}</td>
+        </tr>`;
+        historyCount++;
+    });
+
+
+    // MAIN PASSES LOGIC
     data.forEach(row=>{
         if(!row||!row.UniqueID)return;
         let rType = String(row.Type || ''); let rLocation = String(row.Location || ''); let rStatus = String(row.Status || 'Pending');
@@ -1231,10 +1119,7 @@ function renderAdminData(data){
         let endDateObj=new Date((parseFlexibleDate(row.EndDate)||parseFlexibleDate(row.StartDate)||new Date()).getTime()); endDateObj.setHours(23,59,59,999);
         const isExpired=endDateObj<today;
         
-        let visits = parseLogs(row);
-        let isInside = visits.length > 0 && visits[visits.length - 1].in && !visits[visits.length - 1].out;
-        
-        const isHistory = isExpired || rStatus==='Rejected' || rStatus==='Completed';
+        const isPassExpiredOrFinished = isExpired || rStatus==='Rejected' || rStatus==='Completed';
         const inRange=isDateInRange(row.StartDate,currentAdminFilter,fStart,fEnd);
         
         let formattedStart = formatToDDMMYYYY(row.StartDate);
@@ -1252,10 +1137,10 @@ function renderAdminData(data){
         let isMultiDay = (startD && endD && endD.getTime() > startD.getTime());
 
         let rowStyle='',dateBadge='';
-        if(startD&&startD.getTime()===today.getTime()&&!isHistory){ rowStyle='style="background: rgba(16, 185, 129, 0.1);"'; dateBadge+=`<span style="display:inline-block;margin-top:4px;background:var(--success);color:#000;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;margin-right:5px;">TODAY</span>`; }
-        else if(startD&&startD.getTime()===tomorrow.getTime()&&!isHistory){ rowStyle='style="background: rgba(59, 130, 246, 0.1);"'; dateBadge+=`<span style="display:inline-block;margin-top:4px;background:#3b82f6;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;margin-right:5px;">TOMORROW</span>`; }
+        if(startD&&startD.getTime()===today.getTime()&&!isPassExpiredOrFinished){ rowStyle='style="background: rgba(16, 185, 129, 0.1);"'; dateBadge+=`<span style="display:inline-block;margin-top:4px;background:var(--success);color:#000;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;margin-right:5px;">TODAY</span>`; }
+        else if(startD&&startD.getTime()===tomorrow.getTime()&&!isPassExpiredOrFinished){ rowStyle='style="background: rgba(59, 130, 246, 0.1);"'; dateBadge+=`<span style="display:inline-block;margin-top:4px;background:#3b82f6;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;margin-right:5px;">TOMORROW</span>`; }
         
-        if (isMultiDay && !isHistory) {
+        if (isMultiDay && !isPassExpiredOrFinished) {
             rowStyle = 'style="background: rgba(139, 92, 246, 0.15); border-left: 3px solid #8b5cf6;"';
             dateBadge += `<span style="display:inline-block;margin-top:4px;background:#8b5cf6;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;letter-spacing:0.5px;">MULTI-DAY</span>`;
         }
@@ -1263,34 +1148,7 @@ function renderAdminData(data){
         if(dateBadge !== '') dateBadge = '<br>' + dateBadge;
         const finalDateStr=dateStr+dateBadge;
 
-        if (visits.length > 0 || isHistory) {
-            if(inRange){
-                let finalStatus=rStatus,sColor='var(--noon-yellow)';
-                if(rStatus==='Rejected'){finalStatus=t('status_rejected');sColor='var(--danger)'}
-                else if(isExpired){finalStatus=t('status_expired');sColor='var(--danger)'}
-                else if(rStatus==='Completed'){finalStatus=t('status_completed');sColor='var(--success)'}
-                else{finalStatus=t('status_approved');sColor='var(--success)'}
-                
-                let timelineBtn = visits.length > 0 ? `<button class="btn-primary btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;color:#000;" onclick="openTimeline('${row.UniqueID}')">📜 TIMELINE</button>` : '';
-                let historyActionBtns=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;">${timelineBtn}<button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button></div>`;
-                
-                let typeHtml = `<strong style="color:var(--noon-yellow);">${t(rType.toLowerCase())}</strong>`;
-                let statusBadgeHistory = `<span style="background:${sColor}20; color:${sColor}; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">${finalStatus}</span>`;
-
-                hHistory+=`<tr>
-                    <td style="color:var(--text-muted);">${dateStr}</td>
-                    <td><strong>${rVisitorName}</strong><br>${statusBadgeHistory}</td>
-                    <td>${typeHtml}</td>
-                    <td>${rLocation}</td>
-                    <td style="font-weight:600;color:${sColor}">${finalStatus}</td>
-                    <td style="color:var(--text-main);font-weight:bold;">${visits.length} Visit(s)</td>
-                    <td>${historyActionBtns}</td>
-                </tr>`;
-                historyCount++;
-            }
-        }
-        
-        if (!isHistory) {
+        if (!isPassExpiredOrFinished) {
             if(inRange){
                 if(rStatus==='Pending'){
                     let actionBtns=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;"><button class="btn-primary btn-success btn-sm" style="width:auto;white-space:nowrap;" onclick="updateStatus('${row.UniqueID}','Approved')">${t('btn_approve')}</button><button class="btn-primary btn-danger btn-sm" style="width:auto;white-space:nowrap;" onclick="updateStatus('${row.UniqueID}','Rejected')">${t('btn_reject')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button></div>`;
@@ -1304,17 +1162,18 @@ function renderAdminData(data){
                     let ciTime = '-';
                     let durHtml = '-';
                     
+                    const isInside = !!row.CheckInTime && !row.CheckOutTime;
                     if (isInside) {
-                        let activeVisit = visits[visits.length - 1];
-                        ciTime = formatTime(activeVisit.in);
-                        
-                        let ci = activeVisit.in.getTime();
-                        let now = new Date().getTime();
-                        let diffMins = Math.floor((now - ci) / 60000);
-                        if(diffMins < 0) diffMins = 0;
-                        let h = Math.floor(diffMins / 60);
-                        let m = diffMins % 60;
-                        durHtml = `<span style="color:var(--noon-yellow); font-weight:bold;">${h}h ${m}m</span>`;
+                        let ciObj = new Date(row.CheckInTime);
+                        if (!isNaN(ciObj.getTime())) {
+                            ciTime = formatTime(ciObj);
+                            let now = new Date().getTime();
+                            let diffMins = Math.floor((now - ciObj.getTime()) / 60000);
+                            if(diffMins < 0) diffMins = 0;
+                            let h = Math.floor(diffMins / 60);
+                            let m = diffMins % 60;
+                            durHtml = `<span style="color:var(--noon-yellow); font-weight:bold;">${h}h ${m}m</span>`;
+                        }
                     }
                     
                     hActive+=`<tr ${rowStyle}>
@@ -1367,7 +1226,7 @@ function renderAdminData(data){
 
     if(tPending){if(pendingCount===0)hPending=`<tr><td colspan="5" class="text-center" style="padding:30px;">${t("msg_no_pending")}</td></tr>`;tPending.innerHTML=hPending}
     if(tActive){if(activeCount===0)hActive=`<tr><td colspan="8" class="text-center" style="padding:30px;">${t("msg_no_active")}</td></tr>`;tActive.innerHTML=hActive}
-    if(tHistory){if(historyCount===0)hHistory=`<tr><td colspan="7" class="text-center" style="padding:30px;">${t("msg_no_history")}</td></tr>`;tHistory.innerHTML=hHistory}
+    if(tHistory){if(historyCount===0)hHistory=`<tr><td colspan="8" class="text-center" style="padding:30px;">${t("msg_no_history")}</td></tr>`;tHistory.innerHTML=hHistory}
     if(tGuard){if(guardCount===0)hGuard=`<tr><td colspan="7" class="text-center" style="padding:30px;">${t("msg_no_gate")}</td></tr>`;tGuard.innerHTML=hGuard}
 
     const st=document.getElementById('stat-type');if(st)st.innerHTML=Object.keys(aType).map(k=>`<div class="stat-row"><span>${t(k.toLowerCase())}</span><span class="stat-val">${aType[k]}</span></div>`).join('')||'<div class="stat-row"><span>-</span></div>';
@@ -1385,17 +1244,33 @@ function handlePrintCheckbox(cb){if(cb.checked)checkedPrintIds.add(cb.value);els
 function toggleSelectAll(src){const cbs=document.querySelectorAll('.print-checkbox.row-checkbox');cbs.forEach(cb=>{cb.checked=src.checked;handlePrintCheckbox(cb)})}
 
 async function loadAdminData(isSilent=false){
-    const cached=localStorage.getItem('cached_admin_data');
-    if(cached&&!isSilent){
-        try{ let parsed = JSON.parse(cached); if(Array.isArray(parsed)) renderAdminData(parsed.reverse()); else localStorage.removeItem('cached_admin_data'); }
-        catch(e){ localStorage.removeItem('cached_admin_data'); }
+    const cachedM=localStorage.getItem('cached_admin_data');
+    const cachedH=localStorage.getItem('cached_history_data');
+    if(cachedM && cachedH && !isSilent){
+        try{ 
+            let parsedM = JSON.parse(cachedM); 
+            let parsedH = JSON.parse(cachedH); 
+            if(Array.isArray(parsedM) && Array.isArray(parsedH)) renderAdminData(parsedM.reverse(), parsedH); 
+            else { localStorage.removeItem('cached_admin_data'); localStorage.removeItem('cached_history_data'); }
+        } catch(e){ localStorage.removeItem('cached_admin_data'); localStorage.removeItem('cached_history_data'); }
     }
     try{
-        const res=await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'get_all' }) });
-        if(!res.ok)throw new Error("HTTP error");
-        const data=await res.json();
-        if(Array.isArray(data)){ localStorage.setItem('cached_admin_data',JSON.stringify(data)); renderAdminData(data.reverse()); } else { renderAdminData([]); }
-    }catch(e){ renderAdminData(globalAdminData || []); if(!isSilent&&!cached)console.error(e); }
+        const [resMain, resHist] = await Promise.all([
+            fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'get_all' }) }),
+            fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'get_history' }) })
+        ]);
+        
+        if(!resMain.ok || !resHist.ok) throw new Error("HTTP error");
+        
+        const dataMain = await resMain.json();
+        const dataHist = await resHist.json();
+        
+        if(Array.isArray(dataMain) && Array.isArray(dataHist)){ 
+            localStorage.setItem('cached_admin_data',JSON.stringify(dataMain)); 
+            localStorage.setItem('cached_history_data',JSON.stringify(dataHist)); 
+            renderAdminData(dataMain.reverse(), dataHist); 
+        } else { renderAdminData([], []); }
+    }catch(e){ renderAdminData(globalAdminData || [], globalHistoryData || []); if(!isSilent&&(!cachedM || !cachedH))console.error(e); }
 }
 
 async function updateStatus(id,newStatus){
@@ -1404,7 +1279,7 @@ async function updateStatus(id,newStatus){
     if(Array.isArray(globalAdminData)){
         let item = globalAdminData.find(x => String(x.UniqueID) === String(id));
         if(item) {
-            item.Status = newStatus; localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData)); renderAdminData(globalAdminData);
+            item.Status = newStatus; localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData)); renderAdminData(globalAdminData, globalHistoryData);
             if(item.HostEmail) { localStorage.removeItem('cached_passes_' + String(item.HostEmail).toLowerCase().trim()); }
         }
     }
@@ -1433,8 +1308,7 @@ async function submitAdminGateAction(actionType) {
     
     let item = globalAdminData.find(x => String(x.UniqueID) === String(id));
     if(item) {
-        let visits = parseLogs(item);
-        const isInside = visits.length > 0 && visits[visits.length - 1].in && !visits[visits.length - 1].out;
+        const isInside = !!item.CheckInTime && !item.CheckOutTime;
         const actor = item.ScannedByGuard || 'Unknown';
         
         if (actionType === 'check_in' && isInside) {
@@ -1453,6 +1327,7 @@ async function submitAdminGateAction(actionType) {
         const res=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:actionType,id:id,guardInfo:adminInfo,headCount:1})});
         if(!res.ok)throw new Error("HTTP error");
         localStorage.removeItem('cached_admin_data'); 
+        localStorage.removeItem('cached_history_data'); 
         closeAdminGateModal();
         setTimeout(()=>{loadAdminData(true)},1000);
     }catch(e){
@@ -1468,7 +1343,7 @@ async function adminRevokePass(id){
     if(Array.isArray(globalAdminData)){
         let item = globalAdminData.find(x => String(x.UniqueID) === String(id));
         if(item) {
-            item.Status = 'Completed'; item.CheckOutTime = new Date().toISOString(); localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData)); renderAdminData(globalAdminData);
+            item.Status = 'Completed'; item.CheckOutTime = new Date().toISOString(); localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData)); renderAdminData(globalAdminData, globalHistoryData);
             if(item.HostEmail) { localStorage.removeItem('cached_passes_' + String(item.HostEmail).toLowerCase().trim()); }
         }
     }
@@ -1476,7 +1351,7 @@ async function adminRevokePass(id){
         const adminInfo=`Admin: ${currentUser.name} (${currentUser.email})`;
         const res=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'check_out',id:id,guardInfo:adminInfo,headCount:1,forceStatus:'Completed'})});
         if(!res.ok)throw new Error("HTTP error");
-        localStorage.removeItem('cached_admin_data'); setTimeout(()=>{loadAdminData(true)},1000);
+        localStorage.removeItem('cached_admin_data'); localStorage.removeItem('cached_history_data'); setTimeout(()=>{loadAdminData(true)},1000);
     }catch(e){}finally{ startAutoRefresh(currentUser.role); }
 }
 
@@ -1723,8 +1598,7 @@ async function onScanSuccess(decodedText){
     let startObj=parseFlexibleDate(data.StartDate),startNum=startObj?startObj.setHours(0,0,0,0):todayNum;
     let endObj=parseFlexibleDate(data.EndDate),endNum=endObj?endObj.setHours(0,0,0,0):startNum;
     
-    let visits = parseLogs(data);
-    const isInside = visits.length > 0 && visits[visits.length - 1].in && !visits[visits.length - 1].out;
+    let isInside = !!data.CheckInTime && !data.CheckOutTime;
 
     let scanState = t("allowed"), scanMsg = t("pass_validated"), scanColor = "bg-green"; let allowAction = true;
     if(currentUser.role==='admin'&&!currentUser.location) { scanState=t("denied"); scanMsg=t("admin_select_fac"); scanColor="bg-red"; allowAction=false; }
