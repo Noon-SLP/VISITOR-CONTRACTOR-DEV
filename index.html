@@ -40,6 +40,33 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
 <div id="add-more-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 500px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;" data-i18n="add_more_people">➕ Add More People</h3><button onclick="closeAddMoreModal()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; display: flex; flex-direction: column; gap: 15px;"><p style="color:var(--danger); font-size:12px; font-weight:bold; margin-bottom:5px;" data-i18n="add_more_warning">⚠️ WARNING: Submitting this will change the pass status back to PENDING. It cannot be used until the Admin approves it again.</p><div id="add-team-roster-display" class="team-roster hidden"></div><div id="add-team-entry-box" style="border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; background: rgba(255,255,255,0.02);"><div class="input-group" style="margin-bottom: 15px;"><input type="text" id="req-add-team-name" class="input-field" data-i18n="full_name_ph" placeholder="Full Name"></div><div class="input-group" style="margin-bottom: 15px;"><input type="text" id="req-add-team-iqamatext" class="input-field" data-i18n="iqama_id_ph" placeholder="Iqama / ID Number"></div><div class="input-group" style="margin-bottom: 15px;"><label style="font-size: 11px; color:var(--noon-yellow);" data-i18n="device_type_label">Device Type</label><select id="req-add-team-device-type" class="input-field" onchange="toggleAddTeamDeviceInput()"><option value="None" data-i18n="no_device">No Device</option><option value="Mobile">Mobile</option><option value="Laptop">Laptop</option></select></div><div class="input-group hidden" id="req-add-team-device-id-group" style="margin-bottom: 15px;"><input type="text" id="req-add-team-device-id" class="input-field" placeholder="IMEI / Serial Number"><label style="font-size: 11px; margin-top:10px;" data-i18n="upload_device_photo">Upload Device Photo/Screen</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_imeiphoto')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-add-team-imeiphoto" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_imeiphoto')"></div><img id="preview-add_team_imeiphoto" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div><div class="input-group"><label style="font-size: 11px;" data-i18n="upload_iqama">Upload Iqama/ID Copy</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_iqama')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-add-team-iqama" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_iqama')"></div><img id="preview-add_team_iqama" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div><div class="input-group" style="margin-bottom: 15px;"><label style="font-size: 11px;" data-i18n="upload_selfie">Upload Selfie Photo</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_selfie')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-add-team-selfie" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_selfie')"></div><img id="preview-add_team_selfie" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div><button type="button" class="btn-primary btn-success" style="font-size: 12px;" onclick="saveAddTeamMember()" data-i18n="save_person_list">✅ SAVE PERSON TO LIST</button></div><button id="btn-submit-add-more" class="btn-primary" onclick="submitAddMorePeople()" data-i18n="submit_send_approval">SUBMIT & SEND FOR APPROVAL</button></div></div></div>
 <div id="admin-gate-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 400px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">🚪 GATE ACTION</h3><button onclick="closeAdminGateModal()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; display: flex; flex-direction: column; gap: 15px; text-align: center;"><p style="color:var(--text-muted); font-size:13px; margin-bottom:10px;">Select an action for pass <strong id="admin-gate-id-display" style="color:white;"></strong></p><input type="hidden" id="admin-gate-id"><button class="btn-primary btn-success" style="font-size: 14px; padding: 14px;" onclick="submitAdminGateAction('check_in')">✅ CHECK IN</button><button class="btn-primary btn-warning" style="font-size: 14px; padding: 14px; color:#000;" onclick="submitAdminGateAction('check_out')">🚪 CHECK OUT</button></div></div></div>
 
+<!-- TIMELINE MODAL -->
+<div id="timeline-modal" class="popup-modal hidden">
+    <div class="record-modal-box" style="max-width: 700px;">
+        <div class="record-modal-header">
+            <h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">📜 Access Timeline</h3>
+            <button onclick="closeTimeline()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
+        </div>
+        <div style="padding: 25px; overflow-y: auto; max-height: 70vh;">
+            <h4 id="timeline-pass-name" style="color: white; margin-bottom: 20px; font-size: 15px;"></h4>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Check-In</th>
+                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Check-Out</th>
+                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Duration</th>
+                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Guard</th>
+                        </tr>
+                    </thead>
+                    <tbody id="timeline-table-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="login-view"><div class="login-top-controls"><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 16px;" onclick="hardRefreshApp()" title="Hard Refresh Cache">🔄</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 16px;" onclick="toggleFullScreen()" title="Fullscreen">⛶</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 12px;" onclick="toggleLang()">عربي / EN</button></div><div class="login-container"><div class="logo-box"></div><div style="text-align:center;margin-bottom:25px;"><h2 style="color:var(--noon-yellow);font-size:24px;margin-bottom:6px;letter-spacing:1px;">NOON SLP</h2><p style="color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="visitor_contractor_portal">Visitor & Contractor Portal</p></div>
 <div class="role-tabs" id="role-tabs" style="display:none;"><div class="role-tab active" id="tab-guard" onclick="switchLoginTab('guard')" data-i18n="guard">🛡️ Guard</div><div class="role-tab" id="tab-admin" onclick="switchLoginTab('admin')" data-i18n="admin">⚙️ Admin</div></div>
 <div id="login-guard" class="hidden"><div class="input-group"><input type="text" id="lg-name" class="input-field t-ph" data-i18n="name" placeholder="Name"></div><div class="input-group"><input type="text" id="lg-id" class="input-field t-ph" data-i18n="noon_id" placeholder="Noon ID"></div><div class="input-group"><select id="lg-location" class="input-field"><option value="" data-i18n="select_guard_loc">Select Guard Location...</option><option value="RUH01">RUH01</option><option value="JED01">JED01</option></select></div><button class="btn-primary" onclick="login('guard')" data-i18n="login_gate">LOGIN TO GATE</button></div>
@@ -317,6 +344,33 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
       </div>
     </div>
   </main>
+</div>
+
+<!-- TIMELINE MODAL -->
+<div id="timeline-modal" class="popup-modal hidden">
+    <div class="record-modal-box" style="max-width: 700px;">
+        <div class="record-modal-header">
+            <h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">📜 Access Timeline</h3>
+            <button onclick="closeTimeline()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
+        </div>
+        <div style="padding: 25px; overflow-y: auto; max-height: 70vh;">
+            <h4 id="timeline-pass-name" style="color: white; margin-bottom: 20px; font-size: 15px;"></h4>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Check-In</th>
+                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Check-Out</th>
+                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Duration</th>
+                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Guard</th>
+                        </tr>
+                    </thead>
+                    <tbody id="timeline-table-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -768,7 +822,7 @@ function initApp(){
         if(currentUser&&currentUser.role==='admin'){
             const vn=document.getElementById('req-vname'),ae=document.getElementById('req-admin-email'),ag=document.getElementById('admin-email-group'),sb=document.getElementById('sidebar'),han=document.getElementById('header-admin-name'),sun=document.getElementById('sidebar-user-name'),na=document.getElementById('nav-sidebar-admin'),glt=document.getElementById('guard-loc-text'),agl=document.getElementById('admin-guard-loc');
             const msb=document.getElementById('admin-manual-search-box');
-            if(vn)vn.value='';if(ae)ae.value='';if(ag)ag.classList.remove('hidden');if(sb)style.display='flex';
+            if(vn)vn.value='';if(ae)ae.value='';if(ag)ag.classList.remove('hidden');if(sb)sb.style.display='flex';
             if(han)han.innerText=currentUser.name;if(sun)sun.innerText=currentUser.name;if(na)na.classList.remove('hidden');
             if(glt)glt.classList.add('hidden');if(agl){agl.classList.remove('hidden');agl.value=currentUser.location||'';currentUser.location=agl.value||''}
             if(msb)msb.classList.remove('hidden');
@@ -1109,6 +1163,55 @@ function parseLogs(row) {
     return visits;
 }
 
+function openTimeline(id) {
+    let row = globalAdminData.find(x => String(x.UniqueID) === String(id));
+    if(!row) return;
+    
+    let passName = row.VisitorName || 'Unknown Pass';
+    document.getElementById('timeline-pass-name').innerText = passName + " (" + id + ")";
+    
+    let visits = parseLogs(row);
+    let tbody = document.getElementById('timeline-table-body');
+    let h = '';
+    
+    if(visits.length === 0) {
+        h = `<tr><td colspan="4" class="text-center" style="padding:20px; color:var(--text-muted);">No scan logs found for this pass.</td></tr>`;
+    } else {
+        visits.reverse().forEach(v => {
+            let inStr = v.in ? formatTime(v.in) : '-';
+            let outStr = v.out ? formatTime(v.out) : '<span style="color:var(--success);font-weight:bold;">Currently Inside</span>';
+            
+            let durStr = '-';
+            if (v.in) {
+                let endT = v.out ? v.out.getTime() : new Date().getTime();
+                let startT = v.in.getTime();
+                let diffMins = Math.floor((endT - startT) / 60000);
+                if(diffMins < 0) diffMins = 0;
+                let hs = Math.floor(diffMins / 60);
+                let ms = diffMins % 60;
+                durStr = `<span style="color:var(--noon-yellow);font-weight:bold;">${hs}h ${ms}m</span>`;
+            }
+            
+            let gStr = v.guardIn;
+            if(v.guardOut && v.guardOut !== v.guardIn) gStr += ` / ${v.guardOut}`;
+            
+            h += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <td style="color:white; font-size:12px;">${inStr}</td>
+                <td style="color:var(--text-muted); font-size:12px;">${outStr}</td>
+                <td style="font-size:12px;">${durStr}</td>
+                <td style="color:var(--text-muted); font-size:11px;">🛡️ ${gStr}</td>
+            </tr>`;
+        });
+    }
+    
+    tbody.innerHTML = h;
+    document.getElementById('timeline-modal').classList.remove('hidden');
+}
+
+function closeTimeline() {
+    document.getElementById('timeline-modal').classList.add('hidden');
+}
+
 function renderAdminData(data){
     if(!Array.isArray(data)){ data = []; } globalAdminData=data;
     const tPending=document.getElementById('admin-table-pending'),tActive=document.getElementById('admin-table-active'),tHistory=document.getElementById('admin-table-history'),tGuard=document.getElementById('admin-table-guard-approvals');
@@ -1131,7 +1234,7 @@ function renderAdminData(data){
         let visits = parseLogs(row);
         let isInside = visits.length > 0 && visits[visits.length - 1].in && !visits[visits.length - 1].out;
         
-        const isPassExpiredOrFinished = isExpired || rStatus==='Rejected' || rStatus==='Completed';
+        const isHistory = isExpired || rStatus==='Rejected' || rStatus==='Completed';
         const inRange=isDateInRange(row.StartDate,currentAdminFilter,fStart,fEnd);
         
         let formattedStart = formatToDDMMYYYY(row.StartDate);
@@ -1149,138 +1252,83 @@ function renderAdminData(data){
         let isMultiDay = (startD && endD && endD.getTime() > startD.getTime());
 
         let rowStyle='',dateBadge='';
-        if(startD&&startD.getTime()===today.getTime()&&!isPassExpiredOrFinished){ rowStyle='style="background: rgba(16, 185, 129, 0.1);"'; dateBadge+=`<span style="display:inline-block;margin-top:4px;background:var(--success);color:#000;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;margin-right:5px;">TODAY</span>`; }
-        else if(startD&&startD.getTime()===tomorrow.getTime()&&!isPassExpiredOrFinished){ rowStyle='style="background: rgba(59, 130, 246, 0.1);"'; dateBadge+=`<span style="display:inline-block;margin-top:4px;background:#3b82f6;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;margin-right:5px;">TOMORROW</span>`; }
+        if(startD&&startD.getTime()===today.getTime()&&!isHistory){ rowStyle='style="background: rgba(16, 185, 129, 0.1);"'; dateBadge+=`<span style="display:inline-block;margin-top:4px;background:var(--success);color:#000;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;margin-right:5px;">TODAY</span>`; }
+        else if(startD&&startD.getTime()===tomorrow.getTime()&&!isHistory){ rowStyle='style="background: rgba(59, 130, 246, 0.1);"'; dateBadge+=`<span style="display:inline-block;margin-top:4px;background:#3b82f6;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;margin-right:5px;">TOMORROW</span>`; }
         
-        if (isMultiDay && !isPassExpiredOrFinished) {
-            rowStyle = 'style="background: rgba(139, 92, 246, 0.15);"';
+        if (isMultiDay && !isHistory) {
+            rowStyle = 'style="background: rgba(139, 92, 246, 0.15); border-left: 3px solid #8b5cf6;"';
             dateBadge += `<span style="display:inline-block;margin-top:4px;background:#8b5cf6;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;letter-spacing:0.5px;">MULTI-DAY</span>`;
         }
 
         if(dateBadge !== '') dateBadge = '<br>' + dateBadge;
         const finalDateStr=dateStr+dateBadge;
 
-        let dailyCounts = {};
-        visits.forEach(v => {
-            if(v.in) {
-                let dStr = formatToDDMMYYYY(v.in);
-                dailyCounts[dStr] = (dailyCounts[dStr] || 0) + 1;
-            }
-        });
-        let visitTrackers = {};
+        if (visits.length > 0 || isHistory) {
+            if(inRange){
+                let finalStatus=rStatus,sColor='var(--noon-yellow)';
+                if(rStatus==='Rejected'){finalStatus=t('status_rejected');sColor='var(--danger)'}
+                else if(isExpired){finalStatus=t('status_expired');sColor='var(--danger)'}
+                else if(rStatus==='Completed'){finalStatus=t('status_completed');sColor='var(--success)'}
+                else{finalStatus=t('status_approved');sColor='var(--success)'}
+                
+                let timelineBtn = visits.length > 0 ? `<button class="btn-primary btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;color:#000;" onclick="openTimeline('${row.UniqueID}')">📜 TIMELINE</button>` : '';
+                let historyActionBtns=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;">${timelineBtn}<button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button></div>`;
+                
+                let typeHtml = `<strong style="color:var(--noon-yellow);">${t(rType.toLowerCase())}</strong>`;
+                let statusBadgeHistory = `<span style="background:${sColor}20; color:${sColor}; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">${finalStatus}</span>`;
 
-        if (!isPassExpiredOrFinished && inRange) {
-            if(rStatus==='Pending'){
-                let actionBtns=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;"><button class="btn-primary btn-success btn-sm" style="width:auto;white-space:nowrap;" onclick="updateStatus('${row.UniqueID}','Approved')">${t('btn_approve')}</button><button class="btn-primary btn-danger btn-sm" style="width:auto;white-space:nowrap;" onclick="updateStatus('${row.UniqueID}','Rejected')">${t('btn_reject')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button></div>`;
-                hPending+=`<tr ${rowStyle}><td style="color:var(--text-muted);">${finalDateStr}</td><td><strong>${rVisitorName}</strong><br><span style="font-size:10px;color:var(--text-muted);">Email: ${rHostEmail}</span></td><td>${t(rType.toLowerCase())}</td><td>${rLocation}</td><td>${actionBtns}</td></tr>`;
-                pendingCount++;
-            }else if(rStatus==='Approved'){
-                const isChecked=checkedPrintIds.has(row.UniqueID)?'checked':'';
-                let cbHtml=`<input type="checkbox" class="print-checkbox row-checkbox" value="${row.UniqueID}" data-name="${rVisitorName}" data-type="${rType}" data-location="${rLocation}" data-status="${rStatus}" data-date="${dateStr}" ${isChecked} onchange="handlePrintCheckbox(this)">`;
-                let actionBtns=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;"><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="printQR('${rVisitorName}','${rType}','${rLocation}','${row.UniqueID}','${rStatus}','${dateStr}')">${t('btn_print')}</button><button class="btn-primary btn-warning btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;color:#000;" onclick="openAdminGateModal('${row.UniqueID}')">🚪 GATE ACTION</button><button class="btn-primary btn-danger btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="adminRevokePass('${row.UniqueID}')">🚫 REVOKE PASS</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button></div>`;
-                
-                let ciTime = '-';
-                let durHtml = '-';
-                
-                if (isInside) {
-                    let activeVisit = visits[visits.length - 1];
-                    ciTime = formatTime(activeVisit.in);
-                    
-                    let ci = activeVisit.in.getTime();
-                    let now = new Date().getTime();
-                    let diffMins = Math.floor((now - ci) / 60000);
-                    if(diffMins < 0) diffMins = 0;
-                    let h = Math.floor(diffMins / 60);
-                    let m = diffMins % 60;
-                    durHtml = `<span style="color:var(--noon-yellow); font-weight:bold;">${h}h ${m}m</span>`;
-                }
-                
-                hActive+=`<tr ${rowStyle}>
-                    <td>${cbHtml}</td>
-                    <td style="color:var(--text-muted);">${finalDateStr}</td>
-                    <td><strong>${rVisitorName}</strong><br><span style="font-size:10px;color:var(--text-muted);">Email: ${rHostEmail}</span></td>
-                    <td>${t(rType.toLowerCase())}</td>
+                hHistory+=`<tr>
+                    <td style="color:var(--text-muted);">${dateStr}</td>
+                    <td><strong>${rVisitorName}</strong><br>${statusBadgeHistory}</td>
+                    <td>${typeHtml}</td>
                     <td>${rLocation}</td>
-                    <td style="color:var(--text-muted);font-size:11px;">${ciTime}</td>
-                    <td>${durHtml}</td>
-                    <td>${actionBtns}</td>
+                    <td style="font-weight:600;color:${sColor}">${finalStatus}</td>
+                    <td style="color:var(--text-main);font-weight:bold;">${visits.length} Visit(s)</td>
+                    <td>${historyActionBtns}</td>
                 </tr>`;
-                activeCount++;
+                historyCount++;
             }
         }
-
-        if (inRange) {
-            let finalStatus=rStatus,sColor='var(--noon-yellow)';
-            if(rStatus==='Rejected'){finalStatus=t('status_rejected');sColor='var(--danger)'}
-            else if(isExpired){finalStatus=t('status_expired');sColor='var(--danger)'}
-            else if(rStatus==='Completed'){finalStatus=t('status_completed');sColor='var(--success)'}
-            else{finalStatus=t('status_approved');sColor='var(--success)'}
-            let statusBadgeHistory = `<span style="background:${sColor}20; color:${sColor}; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">${finalStatus}</span>`;
-            let historyActionBtns=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;"><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button></div>`;
-            let typeHtml = `<strong style="color:var(--noon-yellow);">${t(rType.toLowerCase())}</strong>`;
-
-            if (visits.length === 0) {
-                if (isPassExpiredOrFinished) {
-                    hHistory+=`<tr>
-                        <td style="color:var(--text-muted);">${dateStr}</td>
-                        <td><strong>${rVisitorName}</strong><br>${statusBadgeHistory}</td>
-                        <td>${typeHtml}</td>
-                        <td>${rLocation}</td>
-                        <td style="font-weight:600;color:${sColor}">${finalStatus}</td>
-                        <td style="color:var(--text-muted);font-size:11px;">-</td>
-                        <td style="color:var(--text-muted);font-size:11px;">-</td>
-                        <td style="color:var(--text-muted);font-size:11px;">-</td>
-                        <td style="color:var(--text-muted);font-size:11px;">-</td>
-                        <td>${historyActionBtns}</td>
-                    </tr>`;
-                    historyCount++;
-                }
-            } else {
-                visits.forEach(v => {
-                    if (v.out || isPassExpiredOrFinished) {
-                        let inStr = v.in ? formatTime(v.in) : '-';
-                        let outStr = v.out ? formatTime(v.out) : '<span style="color:var(--danger);font-weight:bold;">Missed Out-Scan</span>';
-
-                        let durStr = '-';
-                        if (v.in && v.out) {
-                            let endT = v.out.getTime();
-                            let startT = v.in.getTime();
-                            let diffMins = Math.floor((endT - startT) / 60000);
-                            if(diffMins < 0) diffMins = 0;
-                            let hs = Math.floor(diffMins / 60);
-                            let ms = diffMins % 60;
-                            durStr = `<span style="color:var(--noon-yellow);font-weight:bold;">${hs}h ${ms}m</span>`;
-                        }
-
-                        let gStr = v.guardIn || '-';
-                        if(v.guardOut && v.guardOut !== v.guardIn) gStr += ` / ${v.guardOut}`;
-
-                        let dStr = v.in ? formatToDDMMYYYY(v.in) : '';
-                        let dayCount = dailyCounts[dStr] || 1;
-                        visitTrackers[dStr] = (visitTrackers[dStr] || 0) + 1;
-
-                        let visitBadge = '';
-                        if (dayCount > 1) {
-                            visitBadge = `<br><span style="color:var(--noon-yellow);font-size:9px;font-weight:bold;letter-spacing:0.5px;text-transform:uppercase;">VISIT ${visitTrackers[dStr]} OF ${dayCount} (THIS DAY)</span>`;
-                        } else {
-                            visitBadge = `<br><span style="color:var(--text-muted);font-size:9px;font-weight:bold;letter-spacing:0.5px;text-transform:uppercase;">VISIT 1 OF 1</span>`;
-                        }
-
-                        hHistory+=`<tr>
-                            <td style="color:var(--text-muted);">${dateStr}</td>
-                            <td><strong>${rVisitorName}</strong><br>${statusBadgeHistory}${visitBadge}</td>
-                            <td>${typeHtml}</td>
-                            <td>${rLocation}</td>
-                            <td style="font-weight:600;color:${sColor}">${finalStatus}</td>
-                            <td style="color:var(--text-main);font-size:11px;">${inStr}</td>
-                            <td style="color:var(--text-main);font-size:11px;">${outStr}</td>
-                            <td style="font-size:12px;">${durStr}</td>
-                            <td style="color:var(--text-muted);font-size:11px;">🛡️ ${gStr}</td>
-                            <td>${historyActionBtns}</td>
-                        </tr>`;
-                        historyCount++;
+        
+        if (!isHistory) {
+            if(inRange){
+                if(rStatus==='Pending'){
+                    let actionBtns=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;"><button class="btn-primary btn-success btn-sm" style="width:auto;white-space:nowrap;" onclick="updateStatus('${row.UniqueID}','Approved')">${t('btn_approve')}</button><button class="btn-primary btn-danger btn-sm" style="width:auto;white-space:nowrap;" onclick="updateStatus('${row.UniqueID}','Rejected')">${t('btn_reject')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button></div>`;
+                    hPending+=`<tr ${rowStyle}><td style="color:var(--text-muted);">${finalDateStr}</td><td><strong>${rVisitorName}</strong><br><span style="font-size:10px;color:var(--text-muted);">Email: ${rHostEmail}</span></td><td>${t(rType.toLowerCase())}</td><td>${rLocation}</td><td>${actionBtns}</td></tr>`;
+                    pendingCount++;
+                }else if(rStatus==='Approved'){
+                    const isChecked=checkedPrintIds.has(row.UniqueID)?'checked':'';
+                    let cbHtml=`<input type="checkbox" class="print-checkbox row-checkbox" value="${row.UniqueID}" data-name="${rVisitorName}" data-type="${rType}" data-location="${rLocation}" data-status="${rStatus}" data-date="${dateStr}" ${isChecked} onchange="handlePrintCheckbox(this)">`;
+                    let actionBtns=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;"><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="printQR('${rVisitorName}','${rType}','${rLocation}','${row.UniqueID}','${rStatus}','${dateStr}')">${t('btn_print')}</button><button class="btn-primary btn-warning btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;color:#000;" onclick="openAdminGateModal('${row.UniqueID}')">🚪 GATE ACTION</button><button class="btn-primary btn-danger btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="adminRevokePass('${row.UniqueID}')">🚫 REVOKE PASS</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button></div>`;
+                    
+                    let ciTime = '-';
+                    let durHtml = '-';
+                    
+                    if (isInside) {
+                        let activeVisit = visits[visits.length - 1];
+                        ciTime = formatTime(activeVisit.in);
+                        
+                        let ci = activeVisit.in.getTime();
+                        let now = new Date().getTime();
+                        let diffMins = Math.floor((now - ci) / 60000);
+                        if(diffMins < 0) diffMins = 0;
+                        let h = Math.floor(diffMins / 60);
+                        let m = diffMins % 60;
+                        durHtml = `<span style="color:var(--noon-yellow); font-weight:bold;">${h}h ${m}m</span>`;
                     }
-                });
+                    
+                    hActive+=`<tr ${rowStyle}>
+                        <td>${cbHtml}</td>
+                        <td style="color:var(--text-muted);">${finalDateStr}</td>
+                        <td><strong>${rVisitorName}</strong><br><span style="font-size:10px;color:var(--text-muted);">Email: ${rHostEmail}</span></td>
+                        <td>${t(rType.toLowerCase())}</td>
+                        <td>${rLocation}</td>
+                        <td style="color:var(--text-muted);font-size:11px;">${ciTime}</td>
+                        <td>${durHtml}</td>
+                        <td>${actionBtns}</td>
+                    </tr>`;
+                    activeCount++;
+                }
             }
         }
         
@@ -1319,7 +1367,7 @@ function renderAdminData(data){
 
     if(tPending){if(pendingCount===0)hPending=`<tr><td colspan="5" class="text-center" style="padding:30px;">${t("msg_no_pending")}</td></tr>`;tPending.innerHTML=hPending}
     if(tActive){if(activeCount===0)hActive=`<tr><td colspan="8" class="text-center" style="padding:30px;">${t("msg_no_active")}</td></tr>`;tActive.innerHTML=hActive}
-    if(tHistory){if(historyCount===0)hHistory=`<tr><td colspan="10" class="text-center" style="padding:30px;">${t("msg_no_history")}</td></tr>`;tHistory.innerHTML=hHistory}
+    if(tHistory){if(historyCount===0)hHistory=`<tr><td colspan="7" class="text-center" style="padding:30px;">${t("msg_no_history")}</td></tr>`;tHistory.innerHTML=hHistory}
     if(tGuard){if(guardCount===0)hGuard=`<tr><td colspan="7" class="text-center" style="padding:30px;">${t("msg_no_gate")}</td></tr>`;tGuard.innerHTML=hGuard}
 
     const st=document.getElementById('stat-type');if(st)st.innerHTML=Object.keys(aType).map(k=>`<div class="stat-row"><span>${t(k.toLowerCase())}</span><span class="stat-val">${aType[k]}</span></div>`).join('')||'<div class="stat-row"><span>-</span></div>';
