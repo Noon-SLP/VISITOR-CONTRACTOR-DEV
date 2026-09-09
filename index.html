@@ -1003,7 +1003,8 @@ async function submitRequest(){
 }
 
 function downloadQR(id) {
-    const qrBox = document.getElementById('qr-' + id); if (!qrBox) return;
+    let safeId = String(id).replace(/[^a-zA-Z0-9_-]/g, '');
+    const qrBox = document.getElementById('qr-' + safeId); if (!qrBox) return;
     let canvas = qrBox.querySelector('canvas'); let img = qrBox.querySelector('img');
     let sourceImage = canvas && canvas.style.display !== 'none' ? canvas : (img && img.src ? img : null);
     if (!sourceImage) return alert("QR Code not ready yet.");
@@ -1011,7 +1012,7 @@ function downloadQR(id) {
     newCanvas.width = size + (padding * 2); newCanvas.height = size + (padding * 2);
     let ctx = newCanvas.getContext('2d'); ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
     ctx.drawImage(sourceImage, padding, padding, size, size);
-    const link = document.createElement('a'); link.href = newCanvas.toDataURL('image/png'); link.download = `Noon_Pass_QR_${id}.png`;
+    const link = document.createElement('a'); link.href = newCanvas.toDataURL('image/png'); link.download = `Noon_Pass_QR_${safeId}.png`;
     document.body.appendChild(link); link.click(); document.body.removeChild(link);
 }
 
@@ -1022,6 +1023,7 @@ function renderMyPasses(data){
     let displayData = [...data].reverse();
 
     displayData.forEach(pass=>{
+        let safeId = String(pass.UniqueID).replace(/[^a-zA-Z0-9_-]/g, '');
         let safeType = String(pass.Type || ''); let safeStatus = String(pass.Status || 'Pending'); let safeLoc = String(pass.Location || '');
         const todayNum=new Date().setHours(0,0,0,0); let endObj=parseFlexibleDate(pass.EndDate)||parseFlexibleDate(pass.StartDate);
         let endNum=endObj?endObj.setHours(0,0,0,0):todayNum;
@@ -1032,10 +1034,10 @@ function renderMyPasses(data){
         if(isExp && safeStatus!=='Rejected' && safeStatus!=='Completed'){st=t('status_expired');sc='var(--text-muted)'}
         
         const valText=`(${formatToDDMMYYYY(pass.StartDate)} - ${formatToDDMMYYYY(pass.EndDate||pass.StartDate)})`;
-        h+=`<div class="pass-item" id="pass-card-${pass.UniqueID}"><div class="pass-header"><div><strong style="color:white;font-size:14px;">${pass.VisitorName}</strong><br><span style="font-size:11px;color:var(--text-muted);">${t(safeType.toLowerCase())} • ${safeLoc}</span><br><span style="font-size:10px;color:var(--noon-yellow);">${valText}</span></div><div style="text-align:right;"><span style="font-size:11px;font-weight:bold;color:${sc};text-transform:uppercase;">${st}</span><br><span style="font-size:10px;color:var(--text-muted);">${pass.UniqueID}</span></div></div>`;
+        h+=`<div class="pass-item" id="pass-card-${safeId}"><div class="pass-header"><div><strong style="color:white;font-size:14px;">${pass.VisitorName}</strong><br><span style="font-size:11px;color:var(--text-muted);">${t(safeType.toLowerCase())} • ${safeLoc}</span><br><span style="font-size:10px;color:var(--noon-yellow);">${valText}</span></div><div style="text-align:right;"><span style="font-size:11px;font-weight:bold;color:${sc};text-transform:uppercase;">${st}</span><br><span style="font-size:10px;color:var(--text-muted);">${pass.UniqueID}</span></div></div>`;
         
         if(!isComp && safeStatus !== 'Rejected') {
-            h+=`<div style="text-align:center;margin-top:10px;"><div class="qr-box" id="qr-${pass.UniqueID}" style="background:white;padding:10px;border-radius:6px;display:inline-block;min-width:140px;min-height:140px;"></div><div style="margin-top:15px;" id="save-btn-container-${pass.UniqueID}"><button class="btn-primary btn-outline btn-sm" style="margin-bottom:8px;" onclick="downloadQR('${pass.UniqueID}')" data-i18n="save_qr">${t('save_qr')}</button><br><button class="btn-primary btn-warning btn-sm" style="color:#000;" onclick="openAddMoreModal('${pass.UniqueID}')">➕ ${t('add_more_people')}</button></div></div>`;
+            h+=`<div style="text-align:center;margin-top:10px;"><div class="qr-box" id="qr-${safeId}" style="background:white;padding:10px;border-radius:6px;display:inline-block;min-width:140px;min-height:140px;"></div><div style="margin-top:15px;" id="save-btn-container-${safeId}"><button class="btn-primary btn-outline btn-sm" style="margin-bottom:8px;" onclick="downloadQR('${pass.UniqueID}')" data-i18n="save_qr">${t('save_qr')}</button><br><button class="btn-primary btn-warning btn-sm" style="color:#000;" onclick="openAddMoreModal('${pass.UniqueID}')">➕ ${t('add_more_people')}</button></div></div>`;
         } else if (safeStatus === 'Rejected') {
             h+=`<div style="text-align:center;margin-top:15px;font-size:12px;color:var(--danger);font-weight:bold;"><em>${t("status_rejected")} - Access Denied</em></div>`;
         } else if (safeStatus === 'Completed') {
@@ -1048,13 +1050,14 @@ function renderMyPasses(data){
     listDiv.innerHTML=h;
     
     displayData.forEach(pass=>{
+        let safeId = String(pass.UniqueID).replace(/[^a-zA-Z0-9_-]/g, '');
         let safeStatus = String(pass.Status || 'Pending');
         const todayNum=new Date().setHours(0,0,0,0); let endObj=parseFlexibleDate(pass.EndDate)||parseFlexibleDate(pass.StartDate);
-        let endNum=endObj?endObj.setHours(0,0,0,0):todayNum; let safeType = String(pass.Type || '');
+        let endNum=endObj?endObj.setHours(0,0,0,0):todayNum;
         const isExp=todayNum>endNum, isComp=isExp || safeStatus==='Completed';
         
         if(!isComp && safeStatus !== 'Rejected'){ 
-            setTimeout(() => { const qre=document.getElementById(`qr-${pass.UniqueID}`); if(qre) { qre.innerHTML = ""; try { new QRCode(qre, {text: String(pass.UniqueID), width:120, height:120, colorDark:"#000", colorLight:"#fff", correctLevel: QRCode.CorrectLevel.H}); } catch(err) {} } }, 200); 
+            setTimeout(() => { const qre=document.getElementById(`qr-${safeId}`); if(qre) { qre.innerHTML = ""; try { new QRCode(qre, {text: String(pass.UniqueID), width:120, height:120, colorDark:"#000", colorLight:"#fff", correctLevel: QRCode.CorrectLevel.H}); } catch(err) {} } }, 200); 
         }
     });
 }
@@ -1076,7 +1079,12 @@ async function loadMyPasses(forceRefresh=false,isSilent=false){
         const res=await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'get_by_email', email: targetEmail }) });
         if(!res.ok)throw new Error("HTTP error");
         const data=await res.json();
-        if(Array.isArray(data)){ localStorage.setItem(cachedKey,JSON.stringify(data)); processAndRenderPasses(data, targetEmail, isSilent); }
+        if(Array.isArray(data)){ 
+            const newDataStr = JSON.stringify(data);
+            if (isSilent && cached === newDataStr) return; // DIFF CHECK - Prevent QR Flash!
+            localStorage.setItem(cachedKey, newDataStr); 
+            processAndRenderPasses(data, targetEmail, isSilent); 
+        }
     }catch(e){if(!isSilent&&!cached)listDiv.innerHTML='<p style="color:var(--danger);font-size:13px;">Error.</p>'}
 }
 
@@ -1287,8 +1295,12 @@ async function loadAdminData(isSilent=false){
         const dataHist = await resHist.json();
         
         if(Array.isArray(dataMain) && Array.isArray(dataHist)){ 
-            localStorage.setItem('cached_admin_data',JSON.stringify(dataMain)); 
-            localStorage.setItem('cached_history_data',JSON.stringify(dataHist)); 
+            const newMStr = JSON.stringify(dataMain);
+            const newHStr = JSON.stringify(dataHist);
+            if (isSilent && cachedM === newMStr && cachedH === newHStr) return; // DIFF CHECK - Prevents flashing!
+            
+            localStorage.setItem('cached_admin_data', newMStr); 
+            localStorage.setItem('cached_history_data', newHStr); 
             renderAdminData(dataMain.reverse(), dataHist); 
         } else { renderAdminData([], []); }
     }catch(e){ renderAdminData(globalAdminData || [], globalHistoryData || []); if(!isSilent&&(!cachedM || !cachedH))console.error(e); }
