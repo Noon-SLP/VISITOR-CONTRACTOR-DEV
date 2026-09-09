@@ -40,33 +40,6 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
 <div id="add-more-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 500px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;" data-i18n="add_more_people">➕ Add More People</h3><button onclick="closeAddMoreModal()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; display: flex; flex-direction: column; gap: 15px;"><p style="color:var(--danger); font-size:12px; font-weight:bold; margin-bottom:5px;" data-i18n="add_more_warning">⚠️ WARNING: Submitting this will change the pass status back to PENDING. It cannot be used until the Admin approves it again.</p><div id="add-team-roster-display" class="team-roster hidden"></div><div id="add-team-entry-box" style="border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; background: rgba(255,255,255,0.02);"><div class="input-group" style="margin-bottom: 15px;"><input type="text" id="req-add-team-name" class="input-field" data-i18n="full_name_ph" placeholder="Full Name"></div><div class="input-group" style="margin-bottom: 15px;"><input type="text" id="req-add-team-iqamatext" class="input-field" data-i18n="iqama_id_ph" placeholder="Iqama / ID Number"></div><div class="input-group" style="margin-bottom: 15px;"><label style="font-size: 11px; color:var(--noon-yellow);" data-i18n="device_type_label">Device Type</label><select id="req-add-team-device-type" class="input-field" onchange="toggleAddTeamDeviceInput()"><option value="None" data-i18n="no_device">No Device</option><option value="Mobile">Mobile</option><option value="Laptop">Laptop</option></select></div><div class="input-group hidden" id="req-add-team-device-id-group" style="margin-bottom: 15px;"><input type="text" id="req-add-team-device-id" class="input-field" placeholder="IMEI / Serial Number"><label style="font-size: 11px; margin-top:10px;" data-i18n="upload_device_photo">Upload Device Photo/Screen</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_imeiphoto')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-add-team-imeiphoto" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_imeiphoto')"></div><img id="preview-add_team_imeiphoto" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div><div class="input-group"><label style="font-size: 11px;" data-i18n="upload_iqama">Upload Iqama/ID Copy</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_iqama')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-add-team-iqama" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_iqama')"></div><img id="preview-add_team_iqama" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div><div class="input-group" style="margin-bottom: 15px;"><label style="font-size: 11px;" data-i18n="upload_selfie">Upload Selfie Photo</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_selfie')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-add-team-selfie" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_selfie')"></div><img id="preview-add_team_selfie" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div><button type="button" class="btn-primary btn-success" style="font-size: 12px;" onclick="saveAddTeamMember()" data-i18n="save_person_list">✅ SAVE PERSON TO LIST</button></div><button id="btn-submit-add-more" class="btn-primary" onclick="submitAddMorePeople()" data-i18n="submit_send_approval">SUBMIT & SEND FOR APPROVAL</button></div></div></div>
 <div id="admin-gate-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 400px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">🚪 GATE ACTION</h3><button onclick="closeAdminGateModal()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; display: flex; flex-direction: column; gap: 15px; text-align: center;"><p style="color:var(--text-muted); font-size:13px; margin-bottom:10px;">Select an action for pass <strong id="admin-gate-id-display" style="color:white;"></strong></p><input type="hidden" id="admin-gate-id"><button class="btn-primary btn-success" style="font-size: 14px; padding: 14px;" onclick="submitAdminGateAction('check_in')">✅ CHECK IN</button><button class="btn-primary btn-warning" style="font-size: 14px; padding: 14px; color:#000;" onclick="submitAdminGateAction('check_out')">🚪 CHECK OUT</button></div></div></div>
 
-<!-- TIMELINE MODAL -->
-<div id="timeline-modal" class="popup-modal hidden">
-    <div class="record-modal-box" style="max-width: 700px;">
-        <div class="record-modal-header">
-            <h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">📜 Access Timeline</h3>
-            <button onclick="closeTimeline()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
-        </div>
-        <div style="padding: 25px; overflow-y: auto; max-height: 70vh;">
-            <h4 id="timeline-pass-name" style="color: white; margin-bottom: 20px; font-size: 15px;"></h4>
-            <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr>
-                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Check-In</th>
-                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Check-Out</th>
-                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Duration</th>
-                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Guard</th>
-                        </tr>
-                    </thead>
-                    <tbody id="timeline-table-body">
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
 <div id="login-view"><div class="login-top-controls"><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 16px;" onclick="hardRefreshApp()" title="Hard Refresh Cache">🔄</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 16px;" onclick="toggleFullScreen()" title="Fullscreen">⛶</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 12px;" onclick="toggleLang()">عربي / EN</button></div><div class="login-container"><div class="logo-box"></div><div style="text-align:center;margin-bottom:25px;"><h2 style="color:var(--noon-yellow);font-size:24px;margin-bottom:6px;letter-spacing:1px;">NOON SLP</h2><p style="color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="visitor_contractor_portal">Visitor & Contractor Portal</p></div>
 <div class="role-tabs" id="role-tabs" style="display:none;"><div class="role-tab active" id="tab-guard" onclick="switchLoginTab('guard')" data-i18n="guard">🛡️ Guard</div><div class="role-tab" id="tab-admin" onclick="switchLoginTab('admin')" data-i18n="admin">⚙️ Admin</div></div>
 <div id="login-guard" class="hidden"><div class="input-group"><input type="text" id="lg-name" class="input-field t-ph" data-i18n="name" placeholder="Name"></div><div class="input-group"><input type="text" id="lg-id" class="input-field t-ph" data-i18n="noon_id" placeholder="Noon ID"></div><div class="input-group"><select id="lg-location" class="input-field"><option value="" data-i18n="select_guard_loc">Select Guard Location...</option><option value="RUH01">RUH01</option><option value="JED01">JED01</option></select></div><button class="btn-primary" onclick="login('guard')" data-i18n="login_gate">LOGIN TO GATE</button></div>
@@ -294,12 +267,15 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
                 <th data-i18n="type_header">Type</th>
                 <th data-i18n="facility_header">Facility</th>
                 <th data-i18n="final_status">Final Status</th>
-                <th>Total Visits</th>
+                <th data-i18n="check_in">Check-In</th>
+                <th data-i18n="check_out">Check-Out</th>
+                <th>Duration</th>
+                <th data-i18n="scanned_by">Scanned By</th>
                 <th data-i18n="action">Action</th>
               </tr>
             </thead>
             <tbody id="admin-table-history">
-              <tr><td colspan="7" class="text-center" style="padding: 30px;" data-i18n="no_history">No history found.</td></tr>
+              <tr><td colspan="10" class="text-center" style="padding: 30px;" data-i18n="no_history">No history found.</td></tr>
             </tbody>
           </table>
         </div>
@@ -341,33 +317,6 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
       </div>
     </div>
   </main>
-</div>
-
-<!-- TIMELINE MODAL -->
-<div id="timeline-modal" class="popup-modal hidden">
-    <div class="record-modal-box" style="max-width: 700px;">
-        <div class="record-modal-header">
-            <h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">📜 Access Timeline</h3>
-            <button onclick="closeTimeline()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
-        </div>
-        <div style="padding: 25px; overflow-y: auto; max-height: 70vh;">
-            <h4 id="timeline-pass-name" style="color: white; margin-bottom: 20px; font-size: 15px;"></h4>
-            <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr>
-                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Check-In</th>
-                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Check-Out</th>
-                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Duration</th>
-                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Guard</th>
-                        </tr>
-                    </thead>
-                    <tbody id="timeline-table-body">
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
 </div>
 
 <script>
@@ -495,7 +444,7 @@ function closePinVerify() {
 
 const dict={
     en:{"guard":"🛡️ Guard","visitor_ops":"📋 Visitor/Ops","admin":"⚙️ Admin","name":"Name","noon_id":"Noon ID","select_guard_loc":"Select Guard Location...","login_gate":"LOGIN TO GATE","your_full_name":"Your Full Name","your_email":"Your Gmail / Email","login_portal":"LOGIN TO PORTAL","admin_name":"Admin Name","admin_email":"Admin Gmail","admin_password":"Admin Password","login_admin":"LOGIN AS ADMIN","system_admin":"System Admin","visitor_portal":"Visitor Portal","gate_scanner":"Gate Scanner","admin_dashboard":"Admin Dashboard","whats_new":"What's New","logout":"LOGOUT","visitor_contractor_portal":"Visitor & Contractor Portal","submit_new_request":"Submit New Request","type":"Type","visitor":"Visitor","contractor":"Contractor","req_email_ph":"Email Address (For Pass Tracking)","req_vname_ph":"Visitor / Contractor Full Name","iqama_id_ph":"Lead Iqama / ID Number","visit_date":"Visit Date / Validity (From - To)","slp_ticket":"SLP Ticket No.","contact_no":"Contact No.","invited_by":"Invited by Whom","vehicle_plate":"Vehicle Plate / Picture","live_camera":"📷 Live Camera","contract_exp":"Contract Expiration (From - To)","project_name":"Project Name","company_name":"Company / Contractor Name","project_manager":"Project Manager","fm_poc":"FM POC Name / Details","upload_iqama":"Upload Iqama/ID Copy","upload_selfie":"Upload Selfie Photo","submit_approval":"Submit for Approval","my_passes":"My Passes","refresh":"Refresh","fetching":"Fetching your passes...","start_camera":"START CAMERA SCANNER","name_label":"Name:","type_label":"Type:","location_label":"Location:","confirm_action":"CONFIRM ACTION","access_approvals":"📋 Access Approvals","history":"🕰️ History","guard_approvals":"🛡️ Guard Approvals","analytics":"📊 Analytics","all_time":"All Time","today":"Today","weekly":"Weekly","monthly":"Monthly","6months":"6 Months","1year":"1 Year","custom":"Custom","to":"TO","apply":"APPLY","pending_req":"Pending Requests","active_req":"Active Requests","print_selected":"🖨️ PRINT SELECTED","val_period":"Validity Period","name_header":"Name","type_header":"Type","facility_header":"Facility","action":"Action","access_history":"Access & Gate History","final_status":"Final Status","check_in":"Check-In","check_out":"Check-Out","scanned_by":"Scanned By","live_gate":"Live Gate Operations","check_in_time":"Check-In Time","check_out_time":"Check-Out Time","visitor_name":"Visitor Name","date_analytics":"📅 Date Analytics","type_analytics":"👤 Type Analytics","facility_analytics":"🏢 Facility Analytics","status_analytics":"✅ Status Analytics","detailed_record":"Detailed Record View","extend_pass":"Extend Pass Validity","new_start_date":"New Visit / Start Date","new_end_date":"New End Date","save_extension":"SAVE EXTENSION","capture":"📸 CAPTURE","flip_cam":"🔄 FLIP CAM","cancel":"❌ CANCEL","click_to_close":"Click anywhere to close","btn_approve":"Approve","btn_reject":"Reject","btn_extend":"📅 EXTEND","btn_view":"🔍 VIEW DATA","btn_print":"🖨️ PRINT PASS","btn_checkout":"🚪 CHECK OUT","lbl_host_name":"Host Name","lbl_host_email":"Host Email","lbl_validity":"Validity Period","lbl_iqama":"IQAMA/ID COPY","lbl_selfie":"SELFIE PHOTO","lbl_vehicle":"VEHICLE PLATE","status_approved":"Approved","status_pending":"Pending","status_rejected":"Rejected","status_expired":"EXPIRED","status_completed":"COMPLETED","msg_no_pending":"No pending requests found in this timeframe.","msg_no_active":"No active requests found in this timeframe.","msg_no_history":"No history found in this timeframe.","msg_no_gate":"No gate operations found in this timeframe.","msg_enter_email":"Enter an Email Address on the left to view passes.","msg_loading":"Loading requests...","msg_inside":"Inside Facility","msg_admin_select_loc":"Admin: Please select a facility first.","btn_add_team":"➕ ADD TEAM MEMBER","camera_scanner_btn":"📷 CAMERA SCANNER","hardware_gun_btn":"🔌 HARDWARE GUN","hw_scanner_ready":"HARDWARE SCANNER READY","hw_scanner_inst":"Point your handheld gun scanner at the QR code and trigger.","awaiting_scan":"Awaiting hardware scan...","save_qr":"⬇️ SAVE QR CODE","allowed":"ALLOWED","pass_validated":"Pass Validated","denied":"DENIED","admin_select_fac":"Admin: Please select a facility first.","pending":"PENDING","awaiting_admin":"Pass is awaiting Admin approval","not_approved":"Pass not approved by Admin","wrong_facility":"WRONG FACILITY","wrong_fac_msg":"Wrong Facility","invalid_date":"INVALID DATE","not_valid_today":"Pass is not valid for today","expired":"EXPIRED","contractor_expired":"Contractor Pass Expired","check_out":"CHECK OUT","scanning_out":"Scanning Out.<br><span style='color:#000; font-size:14px; font-weight:bold;'>⚠️ TAKE ID CARD FROM LEAD.</span>","select_all_members":"SELECT ALL MEMBERS","lead":"Lead","device_photos_all":"DEVICE & PHOTOS FOR ALL","device_label":"Device","iqama_id":"IQAMA / ID","selfie":"SELFIE","device_screen":"DEVICE SCREEN","vehicle":"VEHICLE","add_more_people":"➕ Add More People","add_more_warning":"⚠️ WARNING: Submitting this will change the pass status back to PENDING. It cannot be used until the Admin approves it again.","device_type_label":"Device Type","no_device":"No Device","upload_device_photo":"Upload Device Photo/Screen","full_name_ph":"Full Name","save_person_list":"✅ SAVE PERSON TO LIST","submit_send_approval":"SUBMIT & SEND FOR APPROVAL","save_add_next":"✅ SAVE & ADD NEXT","lead_device_details":"Lead Device Details & Photo Screen","max_devices_note":"* Note: A maximum of 10 members are allowed to bring devices (Mobile/Laptop).", "total_people":"Total People", "new_members_added":"➕ NEW MEMBERS ADDED", "new_badge":"NEW", "notice_new_people":"NOTICE: New people have been added to this pass!"},
-    ar:{"guard":"🛡️ الحارس","visitor_ops":"📋 الزوار/العمليات","admin":"⚙️ الإدارة","name":"الاسم","noon_id":"الرقم الوظيفي (Noon ID)","select_guard_loc":"اختر موقع الحارس...","login_gate":"الدخول للبوابة","your_full_name":"الاسم الكامل","your_email":"البريد الإلكتروني","login_portal":"تسجيل الدخول للبوابة","admin_name":"اسم المشرف","admin_email":"بريد المشرف","admin_password":"كلمة المرور","login_admin":"دخول كمسؤول","system_admin":"إدارة النظام","visitor_portal":"بوابة الزوار","gate_scanner":"ماسح البوابة","admin_dashboard":"لوحة التحكم","whats_new":"ما الجديد","logout":"تسجيل خروج","visitor_contractor_portal":"بوابة الزوار والمقاولين","submit_new_request":"تقديم طلب جديد","type":"النوع","visitor":"زائر","contractor":"مقاول","req_email_ph":"البريد الإلكتروني (لتتبع التصريح)","req_vname_ph":"الاسم الكامل للزائر/المقاول","iqama_id_ph":"رقم الهوية / الإقامة للقائد","visit_date":"تاريخ الزيارة / الصلاحية (من - إلى)","slp_ticket":"رقم تذكرة SLP","contact_no":"رقم الاتصال","invited_by":"بدعوة من","vehicle_plate":"صورة / لوحة السيارة","live_camera":"📷 كاميرا مباشرة","contract_exp":"صلاحية العقد (من - إلى)","project_name":"اسم المشروع","company_name":"اسم الشركة / المقاول","project_manager":"مدير المشروع","fm_poc":"اسم/تفاصيل مسؤول المرافق (FM POC)","upload_iqama":"رفع صورة الهوية/الإقامة","upload_selfie":"رفع صورة شخصية","submit_approval":"إرسال للموافقة","my_passes":"تصاريحي","refresh":"تحديث","fetching":"جاري جلب التصاريح...","start_camera":"تشغيل ماسح الكاميرا","name_label":"الاسم:","type_label":"النوع:","location_label":"الموقع:","confirm_action":"تأكيد الإجراء","access_approvals":"📋 موافقات الدخول","history":"🕰️ السجل","guard_approvals":"🛡️ عمليات البوابة","analytics":"📊 الإحصائيات","all_time":"الكل","today":"اليوم","weekly":"أسبوعي","monthly":"شهري","6months":"٦ أشهر","1year":"سنة","custom":"مخصص","to":"إلى","apply":"تطبيق","pending_req":"الطلبات المعلقة","active_req":"الطلبات النشطة","print_selected":"🖨️ طباعة المحدد","val_period":"فترة الصلاحية","name_header":"الاسم","type_header":"النوع","facility_header":"المنشأة","action":"الإجراء","access_history":"سجل الدخول والبوابة","final_status":"الحالة النهائية","check_in":"دخول","check_out":"خروج","scanned_by":"تم المسح بواسطة","live_gate":"عمليات البوابة المباشرة","check_in_time":"وقت الدخول","check_out_time":"وقت الخروج","visitor_name":"اسم الزائر","date_analytics":"📅 إحصائيات التواريخ","type_analytics":"👤 إحصائيات الأنواع","facility_analytics":"🏢 إحصائيات المنشآت","status_analytics":"✅ إحصائيات الحالات","detailed_record":"عرض السجل التفصيلي","extend_pass":"تمديد صلاحية التصريح","new_start_date":"تاريخ الزيارة/البداية الجديد","new_end_date":"تاريخ النهاية الجديد","save_extension":"حفظ التمديد","capture":"📸 التقاط","flip_cam":"🔄 قلب الكاميرا","cancel":"❌ إلغاء","click_to_close":"انقر في أي مكان للإغلاق","btn_approve":"موافقة","btn_reject":"رفض","btn_extend":"📅 تمديد","btn_view":"🔍 عرض البيانات","btn_print":"🖨️ طباعة","btn_checkout":"🚪 خروج","lbl_host_name":"اسم المضيف","lbl_host_email":"بريد المضيف","lbl_validity":"فترة الصلاحية","lbl_iqama":"صورة الهوية/الإقامة","lbl_selfie":"الصورة الشخصية","lbl_vehicle":"لوحة السيارة","status_approved":"مقبول","status_pending":"قيد الانتظار","status_rejected":"مرفوض","status_expired":"منتهي","status_completed":"مكتمل","msg_no_pending":"لا توجد طلبات معلقة في هذه الفترة.","msg_no_active":"لا توجد طلبات نشطة في هذه الفترة.","msg_no_history":"لا يوجد سجل في هذه الفترة.","msg_no_gate":"لا توجد عمليات بوابة في هذه الفترة.","msg_enter_email":"أدخل بريداً إلكترونياً لعرض التصاريح.","msg_loading":"جاري التحميل...","msg_inside":"داخل المنشأة","msg_admin_select_loc":"المشرف: يرجى تحديد المنشأة أولاً من القائمة العلوية.","btn_add_team":"➕ إضافة عضو للفريق","camera_scanner_btn":"📷 ماسح الكاميرا","hardware_gun_btn":"🔌 ماسح الباركود اليدوي","hw_scanner_ready":"ماسح الباركود جاهز","hw_scanner_inst":"قم بتوجيه الماسح الضوئي نحو رمز الاستجابة السريعة (QR).","awaiting_scan":"بانتظار المسح...","save_qr":"⬇️ حفظ الرمز","allowed":"مسموح","pass_validated":"تم التحقق من التصريح","denied":"مرفوض","admin_select_fac":"المشرف: يرجى تحديد المنشأة أولاً.","pending":"قيد الانتظار","awaiting_admin":"التصريح بانتظار موافقة المشرف","not_approved":"لم تتم الموافقة على التصريح","wrong_facility":"منشأة خاطئة","wrong_fac_msg":"منشأة خاطئة","invalid_date":"تاريخ غير صالح","not_valid_today":"التصريح غير صالح لهذا اليوم","expired":"منتهي","contractor_expired":"تصريح المقاول منتهي","check_out":"تسجيل خروج","scanning_out":"تسجيل الخروج.<br><span style='color:#000; font-size:14px; font-weight:bold;'>⚠️ خذ بطاقة الهوية من القائد.</span>","select_all_members":"تحديد جميع الأعضاء","lead":"القائد","device_photos_all":"الأجهزة والصور للجميع","device_label":"الجهاز","iqama_id":"الإقامة / الهوية","selfie":"الصورة الشخصية","device_screen":"شاشة الجهاز","vehicle":"المركبة","add_more_people":"➕ إضافة المزيد من الأشخاص","add_more_warning":"⚠️ تحذير: سيؤدي هذا إلى إعادة حالة التصريح إلى قيد الانتظار. لا يمكن استخدامه حتى يوافق عليه المشرف مرة أخرى.","device_type_label":"نوع الجهاز","no_device":"لا يوجد جهاز","upload_device_photo":"Upload Device Photo/Screen","full_name_ph":"الاسم الكامل","save_person_list":"✅ حفظ الشخص في القائمة","submit_send_approval":"إرسال وطلب الموافقة","save_add_next":"✅ حفظ وإضافة التالي","lead_device_details":"تفاصيل جهاز القائد وصورة الشاشة","max_devices_note":"* ملاحظة: يُسمح لـ 10 أعضاء كحد أقصى بإحضار أجهزة (هاتف/كمبيوتر محمول).", "total_people":"إجمالي الأشخاص", "new_members_added":"➕ أعضاء جدد مضافون", "new_badge":"جديد", "notice_new_people":"تنبيه: تم إضافة أشخاص جدد إلى هذا التصريح!"}
+    ar:{"guard":"🛡️ الحارس","visitor_ops":"📋 الزوار/العمليات","admin":"⚙️ الإدارة","name":"الاسم","noon_id":"الرقم الوظيفي (Noon ID)","select_guard_loc":"اختر موقع الحارس...","login_gate":"الدخول للبوابة","your_full_name":"الاسم الكامل","your_email":"البريد الإلكتروني","login_portal":"تسجيل الدخول للبوابة","admin_name":"اسم المشرف","admin_email":"بريد المشرف","admin_password":"كلمة المرور","login_admin":"دخول كمسؤول","system_admin":"إدارة النظام","visitor_portal":"بوابة الزوار","gate_scanner":"ماسح البوابة","admin_dashboard":"لوحة التحكم","whats_new":"ما الجديد","logout":"تسجيل خروج","visitor_contractor_portal":"بوابة الزوار والمقاولين","submit_new_request":"تقديم طلب جديد","type":"النوع","visitor":"زائر","contractor":"مقاول","req_email_ph":"البريد الإلكتروني (لتتبع التصريح)","req_vname_ph":"الاسم الكامل للزائر/المقاول","iqama_id_ph":"رقم الهوية / الإقامة للقائد","visit_date":"تاريخ الزيارة / الصلاحية (من - إلى)","slp_ticket":"رقم تذكرة SLP","contact_no":"رقم الاتصال","invited_by":"بدعوة من","vehicle_plate":"صورة / لوحة السيارة","live_camera":"📷 كاميرا مباشرة","contract_exp":"صلاحية العقد (من - إلى)","project_name":"اسم المشروع","company_name":"اسم الشركة / المقاول","project_manager":"مدير المشروع","fm_poc":"اسم/تفاصيل مسؤول المرافق (FM POC)","upload_iqama":"رفع صورة الهوية/الإقامة","upload_selfie":"رفع صورة شخصية","submit_approval":"إرسال للموافقة","my_passes":"تصاريحي","refresh":"تحديث","fetching":"جاري جلب التصاريح...","start_camera":"تشغيل ماسح الكاميرا","name_label":"الاسم:","type_label":"النوع:","location_label":"الموقع:","confirm_action":"تأكيد الإجراء","access_approvals":"📋 موافقات الدخول","history":"🕰️ السجل","guard_approvals":"🛡️ عمليات البوابة","analytics":"📊 الإحصائيات","all_time":"الكل","today":"اليوم","weekly":"أسبوعي","monthly":"شهري","6months":"٦ أشهر","1year":"سنة","custom":"مخصص","to":"إلى","apply":"تطبيق","pending_req":"الطلبات المعلقة","active_req":"الطلبات النشطة","print_selected":"🖨️ طباعة المحدد","val_period":"فترة الصلاحية","name_header":"الاسم","type_header":"النوع","facility_header":"المنشأة","action":"الإجراء","access_history":"سجل الدخول والبوابة","final_status":"الحالة النهائية","check_in":"دخول","check_out":"خروج","scanned_by":"تم المسح بواسطة","live_gate":"عمليات البوابة المباشرة","check_in_time":"وقت الدخول","check_out_time":"وقت الخروج","visitor_name":"اسم الزائر","date_analytics":"📅 إحصائيات التواريخ","type_analytics":"👤 إحصائيات الأنواع","facility_analytics":"🏢 إحصائيات المنشآت","status_analytics":"✅ إحصائيات الحالات","detailed_record":"عرض السجل التفصيلي","extend_pass":"تمديد صلاحية التصريح","new_start_date":"تاريخ الزيارة/البداية الجديد","new_end_date":"تاريخ النهاية الجديد","save_extension":"حفظ التمديد","capture":"📸 التقاط","flip_cam":"🔄 قلب الكاميرا","cancel":"❌ إلغاء","click_to_close":"انقر في أي مكان للإغلاق","btn_approve":"موافقة","btn_reject":"رفض","btn_extend":"📅 تمديد","btn_view":"🔍 عرض البيانات","btn_print":"🖨️ طباعة","btn_checkout":"🚪 خروج","lbl_host_name":"اسم المضيف","lbl_host_email":"بريد المضيف","lbl_validity":"فترة الصلاحية","lbl_iqama":"صورة الهوية/الإقامة","lbl_selfie":"الصورة الشخصية","lbl_vehicle":"لوحة السيارة","status_approved":"مقبول","status_pending":"قيد الانتظار","status_rejected":"مرفوض","status_expired":"منتهي","status_completed":"مكتمل","msg_no_pending":"لا توجد طلبات معلقة في هذه الفترة.","msg_no_active":"لا توجد طلبات نشطة في هذه الفترة.","msg_no_history":"لا يوجد سجل في هذه الفترة.","msg_no_gate":"لا توجد عمليات بوابة في هذه الفترة.","msg_enter_email":"أدخل بريداً إلكترونياً لعرض التصاريح.","msg_loading":"جاري التحميل...","msg_inside":"داخل المنشأة","msg_admin_select_loc":"المشرف: يرجى تحديد المنشأة أولاً من القائمة العلوية.","btn_add_team":"➕ إضافة عضو للفريق","camera_scanner_btn":"📷 ماسح الكاميرا","hardware_gun_btn":"🔌 ماسح الباركود اليدوي","hw_scanner_ready":"ماسح الباركود جاهز","hw_scanner_inst":"قم بتوجيه الماسح الضوئي نحو رمز الاستجابة السريعة (QR).","awaiting_scan":"بانتظار المسح...","save_qr":"⬇️ حفظ الرمز","allowed":"مسموح","pass_validated":"تم التحقق من التصريح","denied":"مرفوض","admin_select_fac":"المشرف: يرجى تحديد المنشأة أولاً.","pending":"قيد الانتظار","awaiting_admin":"التصريح بانتظار موافقة المشرف","not_approved":"لم تتم الموافقة على التصريح","wrong_facility":"منشأة خاطئة","wrong_fac_msg":"منشأة خاطئة","invalid_date":"تاريخ غير صالح","not_valid_today":"التصريح غير صالح لهذا اليوم","expired":"منتهي","contractor_expired":"تصريح المقاول منتهي","check_out":"تسجيل خروج","scanning_out":"تسجيل الخروج.<br><span style='color:#000; font-size:14px; font-weight:bold;'>⚠️ خذ بطاقة الهوية من القائد.</span>","select_all_members":"تحديد جميع الأعضاء","lead":"القائد","device_photos_all":"الأجهزة والصور للجميع","device_label":"الجهاز","iqama_id":"الإقامة / الهوية","selfie":"الصورة الشخصية","device_screen":"شاشة الجهاز","vehicle":"المركبة","add_more_people":"➕ إضافة المزيد من الأشخاص","add_more_warning":"⚠️ تحذير: سيؤدي هذا إلى إعادة حالة التصريح إلى قيد الانتظار. لا يمكن استخدامه حتى يوافق عليه المشرف مرة أخرى.","device_type_label":"نوع الجهاز","no_device":"لا يوجد جهاز","upload_device_photo":"رفع صورة الجهاز/الشاشة","full_name_ph":"الاسم الكامل","save_person_list":"✅ حفظ الشخص في القائمة","submit_send_approval":"إرسال وطلب الموافقة","save_add_next":"✅ حفظ وإضافة التالي","lead_device_details":"تفاصيل جهاز القائد وصورة الشاشة","max_devices_note":"* ملاحظة: يُسمح لـ 10 أعضاء كحد أقصى بإحضار أجهزة (هاتف/كمبيوتر محمول).", "total_people":"إجمالي الأشخاص", "new_members_added":"➕ أعضاء جدد مضافون", "new_badge":"جديد", "notice_new_people":"تنبيه: تم إضافة أشخاص جدد إلى هذا التصريح!"}
 };
 
 let currentLang='en';
@@ -819,7 +768,7 @@ function initApp(){
         if(currentUser&&currentUser.role==='admin'){
             const vn=document.getElementById('req-vname'),ae=document.getElementById('req-admin-email'),ag=document.getElementById('admin-email-group'),sb=document.getElementById('sidebar'),han=document.getElementById('header-admin-name'),sun=document.getElementById('sidebar-user-name'),na=document.getElementById('nav-sidebar-admin'),glt=document.getElementById('guard-loc-text'),agl=document.getElementById('admin-guard-loc');
             const msb=document.getElementById('admin-manual-search-box');
-            if(vn)vn.value='';if(ae)ae.value='';if(ag)ag.classList.remove('hidden');if(sb)sb.style.display='flex';
+            if(vn)vn.value='';if(ae)ae.value='';if(ag)ag.classList.remove('hidden');if(sb)style.display='flex';
             if(han)han.innerText=currentUser.name;if(sun)sun.innerText=currentUser.name;if(na)na.classList.remove('hidden');
             if(glt)glt.classList.add('hidden');if(agl){agl.classList.remove('hidden');agl.value=currentUser.location||'';currentUser.location=agl.value||''}
             if(msb)msb.classList.remove('hidden');
@@ -1160,55 +1109,6 @@ function parseLogs(row) {
     return visits;
 }
 
-function openTimeline(id) {
-    let row = globalAdminData.find(x => String(x.UniqueID) === String(id));
-    if(!row) return;
-    
-    let passName = row.VisitorName || 'Unknown Pass';
-    document.getElementById('timeline-pass-name').innerText = passName + " (" + id + ")";
-    
-    let visits = parseLogs(row);
-    let tbody = document.getElementById('timeline-table-body');
-    let h = '';
-    
-    if(visits.length === 0) {
-        h = `<tr><td colspan="4" class="text-center" style="padding:20px; color:var(--text-muted);">No scan logs found for this pass.</td></tr>`;
-    } else {
-        visits.reverse().forEach(v => {
-            let inStr = v.in ? formatTime(v.in) : '-';
-            let outStr = v.out ? formatTime(v.out) : '<span style="color:var(--success);font-weight:bold;">Currently Inside</span>';
-            
-            let durStr = '-';
-            if (v.in) {
-                let endT = v.out ? v.out.getTime() : new Date().getTime();
-                let startT = v.in.getTime();
-                let diffMins = Math.floor((endT - startT) / 60000);
-                if(diffMins < 0) diffMins = 0;
-                let hs = Math.floor(diffMins / 60);
-                let ms = diffMins % 60;
-                durStr = `<span style="color:var(--noon-yellow);font-weight:bold;">${hs}h ${ms}m</span>`;
-            }
-            
-            let gStr = v.guardIn;
-            if(v.guardOut && v.guardOut !== v.guardIn) gStr += ` / ${v.guardOut}`;
-            
-            h += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                <td style="color:white; font-size:12px;">${inStr}</td>
-                <td style="color:var(--text-muted); font-size:12px;">${outStr}</td>
-                <td style="font-size:12px;">${durStr}</td>
-                <td style="color:var(--text-muted); font-size:11px;">🛡️ ${gStr}</td>
-            </tr>`;
-        });
-    }
-    
-    tbody.innerHTML = h;
-    document.getElementById('timeline-modal').classList.remove('hidden');
-}
-
-function closeTimeline() {
-    document.getElementById('timeline-modal').classList.add('hidden');
-}
-
 function renderAdminData(data){
     if(!Array.isArray(data)){ data = []; } globalAdminData=data;
     const tPending=document.getElementById('admin-table-pending'),tActive=document.getElementById('admin-table-active'),tHistory=document.getElementById('admin-table-history'),tGuard=document.getElementById('admin-table-guard-approvals');
@@ -1231,7 +1131,7 @@ function renderAdminData(data){
         let visits = parseLogs(row);
         let isInside = visits.length > 0 && visits[visits.length - 1].in && !visits[visits.length - 1].out;
         
-        const isHistory = isExpired || rStatus==='Rejected' || rStatus==='Completed';
+        const isPassExpiredOrFinished = isExpired || rStatus==='Rejected' || rStatus==='Completed';
         const inRange=isDateInRange(row.StartDate,currentAdminFilter,fStart,fEnd);
         
         let formattedStart = formatToDDMMYYYY(row.StartDate);
@@ -1249,10 +1149,10 @@ function renderAdminData(data){
         let isMultiDay = (startD && endD && endD.getTime() > startD.getTime());
 
         let rowStyle='',dateBadge='';
-        if(startD&&startD.getTime()===today.getTime()&&!isHistory){ rowStyle='style="background: rgba(16, 185, 129, 0.1);"'; dateBadge+=`<span style="display:inline-block;margin-top:4px;background:var(--success);color:#000;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;margin-right:5px;">TODAY</span>`; }
-        else if(startD&&startD.getTime()===tomorrow.getTime()&&!isHistory){ rowStyle='style="background: rgba(59, 130, 246, 0.1);"'; dateBadge+=`<span style="display:inline-block;margin-top:4px;background:#3b82f6;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;margin-right:5px;">TOMORROW</span>`; }
+        if(startD&&startD.getTime()===today.getTime()&&!isPassExpiredOrFinished){ rowStyle='style="background: rgba(16, 185, 129, 0.1);"'; dateBadge+=`<span style="display:inline-block;margin-top:4px;background:var(--success);color:#000;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;margin-right:5px;">TODAY</span>`; }
+        else if(startD&&startD.getTime()===tomorrow.getTime()&&!isPassExpiredOrFinished){ rowStyle='style="background: rgba(59, 130, 246, 0.1);"'; dateBadge+=`<span style="display:inline-block;margin-top:4px;background:#3b82f6;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;margin-right:5px;">TOMORROW</span>`; }
         
-        if (isMultiDay && !isHistory) {
+        if (isMultiDay && !isPassExpiredOrFinished) {
             rowStyle = 'style="background: rgba(139, 92, 246, 0.15);"';
             dateBadge += `<span style="display:inline-block;margin-top:4px;background:#8b5cf6;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;letter-spacing:0.5px;">MULTI-DAY</span>`;
         }
@@ -1260,72 +1160,127 @@ function renderAdminData(data){
         if(dateBadge !== '') dateBadge = '<br>' + dateBadge;
         const finalDateStr=dateStr+dateBadge;
 
-        if (visits.length > 0 || isHistory) {
-            if(inRange){
-                let finalStatus=rStatus,sColor='var(--noon-yellow)';
-                if(rStatus==='Rejected'){finalStatus=t('status_rejected');sColor='var(--danger)'}
-                else if(isExpired){finalStatus=t('status_expired');sColor='var(--danger)'}
-                else if(rStatus==='Completed'){finalStatus=t('status_completed');sColor='var(--success)'}
-                else{finalStatus=t('status_approved');sColor='var(--success)'}
-                
-                let timelineBtn = visits.length > 0 ? `<button class="btn-primary btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;color:#000;" onclick="openTimeline('${row.UniqueID}')">📜 TIMELINE</button>` : '';
-                let historyActionBtns=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;">${timelineBtn}<button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button></div>`;
-                
-                let typeHtml = `<strong style="color:var(--noon-yellow);">${t(rType.toLowerCase())}</strong>`;
-                let statusBadgeHistory = `<span style="background:${sColor}20; color:${sColor}; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">${finalStatus}</span>`;
+        let dailyCounts = {};
+        visits.forEach(v => {
+            if(v.in) {
+                let dStr = formatToDDMMYYYY(v.in);
+                dailyCounts[dStr] = (dailyCounts[dStr] || 0) + 1;
+            }
+        });
+        let visitTrackers = {};
 
-                hHistory+=`<tr>
-                    <td style="color:var(--text-muted);">${dateStr}</td>
-                    <td><strong>${rVisitorName}</strong><br>${statusBadgeHistory}</td>
-                    <td>${typeHtml}</td>
+        if (!isPassExpiredOrFinished && inRange) {
+            if(rStatus==='Pending'){
+                let actionBtns=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;"><button class="btn-primary btn-success btn-sm" style="width:auto;white-space:nowrap;" onclick="updateStatus('${row.UniqueID}','Approved')">${t('btn_approve')}</button><button class="btn-primary btn-danger btn-sm" style="width:auto;white-space:nowrap;" onclick="updateStatus('${row.UniqueID}','Rejected')">${t('btn_reject')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button></div>`;
+                hPending+=`<tr ${rowStyle}><td style="color:var(--text-muted);">${finalDateStr}</td><td><strong>${rVisitorName}</strong><br><span style="font-size:10px;color:var(--text-muted);">Email: ${rHostEmail}</span></td><td>${t(rType.toLowerCase())}</td><td>${rLocation}</td><td>${actionBtns}</td></tr>`;
+                pendingCount++;
+            }else if(rStatus==='Approved'){
+                const isChecked=checkedPrintIds.has(row.UniqueID)?'checked':'';
+                let cbHtml=`<input type="checkbox" class="print-checkbox row-checkbox" value="${row.UniqueID}" data-name="${rVisitorName}" data-type="${rType}" data-location="${rLocation}" data-status="${rStatus}" data-date="${dateStr}" ${isChecked} onchange="handlePrintCheckbox(this)">`;
+                let actionBtns=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;"><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="printQR('${rVisitorName}','${rType}','${rLocation}','${row.UniqueID}','${rStatus}','${dateStr}')">${t('btn_print')}</button><button class="btn-primary btn-warning btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;color:#000;" onclick="openAdminGateModal('${row.UniqueID}')">🚪 GATE ACTION</button><button class="btn-primary btn-danger btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="adminRevokePass('${row.UniqueID}')">🚫 REVOKE PASS</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button></div>`;
+                
+                let ciTime = '-';
+                let durHtml = '-';
+                
+                if (isInside) {
+                    let activeVisit = visits[visits.length - 1];
+                    ciTime = formatTime(activeVisit.in);
+                    
+                    let ci = activeVisit.in.getTime();
+                    let now = new Date().getTime();
+                    let diffMins = Math.floor((now - ci) / 60000);
+                    if(diffMins < 0) diffMins = 0;
+                    let h = Math.floor(diffMins / 60);
+                    let m = diffMins % 60;
+                    durHtml = `<span style="color:var(--noon-yellow); font-weight:bold;">${h}h ${m}m</span>`;
+                }
+                
+                hActive+=`<tr ${rowStyle}>
+                    <td>${cbHtml}</td>
+                    <td style="color:var(--text-muted);">${finalDateStr}</td>
+                    <td><strong>${rVisitorName}</strong><br><span style="font-size:10px;color:var(--text-muted);">Email: ${rHostEmail}</span></td>
+                    <td>${t(rType.toLowerCase())}</td>
                     <td>${rLocation}</td>
-                    <td style="font-weight:600;color:${sColor}">${finalStatus}</td>
-                    <td style="color:var(--text-main);font-weight:bold;">${visits.length} Visit(s)</td>
-                    <td>${historyActionBtns}</td>
+                    <td style="color:var(--text-muted);font-size:11px;">${ciTime}</td>
+                    <td>${durHtml}</td>
+                    <td>${actionBtns}</td>
                 </tr>`;
-                historyCount++;
+                activeCount++;
             }
         }
-        
-        if (!isHistory) {
-            if(inRange){
-                if(rStatus==='Pending'){
-                    let actionBtns=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;"><button class="btn-primary btn-success btn-sm" style="width:auto;white-space:nowrap;" onclick="updateStatus('${row.UniqueID}','Approved')">${t('btn_approve')}</button><button class="btn-primary btn-danger btn-sm" style="width:auto;white-space:nowrap;" onclick="updateStatus('${row.UniqueID}','Rejected')">${t('btn_reject')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button></div>`;
-                    hPending+=`<tr ${rowStyle}><td style="color:var(--text-muted);">${finalDateStr}</td><td><strong>${rVisitorName}</strong><br><span style="font-size:10px;color:var(--text-muted);">Email: ${rHostEmail}</span></td><td>${t(rType.toLowerCase())}</td><td>${rLocation}</td><td>${actionBtns}</td></tr>`;
-                    pendingCount++;
-                }else if(rStatus==='Approved'){
-                    const isChecked=checkedPrintIds.has(row.UniqueID)?'checked':'';
-                    let cbHtml=`<input type="checkbox" class="print-checkbox row-checkbox" value="${row.UniqueID}" data-name="${rVisitorName}" data-type="${rType}" data-location="${rLocation}" data-status="${rStatus}" data-date="${dateStr}" ${isChecked} onchange="handlePrintCheckbox(this)">`;
-                    let actionBtns=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;"><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="printQR('${rVisitorName}','${rType}','${rLocation}','${row.UniqueID}','${rStatus}','${dateStr}')">${t('btn_print')}</button><button class="btn-primary btn-warning btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;color:#000;" onclick="openAdminGateModal('${row.UniqueID}')">🚪 GATE ACTION</button><button class="btn-primary btn-danger btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="adminRevokePass('${row.UniqueID}')">🚫 REVOKE PASS</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button></div>`;
-                    
-                    let ciTime = '-';
-                    let durHtml = '-';
-                    
-                    if (isInside) {
-                        let activeVisit = visits[visits.length - 1];
-                        ciTime = formatTime(activeVisit.in);
-                        
-                        let ci = activeVisit.in.getTime();
-                        let now = new Date().getTime();
-                        let diffMins = Math.floor((now - ci) / 60000);
-                        if(diffMins < 0) diffMins = 0;
-                        let h = Math.floor(diffMins / 60);
-                        let m = diffMins % 60;
-                        durHtml = `<span style="color:var(--noon-yellow); font-weight:bold;">${h}h ${m}m</span>`;
-                    }
-                    
-                    hActive+=`<tr ${rowStyle}>
-                        <td>${cbHtml}</td>
-                        <td style="color:var(--text-muted);">${finalDateStr}</td>
-                        <td><strong>${rVisitorName}</strong><br><span style="font-size:10px;color:var(--text-muted);">Email: ${rHostEmail}</span></td>
-                        <td>${t(rType.toLowerCase())}</td>
+
+        if (inRange) {
+            let finalStatus=rStatus,sColor='var(--noon-yellow)';
+            if(rStatus==='Rejected'){finalStatus=t('status_rejected');sColor='var(--danger)'}
+            else if(isExpired){finalStatus=t('status_expired');sColor='var(--danger)'}
+            else if(rStatus==='Completed'){finalStatus=t('status_completed');sColor='var(--success)'}
+            else{finalStatus=t('status_approved');sColor='var(--success)'}
+            let statusBadgeHistory = `<span style="background:${sColor}20; color:${sColor}; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">${finalStatus}</span>`;
+            let historyActionBtns=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;"><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button></div>`;
+            let typeHtml = `<strong style="color:var(--noon-yellow);">${t(rType.toLowerCase())}</strong>`;
+
+            if (visits.length === 0) {
+                if (isPassExpiredOrFinished) {
+                    hHistory+=`<tr>
+                        <td style="color:var(--text-muted);">${dateStr}</td>
+                        <td><strong>${rVisitorName}</strong><br>${statusBadgeHistory}</td>
+                        <td>${typeHtml}</td>
                         <td>${rLocation}</td>
-                        <td style="color:var(--text-muted);font-size:11px;">${ciTime}</td>
-                        <td>${durHtml}</td>
-                        <td>${actionBtns}</td>
+                        <td style="font-weight:600;color:${sColor}">${finalStatus}</td>
+                        <td style="color:var(--text-muted);font-size:11px;">-</td>
+                        <td style="color:var(--text-muted);font-size:11px;">-</td>
+                        <td style="color:var(--text-muted);font-size:11px;">-</td>
+                        <td style="color:var(--text-muted);font-size:11px;">-</td>
+                        <td>${historyActionBtns}</td>
                     </tr>`;
-                    activeCount++;
+                    historyCount++;
                 }
+            } else {
+                visits.forEach(v => {
+                    if (v.out || isPassExpiredOrFinished) {
+                        let inStr = v.in ? formatTime(v.in) : '-';
+                        let outStr = v.out ? formatTime(v.out) : '<span style="color:var(--danger);font-weight:bold;">Missed Out-Scan</span>';
+
+                        let durStr = '-';
+                        if (v.in && v.out) {
+                            let endT = v.out.getTime();
+                            let startT = v.in.getTime();
+                            let diffMins = Math.floor((endT - startT) / 60000);
+                            if(diffMins < 0) diffMins = 0;
+                            let hs = Math.floor(diffMins / 60);
+                            let ms = diffMins % 60;
+                            durStr = `<span style="color:var(--noon-yellow);font-weight:bold;">${hs}h ${ms}m</span>`;
+                        }
+
+                        let gStr = v.guardIn || '-';
+                        if(v.guardOut && v.guardOut !== v.guardIn) gStr += ` / ${v.guardOut}`;
+
+                        let dStr = v.in ? formatToDDMMYYYY(v.in) : '';
+                        let dayCount = dailyCounts[dStr] || 1;
+                        visitTrackers[dStr] = (visitTrackers[dStr] || 0) + 1;
+
+                        let visitBadge = '';
+                        if (dayCount > 1) {
+                            visitBadge = `<br><span style="color:var(--noon-yellow);font-size:9px;font-weight:bold;letter-spacing:0.5px;text-transform:uppercase;">VISIT ${visitTrackers[dStr]} OF ${dayCount} (THIS DAY)</span>`;
+                        } else {
+                            visitBadge = `<br><span style="color:var(--text-muted);font-size:9px;font-weight:bold;letter-spacing:0.5px;text-transform:uppercase;">VISIT 1 OF 1</span>`;
+                        }
+
+                        hHistory+=`<tr>
+                            <td style="color:var(--text-muted);">${dateStr}</td>
+                            <td><strong>${rVisitorName}</strong><br>${statusBadgeHistory}${visitBadge}</td>
+                            <td>${typeHtml}</td>
+                            <td>${rLocation}</td>
+                            <td style="font-weight:600;color:${sColor}">${finalStatus}</td>
+                            <td style="color:var(--text-main);font-size:11px;">${inStr}</td>
+                            <td style="color:var(--text-main);font-size:11px;">${outStr}</td>
+                            <td style="font-size:12px;">${durStr}</td>
+                            <td style="color:var(--text-muted);font-size:11px;">🛡️ ${gStr}</td>
+                            <td>${historyActionBtns}</td>
+                        </tr>`;
+                        historyCount++;
+                    }
+                });
             }
         }
         
@@ -1364,7 +1319,7 @@ function renderAdminData(data){
 
     if(tPending){if(pendingCount===0)hPending=`<tr><td colspan="5" class="text-center" style="padding:30px;">${t("msg_no_pending")}</td></tr>`;tPending.innerHTML=hPending}
     if(tActive){if(activeCount===0)hActive=`<tr><td colspan="8" class="text-center" style="padding:30px;">${t("msg_no_active")}</td></tr>`;tActive.innerHTML=hActive}
-    if(tHistory){if(historyCount===0)hHistory=`<tr><td colspan="7" class="text-center" style="padding:30px;">${t("msg_no_history")}</td></tr>`;tHistory.innerHTML=hHistory}
+    if(tHistory){if(historyCount===0)hHistory=`<tr><td colspan="10" class="text-center" style="padding:30px;">${t("msg_no_history")}</td></tr>`;tHistory.innerHTML=hHistory}
     if(tGuard){if(guardCount===0)hGuard=`<tr><td colspan="7" class="text-center" style="padding:30px;">${t("msg_no_gate")}</td></tr>`;tGuard.innerHTML=hGuard}
 
     const st=document.getElementById('stat-type');if(st)st.innerHTML=Object.keys(aType).map(k=>`<div class="stat-row"><span>${t(k.toLowerCase())}</span><span class="stat-val">${aType[k]}</span></div>`).join('')||'<div class="stat-row"><span>-</span></div>';
