@@ -327,13 +327,12 @@ const SESSION_KEY = 'noon_session_' + currentRoleParam;
 let html5QrCode=null; let scannerFacingMode='environment'; let currentUser=null; let currentScannedID=null; let currentScanAction='check_in'; let currentAdminFilter='all'; let autoRefreshTimer=null; let globalAdminData=[]; let checkedPrintIds=new Set(); let liveStream=null; let currentFacingMode='environment'; let targetPhotoType=''; let capturedImages={iqama:null,selfie:null,imeiphoto:null,vehicle:null,fmpoc:null}; let teamList=[]; let currentTeamCounter=1; let isProcessingScan = false; let userSecurityPin = null; let lockedPassesData = null; let pinCreateMode = 'submit';
 
 // ==========================================
-// FIX: Convert old Drive URLs to raw image URLs dynamically (using lh3.googleusercontent.com)
+// FIX: Convert old Drive URLs to raw image thumbnail URLs dynamically
 // ==========================================
 function convertDriveUrls(dataObj) {
     let str = JSON.stringify(dataObj);
-    str = str.replace(/https:\/\/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)\/view[^\s"'\\|]*/g, "https://lh3.googleusercontent.com/d/$1");
-    str = str.replace(/https:\/\/drive\.google\.com\/thumbnail\?id=([a-zA-Z0-9_-]+)[^\s"'\\|]*/g, "https://lh3.googleusercontent.com/d/$1");
-    str = str.replace(/https:\/\/drive\.google\.com\/uc\?[^\s"'\\|]*id=([a-zA-Z0-9_-]+)[^\s"'\\|]*/g, "https://lh3.googleusercontent.com/d/$1");
+    str = str.replace(/https:\/\/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)\/view[^\s"'\\]*/g, "https://drive.google.com/thumbnail?id=$1&sz=w1000");
+    str = str.replace(/https:\/\/drive\.google\.com\/uc\?[^\s"'\\]*id=([a-zA-Z0-9_-]+)[^\s"'\\]*/g, "https://drive.google.com/thumbnail?id=$1&sz=w1000");
     return JSON.parse(str);
 }
 
@@ -1513,3 +1512,4 @@ async function submitAddMorePeople() {
 }
 </script>
 </body></html>
+
