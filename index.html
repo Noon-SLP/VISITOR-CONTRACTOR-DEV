@@ -1,4 +1,14 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Noon SLP - Access System</title><link rel="icon" type="image/jpeg" href="logo.jpeg"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script><script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noon SLP - Access System</title>
+<link rel="icon" type="image/jpeg" href="logo.jpeg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
 <style>
 :root{--bg-dark:#0b0e14;--card-bg:#12151c;--border-color:#242b3b;--noon-yellow:#ffc700;--text-main:#f0f2f5;--text-muted:#8b95a5;--input-bg:#090b10;--success:#10b981;--danger:#ef4444;--sidebar-bg:#12161f}
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif}
@@ -17,41 +27,228 @@ body[dir="rtl"]{font-family:'Inter','Segoe UI',Tahoma,sans-serif}body[dir="rtl"]
 .dashboard{width:100%;padding:20px;margin:0 auto}.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;padding-bottom:15px;border-bottom:1px solid var(--border-color);flex-wrap:wrap;gap:15px}.header h2{color:var(--noon-yellow);font-size:22px;margin:0;display:flex;align-items:center;gap:15px}.header-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}#dashboard-ops{max-width:950px;margin-top:20px}#dashboard-guard{max-width:600px;margin-top:20px}#dashboard-admin, #dashboard-whatsnew {max-width:100%;padding:30px 2.5vw;padding-top:0}
 .ops-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}.ops-card{background:var(--card-bg);padding:24px;border-radius:12px;border:1px solid var(--border-color);box-shadow:0 10px 30px rgba(0,0,0,.5)}.pass-item{background:var(--input-bg);padding:15px;border-radius:8px;border:1px solid var(--border-color);margin-bottom:12px;text-align:start;position:relative;overflow:hidden}.pass-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:10px}.qr-box{background:#fff;padding:10px;border-radius:6px;display:inline-block;margin-top:10px}
 #reader{width:100%;border:none;border-radius:12px;overflow:hidden;background:var(--card-bg);box-shadow:0 10px 40px rgba(0,0,0,.6)}
-.scan-result-card{padding:30px;border-radius:12px;text-align:center;margin-top:25px;color:#fff;font-weight:bold;box-shadow:0 10px 30px rgba(0,0,0,.4)}.bg-green{background-color:var(--success)}.bg-red{background-color:var(--danger)}.bg-blue{background-color:#3b82f6}.bg-yellow{background-color:var(--noon-yellow);color:#000 !important}.bg-yellow h1, .bg-yellow p{color:#000 !important}.visitor-photo{width:160px;height:160px;border-radius:12px;object-fit:cover;border:3px solid #fff;margin:0 auto 20px auto;display:none;box-shadow:0 8px 25px rgba(0,0,0,.5)}
+.scan-result-card{padding:30px;border-radius:12px;text-align:center;margin-top:25px;color:#fff;font-weight:bold;box-shadow:0 10px 30px rgba(0,0,0,.4)}.bg-green{background-color:var(--success)}.bg-red{background-color:var(--danger)}.bg-blue{background-color:#3b82f6}.bg-yellow{background-color:var(--noon-yellow);color:#000 !important}.bg-yellow h1, .bg-yellow p{color:#000 !important}
 .fullscreen-scan{position:fixed !important;top:0;left:0;width:100vw !important;height:100vh !important;z-index:999999;overflow-y:auto;border-radius:0 !important;margin:0 !important;display:flex;flex-direction:column;justify-content:flex-start}
 .team-roster{display:flex;flex-direction:column;gap:10px;margin-bottom:15px}.team-member-row{display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.05);padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.1)}.team-member-img{width:50px;height:50px;border-radius:6px;object-fit:cover;border:2px solid var(--border-color);cursor:pointer}.team-member-img:hover{border-color:var(--noon-yellow)}
 .admin-header-top{display:flex;align-items:center;padding:0 2.5vw;height:75px;background-color:var(--sidebar-bg);border-bottom:1px solid var(--border-color);justify-content:space-between;flex-wrap:wrap;gap:15px}.admin-brand-horizontal{display:flex;flex-direction:column}.admin-brand-horizontal h1{font-size:18px;font-weight:700;color:var(--noon-yellow);letter-spacing:.5px;margin:0}.admin-nav-horizontal{list-style:none;display:flex;gap:10px;margin-bottom:24px;border-bottom:1px solid var(--border-color);padding-bottom:10px;overflow-x:auto}.admin-nav-horizontal li{padding:12px 20px;color:var(--text-muted);font-size:13px;font-weight:600;cursor:pointer;border-radius:6px;transition:.2s;text-transform:uppercase;white-space:nowrap}.admin-nav-horizontal li.active{color:var(--noon-yellow);background:rgba(255,199,0,.1)}.admin-nav-horizontal li:hover:not(.active){color:var(--text-main);background:rgba(255,255,255,.05)}.admin-user-info{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.admin-card{background:var(--card-bg);border-radius:12px;border:1px solid var(--border-color);box-shadow:0 8px 30px rgba(0,0,0,.4);overflow:hidden;margin-bottom:24px}.admin-card-title{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;font-size:13px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;border-bottom:1px solid var(--border-color);background:rgba(0,0,0,.2)}
 table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px;text-align:start;border-bottom:1px solid var(--border-color)}th{background:rgba(0,0,0,.2);color:var(--text-muted);text-transform:uppercase;font-size:11px;font-weight:600;letter-spacing:.5px}tr:hover td{background-color:rgba(255,255,255,.02)}
 .analytics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:24px}.analytics-box{background:var(--card-bg);border-radius:12px;border:1px solid var(--border-color);padding:24px;box-shadow:0 4px 15px rgba(0,0,0,.3)}.analytics-box-title{font-size:12px;font-weight:600;color:var(--noon-yellow);text-transform:uppercase;border-bottom:1px solid var(--border-color);padding-bottom:10px;margin-bottom:15px}.stat-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:14px}.stat-row:last-child{border-bottom:none}.stat-val{font-weight:700;color:var(--text-main)}.admin-filter-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:15px;background:var(--card-bg);padding:15px 24px;border-radius:12px;border:1px solid var(--border-color);margin-bottom:24px;position:relative;z-index:1}.btn-filter{background:transparent;color:var(--text-muted);border:none;font-size:12px;font-weight:600;cursor:pointer;padding:8px 12px;text-transform:uppercase;border-radius:6px;transition:.2s}.btn-filter.active{color:var(--noon-yellow);background:rgba(255,199,0,.1)}
-.popup-modal{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,.9);z-index:99999;display:flex;justify-content:center;align-items:center;padding:20px}.record-modal-box{background:var(--card-bg);width:100%;max-width:650px;border-radius:12px;border:1px solid var(--border-color);display:flex;flex-direction:column;max-height:90vh;box-shadow:0 15px 40px rgba(0,0,0,.7)}.record-modal-header{padding:20px;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,.2)}.record-modal-content{padding:25px;overflow-y:auto;font-size:13px;line-height:1.6;display:grid;grid-template-columns:1fr 1fr;gap:20px;color:var(--text-main)}.record-modal-content div{background:rgba(255,255,255,.02);padding:12px;border-radius:6px;border:1px solid rgba(255,255,255,.05)}.record-modal-content strong{color:var(--noon-yellow);display:block;font-size:11px;text-transform:uppercase;margin-bottom:4px;letter-spacing:.5px}.record-img-box{grid-column:span 2;display:flex;flex-wrap:wrap;gap:15px}.record-img-box div{flex:1;min-width:180px;display:flex;flex-direction:column}.record-img-box img{width:100%;border-radius:8px;border:1px solid var(--border-color);object-fit:cover;margin-top:5px;cursor:pointer;transition:.2s}.record-img-box img:hover{filter:brightness(1.2);box-shadow:0 0 15px rgba(255,199,0,.3)}#camera-video-stream{width:100%;max-width:500px;max-height:70vh;background:#000;border-radius:12px;border:2px solid var(--noon-yellow);object-fit:cover}.cam-controls{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;justify-content:center}.print-checkbox{width:18px;height:18px;cursor:pointer;accent-color:var(--noon-yellow)}
+.popup-modal{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,.9);z-index:99999;display:flex;justify-content:center;align-items:center;padding:20px}.record-modal-box{background:var(--card-bg);width:100%;max-width:650px;border-radius:12px;border:1px solid var(--border-color);display:flex;flex-direction:column;max-height:90vh;box-shadow:0 15px 40px rgba(0,0,0,.7)}.record-modal-header{padding:20px;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,.2)}.record-modal-content{padding:25px;overflow-y:auto;font-size:13px;line-height:1.6;display:grid;grid-template-columns:1fr 1fr;gap:20px;color:var(--text-main)}.record-modal-content div{background:rgba(255,255,255,.02);padding:12px;border-radius:6px;border:1px solid rgba(255,255,255,.05)}.record-modal-content strong{color:var(--noon-yellow);display:block;font-size:11px;text-transform:uppercase;margin-bottom:4px;letter-spacing:.5px}.record-img-box{grid-column:span 2;display:flex;flex-wrap:wrap;gap:15px}.record-img-box div{flex:1;min-width:180px;display:flex;flex-direction:column}.cam-controls{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;justify-content:center}.print-checkbox{width:18px;height:18px;cursor:pointer;accent-color:var(--noon-yellow)}
 .splash-screen{position:fixed;top:0;left:0;width:100vw;height:100vh;background:var(--bg-dark);z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .6s ease;opacity:1}.splash-screen.fade-out{opacity:0;pointer-events:none}@keyframes pulse-glow{0%{box-shadow:0 0 0 0 rgba(255,199,0,.4)}70%{box-shadow:0 0 0 20px rgba(255,199,0,0)}100%{box-shadow:0 0 0 0 rgba(255,199,0,0)}}.splash-logo{width:160px;height:160px;background-color:#12151c;background-image:url('logo.jpeg');background-size:contain;background-position:center;background-repeat:no-repeat;border-radius:18px;margin-bottom:30px;animation:pulse-glow 2s infinite}
-@media (max-width:1024px){.ops-grid{grid-template-columns:1fr}}
 @media (max-width:900px){.sidebar{position:fixed;height:100vh;transform:translateX(0)}.sidebar.minimized{transform:translateX(-100%);width:240px}body[dir="rtl"] .sidebar.minimized{transform:translateX(100%)}.dashboard{padding:4vw;margin-top:10px}.admin-header-top{flex-direction:column;height:auto;padding:15px;align-items:stretch;gap:15px;margin:0 -4vw 20px -4vw !important}.admin-brand-horizontal{margin-right:0;text-align:center;width:100%}.admin-nav-horizontal{flex-wrap:wrap;justify-content:center;gap:5px;width:100%}.admin-nav-horizontal li{padding:10px;font-size:11px;flex:1 1 auto;text-align:center}.admin-user-info{justify-content:center;width:100%}.admin-filter-bar{flex-direction:column;align-items:stretch;gap:10px}.admin-filter-bar > div{flex-wrap:wrap;justify-content:center;width:100%}#custom-date-picker{flex-direction:column;align-items:stretch;width:100%}table th,table td{padding:10px}.record-modal-content{grid-template-columns:1fr}#main-content{transition:margin-left .3s,margin-right .3s}body:not(.sidebar-minimized) #main-content{margin-inline-start:240px}}
-</style></head>
+</style>
+</head>
 <body class="sidebar-minimized" dir="ltr"> 
-<div id="splash" class="splash-screen"><div class="splash-logo"></div><h1 style="color:var(--noon-yellow);font-size:26px;letter-spacing:2px;margin:0;font-weight:700;">WELCOME TO NOON SLP</h1><p style="color:var(--text-muted);font-size:12px;margin-top:12px;text-transform:uppercase;letter-spacing:1.5px;">Security & Loss Prevention</p></div>
 
-<div id="fullscreen-image-modal" class="popup-modal hidden" onclick="this.classList.add('hidden')" style="z-index: 9999999; cursor: zoom-out;"><img id="fullscreen-img" src="" style="max-width: 95vw; max-height: 95vh; border-radius: 8px; object-fit: contain;"><div style="position: absolute; bottom: 20px; color: white; background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 20px;" data-i18n="click_to_close">Click anywhere to close</div></div>
-<div id="view-record-modal" class="popup-modal hidden"><div class="record-modal-box"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;" data-i18n="detailed_record">Detailed Record View</h3><button onclick="closeViewRecord()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div id="view-record-content" class="record-modal-content"></div></div></div>
-<div id="extend-pass-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 400px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;" data-i18n="extend_pass">Extend Pass Validity</h3><button onclick="closeExtendPass()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; display: flex; flex-direction: column; gap: 15px;"><input type="hidden" id="extend-id"><input type="hidden" id="extend-type"><div class="input-group" id="extend-start-group"><label style="color: var(--noon-yellow); font-size: 13px;" data-i18n="new_start_date">New Visit / Start Date</label><input type="date" id="extend-start" class="input-field"></div><div class="input-group" id="extend-end-group"><label style="color: var(--noon-yellow); font-size: 13px;" data-i18n="new_end_date">New End Date</label><input type="date" id="extend-end" class="input-field"></div><button id="btn-submit-extend" class="btn-primary" onclick="submitExtendPass()" data-i18n="save_extension">SAVE EXTENSION</button></div></div></div>
-<div id="custom-camera-modal" class="popup-modal hidden"><div style="display: flex; flex-direction: column; align-items: center; background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color);"><video id="camera-video-stream" autoplay playsinline></video><canvas id="camera-hidden-canvas" class="hidden"></canvas><div class="cam-controls"><button class="btn-primary btn-success" style="width: auto;" onclick="captureLivePhoto()" data-i18n="capture">📸 CAPTURE</button><button class="btn-primary btn-outline" style="width: auto;" onclick="switchLiveCamera()" data-i18n="flip_cam">🔄 FLIP CAM</button><button class="btn-primary btn-danger" style="width: auto;" onclick="closeLiveCamera()" data-i18n="cancel">❌ CANCEL</button></div></div></div>
-<div id="pin-create-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 350px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">Set Security PIN</h3><button onclick="closePinCreate()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; display: flex; flex-direction: column; gap: 15px; text-align:center;"><p style="color:var(--text-muted); font-size:13px;">Create a 4-digit PIN to secure your passes. You will need this to view your QR codes on other devices.</p><input type="password" id="new-pin-input" class="input-field" placeholder="****" maxlength="4" style="text-align:center; font-size:24px; letter-spacing:10px;" oninput="this.value=this.value.replace(/[^0-9]/g,'')"><button class="btn-primary" onclick="confirmPinCreate()">SAVE PIN</button></div></div></div>
-<div id="pin-verify-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 350px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">Security PIN Required</h3><button onclick="closePinVerify()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; display: flex; flex-direction: column; gap: 15px; text-align:center;"><p style="color:var(--text-muted); font-size:13px;">Please enter your 4-digit PIN to unlock and view your passes.</p><input type="password" id="verify-pin-input" class="input-field" placeholder="****" maxlength="4" style="text-align:center; font-size:24px; letter-spacing:10px;" oninput="this.value=this.value.replace(/[^0-9]/g,'')"><p id="pin-error-msg" class="hidden" style="color:var(--danger); font-size:12px; margin:0;">Incorrect PIN.</p><button class="btn-primary" onclick="confirmPinVerify()">UNLOCK</button></div></div></div>
-<div id="add-more-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 500px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;" data-i18n="add_more_people">➕ Add More People</h3><button onclick="closeAddMoreModal()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; display: flex; flex-direction: column; gap: 15px;"><p style="color:var(--danger); font-size:12px; font-weight:bold; margin-bottom:5px;" data-i18n="add_more_warning">⚠️ WARNING: Submitting this will change the pass status back to PENDING. It cannot be used until the Admin approves it again.</p><div id="add-team-roster-display" class="team-roster hidden"></div><div id="add-team-entry-box" style="border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; background: rgba(255,255,255,0.02);"><div class="input-group" style="margin-bottom: 15px;"><input type="text" id="req-add-team-name" class="input-field" data-i18n="full_name_ph" placeholder="Full Name"></div><div class="input-group" style="margin-bottom: 15px;"><input type="text" id="req-add-team-iqamatext" class="input-field" data-i18n="iqama_id_ph" placeholder="Iqama / ID Number"></div><div class="input-group" style="margin-bottom: 15px;"><label style="font-size: 11px; color:var(--noon-yellow);" data-i18n="device_type_label">Device Type</label><select id="req-add-team-device-type" class="input-field" onchange="toggleAddTeamDeviceInput()"><option value="None" data-i18n="no_device">No Device</option><option value="Mobile">Mobile</option><option value="Laptop">Laptop</option></select></div><div class="input-group hidden" id="req-add-team-device-id-group" style="margin-bottom: 15px;"><input type="text" id="req-add-team-device-id" class="input-field" placeholder="IMEI / Serial Number"><label style="font-size: 11px; margin-top:10px;" data-i18n="upload_device_photo">Upload Device Photo/Screen</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_imeiphoto')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-add-team-imeiphoto" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_imeiphoto')"></div><img id="preview-add_team_imeiphoto" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div><div class="input-group"><label style="font-size: 11px;" data-i18n="upload_iqama">Upload Iqama/ID Copy</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_iqama')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-add-team-iqama" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_iqama')"></div><img id="preview-add_team_iqama" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div><div class="input-group" style="margin-bottom: 15px;"><label style="font-size: 11px;" data-i18n="upload_selfie">Upload Selfie Photo</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_selfie')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-add-team-selfie" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_selfie')"></div><img id="preview-add_team_selfie" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div><button type="button" class="btn-primary btn-success" style="font-size: 12px;" onclick="saveAddTeamMember()" data-i18n="save_person_list">✅ SAVE PERSON TO LIST</button></div><button id="btn-submit-add-more" class="btn-primary" onclick="submitAddMorePeople()" data-i18n="submit_send_approval">SUBMIT & SEND FOR APPROVAL</button></div></div></div>
-<div id="admin-gate-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 400px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">🚪 GATE ACTION</h3><button onclick="closeAdminGateModal()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; display: flex; flex-direction: column; gap: 15px; text-align: center;"><p style="color:var(--text-muted); font-size:13px; margin-bottom:10px;">Select an action for pass <strong id="admin-gate-id-display" style="color:white;"></strong></p><input type="hidden" id="admin-gate-id"><button class="btn-primary btn-success" style="font-size: 14px; padding: 14px;" onclick="submitAdminGateAction('check_in')">✅ CHECK IN</button><button class="btn-primary btn-warning" style="font-size: 14px; padding: 14px; color:#000;" onclick="submitAdminGateAction('check_out')">🚪 CHECK OUT</button></div></div></div>
+<div id="splash" class="splash-screen">
+    <div class="splash-logo"></div>
+    <h1 style="color:var(--noon-yellow);font-size:26px;letter-spacing:2px;margin:0;font-weight:700;">WELCOME TO NOON SLP</h1>
+    <p style="color:var(--text-muted);font-size:12px;margin-top:12px;text-transform:uppercase;letter-spacing:1.5px;">Security & Loss Prevention</p>
+</div>
 
-<div id="timeline-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 700px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">📜 Access Timeline</h3><button onclick="closeTimeline()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; overflow-y: auto; max-height: 70vh;"><h4 id="timeline-pass-name" style="color: white; margin-bottom: 20px; font-size: 15px;"></h4><div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse;"><thead><tr><th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Check-In</th><th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Check-Out</th><th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Duration</th><th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Guard</th></tr></thead><tbody id="timeline-table-body"></tbody></table></div></div></div></div>
+<!-- Modal Popups -->
+<div id="fullscreen-image-modal" class="popup-modal hidden" onclick="this.classList.add('hidden')" style="z-index: 9999999; cursor: zoom-out;">
+    <img id="fullscreen-img" src="" style="max-width: 95vw; max-height: 95vh; border-radius: 8px; object-fit: contain;">
+    <div style="position: absolute; bottom: 20px; color: white; background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 20px;" data-i18n="click_to_close">Click anywhere to close</div>
+</div>
 
-<div id="login-view"><div class="login-top-controls"><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 16px;" onclick="hardRefreshApp()" title="Hard Refresh Cache">🔄</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 16px;" onclick="toggleFullScreen()" title="Fullscreen">⛶</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 12px;" onclick="toggleLang()">عربي / EN</button></div><div class="login-container"><div class="logo-box"></div><div style="text-align:center;margin-bottom:25px;"><h2 style="color:var(--noon-yellow);font-size:24px;margin-bottom:6px;letter-spacing:1px;">NOON SLP</h2><p style="color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;" data-i18n="visitor_contractor_portal">Visitor & Contractor Portal</p></div>
-<div class="role-tabs" id="role-tabs" style="display:none;"><div class="role-tab active" id="tab-guard" onclick="switchLoginTab('guard')" data-i18n="guard">🛡️ Guard</div><div class="role-tab" id="tab-admin" onclick="switchLoginTab('admin')" data-i18n="admin">⚙️ Admin</div></div>
-<div id="login-guard" class="hidden"><div class="input-group"><input type="text" id="lg-name" class="input-field t-ph" data-i18n="name" placeholder="Name"></div><div class="input-group"><input type="text" id="lg-id" class="input-field t-ph" data-i18n="noon_id" placeholder="Noon ID"></div><div class="input-group"><select id="lg-location" class="input-field"><option value="" data-i18n="select_guard_loc">Select Guard Location...</option><option value="RUH01">RUH01</option><option value="JED01">JED01</option></select></div><button class="btn-primary" onclick="login('guard')" data-i18n="login_gate">LOGIN TO GATE</button></div>
-<div id="login-ops"><div class="input-group"><input type="text" id="lo-name" class="input-field t-ph" data-i18n="your_full_name" placeholder="Your Full Name"></div><div class="input-group"><input type="email" id="lo-mail" class="input-field t-ph" data-i18n="your_email" placeholder="Your Gmail / Email"></div><button class="btn-primary" onclick="login('ops')" data-i18n="login_portal">LOGIN TO PORTAL</button></div>
-<div id="login-admin" class="hidden">
-  <div class="input-group"><input type="text" id="la-name" class="input-field t-ph" data-i18n="admin_name" placeholder="Admin Name"></div>
-  <div class="input-group"><input type="email" id="la-mail" class="input-field t-ph" data-i18n="admin_email" placeholder="Admin Gmail"></div>
-  <div class="input-group"><input type="password" id="la-pass" class="input-field t-ph" data-i18n="admin_password" placeholder="Admin Password"></div>
-  <button class="btn-primary" onclick="login('admin')" data-i18n="login_admin">LOGIN AS ADMIN</button>
-</div></div></div>
+<div id="view-record-modal" class="popup-modal hidden">
+    <div class="record-modal-box">
+        <div class="record-modal-header">
+            <h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;" data-i18n="detailed_record">Detailed Record View</h3>
+            <button onclick="closeViewRecord()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
+        </div>
+        <div id="view-record-content" class="record-modal-content"></div>
+    </div>
+</div>
+
+<div id="extend-pass-modal" class="popup-modal hidden">
+    <div class="record-modal-box" style="max-width: 400px;">
+        <div class="record-modal-header">
+            <h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;" data-i18n="extend_pass">Extend Pass Validity</h3>
+            <button onclick="closeExtendPass()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
+        </div>
+        <div style="padding: 25px; display: flex; flex-direction: column; gap: 15px;">
+            <input type="hidden" id="extend-id"><input type="hidden" id="extend-type">
+            <div class="input-group" id="extend-start-group">
+                <label style="color: var(--noon-yellow); font-size: 13px;" data-i18n="new_start_date">New Visit / Start Date</label>
+                <input type="date" id="extend-start" class="input-field">
+            </div>
+            <div class="input-group" id="extend-end-group">
+                <label style="color: var(--noon-yellow); font-size: 13px;" data-i18n="new_end_date">New End Date</label>
+                <input type="date" id="extend-end" class="input-field">
+            </div>
+            <button id="btn-submit-extend" class="btn-primary" onclick="submitExtendPass()" data-i18n="save_extension">SAVE EXTENSION</button>
+        </div>
+    </div>
+</div>
+
+<div id="custom-camera-modal" class="popup-modal hidden">
+    <div style="display: flex; flex-direction: column; align-items: center; background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color);">
+        <video id="camera-video-stream" autoplay playsinline style="width:100%;max-width:500px;max-height:70vh;background:#000;border-radius:12px;border:2px solid var(--noon-yellow);object-fit:cover"></video>
+        <canvas id="camera-hidden-canvas" class="hidden"></canvas>
+        <div class="cam-controls">
+            <button class="btn-primary btn-success" style="width: auto;" onclick="captureLivePhoto()" data-i18n="capture">📸 CAPTURE</button>
+            <button class="btn-primary btn-outline" style="width: auto;" onclick="switchLiveCamera()" data-i18n="flip_cam">🔄 FLIP CAM</button>
+            <button class="btn-primary btn-danger" style="width: auto;" onclick="closeLiveCamera()" data-i18n="cancel">❌ CANCEL</button>
+        </div>
+    </div>
+</div>
+
+<div id="pin-create-modal" class="popup-modal hidden">
+    <div class="record-modal-box" style="max-width: 350px;">
+        <div class="record-modal-header">
+            <h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">Set Security PIN</h3>
+            <button onclick="closePinCreate()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
+        </div>
+        <div style="padding: 25px; display: flex; flex-direction: column; gap: 15px; text-align:center;">
+            <p style="color:var(--text-muted); font-size:13px;">Create a 4-digit PIN to secure your passes.</p>
+            <input type="password" id="new-pin-input" class="input-field" placeholder="****" maxlength="4" style="text-align:center; font-size:24px; letter-spacing:10px;" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+            <button class="btn-primary" onclick="confirmPinCreate()">SAVE PIN</button>
+        </div>
+    </div>
+</div>
+
+<div id="pin-verify-modal" class="popup-modal hidden">
+    <div class="record-modal-box" style="max-width: 350px;">
+        <div class="record-modal-header">
+            <h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">Security PIN Required</h3>
+            <button onclick="closePinVerify()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
+        </div>
+        <div style="padding: 25px; display: flex; flex-direction: column; gap: 15px; text-align:center;">
+            <p style="color:var(--text-muted); font-size:13px;">Please enter your 4-digit PIN to unlock passes.</p>
+            <input type="password" id="verify-pin-input" class="input-field" placeholder="****" maxlength="4" style="text-align:center; font-size:24px; letter-spacing:10px;" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+            <p id="pin-error-msg" class="hidden" style="color:var(--danger); font-size:12px; margin:0;">Incorrect PIN.</p>
+            <button class="btn-primary" onclick="confirmPinVerify()">UNLOCK</button>
+        </div>
+    </div>
+</div>
+
+<div id="add-more-modal" class="popup-modal hidden">
+    <div class="record-modal-box" style="max-width: 500px;">
+        <div class="record-modal-header">
+            <h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;" data-i18n="add_more_people">➕ Add More People</h3>
+            <button onclick="closeAddMoreModal()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
+        </div>
+        <div style="padding: 25px; display: flex; flex-direction: column; gap: 15px;">
+            <p style="color:var(--danger); font-size:12px; font-weight:bold; margin-bottom:5px;" data-i18n="add_more_warning">⚠️ WARNING: Submitting this will change the pass status back to PENDING.</p>
+            <div id="add-team-roster-display" class="team-roster hidden"></div>
+            <div id="add-team-entry-box" style="border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; background: rgba(255,255,255,0.02);">
+                <div class="input-group" style="margin-bottom: 15px;"><input type="text" id="req-add-team-name" class="input-field" data-i18n="full_name_ph" placeholder="Full Name"></div>
+                <div class="input-group" style="margin-bottom: 15px;"><input type="text" id="req-add-team-iqamatext" class="input-field" data-i18n="iqama_id_ph" placeholder="Iqama / ID Number"></div>
+                <div class="input-group" style="margin-bottom: 15px;">
+                    <label style="font-size: 11px; color:var(--noon-yellow);" data-i18n="device_type_label">Device Type</label>
+                    <select id="req-add-team-device-type" class="input-field" onchange="toggleAddTeamDeviceInput()"><option value="None" data-i18n="no_device">No Device</option><option value="Mobile">Mobile</option><option value="Laptop">Laptop</option></select>
+                </div>
+                <div class="input-group hidden" id="req-add-team-device-id-group" style="margin-bottom: 15px;">
+                    <input type="text" id="req-add-team-device-id" class="input-field" placeholder="IMEI / Serial Number">
+                    <label style="font-size: 11px; margin-top:10px;" data-i18n="upload_device_photo">Upload Device Photo/Screen</label>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_imeiphoto')" data-i18n="live_camera">📷 Live Camera</button>
+                        <input type="file" id="req-add-team-imeiphoto" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_imeiphoto')">
+                    </div>
+                    <img id="preview-add_team_imeiphoto" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)">
+                </div>
+                <div class="input-group">
+                    <label style="font-size: 11px;" data-i18n="upload_iqama">Upload Iqama/ID Copy</label>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_iqama')" data-i18n="live_camera">📷 Live Camera</button>
+                        <input type="file" id="req-add-team-iqama" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_iqama')">
+                    </div>
+                    <img id="preview-add_team_iqama" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)">
+                </div>
+                <div class="input-group" style="margin-bottom: 15px;">
+                    <label style="font-size: 11px;" data-i18n="upload_selfie">Upload Selfie Photo</label>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_selfie')" data-i18n="live_camera">📷 Live Camera</button>
+                        <input type="file" id="req-add-team-selfie" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_selfie')">
+                    </div>
+                    <img id="preview-add_team_selfie" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)">
+                </div>
+                <button type="button" class="btn-primary btn-success" style="font-size: 12px;" onclick="saveAddTeamMember()" data-i18n="save_person_list">✅ SAVE PERSON TO LIST</button>
+            </div>
+            <button id="btn-submit-add-more" class="btn-primary" onclick="submitAddMorePeople()" data-i18n="submit_send_approval">SUBMIT & SEND FOR APPROVAL</button>
+        </div>
+    </div>
+</div>
+
+<div id="admin-gate-modal" class="popup-modal hidden">
+    <div class="record-modal-box" style="max-width: 400px;">
+        <div class="record-modal-header">
+            <h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">🚪 GATE ACTION</h3>
+            <button onclick="closeAdminGateModal()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
+        </div>
+        <div style="padding: 25px; display: flex; flex-direction: column; gap: 15px; text-align: center;">
+            <p style="color:var(--text-muted); font-size:13px; margin-bottom:10px;">Select an action for pass <strong id="admin-gate-id-display" style="color:white;"></strong></p>
+            <input type="hidden" id="admin-gate-id">
+            <button class="btn-primary btn-success" style="font-size: 14px; padding: 14px;" onclick="submitAdminGateAction('check_in')">✅ CHECK IN</button>
+            <button class="btn-primary btn-warning" style="font-size: 14px; padding: 14px; color:#000;" onclick="submitAdminGateAction('check_out')">🚪 CHECK OUT</button>
+        </div>
+    </div>
+</div>
+
+<div id="timeline-modal" class="popup-modal hidden">
+    <div class="record-modal-box" style="max-width: 700px;">
+        <div class="record-modal-header">
+            <h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">📜 Access Timeline</h3>
+            <button onclick="closeTimeline()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
+        </div>
+        <div style="padding: 25px; overflow-y: auto; max-height: 70vh;">
+            <h4 id="timeline-pass-name" style="color: white; margin-bottom: 20px; font-size: 15px;"></h4>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr><th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Check-In</th><th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Check-Out</th><th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Duration</th><th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Guard</th></tr>
+                    </thead>
+                    <tbody id="timeline-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Login Views -->
+<div id="login-view">
+  <div class="login-top-controls">
+      <button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 16px;" onclick="hardRefreshApp()" title="Hard Refresh Cache">🔄</button>
+      <button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 16px;" onclick="toggleFullScreen()" title="Fullscreen">⛶</button>
+      <button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 12px;" onclick="toggleLang()">عربي / EN</button>
+  </div>
+  
+  <div class="login-container">
+    <div class="logo-box"></div>
+    <div style="text-align:center;margin-bottom:25px;">
+        <h2 style="color:var(--noon-yellow);font-size:24px;margin-bottom:6px;letter-spacing:1px;">NOON SLP</h2>
+        <p style="color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;" data-i18n="visitor_contractor_portal">Visitor & Contractor Portal</p>
+    </div>
+    
+    <div class="role-tabs" id="role-tabs" style="display:flex;">
+        <div class="role-tab active" id="tab-ops" onclick="switchLoginTab('ops')" data-i18n="visitor_ops">👤 Visitor/Ops</div>
+        <div class="role-tab" id="tab-guard" onclick="switchLoginTab('guard')" data-i18n="guard">🛡️ Guard</div>
+        <div class="role-tab" id="tab-admin" onclick="switchLoginTab('admin')" data-i18n="admin">⚙️ Admin</div>
+    </div>
+    
+    <div id="login-ops">
+      <div class="input-group"><input type="text" id="lo-name" class="input-field t-ph" data-i18n="your_full_name" placeholder="Your Full Name"></div>
+      <div class="input-group"><input type="email" id="lo-mail" class="input-field t-ph" data-i18n="your_email" placeholder="Your Gmail / Email"></div>
+      <button class="btn-primary" onclick="login('ops')" data-i18n="login_portal">LOGIN TO PORTAL</button>
+    </div>
+
+    <div id="login-guard" class="hidden">
+      <div class="input-group"><input type="text" id="lg-name" class="input-field t-ph" data-i18n="name" placeholder="Name"></div>
+      <div class="input-group"><input type="text" id="lg-id" class="input-field t-ph" data-i18n="noon_id" placeholder="Noon ID"></div>
+      <div class="input-group"><select id="lg-location" class="input-field"><option value="" data-i18n="select_guard_loc">Select Guard Location...</option><option value="RUH01">RUH01</option><option value="JED01">JED01</option></select></div>
+      <button class="btn-primary" onclick="login('guard')" data-i18n="login_gate">LOGIN TO GATE</button>
+    </div>
+    
+    <div id="login-admin" class="hidden">
+      <div class="input-group"><input type="text" id="la-name" class="input-field t-ph" data-i18n="admin_name" placeholder="Admin Name"></div>
+      <div class="input-group"><input type="email" id="la-mail" class="input-field t-ph" data-i18n="admin_email" placeholder="Admin Gmail"></div>
+      <div class="input-group"><input type="password" id="la-pass" class="input-field t-ph" data-i18n="admin_password" placeholder="Admin Password"></div>
+      <button class="btn-primary" onclick="login('admin')" data-i18n="login_admin">LOGIN AS ADMIN</button>
+    </div>
+  </div>
+</div>
 
 <div id="app-layout" class="hidden">
   <aside id="sidebar" class="sidebar">
@@ -301,7 +498,6 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
       </header>
       <div class="admin-card" style="padding: 24px;">
         <h3 style="color: var(--noon-yellow); margin-bottom: 15px; font-size: 20px;">System Updates & Releases</h3>
-        
         <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
                 <span style="background:var(--noon-yellow); color:#000; font-size:14px; font-weight:bold; padding:4px 8px; border-radius:4px;">09/06/2026</span>
@@ -320,60 +516,386 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
 </div>
 
 <script>
-const SCRIPT_URL='https://script.google.com/macros/s/AKfycbzFQCv1Ng_n-U13NiMLz1Z2ldPzore4YBlnc6Iu4w5kkOSzaoNkPz80QlbD7PDOwld1_A/exec';
+window.addEventListener("unhandledrejection", function(e) {
+    if(e.reason && e.reason.message && e.reason.message.includes("A listener indicated an asynchronous response")) {
+        e.preventDefault();
+    }
+});
+
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzFQCv1Ng_n-U13NiMLz1Z2ldPzore4YBlnc6Iu4w5kkOSzaoNkPz80QlbD7PDOwld1_A/exec';
 const urlParams = new URLSearchParams(window.location.search);
 const currentRoleParam = urlParams.get('role') || 'default';
 const SESSION_KEY = 'noon_session_' + currentRoleParam;
-let html5QrCode=null; let scannerFacingMode='environment'; let currentUser=null; let currentScannedID=null; let currentScanAction='check_in'; let currentAdminFilter='all'; let autoRefreshTimer=null; let globalAdminData=[]; let checkedPrintIds=new Set(); let liveStream=null; let currentFacingMode='environment'; let targetPhotoType=''; let capturedImages={iqama:null,selfie:null,imeiphoto:null,vehicle:null,fmpoc:null}; let teamList=[]; let currentTeamCounter=1; let isProcessingScan = false; let userSecurityPin = null; let lockedPassesData = null; let pinCreateMode = 'submit';
 
-// ==========================================
-// FIX: Convert old Drive URLs to raw image URLs dynamically
-// ==========================================
-function convertDriveUrls(dataObj) {
-    let str = JSON.stringify(dataObj);
-    str = str.replace(/https:\/\/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)\/view[^\s"'\\]*/g, "https://drive.google.com/uc?export=view&id=$1");
-    return JSON.parse(str);
+const formatImg = (u) => {
+    if(!u || u === 'No File' || u.includes('Error:') || u.includes('تعذر')) return '';
+    if(u.startsWith('data:image')) return u;
+    let m = u.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || u.match(/id=([a-zA-Z0-9_-]+)/);
+    if(m && m[1]) return 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w1000';
+    return u;
+};
+
+let html5QrCode = null;
+let scannerFacingMode = 'environment';
+let currentUser = null;
+let currentScannedID = null;
+let currentScanAction = 'check_in';
+let currentAdminFilter = 'all';
+let autoRefreshTimer = null;
+let globalAdminData = [];
+let checkedPrintIds = new Set();
+let liveStream = null;
+let currentFacingMode = 'environment';
+let targetPhotoType = '';
+let capturedImages = {iqama:null, selfie:null, imeiphoto:null, vehicle:null, fmpoc:null};
+let teamList = [];
+let currentTeamCounter = 1;
+let isProcessingScan = false;
+let userSecurityPin = null;
+let lockedPassesData = null;
+let pinCreateMode = 'submit';
+
+const dict={
+    en:{"guard":"🛡️ Guard","visitor_ops":"📋 Visitor/Ops","admin":"⚙️ Admin","name":"Name","noon_id":"Noon ID","select_guard_loc":"Select Guard Location...","login_gate":"LOGIN TO GATE","your_full_name":"Your Full Name","your_email":"Your Gmail / Email","login_portal":"LOGIN TO PORTAL","admin_name":"Admin Name","admin_email":"Admin Gmail","admin_password":"Admin Password","login_admin":"LOGIN AS ADMIN","system_admin":"System Admin","visitor_portal":"Visitor Portal","gate_scanner":"Gate Scanner","admin_dashboard":"Admin Dashboard","whats_new":"What's New","logout":"LOGOUT","visitor_contractor_portal":"Visitor & Contractor Portal","submit_new_request":"Submit New Request","type":"Type","visitor":"Visitor","contractor":"Contractor","req_email_ph":"Email Address (For Pass Tracking)","req_vname_ph":"Visitor / Contractor Full Name","iqama_id_ph":"Lead Iqama / ID Number","visit_date":"Visit Date / Validity (From - To)","slp_ticket":"SLP Ticket No.","contact_no":"Contact No.","invited_by":"Invited by Whom","vehicle_plate":"Vehicle Plate / Picture","live_camera":"📷 Live Camera","contract_exp":"Contract Expiration (From - To)","project_name":"Project Name","company_name":"Company / Contractor Name","project_manager":"Project Manager","fm_poc":"FM POC Name / Details","upload_iqama":"Upload Iqama/ID Copy","upload_selfie":"Upload Selfie Photo","submit_approval":"Submit for Approval","my_passes":"My Passes","refresh":"Refresh","fetching":"Fetching your passes...","start_camera":"START CAMERA SCANNER","name_label":"Name:","type_label":"Type:","location_label":"Location:","confirm_action":"CONFIRM ACTION","access_approvals":"📋 Access Approvals","history":"🕰️ History","guard_approvals":"🛡️ Guard Approvals","analytics":"📊 Analytics","all_time":"All Time","today":"Today","weekly":"Weekly","monthly":"Monthly","6months":"6 Months","1year":"1 Year","custom":"Custom","to":"TO","apply":"APPLY","pending_req":"Pending Requests","active_req":"Active Requests","print_selected":"🖨️ PRINT SELECTED","val_period":"Validity Period","name_header":"Name","type_header":"Type","facility_header":"Facility","action":"Action","access_history":"Access & Gate History","final_status":"Final Status","check_in":"Check-In","check_out":"Check-Out","scanned_by":"Scanned By","live_gate":"Live Gate Operations","check_in_time":"Check-In Time","check_out_time":"Check-Out Time","visitor_name":"Visitor Name","date_analytics":"📅 Date Analytics","type_analytics":"👤 Type Analytics","facility_analytics":"🏢 Facility Analytics","status_analytics":"✅ Status Analytics","detailed_record":"Detailed Record View","extend_pass":"Extend Pass Validity","new_start_date":"New Visit / Start Date","new_end_date":"New End Date","save_extension":"SAVE EXTENSION","capture":"📸 CAPTURE","flip_cam":"🔄 FLIP CAM","cancel":"❌ CANCEL","click_to_close":"Click anywhere to close","btn_approve":"Approve","btn_reject":"Reject","btn_extend":"📅 EXTEND","btn_view":"🔍 VIEW DATA","btn_print":"🖨️ PRINT PASS","btn_checkout":"🚪 CHECK OUT","lbl_host_name":"Host Name","lbl_host_email":"Host Email","lbl_validity":"Validity Period","lbl_iqama":"IQAMA/ID COPY","lbl_selfie":"SELFIE PHOTO","lbl_vehicle":"VEHICLE PLATE","status_approved":"Approved","status_pending":"Pending","status_rejected":"Rejected","status_expired":"EXPIRED","status_completed":"COMPLETED","msg_no_pending":"No pending requests found in this timeframe.","msg_no_active":"No active requests found in this timeframe.","msg_no_history":"No history found in this timeframe.","msg_no_gate":"No gate operations found in this timeframe.","msg_enter_email":"Enter an Email Address on the left to view passes.","msg_loading":"Loading requests...","msg_inside":"Inside Facility","msg_admin_select_loc":"Admin: Please select a facility first.","btn_add_team":"➕ ADD TEAM MEMBER","camera_scanner_btn":"📷 CAMERA SCANNER","hardware_gun_btn":"🔌 HARDWARE GUN","hw_scanner_ready":"HARDWARE SCANNER READY","hw_scanner_inst":"Point your handheld gun scanner at the QR code and trigger.","awaiting_scan":"Awaiting hardware scan...","save_qr":"⬇️ SAVE QR CODE","allowed":"ALLOWED","pass_validated":"Pass Validated","denied":"DENIED","admin_select_fac":"Admin: Please select a facility first.","pending":"PENDING","awaiting_admin":"Pass is awaiting Admin approval","not_approved":"Pass not approved by Admin","wrong_facility":"WRONG FACILITY","wrong_fac_msg":"Wrong Facility","invalid_date":"INVALID DATE","not_valid_today":"Pass is not valid for today","expired":"EXPIRED","contractor_expired":"Contractor Pass Expired","check_out":"CHECK OUT","scanning_out":"Scanning Out.<br><span style='color:#000; font-size:14px; font-weight:bold;'>⚠️ TAKE ID CARD FROM LEAD.</span>","select_all_members":"SELECT ALL MEMBERS","lead":"Lead","device_photos_all":"DEVICE & PHOTOS FOR ALL","device_label":"Device","iqama_id":"IQAMA / ID","selfie":"SELFIE","device_screen":"DEVICE SCREEN","vehicle":"VEHICLE","add_more_people":"➕ Add More People","add_more_warning":"⚠️ WARNING: Submitting this will change the pass status back to PENDING. It cannot be used until the Admin approves it again.","device_type_label":"Device Type","no_device":"No Device","upload_device_photo":"Upload Device Photo/Screen","full_name_ph":"Full Name","save_person_list":"✅ SAVE PERSON TO LIST","submit_send_approval":"SUBMIT & SEND FOR APPROVAL","save_add_next":"✅ SAVE & ADD NEXT","lead_device_details":"Lead Device Details & Photo Screen","max_devices_note":"* Note: A maximum of 10 members are allowed to bring devices (Mobile/Laptop).","total_people":"Total People","new_members_added":"➕ NEW MEMBERS ADDED","new_badge":"NEW","notice_new_people":"NOTICE: New people have been added to this pass!"},
+    ar:{"guard":"🛡️ الحارس","visitor_ops":"📋 الزوار/العمليات","admin":"⚙️ الإدارة","name":"الاسم","noon_id":"الرقم الوظيفي (Noon ID)","select_guard_loc":"اختر موقع الحارس...","login_gate":"الدخول للبوابة","your_full_name":"الاسم الكامل","your_email":"البريد الإلكتروني","login_portal":"تسجيل الدخول للبوابة","admin_name":"اسم المشرف","admin_email":"بريد المشرف","admin_password":"كلمة المرور","login_admin":"دخول كمسؤول","system_admin":"إدارة النظام","visitor_portal":"بوابة الزوار","gate_scanner":"ماسح البوابة","admin_dashboard":"لوحة التحكم","whats_new":"ما الجديد","logout":"تسجيل خروج","visitor_contractor_portal":"بوابة الزوار والمقاولين","submit_new_request":"تقديم طلب جديد","type":"النوع","visitor":"زائر","contractor":"مقاول","req_email_ph":"البريد الإلكتروني (لتتبع التصريح)","req_vname_ph":"الاسم الكامل للزائر/المقاول","iqama_id_ph":"رقم الهوية / الإقامة للقائد","visit_date":"تاريخ الزيارة / الصلاحية (من - إلى)","slp_ticket":"رقم تذكرة SLP","contact_no":"رقم الاتصال","invited_by":"بدعوة من","vehicle_plate":"صورة / لوحة السيارة","live_camera":"📷 كاميرا مباشرة","contract_exp":"صلاحية العقد (من - إلى)","project_name":"اسم المشروع","company_name":"اسم الشركة / المقاول","project_manager":"مدير المشروع","fm_poc":"اسم/تفاصيل مسؤول المرافق (FM POC)","upload_iqama":"رفع صورة الهوية/الإقامة","upload_selfie":"رفع صورة شخصية","submit_approval":"إرسال للموافقة","my_passes":"تصاريحي","refresh":"تحديث","fetching":"جاري جلب التصاريح...","start_camera":"تشغيل ماسح الكاميرا","name_label":"الاسم:","type_label":"النوع:","location_label":"الموقع:","confirm_action":"تأكيد الإجراء","access_approvals":"📋 موافقات الدخول","history":"🕰️ السجل","guard_approvals":"🛡️ عمليات البوابة","analytics":"📊 الإحصائيات","all_time":"الكل","today":"اليوم","weekly":"أسبوعي","monthly":"شهري","6months":"٦ أشهر","1year":"سنة","custom":"مخصص","to":"إلى","apply":"تطبيق","pending_req":"الطلبات المعلقة","active_req":"الطلبات النشطة","print_selected":"🖨️ طباعة المحدد","val_period":"فترة الصلاحية","name_header":"الاسم","type_header":"النوع","facility_header":"المنشأة","action":"الإجراء","access_history":"سجل الدخول والبوابة","final_status":"الحالة النهائية","check_in":"دخول","check_out":"خروج","scanned_by":"تم المسح بواسطة","live_gate":"عمليات البوابة المباشرة","check_in_time":"وقت الدخول","check_out_time":"وقت الخروج","visitor_name":"اسم الزائر","date_analytics":"📅 إحصائيات التواريخ","type_analytics":"👤 إحصائيات الأنواع","facility_analytics":"🏢 إحصائيات المنشآت","status_analytics":"✅ إحصائيات الحالات","detailed_record":"عرض السجل التفصيلي","extend_pass":"تمديد صلاحية التصريح","new_start_date":"تاريخ الزيارة/البداية الجديد","new_end_date":"تاريخ النهاية الجديد","save_extension":"حفظ التمديد","capture":"📸 التقاط","flip_cam":"🔄 قلب الكاميرا","cancel":"❌ إلغاء","click_to_close":"انقر في أي مكان للإغلاق","btn_approve":"موافقة","btn_reject":"رفض","btn_extend":"📅 تمديد","btn_view":"🔍 عرض البيانات","btn_print":"🖨️ طباعة","btn_checkout":"🚪 خروج","lbl_host_name":"اسم المضيف","lbl_host_email":"بريد المضيف","lbl_validity":"فترة الصلاحية","lbl_iqama":"صورة الهوية/الإقامة","lbl_selfie":"الصورة الشخصية","lbl_vehicle":"لوحة السيارة","status_approved":"مقبول","status_pending":"قيد الانتظار","status_rejected":"مرفوض","status_expired":"منتهي","status_completed":"مكتمل","msg_no_pending":"لا توجد طلبات معلقة في هذه الفترة.","msg_no_active":"لا توجد طلبات نشطة في هذه الفترة.","msg_no_history":"لا يوجد سجل في هذه الفترة.","msg_no_gate":"لا توجد عمليات بوابة في هذه الفترة.","msg_enter_email":"أدخل بريداً إلكترونياً لعرض التصاريح.","msg_loading":"جاري التحميل...","msg_inside":"داخل المنشأة","msg_admin_select_loc":"المشرف: يرجى تحديد المنشأة أولاً من القائمة العلوية.","btn_add_team":"➕ إضافة عضو للفريق","camera_scanner_btn":"📷 ماسح الكاميرا","hardware_gun_btn":"🔌 ماسح الباركود اليدوي","hw_scanner_ready":"ماسح الباركود جاهز","hw_scanner_inst":"قم بتوجيه الماسح الضوئي نحو رمز الاستجابة السريعة (QR).","awaiting_scan":"بانتظار المسح...","save_qr":"⬇️ حفظ الرمز","allowed":"مسموح","pass_validated":"تم التحقق من التصريح","denied":"مرفوض","admin_select_fac":"المشرف: يرجى تحديد المنشأة أولاً.","pending":"قيد الانتظار","awaiting_admin":"التصريح بانتظار موافقة المشرف","not_approved":"لم تتم الموافقة على التصريح","wrong_facility":"منشأة خاطئة","wrong_fac_msg":"منشأة خاطئة","invalid_date":"تاريخ غير صالح","not_valid_today":"التصريح غير صالح لهذا اليوم","expired":"منتهي","contractor_expired":"تصريح المقاول منتهي","check_out":"تسجيل خروج","scanning_out":"تسجيل الخروج.<br><span style='color:#000; font-size:14px; font-weight:bold;'>⚠️ خذ بطاقة الهوية من القائد.</span>","select_all_members":"تحديد جميع الأعضاء","lead":"القائد","device_photos_all":"الأجهزة والصور للجميع","device_label":"الجهاز","iqama_id":"الإقامة / الهوية","selfie":"الصورة الشخصية","device_screen":"شاشة الجهاز","vehicle":"المركبة","add_more_people":"➕ إضافة المزيد من الأشخاص","add_more_warning":"⚠️ تحذير: سيؤدي هذا إلى إعادة حالة التصريح إلى قيد الانتظار. لا يمكن استخدامه حتى يوافق عليه المشرف مرة أخرى.","device_type_label":"نوع الجهاز","no_device":"لا يوجد جهاز","upload_device_photo":"رفع صورة الجهاز/الشاشة","full_name_ph":"الاسم الكامل","save_person_list":"✅ حفظ الشخص في القائمة","submit_send_approval":"إرسال وطلب الموافقة","save_add_next":"✅ حفظ وإضافة التالي","lead_device_details":"تفاصيل جهاز القائد وصورة الشاشة","max_devices_note":"* ملاحظة: يُسمح لـ 10 أعضاء كحد أقصى بإحضار أجهزة (هاتف/كمبيوتر محمول).","total_people":"إجمالي الأشخاص","new_members_added":"➕ أعضاء جدد مضافون","new_badge":"جديد","notice_new_people":"تنبيه: تم إضافة أشخاص جدد إلى هذا التصريح!"}
+};
+
+let currentLang='en';
+function toggleLang() {
+    currentLang = currentLang === 'en' ? 'ar' : 'en';
+    document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+    updateUI();
 }
 
-async function confirmPinCreate(){let pin=document.getElementById('new-pin-input').value.trim();if(pin.length!==4)return alert("Please enter a valid 4-digit PIN.");userSecurityPin=pin;let email=currentUser.email;if(currentUser.role==='admin'){const ei=document.getElementById('req-admin-email');if(ei&&ei.value)email=ei.value.toLowerCase().trim();}localStorage.setItem('user_pin_'+email,pin);document.getElementById('pin-create-modal').classList.add('hidden');if(pinCreateMode==='reset'){try{await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'update_pin',email:email,pin:pin})});}catch(e){}setTimeout(()=>loadMyPasses(true,true),1000);renderMyPasses(lockedPassesData);}else{submitRequest();}}
-function closePinCreate(){document.getElementById('pin-create-modal').classList.add('hidden');}
-function processAndRenderPasses(data,email,isSilent){if(currentUser&&currentUser.role==='admin'){renderMyPasses(data);return;}let hasActive=false;const todayNum=new Date().setHours(0,0,0,0);if(Array.isArray(data)){data.forEach(p=>{let safeType=String(p.Type||'');let safeStatus=String(p.Status||'Pending');let endObj=parseFlexibleDate(p.EndDate)||parseFlexibleDate(p.StartDate);let endNum=endObj?endObj.setHours(0,0,0,0):todayNum;let isComp=(todayNum>endNum)||safeStatus==='Rejected'||safeStatus==='Completed';if(!isComp)hasActive=true;});}let backendPin=null;if(Array.isArray(data)){for(let i=data.length-1;i>=0;i--){if(data[i].HostName&&data[i].HostName.includes('||PIN:')){backendPin=data[i].HostName.split('||PIN:')[1];break;}}}let localPin=localStorage.getItem('user_pin_'+email);if(!hasActive&&data.length>0){localStorage.removeItem('user_pin_'+email);userSecurityPin=null;if(backendPin){fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'reset_pin',email:email})}).catch(e=>{});}renderMyPasses(data);return;}if(!hasActive&&data.length===0){renderMyPasses(data);return;}if(!backendPin&&localPin){backendPin=localPin;fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'update_pin',email:email,pin:localPin})}).catch(e=>{});}if(backendPin&&backendPin!==localPin){lockedPassesData=data;const verifyModal=document.getElementById('pin-verify-modal');if(!isSilent&&verifyModal){verifyModal.classList.remove('hidden');document.getElementById('pin-error-msg').classList.add('hidden');document.getElementById('verify-pin-input').value='';}const listDiv=document.getElementById('my-passes-list');if(listDiv)listDiv.innerHTML='<p style="color:var(--text-muted);font-size:13px;margin-top:20px;text-align:center;">Passes locked. <button class="btn-primary btn-sm" style="width:auto;padding:4px 10px;margin-left:10px;" onclick="loadMyPasses(true,false)">UNLOCK</button></p>';return;}if(!backendPin&&!localPin&&Array.isArray(data)&&data.length>0){lockedPassesData=data;const createModal=document.getElementById('pin-create-modal');if(!isSilent&&createModal){pinCreateMode='reset';createModal.classList.remove('hidden');document.getElementById('new-pin-input').value='';}const listDiv=document.getElementById('my-passes-list');if(listDiv)listDiv.innerHTML='<p style="color:var(--text-muted);font-size:13px;margin-top:20px;text-align:center;">Passes locked. Awaiting new PIN.</p>';return;}userSecurityPin=backendPin||localPin;renderMyPasses(data);}
-function confirmPinVerify(){let pin=document.getElementById('verify-pin-input').value.trim();let email=currentUser.email;if(currentUser.role==='admin'){const ei=document.getElementById('req-admin-email');if(ei&&ei.value)email=ei.value.toLowerCase().trim();}let backendPin=null;for(let i=lockedPassesData.length-1;i>=0;i--){if(lockedPassesData[i].HostName&&lockedPassesData[i].HostName.includes('||PIN:')){backendPin=lockedPassesData[i].HostName.split('||PIN:')[1];break;}}if(pin===backendPin){userSecurityPin=pin;localStorage.setItem('user_pin_'+email,pin);document.getElementById('pin-verify-modal').classList.add('hidden');renderMyPasses(lockedPassesData);}else{document.getElementById('pin-error-msg').classList.remove('hidden');}}
-function closePinVerify(){document.getElementById('pin-verify-modal').classList.add('hidden');const listDiv=document.getElementById('my-passes-list');if(listDiv)listDiv.innerHTML='<p style="color:var(--text-muted);font-size:13px; margin-top:20px; text-align:center;">Passes locked. <button class="btn-primary btn-sm" style="width:auto; padding:4px 10px; margin-left:10px;" onclick="loadMyPasses(true, false)">UNLOCK</button></p>';}
-const dict={en:{"guard":"🛡️ Guard","visitor_ops":"📋 Visitor/Ops","admin":"⚙️ Admin","name":"Name","noon_id":"Noon ID","select_guard_loc":"Select Guard Location...","login_gate":"LOGIN TO GATE","your_full_name":"Your Full Name","your_email":"Your Gmail / Email","login_portal":"LOGIN TO PORTAL","admin_name":"Admin Name","admin_email":"Admin Gmail","admin_password":"Admin Password","login_admin":"LOGIN AS ADMIN","system_admin":"System Admin","visitor_portal":"Visitor Portal","gate_scanner":"Gate Scanner","admin_dashboard":"Admin Dashboard","whats_new":"What's New","logout":"LOGOUT","visitor_contractor_portal":"Visitor & Contractor Portal","submit_new_request":"Submit New Request","type":"Type","visitor":"Visitor","contractor":"Contractor","req_email_ph":"Email Address (For Pass Tracking)","req_vname_ph":"Visitor / Contractor Full Name","iqama_id_ph":"Lead Iqama / ID Number","visit_date":"Visit Date / Validity (From - To)","slp_ticket":"SLP Ticket No.","contact_no":"Contact No.","invited_by":"Invited by Whom","vehicle_plate":"Vehicle Plate / Picture","live_camera":"📷 Live Camera","contract_exp":"Contract Expiration (From - To)","project_name":"Project Name","company_name":"Company / Contractor Name","project_manager":"Project Manager","fm_poc":"FM POC Name / Details","upload_iqama":"Upload Iqama/ID Copy","upload_selfie":"Upload Selfie Photo","submit_approval":"Submit for Approval","my_passes":"My Passes","refresh":"Refresh","fetching":"Fetching your passes...","start_camera":"START CAMERA SCANNER","name_label":"Name:","type_label":"Type:","location_label":"Location:","confirm_action":"CONFIRM ACTION","access_approvals":"📋 Access Approvals","history":"🕰️ History","guard_approvals":"🛡️ Guard Approvals","analytics":"📊 Analytics","all_time":"All Time","today":"Today","weekly":"Weekly","monthly":"Monthly","6months":"6 Months","1year":"1 Year","custom":"Custom","to":"TO","apply":"APPLY","pending_req":"Pending Requests","active_req":"Active Requests","print_selected":"🖨️ PRINT SELECTED","val_period":"Validity Period","name_header":"Name","type_header":"Type","facility_header":"Facility","action":"Action","access_history":"Access & Gate History","final_status":"Final Status","check_in":"Check-In","check_out":"Check-Out","scanned_by":"Scanned By","live_gate":"Live Gate Operations","check_in_time":"Check-In Time","check_out_time":"Check-Out Time","visitor_name":"Visitor Name","date_analytics":"📅 Date Analytics","type_analytics":"👤 Type Analytics","facility_analytics":"🏢 Facility Analytics","status_analytics":"✅ Status Analytics","detailed_record":"Detailed Record View","extend_pass":"Extend Pass Validity","new_start_date":"New Visit / Start Date","new_end_date":"New End Date","save_extension":"SAVE EXTENSION","capture":"📸 CAPTURE","flip_cam":"🔄 FLIP CAM","cancel":"❌ CANCEL","click_to_close":"Click anywhere to close","btn_approve":"Approve","btn_reject":"Reject","btn_extend":"📅 EXTEND","btn_view":"🔍 VIEW DATA","btn_print":"🖨️ PRINT PASS","btn_checkout":"🚪 CHECK OUT","lbl_host_name":"Host Name","lbl_host_email":"Host Email","lbl_validity":"Validity Period","lbl_iqama":"IQAMA/ID COPY","lbl_selfie":"SELFIE PHOTO","lbl_vehicle":"VEHICLE PLATE","status_approved":"Approved","status_pending":"Pending","status_rejected":"Rejected","status_expired":"EXPIRED","status_completed":"COMPLETED","msg_no_pending":"No pending requests found in this timeframe.","msg_no_active":"No active requests found in this timeframe.","msg_no_history":"No history found in this timeframe.","msg_no_gate":"No gate operations found in this timeframe.","msg_enter_email":"Enter an Email Address on the left to view passes.","msg_loading":"Loading requests...","msg_inside":"Inside Facility","msg_admin_select_loc":"Admin: Please select a facility first.","btn_add_team":"➕ ADD TEAM MEMBER","camera_scanner_btn":"📷 CAMERA SCANNER","hardware_gun_btn":"🔌 HARDWARE GUN","hw_scanner_ready":"HARDWARE SCANNER READY","hw_scanner_inst":"Point your handheld gun scanner at the QR code and trigger.","awaiting_scan":"Awaiting hardware scan...","save_qr":"⬇️ SAVE QR CODE","allowed":"ALLOWED","pass_validated":"Pass Validated","denied":"DENIED","admin_select_fac":"Admin: Please select a facility first.","pending":"PENDING","awaiting_admin":"Pass is awaiting Admin approval","not_approved":"Pass not approved by Admin","wrong_facility":"WRONG FACILITY","wrong_fac_msg":"Wrong Facility","invalid_date":"INVALID DATE","not_valid_today":"Pass is not valid for today","expired":"EXPIRED","contractor_expired":"Contractor Pass Expired","check_out":"CHECK OUT","scanning_out":"Scanning Out.<br><span style='color:#000; font-size:14px; font-weight:bold;'>⚠️ TAKE ID CARD FROM LEAD.</span>","select_all_members":"SELECT ALL MEMBERS","lead":"Lead","device_photos_all":"DEVICE & PHOTOS FOR ALL","device_label":"Device","iqama_id":"IQAMA / ID","selfie":"SELFIE","device_screen":"DEVICE SCREEN","vehicle":"VEHICLE","add_more_people":"➕ Add More People","add_more_warning":"⚠️ WARNING: Submitting this will change the pass status back to PENDING. It cannot be used until the Admin approves it again.","device_type_label":"Device Type","no_device":"No Device","upload_device_photo":"Upload Device Photo/Screen","full_name_ph":"Full Name","save_person_list":"✅ SAVE PERSON TO LIST","submit_send_approval":"SUBMIT & SEND FOR APPROVAL","save_add_next":"✅ SAVE & ADD NEXT","lead_device_details":"Lead Device Details & Photo Screen","max_devices_note":"* Note: A maximum of 10 members are allowed to bring devices (Mobile/Laptop).", "total_people":"Total People", "new_members_added":"➕ NEW MEMBERS ADDED", "new_badge":"NEW", "notice_new_people":"NOTICE: New people have been added to this pass!"},ar:{"guard":"🛡️ الحارس","visitor_ops":"📋 الزوار/العمليات","admin":"⚙️ الإدارة","name":"الاسم","noon_id":"الرقم الوظيفي (Noon ID)","select_guard_loc":"اختر موقع الحارس...","login_gate":"الدخول للبوابة","your_full_name":"الاسم الكامل","your_email":"البريد الإلكتروني","login_portal":"تسجيل الدخول للبوابة","admin_name":"اسم المشرف","admin_email":"بريد المشرف","admin_password":"كلمة المرور","login_admin":"دخول كمسؤول","system_admin":"إدارة النظام","visitor_portal":"بوابة الزوار","gate_scanner":"ماسح البوابة","admin_dashboard":"لوحة التحكم","whats_new":"ما الجديد","logout":"تسجيل خروج","visitor_contractor_portal":"بوابة الزوار والمقاولين","submit_new_request":"تقديم طلب جديد","type":"النوع","visitor":"زائر","contractor":"مقاول","req_email_ph":"البريد الإلكتروني (لتتبع التصريح)","req_vname_ph":"الاسم الكامل للزائر/المقاول","iqama_id_ph":"رقم الهوية / الإقامة للقائد","visit_date":"تاريخ الزيارة / الصلاحية (من - إلى)","slp_ticket":"رقم تذكرة SLP","contact_no":"رقم الاتصال","invited_by":"بدعوة من","vehicle_plate":"صورة / لوحة السيارة","live_camera":"📷 كاميرا مباشرة","contract_exp":"صلاحية العقد (من - إلى)","project_name":"اسم المشروع","company_name":"اسم الشركة / المقاول","project_manager":"مدير المشروع","fm_poc":"اسم/تفاصيل مسؤول المرافق (FM POC)","upload_iqama":"رفع صورة الهوية/الإقامة","upload_selfie":"رفع صورة شخصية","submit_approval":"إرسال للموافقة","my_passes":"تصاريحي","refresh":"تحديث","fetching":"جاري جلب التصاريح...","start_camera":"تشغيل ماسح الكاميرا","name_label":"الاسم:","type_label":"النوع:","location_label":"الموقع:","confirm_action":"تأكيد الإجراء","access_approvals":"📋 موافقات الدخول","history":"🕰️ السجل","guard_approvals":"🛡️ عمليات البوابة","analytics":"📊 الإحصائيات","all_time":"الكل","today":"اليوم","weekly":"أسبوعي","monthly":"شهري","6months":"٦ أشهر","1year":"سنة","custom":"مخصص","to":"إلى","apply":"تطبيق","pending_req":"الطلبات المعلقة","active_req":"الطلبات النشطة","print_selected":"🖨️ طباعة المحدد","val_period":"فترة الصلاحية","name_header":"الاسم","type_header":"النوع","facility_header":"المنشأة","action":"الإجراء","access_history":"سجل الدخول والبوابة","final_status":"الحالة النهائية","check_in":"دخول","check_out":"خروج","scanned_by":"تم المسح بواسطة","live_gate":"عمليات البوابة المباشرة","check_in_time":"وقت الدخول","check_out_time":"وقت الخروج","visitor_name":"اسم الزائر","date_analytics":"📅 إحصائيات التواريخ","type_analytics":"👤 إحصائيات الأنواع","facility_analytics":"🏢 إحصائيات المنشآت","status_analytics":"✅ إحصائيات الحالات","detailed_record":"عرض السجل التفصيلي","extend_pass":"تمديد صلاحية التصريح","new_start_date":"تاريخ الزيارة/البداية الجديد","new_end_date":"تاريخ النهاية الجديد","save_extension":"حفظ التمديد","capture":"📸 التقاط","flip_cam":"🔄 قلب الكاميرا","cancel":"❌ إلغاء","click_to_close":"انقر في أي مكان للإغلاق","btn_approve":"موافقة","btn_reject":"رفض","btn_extend":"📅 تمديد","btn_view":"🔍 عرض البيانات","btn_print":"🖨️ طباعة","btn_checkout":"🚪 خروج","lbl_host_name":"اسم المضيف","lbl_host_email":"بريد المضيف","lbl_validity":"فترة الصلاحية","lbl_iqama":"صورة الهوية/الإقامة","lbl_selfie":"الصورة الشخصية","lbl_vehicle":"لوحة السيارة","status_approved":"مقبول","status_pending":"قيد الانتظار","status_rejected":"مرفوض","status_expired":"منتهي","status_completed":"مكتمل","msg_no_pending":"لا توجد طلبات معلقة في هذه الفترة.","msg_no_active":"لا توجد طلبات نشطة في هذه الفترة.","msg_no_history":"لا يوجد سجل في هذه الفترة.","msg_no_gate":"لا توجد عمليات بوابة في هذه الفترة.","msg_enter_email":"أدخل بريداً إلكترونياً لعرض التصاريح.","msg_loading":"جاري التحميل...","msg_inside":"داخل المنشأة","msg_admin_select_loc":"المشرف: يرجى تحديد المنشأة أولاً من القائمة العلوية.","btn_add_team":"➕ إضافة عضو للفريق","camera_scanner_btn":"📷 ماسح الكاميرا","hardware_gun_btn":"🔌 ماسح الباركود اليدوي","hw_scanner_ready":"ماسح الباركود جاهز","hw_scanner_inst":"قم بتوجيه الماسح الضوئي نحو رمز الاستجابة السريعة (QR).","awaiting_scan":"بانتظار المسح...","save_qr":"⬇️ حفظ الرمز","allowed":"مسموح","pass_validated":"تم التحقق من التصريح","denied":"مرفوض","admin_select_fac":"المشرف: يرجى تحديد المنشأة أولاً.","pending":"قيد الانتظار","awaiting_admin":"التصريح بانتظار موافقة المشرف","not_approved":"لم تتم الموافقة على التصريح","wrong_facility":"منشأة خاطئة","wrong_fac_msg":"منشأة خاطئة","invalid_date":"تاريخ غير صالح","not_valid_today":"التصريح غير صالح لهذا اليوم","expired":"منتهي","contractor_expired":"تصريح المقاول منتهي","check_out":"تسجيل خروج","scanning_out":"تسجيل الخروج.<br><span style='color:#000; font-size:14px; font-weight:bold;'>⚠️ خذ بطاقة الهوية من القائد.</span>","select_all_members":"تحديد جميع الأعضاء","lead":"القائد","device_photos_all":"الأجهزة والصور للجميع","device_label":"الجهاز","iqama_id":"الإقامة / الهوية","selfie":"الصورة الشخصية","device_screen":"شاشة الجهاز","vehicle":"المركبة","add_more_people":"➕ إضافة المزيد من الأشخاص","add_more_warning":"⚠️ تحذير: سيؤدي هذا إلى إعادة حالة التصريح إلى قيد الانتظار. لا يمكن استخدامه حتى يوافق عليه المشرف مرة أخرى.","device_type_label":"نوع الجهاز","no_device":"لا يوجد جهاز","upload_device_photo":"رفع صورة الجهاز/الشاشة","full_name_ph":"الاسم الكامل","save_person_list":"✅ حفظ الشخص في القائمة","submit_send_approval":"إرسال وطلب الموافقة","save_add_next":"✅ حفظ وإضافة التالي","lead_device_details":"تفاصيل جهاز القائد وصورة الشاشة","max_devices_note":"* ملاحظة: يُسمح لـ 10 أعضاء كحد أقصى بإحضار أجهزة (هاتف/كمبيوتر محمول).", "total_people":"إجمالي الأشخاص", "new_members_added":"➕ أعضاء جدد مضافون", "new_badge":"جديد", "notice_new_people":"تنبيه: تم إضافة أشخاص جدد إلى هذا التصريح!"}};
-let currentLang='en';function toggleLang(){currentLang=currentLang==='en'?'ar':'en';document.documentElement.dir=currentLang==='ar'?'rtl':'ltr';updateUI()}
-function t(k){return dict[currentLang]?.[k]||dict['en'][k]||k||''}
-function updateUI(){document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.getAttribute('data-i18n');if(t(k))el.innerHTML=t(k)});document.querySelectorAll('.t-ph').forEach(el=>{const k=el.getAttribute('data-i18n');if(t(k))el.placeholder=t(k)});if(currentUser&&currentUser.role==='admin')renderAdminData(globalAdminData)}
-function toggleFullScreen(){const d=document,de=d.documentElement;const req=de.requestFullscreen||de.mozRequestFullScreen||de.webkitRequestFullScreen||de.msRequestFullscreen;const exit=d.exitFullscreen||d.mozCancelFullScreen||d.webkitExitFullscreen||d.msExitFullscreen;if(!d.fullscreenElement&&!d.mozFullScreenElement&&!d.webkitFullscreenElement&&!d.msFullscreenElement){if(req)req.call(de).catch(e=>console.log(e));else alert("Fullscreen not supported")}else{if(exit)exit.call(d).catch(e=>console.log(e))}}
-function toggleSidebar(){const sb=document.getElementById('sidebar');if(sb)sb.classList.toggle('minimized');document.body.classList.toggle('sidebar-minimized')}
-function logout(){if(autoRefreshTimer)clearInterval(autoRefreshTimer);localStorage.removeItem(SESSION_KEY);Object.keys(localStorage).forEach(key=>{if(key.startsWith('user_pin_'))localStorage.removeItem(key)});try{if(html5QrCode&&html5QrCode.isScanning)html5QrCode.stop()}catch(e){}location.reload()}
-function hardRefreshApp(){if(confirm("Perform a Hard Refresh? This will clear all saved cache and fetch the latest data.")){Object.keys(localStorage).forEach(key=>{if(key.startsWith('cached_'))localStorage.removeItem(key)});sessionStorage.clear();window.location.reload(true)}}
-function toggleDateFields(){const te=document.getElementById('req-type');if(!te)return;const type=te.value,vf=document.getElementById('req-visitor-fields'),cf=document.getElementById('req-contractor-fields'),tms=document.getElementById('team-members-section');if(vf)vf.classList.toggle('hidden',type==='Contractor');if(cf)cf.classList.toggle('hidden',type==='Visitor');if(tms)tms.classList.toggle('hidden',type==='Visitor')}
-function switchLoginTab(role){document.querySelectorAll('.role-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('#login-guard, #login-ops, #login-admin').forEach(f=>f.classList.add('hidden'));const te=document.getElementById(`tab-${role}`);if(te)te.classList.add('active');const le=document.getElementById(`login-${role}`);if(le)le.classList.remove('hidden')}
-function switchMainView(vId){document.querySelectorAll('.dashboard').forEach(e=>e.classList.add('hidden'));const tv=document.getElementById(`dashboard-${vId}`);if(tv)tv.classList.remove('hidden');document.querySelectorAll('.sidebar-nav a').forEach(a=>a.classList.remove('active'));const an=document.getElementById(`nav-sidebar-${vId}`);if(an)an.classList.add('active');const sb=document.getElementById('sidebar');if(window.innerWidth<=900&&sb&&!sb.classList.contains('minimized'))toggleSidebar();if(vId==='ops'&&currentUser&&currentUser.role==='admin')loadMyPasses(false,false)}
-function updateAdminGuardLoc(){if(currentUser&&currentUser.role==='admin'){const agl=document.getElementById('admin-guard-loc');if(agl)currentUser.location=agl.value||''}}
-function openFullscreenImage(src){if(!src)return;const fi=document.getElementById('fullscreen-img'),fm=document.getElementById('fullscreen-image-modal');if(fi&&fm){fi.src=src;fm.classList.remove('hidden')}}
-function showTeamEntry(){const tb=document.getElementById('team-entry-box'),b=document.getElementById('btn-show-team-entry'),tt=document.getElementById('team-entry-title');if(tb)tb.classList.remove('hidden');if(b)b.classList.add('hidden');if(tt)tt.innerText=`Team Member ${currentTeamCounter}`}
-function hideTeamEntry(){const tb=document.getElementById('team-entry-box'),b=document.getElementById('btn-show-team-entry');if(tb)tb.classList.add('hidden');if(b)b.classList.remove('hidden');const ii=document.getElementById('req-team-iqama'),si=document.getElementById('req-team-selfie'),tName=document.getElementById('req-team-name'),tIqama=document.getElementById('req-team-iqamatext');const devType=document.getElementById('req-team-device-type'),devId=document.getElementById('req-team-device-id');const tDev=document.getElementById('req-team-imeiphoto');if(ii)ii.value="";if(si)si.value="";if(tName)tName.value="";if(tIqama)tIqama.value="";if(devType)devType.value="None";if(devId)devId.value="";if(tDev)tDev.value="";toggleTeamDeviceInput();clearCapturedData('team_iqama');clearCapturedData('team_selfie');clearCapturedData('team_imeiphoto')}
-function toggleLeadDeviceInput(){let type=document.getElementById('req-lead-device-type').value;let input=document.getElementById('req-lead-device-id');if(type==='None'){input.classList.add('hidden');input.value=''}else{input.classList.remove('hidden');input.placeholder=type==='Mobile'?'IMEI Number':'Serial Number'}}
-function toggleTeamDeviceInput(){let type=document.getElementById('req-team-device-type').value;let group=document.getElementById('req-team-device-id-group');let input=document.getElementById('req-team-device-id');let tDev=document.getElementById('req-team-imeiphoto');if(type==='None'){group.classList.add('hidden');input.value='';if(tDev)tDev.value='';clearCapturedData('team_imeiphoto')}else{group.classList.remove('hidden');input.placeholder=type==='Mobile'?'IMEI Number':'Serial Number'}}
-async function saveCurrentTeamMember(){let iB64='',sB64='',tDevB64='',ii=document.getElementById('req-team-iqama'),si=document.getElementById('req-team-selfie'),tName=document.getElementById('req-team-name'),tIqama=document.getElementById('req-team-iqamatext');let devType=document.getElementById('req-team-device-type').value,devId=document.getElementById('req-team-device-id').value;let tDev=document.getElementById('req-team-imeiphoto');if(!tName||!tName.value.trim())return alert("Please provide Team Member Name.");if(!tIqama||!tIqama.value.trim())return alert("Please provide Team Member Iqama / ID Number.");let currentDeviceCount=teamList.filter(m=>m.deviceType!=='None').length;let leadDevType=document.getElementById('req-lead-device-type').value;if(leadDevType!=='None')currentDeviceCount++;if(devType!=='None'&&currentDeviceCount>=10)return alert("Maximum of 10 devices allowed per request.");if(devType!=='None'){if(!devId.trim())return alert("Please provide the device IMEI/Serial number.");if(capturedImages.team_imeiphoto)tDevB64=capturedImages.team_imeiphoto.split(',')[1];else if(tDev&&tDev.files.length>0){let f=await getBase64(tDev.files[0]);tDevB64=f.split(',')[1]}else return alert("Please provide Device Screen photo for the team member.");}if(capturedImages.team_iqama)iB64=capturedImages.team_iqama.split(',')[1];else if(ii&&ii.files.length>0){let f=await getBase64(ii.files[0]);iB64=f.split(',')[1]}else return alert("Please provide Iqama photo.");if(capturedImages.team_selfie)sB64=capturedImages.team_selfie.split(',')[1];else if(si&&si.files.length>0){let f=await getBase64(si.files[0]);sB64=f.split(',')[1]}else return alert("Please provide Selfie photo.");teamList.push({iqama:"data:image/jpeg;base64,"+iB64,selfie:"data:image/jpeg;base64,"+sB64,rawIqama:iB64,rawSelfie:sB64,rawDevicePhoto:tDevB64,name:tName.value.trim(),iqamaText:tIqama.value.trim(),deviceType:devType,deviceId:devId.trim()});currentTeamCounter++;renderTeamRoster();if(ii)ii.value="";if(si)si.value="";if(tName)tName.value="";if(tIqama)tIqama.value="";document.getElementById('req-team-device-type').value="None";document.getElementById('req-team-device-id').value="";toggleTeamDeviceInput();clearCapturedData('team_iqama');clearCapturedData('team_selfie');clearCapturedData('team_imeiphoto');const tt=document.getElementById('team-entry-title');if(tt)tt.innerText=`Team Member ${currentTeamCounter}`}
-function renderTeamRoster(){const div=document.getElementById('team-roster-display');if(!div)return;if(teamList.length>0){div.classList.remove('hidden');let h='';teamList.forEach((m,idx)=>{let devHtml=m.deviceType!=='None'?`<span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">${m.deviceType}</span>`:'';let imgsHtml=`<img src="${m.iqama}" class="team-member-img" onclick="openFullscreenImage(this.src)" title="Iqama"><img src="${m.selfie}" class="team-member-img" onclick="openFullscreenImage(this.src)" title="Selfie">`;if(m.rawDevicePhoto&&m.rawDevicePhoto!=='No File'){let devPhotoUri="data:image/jpeg;base64,"+m.rawDevicePhoto;imgsHtml+=`<img src="${devPhotoUri}" class="team-member-img" onclick="openFullscreenImage(this.src)" title="Device Screen">`;}h+=`<div class="team-member-row"><span style="color:white;font-size:13px;font-weight:bold;">${m.name} <span style="font-size:11px;color:var(--text-muted);">(ID: ${m.iqamaText})</span>${devHtml}</span><div style="display:flex;gap:10px;">${imgsHtml}<button type="button" style="background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:16px;" onclick="removeTeamMember(${idx})">❌</button></div></div>`;});div.innerHTML=h}else div.classList.add('hidden')}
-function removeTeamMember(idx){teamList.splice(idx,1);currentTeamCounter=teamList.length+1;renderTeamRoster();const tt=document.getElementById('team-entry-title');if(tt)tt.innerText=`Team Member ${currentTeamCounter}`}
-async function openLiveCamera(type){targetPhotoType=type;const m=document.getElementById('custom-camera-modal');if(m){m.classList.remove('hidden');await startStream('camera-video-stream')}}
+function t(k) { return dict[currentLang]?.[k] || dict['en'][k] || k || ''; }
+
+function updateUI() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const k = el.getAttribute('data-i18n');
+        if(t(k)) el.innerHTML = t(k);
+    });
+    document.querySelectorAll('.t-ph').forEach(el => {
+        const k = el.getAttribute('data-i18n');
+        if(t(k)) el.placeholder = t(k);
+    });
+    if(currentUser && currentUser.role === 'admin') {
+        renderAdminData(globalAdminData);
+    }
+}
+
+function toggleFullScreen() {
+    const d=document, de=d.documentElement;
+    const req=de.requestFullscreen||de.mozRequestFullScreen||de.webkitRequestFullScreen||de.msRequestFullscreen;
+    const exit=d.exitFullscreen||d.mozCancelFullScreen||d.webkitExitFullscreen||d.msExitFullscreen;
+    if(!d.fullscreenElement&&!d.mozFullScreenElement&&!d.webkitFullscreenElement&&!d.msFullscreenElement){
+        if(req) req.call(de).catch(e=>console.log(e));
+        else alert("Fullscreen not supported");
+    } else {
+        if(exit) exit.call(d).catch(e=>console.log(e));
+    }
+}
+
+function toggleSidebar(){
+    const sb=document.getElementById('sidebar');
+    if(sb) sb.classList.toggle('minimized');
+    document.body.classList.toggle('sidebar-minimized');
+}
+
+function logout(){
+    if(autoRefreshTimer) clearInterval(autoRefreshTimer);
+    localStorage.removeItem(SESSION_KEY);
+    Object.keys(localStorage).forEach(key => { if(key.startsWith('user_pin_')) localStorage.removeItem(key); });
+    try{ if(html5QrCode && html5QrCode.isScanning) html5QrCode.stop(); }catch(e){}
+    location.reload();
+}
+
+function hardRefreshApp() {
+    if(confirm("Perform a Hard Refresh? This will clear all saved cache and fetch the latest data.")) {
+        Object.keys(localStorage).forEach(key => { if(key.startsWith('cached_')) localStorage.removeItem(key); });
+        sessionStorage.clear();
+        window.location.reload(true);
+    }
+}
+
+function toggleDateFields(){
+    const te = document.getElementById('req-type'); if(!te) return;
+    const type = te.value, vf = document.getElementById('req-visitor-fields'), cf = document.getElementById('req-contractor-fields'), tms = document.getElementById('team-members-section');
+    if(vf) vf.classList.toggle('hidden', type === 'Contractor');
+    if(cf) cf.classList.toggle('hidden', type === 'Visitor');
+    if(tms) tms.classList.toggle('hidden', type === 'Visitor');
+}
+
+function switchLoginTab(role) {
+    document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('#login-guard, #login-ops, #login-admin').forEach(f => f.classList.add('hidden'));
+    
+    const te = document.getElementById(`tab-${role}`);
+    if(te) te.classList.add('active');
+    
+    const le = document.getElementById(`login-${role}`);
+    if(le) le.classList.remove('hidden');
+}
+
+function switchMainView(vId){
+    document.querySelectorAll('.dashboard').forEach(e=>e.classList.add('hidden'));
+    const tv=document.getElementById(`dashboard-${vId}`);if(tv)tv.classList.remove('hidden');
+    document.querySelectorAll('.sidebar-nav a').forEach(a=>a.classList.remove('active'));
+    const an=document.getElementById(`nav-sidebar-${vId}`);if(an)an.classList.add('active');
+    const sb=document.getElementById('sidebar');if(window.innerWidth<=900&&sb&&!sb.classList.contains('minimized'))toggleSidebar();
+    if(vId==='ops'&&currentUser&&currentUser.role==='admin')loadMyPasses(false,false);
+}
+
+function updateAdminGuardLoc(){
+    if(currentUser && currentUser.role==='admin'){
+        const agl=document.getElementById('admin-guard-loc');
+        if(agl) currentUser.location = agl.value || '';
+    }
+}
+
+function openFullscreenImage(src){
+    if(!src) return;
+    const fi=document.getElementById('fullscreen-img'), fm=document.getElementById('fullscreen-image-modal');
+    if(fi && fm){ fi.src=src; fm.classList.remove('hidden'); }
+}
+
+function showTeamEntry(){
+    const tb=document.getElementById('team-entry-box'), b=document.getElementById('btn-show-team-entry'), tt=document.getElementById('team-entry-title');
+    if(tb) tb.classList.remove('hidden'); if(b) b.classList.add('hidden'); if(tt) tt.innerText=`Team Member ${currentTeamCounter}`;
+}
+
+function hideTeamEntry(){
+    const tb=document.getElementById('team-entry-box'), b=document.getElementById('btn-show-team-entry');
+    if(tb) tb.classList.add('hidden'); if(b) b.classList.remove('hidden');
+    const ii=document.getElementById('req-team-iqama'), si=document.getElementById('req-team-selfie'), tName=document.getElementById('req-team-name'), tIqama=document.getElementById('req-team-iqamatext');
+    const devType=document.getElementById('req-team-device-type'), devId=document.getElementById('req-team-device-id');
+    const tDev=document.getElementById('req-team-imeiphoto');
+    if(ii)ii.value=""; if(si)si.value=""; if(tName)tName.value=""; if(tIqama)tIqama.value="";
+    if(devType)devType.value="None"; if(devId)devId.value=""; if(tDev)tDev.value="";
+    toggleTeamDeviceInput();
+    clearCapturedData('team_iqama'); clearCapturedData('team_selfie'); clearCapturedData('team_imeiphoto');
+}
+
+function toggleLeadDeviceInput() {
+    let type = document.getElementById('req-lead-device-type').value;
+    let input = document.getElementById('req-lead-device-id');
+    if(type === 'None') {
+        input.classList.add('hidden');
+        input.value = '';
+    } else {
+        input.classList.remove('hidden');
+        input.placeholder = type === 'Mobile' ? 'IMEI Number' : 'Serial Number';
+    }
+}
+
+function toggleTeamDeviceInput() {
+    let type = document.getElementById('req-team-device-type').value;
+    let group = document.getElementById('req-team-device-id-group');
+    let input = document.getElementById('req-team-device-id');
+    let tDev = document.getElementById('req-team-imeiphoto');
+    if(type === 'None') {
+        group.classList.add('hidden');
+        input.value = '';
+        if(tDev) tDev.value = '';
+        clearCapturedData('team_imeiphoto');
+    } else {
+        group.classList.remove('hidden');
+        input.placeholder = type === 'Mobile' ? 'IMEI Number' : 'Serial Number';
+    }
+}
+
+async function saveCurrentTeamMember() {
+    let iB64='',sB64='',tDevB64='',ii=document.getElementById('req-team-iqama'),si=document.getElementById('req-team-selfie'),tName=document.getElementById('req-team-name'),tIqama=document.getElementById('req-team-iqamatext');
+    let devType=document.getElementById('req-team-device-type').value, devId=document.getElementById('req-team-device-id').value;
+    let tDev=document.getElementById('req-team-imeiphoto');
+
+    if(!tName || !tName.value.trim()) return alert("Please provide Team Member Name.");
+    if(!tIqama || !tIqama.value.trim()) return alert("Please provide Team Member Iqama / ID Number.");
+
+    let currentDeviceCount = teamList.filter(m => m.deviceType !== 'None').length;
+    let leadDevType = document.getElementById('req-lead-device-type').value;
+    if(leadDevType !== 'None') currentDeviceCount++;
+    if(devType !== 'None' && currentDeviceCount >= 10) return alert("Maximum of 10 devices allowed per request.");
+
+    if(devType !== 'None') {
+        if(!devId.trim()) return alert("Please provide the device IMEI/Serial number.");
+        if(capturedImages.team_imeiphoto) tDevB64=capturedImages.team_imeiphoto.split(',')[1];
+        else if(tDev&&tDev.files.length>0){let f=await getBase64(tDev.files[0]); tDevB64=f.split(',')[1]}
+        else return alert("Please provide Device Screen photo for the team member.");
+    }
+
+    if(capturedImages.team_iqama)iB64=capturedImages.team_iqama.split(',')[1];
+    else if(ii&&ii.files.length>0){let f=await getBase64(ii.files[0]);iB64=f.split(',')[1]}
+    else return alert("Please provide Iqama photo.");
+
+    if(capturedImages.team_selfie)sB64=capturedImages.team_selfie.split(',')[1];
+    else if(si&&si.files.length>0){let f=await getBase64(si.files[0]);sB64=f.split(',')[1]}
+    else return alert("Please provide Selfie photo.");
+
+    teamList.push({
+        iqama:"data:image/jpeg;base64,"+iB64,
+        selfie:"data:image/jpeg;base64,"+sB64,
+        rawIqama:iB64,
+        rawSelfie:sB64,
+        rawDevicePhoto:tDevB64,
+        name: tName.value.trim(),
+        iqamaText: tIqama.value.trim(),
+        deviceType: devType,
+        deviceId: devId.trim()
+    });
+    currentTeamCounter++;renderTeamRoster();
+    if(ii)ii.value="";if(si)si.value="";if(tName)tName.value="";if(tIqama)tIqama.value="";
+    document.getElementById('req-team-device-type').value = "None"; document.getElementById('req-team-device-id').value = ""; toggleTeamDeviceInput();
+    clearCapturedData('team_iqama');clearCapturedData('team_selfie');clearCapturedData('team_imeiphoto');
+    const tt=document.getElementById('team-entry-title');if(tt)tt.innerText=`Team Member ${currentTeamCounter}`;
+}
+
+function renderTeamRoster(){
+    const div=document.getElementById('team-roster-display');if(!div)return;
+    if(teamList.length>0){
+        div.classList.remove('hidden');let h='';
+        teamList.forEach((m,idx)=>{
+            let devHtml = m.deviceType !== 'None' ? `<span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">${m.deviceType}</span>` : '';
+            
+            let imgsHtml = `<img src="${m.iqama}" class="team-member-img" onclick="openFullscreenImage(this.src)" title="Iqama"><img src="${m.selfie}" class="team-member-img" onclick="openFullscreenImage(this.src)" title="Selfie">`;
+            if (m.rawDevicePhoto && m.rawDevicePhoto !== 'No File') {
+                let devPhotoUri = "data:image/jpeg;base64," + m.rawDevicePhoto;
+                imgsHtml += `<img src="${devPhotoUri}" class="team-member-img" onclick="openFullscreenImage(this.src)" title="Device Screen">`;
+            }
+
+            h+=`<div class="team-member-row"><span style="color:white;font-size:13px;font-weight:bold;">${m.name} <span style="font-size:11px;color:var(--text-muted);">(ID: ${m.iqamaText})</span>${devHtml}</span><div style="display:flex;gap:10px;">${imgsHtml}<button type="button" style="background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:16px;" onclick="removeTeamMember(${idx})">❌</button></div></div>`;
+        });
+        div.innerHTML=h;
+    }else div.classList.add('hidden');
+}
+
+function removeTeamMember(idx){
+    teamList.splice(idx,1);currentTeamCounter=teamList.length+1;renderTeamRoster();
+    const tt=document.getElementById('team-entry-title');if(tt)tt.innerText=`Team Member ${currentTeamCounter}`;
+}
+
+async function openLiveCamera(type){
+    targetPhotoType=type;const m=document.getElementById('custom-camera-modal');
+    if(m){m.classList.remove('hidden');await startStream('camera-video-stream')}
+}
+
 function switchLiveCamera(){currentFacingMode=currentFacingMode==='environment'?'user':'environment';startStream('camera-video-stream')}
-function captureLivePhoto(){const v=document.getElementById('camera-video-stream'),c=document.getElementById('camera-hidden-canvas');if(!v||!c)return;let width=v.videoWidth,height=v.videoHeight;const MAX_WIDTH=400;if(width>MAX_WIDTH){height=Math.round((height*MAX_WIDTH)/width);width=MAX_WIDTH}c.width=width;c.height=height;c.getContext('2d').drawImage(v,0,0,width,height);const b64=c.toDataURL('image/jpeg',0.4);capturedImages[targetPhotoType]=b64;const p=document.getElementById(`preview-${targetPhotoType}`);if(p){p.src=b64;p.classList.remove('hidden');p.onclick=()=>openFullscreenImage(b64)}let idStr=`req-${targetPhotoType}`;if(targetPhotoType==='team_iqama')idStr='req-team-iqama';if(targetPhotoType==='team_selfie')idStr='req-team-selfie';if(targetPhotoType==='team_imeiphoto')idStr='req-team-imeiphoto';if(targetPhotoType==='add_team_iqama')idStr='req-add-team-iqama';if(targetPhotoType==='add_team_selfie')idStr='req-add-team-selfie';if(targetPhotoType==='add_team_imeiphoto')idStr='req-add-team-imeiphoto';const fi=document.getElementById(idStr);if(fi)fi.value="";closeLiveCamera()}
-function closeLiveCamera(){if(liveStream){liveStream.getTracks().forEach(t=>t.stop());liveStream=null}const m=document.getElementById('custom-camera-modal');if(m)m.classList.add('hidden')}
-function clearCapturedData(type){capturedImages[type]=null;const p=document.getElementById(`preview-${type}`);if(p){p.classList.add('hidden');p.src=""}}
-async function startStream(vId){if(liveStream)liveStream.getTracks().forEach(t=>t.stop());try{liveStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:currentFacingMode}});const ve=document.getElementById(vId);if(ve)ve.srcObject=liveStream}catch(e){alert("Camera access denied.");closeLiveCamera()}}
-function parseFlexibleDate(s){if(!s)return null;if(s instanceof Date)return isNaN(s.getTime())?null:s;let d=new Date(s);if(!isNaN(d.getTime()))return d;if(typeof s==='string'){const p=s.trim().split(/[\/\-\s]/);if(p.length>=3){let p0=parseInt(p[0],10),p1=parseInt(p[1],10),p2=parseInt(p[2],10);if(p2<100)p2+=2000;if(p0>12)d=new Date(p2,p1-1,p0);else if(p1>12)d=new Date(p2,p0-1,p1);else d=new Date(p2,p1-1,p0);if(!isNaN(d.getTime()))return d}}return null}
+
+function captureLivePhoto(){
+    const v=document.getElementById('camera-video-stream'),c=document.getElementById('camera-hidden-canvas');
+    if(!v||!c)return;
+    let width=v.videoWidth,height=v.videoHeight;const MAX_WIDTH=400;if(width>MAX_WIDTH){height=Math.round((height*MAX_WIDTH)/width);width=MAX_WIDTH;}
+    c.width=width;c.height=height;c.getContext('2d').drawImage(v,0,0,width,height);
+    const b64=c.toDataURL('image/jpeg',0.4); 
+    capturedImages[targetPhotoType]=b64;
+    const p=document.getElementById(`preview-${targetPhotoType}`);
+    if(p){p.src=b64;p.classList.remove('hidden');p.onclick=()=>openFullscreenImage(b64)}
+    let idStr=`req-${targetPhotoType}`;
+    if(targetPhotoType==='team_iqama')idStr='req-team-iqama';
+    if(targetPhotoType==='team_selfie')idStr='req-team-selfie';
+    if(targetPhotoType==='team_imeiphoto')idStr='req-team-imeiphoto';
+    if(targetPhotoType==='add_team_iqama')idStr='req-add-team-iqama';
+    if(targetPhotoType==='add_team_selfie')idStr='req-add-team-selfie';
+    if(targetPhotoType==='add_team_imeiphoto')idStr='req-add-team-imeiphoto';
+    const fi=document.getElementById(idStr);if(fi)fi.value="";
+    closeLiveCamera();
+}
+
+function closeLiveCamera(){
+    if(liveStream){liveStream.getTracks().forEach(t=>t.stop());liveStream=null}
+    const m=document.getElementById('custom-camera-modal');if(m)m.classList.add('hidden');
+}
+
+function clearCapturedData(type){
+    capturedImages[type]=null;const p=document.getElementById(`preview-${type}`);
+    if(p){p.classList.add('hidden');p.src=""}
+}
+
+async function startStream(vId){
+    if(liveStream)liveStream.getTracks().forEach(t=>t.stop());
+    try{
+        liveStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:currentFacingMode}});
+        const ve=document.getElementById(vId);if(ve)ve.srcObject=liveStream;
+    }catch(e){alert("Camera access denied.");closeLiveCamera()}
+}
+
+function parseFlexibleDate(s){
+    if(!s)return null;if(s instanceof Date)return isNaN(s.getTime())?null:s;
+    let d=new Date(s);if(!isNaN(d.getTime()))return d;
+    if(typeof s==='string'){
+        const p=s.trim().split(/[\/\-\s]/);
+        if(p.length>=3){
+            let p0=parseInt(p[0],10),p1=parseInt(p[1],10),p2=parseInt(p[2],10);if(p2<100)p2+=2000;
+            if(p0>12)d=new Date(p2,p1-1,p0);else if(p1>12)d=new Date(p2,p0-1,p1);else d=new Date(p2,p1-1,p0);
+            if(!isNaN(d.getTime()))return d;
+        }
+    }
+    return null;
+}
+
 function formatToDDMMYYYY(s){if(!s)return '-';const d=parseFlexibleDate(s);if(!d)return '-';return `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`}
 function formatTime(s){if(!s)return '-';const d=parseFlexibleDate(s);if(!d)return '-';return d.toLocaleString()}
-function getBase64(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.readAsDataURL(file);reader.onload=(e)=>{const img=new Image();img.onload=()=>{const canvas=document.createElement('canvas');const MAX_WIDTH=400;let width=img.width;let height=img.height;if(width>MAX_WIDTH){height=Math.round((height*MAX_WIDTH)/width);width=MAX_WIDTH}canvas.width=width;canvas.height=height;canvas.getContext('2d').drawImage(img,0,0,width,height);resolve(canvas.toDataURL('image/jpeg',0.4))};img.onerror=reject;img.src=e.target.result};reader.onerror=reject})}
-function isDateInRange(s,ft,stStr,enStr){if(ft==='all')return true;const d=parseFlexibleDate(s);if(!d)return true;const now=new Date(),ts=new Date(now.getFullYear(),now.getMonth(),now.getDate(),0,0,0,0),te=new Date(now.getFullYear(),now.getMonth(),now.getDate(),23,59,59,999);if(ft==='today')return d>=ts&&d<=te;if(ft==='weekly'){const w=new Date(ts);w.setDate(w.getDate()-7);return d>=w&&d<=te}if(ft==='monthly'){const m=new Date(ts);m.setMonth(m.getMonth()-1);return d>=m&&d<=te}if(ft==='6months'){const m6=new Date(ts);m6.setMonth(m6.getMonth()-6);return d>=m6&&d<=te}if(ft==='year'){const y=new Date(ts);y.setFullYear(y.getFullYear()-1);return d>=y&&d<=te}if(ft==='custom'){if(!stStr||!enStr)return true;const st=parseFlexibleDate(stStr),en=parseFlexibleDate(enStr);if(st)st.setHours(0,0,0,0);if(en)en.setHours(23,59,59,999);if(st&&en)return d>=st&&d<=en}return true}
+
+function getBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 400; 
+                let width = img.width;
+                let height = img.height;
+                if (width > MAX_WIDTH) { height = Math.round((height * MAX_WIDTH) / width); width = MAX_WIDTH; }
+                canvas.width = width; canvas.height = height;
+                canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', 0.4)); 
+            };
+            img.onerror = reject; img.src = e.target.result;
+        };
+        reader.onerror = reject;
+    });
+}
+
+function isDateInRange(s,ft,stStr,enStr){
+    if(ft==='all')return true;const d=parseFlexibleDate(s);if(!d)return true;
+    const now=new Date(),ts=new Date(now.getFullYear(),now.getMonth(),now.getDate(),0,0,0,0),te=new Date(now.getFullYear(),now.getMonth(),now.getDate(),23,59,59,999);
+    if(ft==='today')return d>=ts&&d<=te;
+    if(ft==='weekly'){const w=new Date(ts);w.setDate(w.getDate()-7);return d>=w&&d<=te}
+    if(ft==='monthly'){const m=new Date(ts);m.setMonth(m.getMonth()-1);return d>=m&&d<=te}
+    if(ft==='6months'){const m6=new Date(ts);m6.setMonth(m6.getMonth()-6);return d>=m6&&d<=te}
+    if(ft==='year'){const y=new Date(ts);y.setFullYear(y.getFullYear()-1);return d>=y&&d<=te}
+    if(ft==='custom'){if(!stStr||!enStr)return true;const st=parseFlexibleDate(stStr),en=parseFlexibleDate(enStr);if(st)st.setHours(0,0,0,0);if(en)en.setHours(23,59,59,999);if(st&&en)return d>=st&&d<=en}
+    return true;
+}
+
 function saveSession(){try{localStorage.setItem(SESSION_KEY,JSON.stringify({user:currentUser,time:Date.now()}))}catch(e){}}
-function startAutoRefresh(r){if(autoRefreshTimer)clearInterval(autoRefreshTimer);autoRefreshTimer=setInterval(async ()=>{if(r==='ops')await loadMyPasses(false,true);else if(r==='admin')await loadAdminData(true)},15000)}
-function login(role){if(role==='guard'){const n=document.getElementById('lg-name'),i=document.getElementById('lg-id'),l=document.getElementById('lg-location');if(!n||!i||!l||!n.value||!i.value||!l.value)return alert("Fill all Guard details");currentUser={role:'guard',name:n.value,id:i.value,location:l.value}}else if(role==='ops'){const n=document.getElementById('lo-name'),m=document.getElementById('lo-mail');if(!n||!m||!n.value||!m.value)return alert("Enter Name and Gmail");currentUser={role:'ops',name:n.value,email:m.value.toLowerCase().trim()}}else if(role==='admin'){const n=document.getElementById('la-name'),m=document.getElementById('la-mail'),p=document.getElementById('la-pass');if(!n||!m||!p||!n.value||!m.value||!p.value)return alert("Enter all Admin details");if(p.value==='NoonCCTVSLP#2026')currentUser={role:'admin',name:n.value,email:m.value.toLowerCase().trim(),location:''};else return alert("Incorrect Password")}saveSession();initApp()}
+
+function startAutoRefresh(r){
+    if(autoRefreshTimer)clearInterval(autoRefreshTimer);
+    autoRefreshTimer=setInterval(async ()=>{
+        if(r==='ops') await loadMyPasses(false,true);
+        else if(r==='admin'){ await loadAdminData(true); }
+    },15000);
+}
+
+function login(role){
+    if(role==='guard'){
+        const n=document.getElementById('lg-name'),i=document.getElementById('lg-id'),l=document.getElementById('lg-location');
+        if(!n||!i||!l||!n.value||!i.value||!l.value)return alert("Fill all Guard details");
+        currentUser={role:'guard',name:n.value,id:i.value,location:l.value};
+    }else if(role==='ops'){
+        const n=document.getElementById('lo-name'),m=document.getElementById('lo-mail');
+        if(!n||!m||!n.value||!m.value)return alert("Enter Name and Gmail");
+        currentUser={role:'ops',name:n.value,email:m.value.toLowerCase().trim()};
+    }else if(role==='admin'){
+        const n=document.getElementById('la-name'),m=document.getElementById('la-mail'),p=document.getElementById('la-pass');
+        if(!n||!m||!p||!n.value||!m.value||!p.value)return alert("Enter all Admin details");
+        if(p.value==='NoonCCTVSLP#2026')currentUser={role:'admin',name:n.value,email:m.value.toLowerCase().trim(),location:''};
+        else return alert("Incorrect Password");
+    }
+    saveSession();initApp();
+}
 
 function initApp(){
     try{
@@ -386,7 +908,9 @@ function initApp(){
             if(han)han.innerText=currentUser.name;if(sun)sun.innerText=currentUser.name;if(na)na.classList.remove('hidden');
             if(glt)glt.classList.add('hidden');if(agl){agl.classList.remove('hidden');agl.value=currentUser.location||'';currentUser.location=agl.value||''}
             if(msb)msb.classList.remove('hidden');
+            
             document.querySelectorAll('.admin-tab').forEach(el => el.classList.remove('hidden'));
+            
             loadAdminData(false);switchMainView('admin');
         }else if(currentUser){
             const vn=document.getElementById('req-vname'),ag=document.getElementById('admin-email-group'),sb=document.getElementById('sidebar'),mc=document.getElementById('main-content');
@@ -404,24 +928,6 @@ function initApp(){
     }catch(e){console.error(e)}
 }
 
-window.onload=function(){
-    updateUI();
-    const params = new URLSearchParams(window.location.search);
-    const r = params.get('role');
-    if(r==='staff'||r==='guard'||r==='admin'){
-        const rt=document.getElementById('role-tabs');if(rt)rt.style.display='flex';
-        switchLoginTab(r==='admin'?'admin':'guard');
-    }
-    const session=localStorage.getItem(SESSION_KEY);
-    if(session){
-        const p=JSON.parse(session),h=(Date.now()-p.time)/(1000*60*60);
-        if(h<12){ currentUser=p.user; initApp(); const s=document.getElementById('splash'); if(s) s.style.display='none'; } 
-        else { localStorage.removeItem(SESSION_KEY); setTimeout(()=>{const s=document.getElementById('splash');if(s){s.classList.add('fade-out');setTimeout(()=>s.style.display='none',600)}},1500); }
-    } else {
-        setTimeout(()=>{const s=document.getElementById('splash');if(s){s.classList.add('fade-out');setTimeout(()=>s.style.display='none',600)}},1500);
-    }
-};
-
 async function performManualSearch() {
     let q = document.getElementById('guard-search-input').value.toLowerCase().trim();
     let resDiv = document.getElementById('manual-search-results');
@@ -431,7 +937,7 @@ async function performManualSearch() {
         let data = globalAdminData;
         if(!data || data.length === 0) {
             const res = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'get_all' }) });
-            data = convertDriveUrls(await res.json()); globalAdminData = data;
+            data = await res.json(); globalAdminData = data;
         }
         let matches = data.filter(r => {
             if(!r.UniqueID || r.Status === 'Rejected') return false;
@@ -562,484 +1068,6 @@ async function submitRequest(){
     } finally { startAutoRefresh(currentUser.role); }
 }
 
-function downloadQR(id) {
-    let safeId = String(id).replace(/[^a-zA-Z0-9_-]/g, '');
-    const qrBox = document.getElementById('qr-' + safeId); if (!qrBox) return;
-    let canvas = qrBox.querySelector('canvas'); let img = qrBox.querySelector('img');
-    let sourceImage = canvas && canvas.style.display !== 'none' ? canvas : (img && img.src ? img : null);
-    if (!sourceImage) return alert("QR Code not ready yet.");
-    let size = 150; let padding = 20; let newCanvas = document.createElement('canvas');
-    newCanvas.width = size + (padding * 2); newCanvas.height = size + (padding * 2);
-    let ctx = newCanvas.getContext('2d'); ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
-    ctx.drawImage(sourceImage, padding, padding, size, size);
-    const link = document.createElement('a'); link.href = newCanvas.toDataURL('image/png'); link.download = `Noon_Pass_QR_${safeId}.png`;
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
-}
-
-function renderMyPasses(data){
-    const listDiv=document.getElementById('my-passes-list');if(!listDiv)return;
-    let h='';
-    if(!Array.isArray(data) || data.length===0){ listDiv.innerHTML=`<p style="color:var(--text-muted);font-size:13px;">${t("msg_no_history")}</p>`; return; }
-    let displayData = [...data].reverse();
-
-    displayData.forEach(pass=>{
-        let safeId = String(pass.UniqueID).replace(/[^a-zA-Z0-9_-]/g, '');
-        let safeType = String(pass.Type || ''); let safeStatus = String(pass.Status || 'Pending'); let safeLoc = String(pass.Location || '');
-        const todayNum=new Date().setHours(0,0,0,0); let endObj=parseFlexibleDate(pass.EndDate)||parseFlexibleDate(pass.StartDate);
-        let endNum=endObj?endObj.setHours(0,0,0,0):todayNum;
-        const isExp=todayNum>endNum,isComp=isExp || safeStatus==='Completed';
-        
-        let st=t(safeStatus==='Approved'?'status_approved':safeStatus==='Rejected'?'status_rejected':safeStatus==='Completed'?'status_completed':'status_pending');
-        let sc=(safeStatus==='Approved'?'var(--success)':safeStatus==='Rejected'?'var(--danger)':safeStatus==='Completed'?'var(--text-muted)':'var(--noon-yellow)');
-        if(isExp && safeStatus!=='Rejected' && safeStatus!=='Completed'){st=t('status_expired');sc='var(--text-muted)'}
-        
-        const valText=`(${formatToDDMMYYYY(pass.StartDate)} - ${formatToDDMMYYYY(pass.EndDate||pass.StartDate)})`;
-        h+=`<div class="pass-item" id="pass-card-${safeId}"><div class="pass-header"><div><strong style="color:white;font-size:14px;">${pass.VisitorName}</strong><br><span style="font-size:11px;color:var(--text-muted);">${t(safeType.toLowerCase())} • ${safeLoc}</span><br><span style="font-size:10px;color:var(--noon-yellow);">${valText}</span></div><div style="text-align:right;"><span style="font-size:11px;font-weight:bold;color:${sc};text-transform:uppercase;">${st}</span><br><span style="font-size:10px;color:var(--text-muted);">${pass.UniqueID}</span></div></div>`;
-        
-        if(!isComp && safeStatus !== 'Rejected') {
-            h+=`<div style="text-align:center;margin-top:10px;"><div class="qr-box" id="qr-${safeId}" style="background:white;padding:10px;border-radius:6px;display:inline-block;min-width:140px;min-height:140px;"></div><div style="margin-top:15px;" id="save-btn-container-${safeId}"><button class="btn-primary btn-outline btn-sm" style="margin-bottom:8px;" onclick="downloadQR('${pass.UniqueID}')" data-i18n="save_qr">${t('save_qr')}</button><br><button class="btn-primary btn-warning btn-sm" style="color:#000;" onclick="openAddMoreModal('${pass.UniqueID}')">➕ ${t('add_more_people')}</button></div></div>`;
-        } else if (safeStatus === 'Rejected') {
-            h+=`<div style="text-align:center;margin-top:15px;font-size:12px;color:var(--danger);font-weight:bold;"><em>${t("status_rejected")} - Access Denied</em></div>`;
-        } else if (safeStatus === 'Completed') {
-            h+=`<div style="text-align:center;margin-top:15px;font-size:12px;color:var(--text-muted);font-weight:bold;"><em>PASS REVOKED / COMPLETED</em></div>`;
-        } else {
-            h+=`<div style="text-align:center;margin-top:15px;font-size:12px;color:var(--text-muted);"><em>${t("status_expired")}</em></div>`;
-        }
-        h+=`</div>`;
-    });
-    listDiv.innerHTML=h;
-    
-    displayData.forEach(pass=>{
-        let safeId = String(pass.UniqueID).replace(/[^a-zA-Z0-9_-]/g, '');
-        let safeStatus = String(pass.Status || 'Pending');
-        const todayNum=new Date().setHours(0,0,0,0); let endObj=parseFlexibleDate(pass.EndDate)||parseFlexibleDate(pass.StartDate);
-        let endNum=endObj?endObj.setHours(0,0,0,0):todayNum;
-        const isExp=todayNum>endNum, isComp=isExp || safeStatus==='Completed';
-        
-        if(!isComp && safeStatus !== 'Rejected'){ 
-            setTimeout(() => { const qre=document.getElementById(`qr-${safeId}`); if(qre) { qre.innerHTML = ""; try { new QRCode(qre, {text: String(pass.UniqueID), width:120, height:120, colorDark:"#000", colorLight:"#fff", correctLevel: QRCode.CorrectLevel.H}); } catch(err) {} } }, 200); 
-        }
-    });
-}
-
-async function loadMyPasses(forceRefresh=false,isSilent=false){
-    const listDiv=document.getElementById('my-passes-list');if(!listDiv)return;
-    let targetEmail=currentUser.email;
-    if(currentUser.role==='admin'){
-        const ei=document.getElementById('req-admin-email'),inputEmail=ei?ei.value.toLowerCase().trim():'';
-        if(inputEmail)targetEmail=inputEmail;
-        else{if(!isSilent)listDiv.innerHTML=`<p style="color:var(--text-muted);font-size:13px;">${t("msg_enter_email")}</p>`;return}
-    }
-    const cachedKey='cached_passes_'+targetEmail,cached=localStorage.getItem(cachedKey);
-    if(!forceRefresh&&cached&&!isSilent){
-        try{ let parsed=JSON.parse(cached); if(Array.isArray(parsed)){ processAndRenderPasses(parsed, targetEmail, false); } else localStorage.removeItem(cachedKey); }catch(e){ localStorage.removeItem(cachedKey); }
-    }
-    else if(!isSilent||forceRefresh)listDiv.innerHTML=`<p style="color:var(--text-muted);font-size:13px;">${t("fetching")}</p>`;
-    try{
-        const res=await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'get_by_email', email: targetEmail }) });
-        if(!res.ok)throw new Error("HTTP error");
-        const data=convertDriveUrls(await res.json());
-        if(Array.isArray(data)){ 
-            const newDataStr = JSON.stringify(data);
-            if (isSilent && cached === newDataStr) return; 
-            localStorage.setItem(cachedKey, newDataStr); 
-            processAndRenderPasses(data, targetEmail, isSilent); 
-        }
-    }catch(e){if(!isSilent&&!cached)listDiv.innerHTML='<p style="color:var(--danger);font-size:13px;">Error.</p>'}
-}
-
-function parseLogs(row) {
-    let visits = [];
-    let gLogs = String(row.GateLogs || "");
-
-    if (!gLogs.trim() && row.CheckInTime) {
-        visits.push({
-            in: new Date(row.CheckInTime),
-            out: row.CheckOutTime ? new Date(row.CheckOutTime) : null,
-            guardIn: row.ScannedByGuard || 'Unknown',
-            guardOut: row.ScannedByGuard || 'Unknown'
-        });
-        return visits;
-    }
-
-    if (gLogs.startsWith("[")) {
-        try {
-            let logs = JSON.parse(gLogs);
-            let currentVisit = null;
-            logs.forEach(l => {
-                if (l.action === 'IN') {
-                    currentVisit = { in: new Date(l.time), out: null, guardIn: l.guard || 'Unknown', guardOut: '' };
-                    visits.push(currentVisit);
-                } else if (l.action === 'OUT') {
-                    if (currentVisit && !currentVisit.out) {
-                        currentVisit.out = new Date(l.time);
-                        currentVisit.guardOut = l.guard || 'Unknown';
-                    } else {
-                        visits.push({ in: null, out: new Date(l.time), guardIn: '', guardOut: l.guard || 'Unknown' });
-                    }
-                }
-            });
-        } catch(e) {}
-    }
-    return visits;
-}
-
-function switchAdminTab(tName){
-    document.querySelectorAll('.admin-nav-horizontal li').forEach(t=>t.classList.remove('active'));
-    const ni=document.getElementById(`nav-${tName}`);if(ni)ni.classList.add('active');
-    document.querySelectorAll('.admin-section').forEach(s=>s.classList.add('hidden'));
-    const si=document.getElementById(`admin-sec-${tName}`);if(si)si.classList.remove('hidden');
-}
-
-function setAdminFilter(range,btnElement){
-    document.querySelectorAll('.btn-filter').forEach(b=>b.classList.remove('active'));
-    if(btnElement){
-        const text = btnElement.innerText;
-        document.querySelectorAll('.btn-filter').forEach(b => { if(b.innerText === text) b.classList.add('active'); });
-    }
-    currentAdminFilter=range;
-    
-    let p1 = document.getElementById('custom-date-picker');
-    if(range === 'custom') { 
-        if(p1) p1.classList.remove('hidden'); 
-    } else { 
-        if(p1) p1.classList.add('hidden'); 
-    }
-    
-    if(range !== 'custom') renderAdminData(globalAdminData);
-}
-
-function renderAdminData(data){
-    if(!Array.isArray(data)){ data = []; } globalAdminData=data;
-    
-    const tPending=document.getElementById('admin-table-pending'),tActive=document.getElementById('admin-table-active'),tHistory=document.getElementById('admin-table-history'),tGuard=document.getElementById('admin-table-guard-approvals');
-    let hPending='',hActive='',hHistory='',hGuard='';
-    const today=new Date();today.setHours(0,0,0,0); const tomorrow=new Date(today.getTime());tomorrow.setDate(tomorrow.getDate()+1);
-    
-    let si = document.getElementById('filter-start'), ei = document.getElementById('filter-end');
-    let fStart = (si && si.value) ? si.value : '';
-    let fEnd = (ei && ei.value) ? ei.value : '';
-    
-    let pendingCount=0,activeCount=0,historyCount=0,guardCount=0; let aDate={},aType={},aFacility={},aStatus={};
-
-    data.forEach(row=>{
-        if(!row||!row.UniqueID)return;
-        let rType = String(row.Type || ''); let rLocation = String(row.Location || ''); let rStatus = String(row.Status || 'Pending');
-        let rVisitorName = String(row.VisitorName || ''); let rHostEmail = String(row.HostEmail || '');
-        let endDateObj=new Date((parseFlexibleDate(row.EndDate)||parseFlexibleDate(row.StartDate)||new Date()).getTime()); endDateObj.setHours(23,59,59,999);
-        const isExpired=endDateObj<today;
-        
-        const isPassExpiredOrFinished = isExpired || rStatus==='Rejected' || rStatus==='Completed';
-        const inRange=isDateInRange(row.StartDate,currentAdminFilter,fStart,fEnd);
-        
-        let formattedStart = formatToDDMMYYYY(row.StartDate);
-        let formattedEnd = formatToDDMMYYYY(row.EndDate || row.StartDate);
-        const dateStr = (formattedStart === formattedEnd) ? formattedStart : `${formattedStart} - ${formattedEnd}`;
-
-        if(inRange){
-            aType[rType]=(aType[rType]||0)+1;aFacility[rLocation]=(aFacility[rLocation]||0)+1;aStatus[rStatus]=(aStatus[rStatus]||0)+1;
-            let dClean=formatToDDMMYYYY(row.StartDate);if(dClean!=='-')aDate[dClean]=(aDate[dClean]||0)+1;
-        }
-
-        let startD=parseFlexibleDate(row.StartDate);if(startD){startD=new Date(startD.getTime());startD.setHours(0,0,0,0)}
-        let endD=parseFlexibleDate(row.EndDate || row.StartDate);if(endD){endD=new Date(endD.getTime());endD.setHours(0,0,0,0)}
-
-        let isMultiDay = (startD && endD && endD.getTime() > startD.getTime());
-
-        let rowStyle='',dateBadge='';
-        if(startD&&startD.getTime()===today.getTime()&&!isPassExpiredOrFinished){ rowStyle='style="background: rgba(16, 185, 129, 0.1);"'; dateBadge+=`<span style="display:inline-block;margin-top:4px;background:var(--success);color:#000;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;margin-right:5px;">TODAY</span>`; }
-        else if(startD&&startD.getTime()===tomorrow.getTime()&&!isPassExpiredOrFinished){ rowStyle='style="background: rgba(59, 130, 246, 0.1);"'; dateBadge+=`<span style="display:inline-block;margin-top:4px;background:#3b82f6;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;margin-right:5px;">TOMORROW</span>`; }
-        
-        if (isMultiDay && !isPassExpiredOrFinished) {
-            rowStyle = 'style="background: rgba(139, 92, 246, 0.15); border-left: 3px solid #8b5cf6;"';
-            dateBadge += `<span style="display:inline-block;margin-top:4px;background:#8b5cf6;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;letter-spacing:0.5px;">MULTI-DAY</span>`;
-        }
-
-        if(dateBadge !== '') dateBadge = '<br>' + dateBadge;
-        const finalDateStr=dateStr+dateBadge;
-
-        // HISTORY TAB LOGIC
-        if (inRange) {
-            let visits = parseLogs(row);
-            let dailyCounts = {};
-            
-            visits.forEach(v => {
-                if(v.in) {
-                    let dStr = formatToDDMMYYYY(v.in);
-                    dailyCounts[dStr] = (dailyCounts[dStr] || 0) + 1;
-                }
-            });
-
-            let visitTrackers = {};
-
-            if (visits.length === 0) {
-                if (isPassExpiredOrFinished) {
-                    let finalStatus=rStatus,sColor='var(--text-muted)';
-                    if(rStatus==='Rejected'){finalStatus=t('status_rejected');sColor='var(--danger)'}
-                    else if(isExpired){finalStatus=t('status_expired');sColor='var(--danger)'}
-                    else if(rStatus==='Completed'){finalStatus=t('status_completed');sColor='var(--success)'}
-                    let badge = `<br><span style="color:${sColor};font-size:10px;font-weight:bold;">${finalStatus}</span>`;
-                    
-                    hHistory+=`<tr>
-                        <td style="color:var(--text-muted);">${dateStr}</td>
-                        <td><strong>${rVisitorName}</strong>${badge}</td>
-                        <td><strong style="color:var(--noon-yellow);">${t(rType.toLowerCase())}</strong></td>
-                        <td>${rLocation}</td>
-                        <td style="color:var(--text-muted);font-size:11px;">-</td>
-                        <td style="color:var(--text-muted);font-size:11px;">-</td>
-                        <td style="color:var(--text-muted);font-size:11px;">-</td>
-                        <td style="color:var(--text-muted);font-size:11px;">-</td>
-                    </tr>`;
-                    historyCount++;
-                }
-            } else {
-                visits.forEach(v => {
-                    if (v.out || isPassExpiredOrFinished) {
-                        let inStr = v.in ? formatTime(v.in) : '-';
-                        let outStr = v.out ? formatTime(v.out) : '<span style="color:var(--danger);font-weight:bold;">Missed Out-Scan</span>';
-
-                        let durStr = '-';
-                        if (v.in && v.out) {
-                            let diffMins = Math.floor((v.out.getTime() - v.in.getTime()) / 60000);
-                            if(diffMins < 0) diffMins = 0;
-                            let hs = Math.floor(diffMins / 60);
-                            let ms = diffMins % 60;
-                            durStr = `<span style="color:var(--noon-yellow);font-weight:bold;">${hs}h ${ms}m</span>`;
-                        }
-
-                        let gStr = v.guardIn || '-';
-                        if(v.guardOut && v.guardOut !== v.guardIn) gStr += ` / ${v.guardOut}`;
-
-                        let dStr = v.in ? formatToDDMMYYYY(v.in) : '';
-                        let dayCount = dailyCounts[dStr] || 1;
-                        visitTrackers[dStr] = (visitTrackers[dStr] || 0) + 1;
-
-                        let visitBadge = '';
-                        if (dayCount > 1) {
-                            visitBadge = `<br><span style="color:var(--noon-yellow);font-size:9px;font-weight:bold;letter-spacing:0.5px;text-transform:uppercase;">VISIT ${visitTrackers[dStr]} OF ${dayCount} (THIS DAY)</span>`;
-                        } else {
-                            visitBadge = `<br><span style="color:var(--text-muted);font-size:9px;font-weight:bold;letter-spacing:0.5px;text-transform:uppercase;">VISIT 1 OF 1</span>`;
-                        }
-
-                        hHistory+=`<tr>
-                            <td style="color:var(--text-muted);">${dateStr}</td>
-                            <td><strong>${rVisitorName}</strong>${visitBadge}</td>
-                            <td><strong style="color:var(--noon-yellow);">${t(rType.toLowerCase())}</strong></td>
-                            <td>${rLocation}</td>
-                            <td style="color:var(--text-main);font-size:11px;">${inStr}</td>
-                            <td style="color:var(--text-main);font-size:11px;">${outStr}</td>
-                            <td style="font-size:12px;">${durStr}</td>
-                            <td style="color:var(--text-muted);font-size:11px;">🛡️ ${gStr}</td>
-                        </tr>`;
-                        historyCount++;
-                    }
-                });
-            }
-        }
-
-        if (!isPassExpiredOrFinished) {
-            if(inRange){
-                // PENDING TAB LOGIC
-                if(rStatus==='Pending'){
-                    let actionBtns=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;"><button class="btn-primary btn-success btn-sm" style="width:auto;white-space:nowrap;" onclick="updateStatus('${row.UniqueID}','Approved')">${t('btn_approve')}</button><button class="btn-primary btn-danger btn-sm" style="width:auto;white-space:nowrap;" onclick="updateStatus('${row.UniqueID}','Rejected')">${t('btn_reject')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button></div>`;
-                    hPending+=`<tr ${rowStyle}><td style="color:var(--text-muted);">${finalDateStr}</td><td><strong>${rVisitorName}</strong><br><span style="font-size:10px;color:var(--text-muted);">Email: ${rHostEmail}</span></td><td>${t(rType.toLowerCase())}</td><td>${rLocation}</td><td>${actionBtns}</td></tr>`;
-                    pendingCount++;
-                }
-                // ACTIVE TAB LOGIC
-                else if(rStatus==='Approved'){
-                    const isChecked=checkedPrintIds.has(row.UniqueID)?'checked':'';
-                    let cbHtml=`<input type="checkbox" class="print-checkbox row-checkbox" value="${row.UniqueID}" data-name="${rVisitorName}" data-type="${rType}" data-location="${rLocation}" data-status="${rStatus}" data-date="${dateStr}" ${isChecked} onchange="handlePrintCheckbox(this)">`;
-                    let actionBtns=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;"><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="printQR('${rVisitorName}','${rType}','${rLocation}','${row.UniqueID}','${rStatus}','${dateStr}')">${t('btn_print')}</button><button class="btn-primary btn-warning btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;color:#000;" onclick="openAdminGateModal('${row.UniqueID}')">🚪 GATE ACTION</button><button class="btn-primary btn-danger btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="adminRevokePass('${row.UniqueID}')">🚫 REVOKE PASS</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button></div>`;
-                    
-                    let ciTime = '-';
-                    let durHtml = '-';
-                    
-                    const isInside = !!row.CheckInTime && !row.CheckOutTime;
-                    if (isInside) {
-                        let ciObj = new Date(row.CheckInTime);
-                        if (!isNaN(ciObj.getTime())) {
-                            ciTime = formatTime(ciObj);
-                            let now = new Date().getTime();
-                            let diffMins = Math.floor((now - ciObj.getTime()) / 60000);
-                            if(diffMins < 0) diffMins = 0;
-                            let h = Math.floor(diffMins / 60);
-                            let m = diffMins % 60;
-                            durHtml = `<span style="color:var(--noon-yellow); font-weight:bold;">${h}h ${m}m</span>`;
-                        }
-                    }
-                    
-                    hActive+=`<tr ${rowStyle}>
-                        <td>${cbHtml}</td>
-                        <td style="color:var(--text-muted);">${finalDateStr}</td>
-                        <td><strong>${rVisitorName}</strong><br><span style="font-size:10px;color:var(--text-muted);">Email: ${rHostEmail}</span></td>
-                        <td>${t(rType.toLowerCase())}</td>
-                        <td>${rLocation}</td>
-                        <td style="color:var(--text-muted);font-size:11px;">${ciTime}</td>
-                        <td>${durHtml}</td>
-                        <td>${actionBtns}</td>
-                    </tr>`;
-                    activeCount++;
-                }
-            }
-        }
-    });
-
-    if(tPending){if(pendingCount===0)hPending=`<tr><td colspan="5" class="text-center" style="padding:30px;">${t("msg_no_pending")}</td></tr>`;tPending.innerHTML=hPending}
-    if(tActive){if(activeCount===0)hActive=`<tr><td colspan="8" class="text-center" style="padding:30px;">${t("msg_no_active")}</td></tr>`;tActive.innerHTML=hActive}
-    if(tHistory){if(historyCount===0)hHistory=`<tr><td colspan="8" class="text-center" style="padding:30px;">${t("msg_no_history")}</td></tr>`;tHistory.innerHTML=hHistory}
-
-    const st=document.getElementById('stat-type');if(st)st.innerHTML=Object.keys(aType).map(k=>`<div class="stat-row"><span>${t(k.toLowerCase())}</span><span class="stat-val">${aType[k]}</span></div>`).join('')||'<div class="stat-row"><span>-</span></div>';
-    const sf=document.getElementById('stat-facility');if(sf)sf.innerHTML=Object.keys(aFacility).map(k=>`<div class="stat-row"><span>${k}</span><span class="stat-val">${aFacility[k]}</span></div>`).join('')||'<div class="stat-row"><span>-</span></div>';
-    let sHtml='';
-    if(aStatus['Approved'])sHtml+=`<div class="stat-row"><span style="color:var(--success)">${t('status_approved')}</span><span class="stat-val">${aStatus['Approved']}</span></div>`;
-    if(aStatus['Pending'])sHtml+=`<div class="stat-row"><span style="color:var(--noon-yellow)">${t('status_pending')}</span><span class="stat-val">${aStatus['Pending']}</span></div>`;
-    if(aStatus['Rejected'])sHtml+=`<div class="stat-row"><span style="color:var(--danger)">${t('status_rejected')}</span><span class="stat-val">${aStatus['Rejected']}</span></div>`;
-    const ss=document.getElementById('stat-status');if(ss)ss.innerHTML=sHtml||'<div class="stat-row"><span>-</span></div>';
-    let topDates=Object.entries(aDate).sort((a,b)=>b[1]-a[1]).slice(0,5);
-    const sd=document.getElementById('stat-date');if(sd)sd.innerHTML=topDates.map(([k,v])=>`<div class="stat-row"><span>${k}</span><span class="stat-val" style="color:var(--noon-yellow);">${v}</span></div>`).join('')||'<div class="stat-row"><span>-</span></div>';
-}
-
-function handlePrintCheckbox(cb){if(cb.checked)checkedPrintIds.add(cb.value);else checkedPrintIds.delete(cb.value)}
-function toggleSelectAll(src){const cbs=document.querySelectorAll('.print-checkbox.row-checkbox');cbs.forEach(cb=>{cb.checked=src.checked;handlePrintCheckbox(cb)})}
-
-async function loadAdminData(isSilent=false){
-    const cachedM=localStorage.getItem('cached_admin_data');
-    if(cachedM && !isSilent){
-        try{ 
-            let parsedM = JSON.parse(cachedM); 
-            if(Array.isArray(parsedM)) renderAdminData(parsedM.reverse()); 
-            else { localStorage.removeItem('cached_admin_data'); }
-        } catch(e){ localStorage.removeItem('cached_admin_data'); }
-    }
-    try{
-        const resMain = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'get_all' }) });
-        if(!resMain.ok) throw new Error("HTTP error");
-        
-        const dataMain = convertDriveUrls(await resMain.json());
-        
-        if(Array.isArray(dataMain)){ 
-            const newMStr = JSON.stringify(dataMain);
-            if (isSilent && cachedM === newMStr) return; 
-            
-            localStorage.setItem('cached_admin_data', newMStr); 
-            renderAdminData(dataMain.reverse()); 
-        } else { renderAdminData([]); }
-    }catch(e){ renderAdminData(globalAdminData || []); if(!isSilent&&!cachedM)console.error(e); }
-}
-
-async function updateStatus(id,newStatus){
-    if(autoRefreshTimer) clearInterval(autoRefreshTimer);
-    if(!confirm(`Mark ${id} as ${newStatus}?`)){ startAutoRefresh(currentUser.role); return; }
-    if(Array.isArray(globalAdminData)){
-        let item = globalAdminData.find(x => String(x.UniqueID) === String(id));
-        if(item) {
-            item.Status = newStatus; localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData)); renderAdminData(globalAdminData);
-            if(item.HostEmail) { localStorage.removeItem('cached_passes_' + String(item.HostEmail).toLowerCase().trim()); }
-        }
-    }
-    try{
-        const res=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'update_status',id:id,newStatus:newStatus})});
-        if(!res.ok)throw new Error("HTTP error");
-        loadAdminData(true); if(currentUser && currentUser.role==='ops') loadMyPasses(true, true);
-    }catch(e){}finally { startAutoRefresh(currentUser.role); }
-}
-
-function openAdminGateModal(id){
-    const gi = document.getElementById('admin-gate-id'), gd = document.getElementById('admin-gate-id-display'), gm = document.getElementById('admin-gate-modal');
-    if(gi) gi.value = id;
-    if(gd) gd.innerText = id;
-    if(gm) gm.classList.remove('hidden');
-}
-
-function closeAdminGateModal(){
-    const gm = document.getElementById('admin-gate-modal');
-    if(gm) gm.classList.add('hidden');
-}
-
-async function submitAdminGateAction(actionType) {
-    const id = document.getElementById('admin-gate-id').value;
-    if(!id) return;
-    
-    let item = globalAdminData.find(x => String(x.UniqueID) === String(id));
-    if(item) {
-        const isInside = !!item.CheckInTime && !item.CheckOutTime;
-        const actor = item.ScannedByGuard || 'Unknown';
-        
-        if (actionType === 'check_in' && isInside) {
-            return alert("This pass is already checked IN by:\n" + actor);
-        }
-        if (actionType === 'check_out' && !isInside) {
-            return alert("This pass is already checked OUT by:\n" + actor);
-        }
-    }
-    
-    if(!confirm(`Proceed to ${actionType === 'check_in' ? 'Check In' : 'Check Out'} pass ${id}?`)) return;
-    
-    if(autoRefreshTimer) clearInterval(autoRefreshTimer);
-    try{
-        const adminInfo=`Admin: ${currentUser.name} (${currentUser.email})`;
-        const res=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:actionType,id:id,guardInfo:adminInfo,headCount:1})});
-        if(!res.ok)throw new Error("HTTP error");
-        localStorage.removeItem('cached_admin_data'); 
-        closeAdminGateModal();
-        setTimeout(()=>{loadAdminData(true)},1000);
-    }catch(e){
-        alert("Action failed.");
-    }finally{ 
-        startAutoRefresh(currentUser.role); 
-    }
-}
-
-async function adminRevokePass(id){
-    if(autoRefreshTimer) clearInterval(autoRefreshTimer);
-    if(!confirm(`Revoke pass ${id} completely? This will kill the QR code permanently.`)){ startAutoRefresh(currentUser.role); return; }
-    if(Array.isArray(globalAdminData)){
-        let item = globalAdminData.find(x => String(x.UniqueID) === String(id));
-        if(item) {
-            item.Status = 'Completed'; item.CheckOutTime = new Date().toISOString(); localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData)); renderAdminData(globalAdminData);
-            if(item.HostEmail) { localStorage.removeItem('cached_passes_' + String(item.HostEmail).toLowerCase().trim()); }
-        }
-    }
-    try{
-        const adminInfo=`Admin: ${currentUser.name} (${currentUser.email})`;
-        const res=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'check_out',id:id,guardInfo:adminInfo,headCount:1,forceStatus:'Completed'})});
-        if(!res.ok)throw new Error("HTTP error");
-        localStorage.removeItem('cached_admin_data'); setTimeout(()=>{loadAdminData(true)},1000);
-    }catch(e){}finally{ startAutoRefresh(currentUser.role); }
-}
-
-function openExtendPass(id,type){
-    const ei=document.getElementById('extend-id'),et=document.getElementById('extend-type'),eg=document.getElementById('extend-end-group'),em=document.getElementById('extend-pass-modal');
-    if(ei)ei.value=id;if(et)et.value=type;
-    if(eg)eg.classList.remove('hidden');
-    if(em)em.classList.remove('hidden');
-}
-
-function closeExtendPass(){const em=document.getElementById('extend-pass-modal');if(em)em.classList.add('hidden')}
-
-async function submitExtendPass(){
-    const id=document.getElementById('extend-id').value,type=document.getElementById('extend-type').value,ns=document.getElementById('extend-start').value,ei=document.getElementById('extend-end');
-    const ne=ei?ei.value:'';
-    const btn=document.getElementById('btn-submit-extend');
-    if(!ns||!ne)return alert('Please select both Start and End dates.');
-    if(!confirm(`Extend pass ${id}?`))return;
-    btn.innerText='SAVING...';btn.disabled=true;
-    try{
-        const res=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'extend_pass',id:id,newStartDate:ns,newEndDate:ne})});
-        if(!res.ok)throw new Error("HTTP error");
-        closeExtendPass();loadAdminData(false);
-    }catch(e){alert('Error.')}finally{btn.innerText=t("save_extension");btn.disabled=false}
-}
-
-async function adminResetPin(email) {
-    if(!confirm(`Reset PIN for ${email}? They will be prompted to create a new one next time.`)) return;
-    try {
-        const res = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'reset_pin', email: email }) });
-        localStorage.removeItem('cached_admin_data'); localStorage.removeItem('cached_passes_' + email);
-        alert("PIN Reset Successful."); closeViewRecord(); loadAdminData(true);
-    } catch(e) { alert("Error resetting PIN"); }
-}
-
 function openViewRecord(id){
     const r=globalAdminData.find(x=>String(x.UniqueID)===String(id));if(!r)return;
     let rType = String(r.Type || ''); let displayHostName = (r.HostName || '-').split('||PIN:')[0]; let actualPin = (r.HostName || '').includes('||PIN:') ? (r.HostName || '').split('||PIN:')[1] : null;
@@ -1055,19 +1083,30 @@ function openViewRecord(id){
     if(rType==='Visitor')h+=`<div><strong>${t('invited_by')}</strong>${r.InvitedBy||'-'}</div>`;
     else h+=`<div><strong>${t('project_name')}</strong>${r.ProjectName||'-'}</div><div><strong>${t('company_name')}</strong>${r.CompanyName||'-'}</div><div><strong>${t('project_manager')}</strong>${r.ProjectManager||'-'}</div><div><strong>${t('fm_poc')}</strong>${r.FmPoc||'-'}</div>`;
 
-    h+=`<div class="record-img-box" style="margin-top:15px;"><div style="flex:1;background:transparent;border:none;padding:0;"><strong>${t('lbl_iqama')} (Lead)</strong><img src="${r.IqamaURL||''}" onclick="openFullscreenImage(this.src)"></div><div style="flex:1;background:transparent;border:none;padding:0;"><strong>${t('lbl_selfie')} (Lead)</strong><img src="${r.SelfieURL||''}" onclick="openFullscreenImage(this.src)"></div>`;
-    if(r.ImeiPhotoURL && r.ImeiPhotoURL !== "No File") h+=`<div style="flex:1;background:transparent;border:none;padding:0;"><strong>IMEI PHOTO (Lead)</strong><img src="${r.ImeiPhotoURL}" onclick="openFullscreenImage(this.src)"></div>`;
+    const makeAdminImg = (lbl, url) => {
+        let src = formatImg(url);
+        if(!src) return `<div style="flex:1;background:transparent;border:none;padding:0;"><strong>${lbl}</strong><div style="margin-top:5px;color:var(--text-muted);font-size:11px;">No Image</div></div>`;
+        return `<div style="flex:1;background:transparent;border:none;padding:0;min-width:120px;"><strong>${lbl}</strong><img src="${src}" style="width:100%;border-radius:8px;border:1px solid var(--border-color);object-fit:cover;margin-top:5px;cursor:pointer;transition:0.2s" onclick="openFullscreenImage(this.src)" onerror="this.parentElement.style.display='none'"></div>`;
+    };
+
+    h += `<div class="record-img-box" style="margin-top:15px;">`;
+    h += makeAdminImg(`${t('lbl_iqama')} (Lead)`, r.IqamaURL);
+    h += makeAdminImg(`${t('lbl_selfie')} (Lead)`, r.SelfieURL);
+    
+    if(r.ImeiPhotoURL && String(r.ImeiPhotoURL) !== "No File") h += makeAdminImg(`IMEI PHOTO (Lead)`, r.ImeiPhotoURL);
+    
     let fmpocStr = String(r.FmPoc || '');
-    if(rType==='Contractor' && fmpocStr && (fmpocStr.startsWith('http')||fmpocStr.startsWith('data:image'))) h+=`<div style="flex:1;background:transparent;border:none;padding:0;"><strong>${t('fm_poc')} (Legacy Image)</strong><img src="${fmpocStr}" onclick="openFullscreenImage(this.src)"></div>`;
+    if(rType==='Contractor' && fmpocStr && (fmpocStr.startsWith('http') || fmpocStr.startsWith('data:image'))) h += makeAdminImg(`${t('fm_poc')} (Legacy Image)`, fmpocStr);
+    
     let vehStr = String(r.VehiclePlateNo || '');
-    if(vehStr){
-        if(vehStr.startsWith('http')||vehStr.startsWith('data:image')) h+=`<div style="flex:1;background:transparent;border:none;padding:0;"><strong>${t('lbl_vehicle')}</strong><img src="${vehStr}" onclick="openFullscreenImage(this.src)"></div>`;
-        else h+=`<div style="flex:1;background:transparent;border:none;padding:0;"><strong>${t('lbl_vehicle')}</strong><div style="margin-top:5px;color:var(--text-muted);">${vehStr}</div></div>`;
+    if(vehStr) {
+        if(vehStr.startsWith('http') || vehStr.startsWith('data:image')) h += makeAdminImg(t('lbl_vehicle'), vehStr);
+        else h += `<div style="flex:1;background:transparent;border:none;padding:0;"><strong>${t('lbl_vehicle')}</strong><div style="margin-top:5px;color:var(--text-muted);">${vehStr}</div></div>`;
     }
-    h+=`</div>`;
+    h += `</div>`;
 
     let tMembers = String(r.TeamMembers || '');
-    if(tMembers.trim()!==""){
+    if(tMembers.trim()!=="") {
         let td=[]; let lines = tMembers.split('\n\n');
         lines.forEach((block, idx)=>{
             let nameMatch = block.match(/Name:\s*([^\|]+)/); 
@@ -1077,11 +1116,8 @@ function openViewRecord(id){
             
             if(extractedUrls.length >= 2){
                 let nameRaw = nameMatch ? nameMatch[1].trim() : 'Team Member ' + (idx+1); 
-                
-                let blockUpper = block.toUpperCase();
-                let nameUpper = nameRaw.toUpperCase();
+                let blockUpper = block.toUpperCase(); let nameUpper = nameRaw.toUpperCase();
                 let isNew = nameUpper.includes('*NEW_MEMBER*') || blockUpper.includes('*NEW_MEMBER*') || nameUpper.includes('[NEW]') || blockUpper.includes('[NEW]'); 
-                
                 let cleanName = nameRaw.replace(/\*NEW_MEMBER\*|\[NEW\]|\*NEW\*|\(NEW\)/gi, '').trim();
                 
                 td.push({ person: idx+1, name: cleanName, isNew: isNew, iqamaText: iqamaMatch ? iqamaMatch[1].trim() : 'N/A', device: deviceMatch ? deviceMatch[1].trim() : 'None', iqama: extractedUrls[0], selfie: extractedUrls[1], devicePhoto: extractedUrls.length > 2 ? extractedUrls[2] : 'No File' });
@@ -1093,9 +1129,16 @@ function openViewRecord(id){
             td.forEach(m=>{
                 let devHtml = m.device !== 'None' ? `<span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">${m.device}</span>` : '';
                 let newBadge = m.isNew ? `<span style="background:var(--success);color:white;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">${t('new_badge')}</span>` : `<span style="background:rgba(255,255,255,0.2);color:white;font-size:9px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;letter-spacing:0.5px;">TEAM</span>`;
-                let imgsHtml = `<img src="${m.iqama}" style="width:50px;height:50px;border-radius:6px;object-fit:cover;cursor:zoom-in;border:1px solid #444;" onclick="openFullscreenImage(this.src)" title="Iqama">`;
-                imgsHtml += `<img src="${m.selfie}" style="width:50px;height:50px;border-radius:6px;object-fit:cover;cursor:zoom-in;border:1px solid #444;" onclick="openFullscreenImage(this.src)" title="Selfie">`;
-                if(m.devicePhoto && m.devicePhoto !== 'No File' && m.devicePhoto.startsWith('http')) imgsHtml += `<img src="${m.devicePhoto}" style="width:50px;height:50px;border-radius:6px;object-fit:cover;cursor:zoom-in;border:1px solid #444;" onclick="openFullscreenImage(this.src)" title="Device Screen">`;
+                
+                let iqSrc = formatImg(m.iqama); let selSrc = formatImg(m.selfie);
+                let imgsHtml = iqSrc ? `<img src="${iqSrc}" style="width:50px;height:50px;border-radius:6px;object-fit:cover;cursor:zoom-in;border:1px solid #444;" onclick="openFullscreenImage(this.src)" onerror="this.style.display='none'">` : '';
+                imgsHtml += selSrc ? `<img src="${selSrc}" style="width:50px;height:50px;border-radius:6px;object-fit:cover;cursor:zoom-in;border:1px solid #444;" onclick="openFullscreenImage(this.src)" onerror="this.style.display='none'">` : '';
+                
+                if(m.devicePhoto && m.devicePhoto !== 'No File') {
+                    let devSrc = formatImg(m.devicePhoto);
+                    if (devSrc) imgsHtml += `<img src="${devSrc}" style="width:50px;height:50px;border-radius:6px;object-fit:cover;cursor:zoom-in;border:1px solid #444;" onclick="openFullscreenImage(this.src)" onerror="this.style.display='none'">`;
+                }
+                
                 h+=`<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;"><div><span style="color:var(--noon-yellow);font-weight:bold;">${m.name}</span>${newBadge}${devHtml}<br><span style="font-size:11px;color:var(--text-muted);">ID: ${m.iqamaText}</span></div><div style="display:flex;gap:10px;">${imgsHtml}</div></div>`;
             });
             h+=`</div></div>`;
@@ -1105,119 +1148,10 @@ function openViewRecord(id){
     if(mc)mc.innerHTML=h;if(modal)modal.classList.remove('hidden');
 }
 
-function closeViewRecord(){const modal=document.getElementById('view-record-modal');if(modal)modal.classList.add('hidden')}
-
-function printSelected(){
-    const cbs=document.querySelectorAll('.print-checkbox.row-checkbox:checked');
-    if(cbs.length===0)return alert("Please select at least one approved pass.");
-    const pm=confirm("Print Layout Selection:\n\n[OK] = MULTIPLE passes per page\n[Cancel] = SINGLE pass per page");
-    const pw=window.open('','','width=800,height=600');let cardsHtml='';
-    cbs.forEach((cb)=>{
-        const id=cb.value,name=cb.getAttribute('data-name'),type=cb.getAttribute('data-type'),loc=cb.getAttribute('data-location'),st=cb.getAttribute('data-status'),date=cb.getAttribute('data-date');
-        let tempDiv = document.createElement("div");
-        new QRCode(tempDiv, {text: id, width: 110, height: 110, colorDark: "#000", colorLight: "#fff", correctLevel: QRCode.CorrectLevel.H});
-        let canvas = tempDiv.querySelector("canvas"); let qrDataUrl = canvas ? canvas.toDataURL() : '';
-        cardsHtml+=`<div class="card"><div class="top-row"><div><p class="name">${name}</p><p class="sub">${type} &bull; ${loc}</p><p class="date">Valid: ${date}</p></div><div><p class="status">${st}</p><p class="id">${id}</p></div></div><div class="qr-box"><img src="${qrDataUrl}"></div></div>`;
-    });
-    let ps=pm?`@media print{@page{margin:10mm}body{display:flex;flex-wrap:wrap;gap:5mm;align-content:flex-start;justify-content:flex-start}.card{page-break-inside:avoid;border:1px solid #ccc !important}}`:`@media print{@page{size:85.6mm 54mm;margin:0}body{display:block;margin:0;padding:0;background:#fff}.card{border:none !important;border-radius:0;margin:0;padding:4mm;width:85.6mm;height:54mm;page-break-after:always;box-sizing:border-box}.card:last-child{page-break-after:auto}}`;
-    pw.document.write(`<html><head><title>Batch Print Passes</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"><style>*{box-sizing:border-box;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}body{margin:0;padding:20px;background:#fff;font-family:'Inter',sans-serif;display:flex;flex-wrap:wrap;gap:15px}.card{width:85.6mm;height:54mm;background:white;border-radius:2mm;padding:4mm;border:1px solid #ccc;position:relative;overflow:hidden}.top-row{display:flex;justify-content:space-between;align-items:flex-start}.name{font-size:10pt;font-weight:700;margin:0;color:black;line-height:1.1;max-width:48mm;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.sub{font-size:7pt;color:#555;margin:2px 0 0 0}.date{font-size:6pt;font-weight:600;color:#444;margin:2px 0 0 0}.status{font-size:8pt;font-weight:700;color:#10b981;margin:0;text-align:right;text-transform:uppercase}.id{font-size:6pt;color:#555;margin:2px 0 0 0;text-align:right}.qr-box{display:flex;justify-content:center;align-items:center;margin-top:2mm}${ps}</style></head><body>${cardsHtml}</body></html>`);
-    pw.document.close(); pw.focus(); setTimeout(()=>{pw.print();pw.close();},250);
-}
-
-function printQR(name,type,location,id,status,date){
-    const pm=confirm("Print Layout Selection:\n\n[OK] = Standard Printer\n[Cancel] = ID Card Printer");
-    const pw=window.open('','','width=800,height=600');
-    let tempDiv = document.createElement("div");
-    new QRCode(tempDiv, {text: id, width: 110, height: 110, colorDark: "#000", colorLight: "#fff", correctLevel: QRCode.CorrectLevel.H});
-    let canvas = tempDiv.querySelector("canvas"); let qrDataUrl = canvas ? canvas.toDataURL() : '';
-    let ps=pm?`@media print{@page{margin:10mm}body{display:flex;align-items:flex-start;justify-content:flex-start}.card{border:1px solid #ccc !important}}`:`@media print{@page{size:85.6mm 54mm;margin:0}body{display:block;margin:0;padding:0;background:#fff}.card{border:none !important;border-radius:0;margin:0;padding:4mm;width:85.6mm;height:54mm;page-break-inside:avoid;box-sizing:border-box}}`;
-    pw.document.write(`<html><head><title>Print QR Pass</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"><style>*{box-sizing:border-box;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}body{margin:0;padding:20px;background:#fff;font-family:'Inter',sans-serif;display:flex;justify-content:center}.card{width:85.6mm;height:54mm;background:white;border-radius:2mm;padding:4mm;border:1px solid #ccc;position:relative;overflow:hidden}.top-row{display:flex;justify-content:space-between;align-items:flex-start}.name{font-size:10pt;font-weight:700;margin:0;color:black;line-height:1.1;max-width:48mm;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.sub{font-size:7pt;color:#555;margin:2px 0 0 0}.date{font-size:6pt;font-weight:600;color:#444;margin:2px 0 0 0}.status{font-size:8pt;font-weight:700;color:#10b981;margin:0;text-align:right;text-transform:uppercase}.id{font-size:6pt;color:#555;margin:2px 0 0 0;text-align:right}.qr-box{display:flex;justify-content:center;align-items:center;margin-top:2mm}${ps}</style></head><body><div class="card"><div class="top-row"><div><p class="name">${name}</p><p class="sub">${type} &bull; ${location}</p><p class="date">Valid: ${date}</p></div><div><p class="status">${status}</p><p class="id">${id}</p></div></div><div class="qr-box"><img src="${qrDataUrl}"></div></div></body></html>`);
-    pw.document.close(); pw.focus(); setTimeout(()=>{pw.print();pw.close();},250);
-}
-
-function switchScanMode(mode) {
-    const btnCam = document.getElementById('btn-mode-camera'); const btnGun = document.getElementById('btn-mode-gun');
-    const gunContainer = document.getElementById('gun-scanner-container'); const camWrapper = document.getElementById('camera-mode-wrapper');
-    const gunInput = document.getElementById('gun-scan-input');
-    if (mode === 'gun') {
-        if(btnCam) btnCam.className = "btn-primary btn-outline"; if(btnGun) btnGun.className = "btn-primary";
-        if(camWrapper) camWrapper.classList.add('hidden'); if(gunContainer) gunContainer.classList.remove('hidden');
-        stopScanner(); if(gunInput) { gunInput.focus(); gunInput.value = ""; }
-    } else {
-        if(btnCam) btnCam.className = "btn-primary"; if(btnGun) btnGun.className = "btn-primary btn-outline";
-        if(gunContainer) gunContainer.classList.add('hidden'); if(camWrapper) camWrapper.classList.remove('hidden');
-    }
-}
-
-function handleGunScan(event) {
-    if (event.key === 'Enter') {
-        event.preventDefault(); const code = event.target.value.replace(/\s+/g, '').trim().toUpperCase();
-        if (code) { event.target.value = ""; onScanSuccess(code); }
-    }
-}
-
-function startScanner() {
-    const btn = document.getElementById('btn-start-scan'); const readerCont = document.getElementById('reader-container'); const scanResult = document.getElementById('scan-result');
-    if(btn) btn.classList.add('hidden'); if(scanResult) scanResult.classList.add('hidden'); if(readerCont) readerCont.classList.remove('hidden');
-    if (!html5QrCode) { html5QrCode = new Html5Qrcode("reader"); }
-    startQrCodeStream();
-}
-
-function startQrCodeStream() {
-    if (html5QrCode && html5QrCode.isScanning) { html5QrCode.stop().then(() => { playQrCodeStream(); }).catch(e => { playQrCodeStream(); }); } 
-    else { playQrCodeStream(); }
-}
-
-function playQrCodeStream() {
-    html5QrCode.start( { facingMode: scannerFacingMode }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess, (errorMessage) => { } ).catch((err) => { alert("Camera access error. Please check permissions."); hideScannerUI(); });
-}
-
-function switchScannerCamera() { scannerFacingMode = scannerFacingMode === "environment" ? "user" : "environment"; startQrCodeStream(); }
-function stopScanner() {
-    if (html5QrCode && html5QrCode.isScanning) { html5QrCode.stop().then(() => { hideScannerUI(); }).catch(e => { hideScannerUI(); }); } 
-    else { hideScannerUI(); }
-}
-
-function hideScannerUI() {
-    document.getElementById('reader-container').classList.add('hidden');
-    document.getElementById('btn-start-scan').classList.remove('hidden');
-}
-
-function showScanResult(d,rHtml,cClass,isContractor=false){
-    const sr=document.getElementById('scan-result');
-    sr.className = '';
-    document.getElementById('r-decision').innerText=d;
-    document.getElementById('r-reason').innerHTML=rHtml;
-    
-    setTimeout(() => { sr.className=`scan-result-card ${cClass} ${isContractor?'fullscreen-scan':''}`; }, 10);
-    if(cClass==="bg-red"){
-        setTimeout(()=>{
-            if (document.getElementById('r-decision').innerText === d) { sr.className = 'scan-result-card hidden'; isProcessingScan = false; try{if(html5QrCode)html5QrCode.resume();}catch(e){} }
-        },3500);
-    }
-}
-
-window.closeScanResult = function() {
-    isProcessingScan = false;
-    const sr = document.getElementById('scan-result');
-    if(sr) sr.className = 'scan-result-card hidden';
-    try{if(html5QrCode) html5QrCode.resume();}catch(e){}
-    const gunInput = document.getElementById('gun-scan-input');
-    if(gunInput && !document.getElementById('gun-scanner-container').classList.contains('hidden')) { gunInput.focus(); gunInput.value = ""; }
-}
-
-function filterTeamMembers(query) {
-    let q = query.toLowerCase();
-    let rows = document.querySelectorAll('.team-member-scan-row');
-    rows.forEach(row => { if(row.innerText.toLowerCase().includes(q)) { row.style.display = 'flex'; } else { row.style.display = 'none'; } });
-    let deviceCards = document.querySelectorAll('.device-photo-card');
-    deviceCards.forEach(card => { if(card.getAttribute('data-search').includes(q)) { card.style.display = 'block'; } else { card.style.display = 'none'; } });
-}
-
-async function onScanSuccess(decodedText){
+async function onScanSuccess(decodedText) {
     if (isProcessingScan) return;
     isProcessingScan = true;
-    try{if(html5QrCode && html5QrCode.isScanning)html5QrCode.pause();}catch(e){}
+    try { if(html5QrCode && html5QrCode.isScanning) html5QrCode.pause(); } catch(e) {}
     
     let rawText = String(decodedText).toUpperCase();
     let exactMatch = rawText.match(/NOON-\d+/);
@@ -1240,7 +1174,7 @@ async function onScanSuccess(decodedText){
 
     try{
         const res=await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'get_single', id: decodedText }) });
-        if(res.ok) { let resData = await res.json(); if(resData && !resData.error) data = convertDriveUrls(resData); }
+        if(res.ok) { let resData = await res.json(); if(resData && !resData.error) data = resData; }
     } catch(err) {}
 
     if(!data && Array.isArray(globalAdminData)){ let cachedMatch = globalAdminData.find(x => String(x.UniqueID).toUpperCase() === String(decodedText).toUpperCase()); if(cachedMatch) data = cachedMatch; }
@@ -1286,11 +1220,8 @@ async function onScanSuccess(decodedText){
             
             if(extractedUrls.length >= 2){
                 let nameRaw = nameMatch ? nameMatch[1].trim() : 'Team Member ' + (idx+1); 
-                
-                let blockUpper = block.toUpperCase();
-                let nameUpper = nameRaw.toUpperCase();
+                let blockUpper = block.toUpperCase(); let nameUpper = nameRaw.toUpperCase();
                 let isNew = nameUpper.includes('*NEW_MEMBER*') || blockUpper.includes('*NEW_MEMBER*') || nameUpper.includes('[NEW]') || blockUpper.includes('[NEW]'); 
-                
                 let cleanName = nameRaw.replace(/\*NEW_MEMBER\*|\[NEW\]|\*NEW\*|\(NEW\)/gi, '').trim();
                 
                 teamData.push({ person: idx+1, name: cleanName, isNew: isNew, iqamaText: iqamaMatch ? iqamaMatch[1].trim() : 'N/A', device: deviceMatch ? deviceMatch[1].trim() : 'None', iqama: extractedUrls[0], selfie: extractedUrls[1], devicePhoto: extractedUrls.length > 2 ? extractedUrls[2] : 'No File' });
@@ -1324,10 +1255,16 @@ async function onScanSuccess(decodedText){
             let safeImei = data.ImeiNumber ? String(data.ImeiNumber).trim() : '';
             let leadDevStr = safeImei && safeImei !== 'None' && safeImei !== '' ? `<br><span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;font-weight:bold;">${safeImei}</span>` : '';
             let leadSearchStr = String(data.VisitorName + " " + safeImei + " lead " + data.UniqueID).toLowerCase();
-            let leadVehThumb = (data.VehiclePlateNo && (data.VehiclePlateNo.startsWith('http')||data.VehiclePlateNo.startsWith('data:image'))) ? `<img src="${data.VehiclePlateNo}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();" title="Vehicle">` : '';
+            
+            let vSrc = formatImg(data.VehiclePlateNo);
+            let leadVehThumb = vSrc ? `<img src="${vSrc}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();" title="Vehicle" onerror="this.style.display='none'">` : '';
             let leadBadge = `<span style="background:var(--noon-yellow);color:#000;font-size:9px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;letter-spacing:0.5px;">LEAD</span>`;
             
-            attHtml += `<label class="team-member-scan-row" data-search="${leadSearchStr}" style="display:flex; align-items:center; justify-content:space-between; color:white; background:rgba(255,255,255,0.08); padding:12px; border-radius:8px; cursor:pointer; border: 1px solid rgba(255,255,255,0.05);"><div style="display:flex; align-items:center; gap:10px;"><img src="${data.IqamaURL}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"><img src="${data.SelfieBase64||data.SelfieURL}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();">${leadVehThumb} <div><span style="font-size:13px;font-weight:600;">${data.VisitorName}${leadBadge}</span>${leadDevStr}</div></div><input type="checkbox" class="att-chk" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)"></label>`;
+            let lIqSrc = formatImg(data.IqamaURL); let lSelSrc = formatImg(data.SelfieURL||data.SelfieBase64);
+            let leadImgsHtml = lIqSrc ? `<img src="${lIqSrc}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();" onerror="this.style.display='none'">` : '';
+            leadImgsHtml += lSelSrc ? `<img src="${lSelSrc}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();" onerror="this.style.display='none'">` : '';
+            
+            attHtml += `<label class="team-member-scan-row" data-search="${leadSearchStr}" style="display:flex; align-items:center; justify-content:space-between; color:white; background:rgba(255,255,255,0.08); padding:12px; border-radius:8px; cursor:pointer; border: 1px solid rgba(255,255,255,0.05);"><div style="display:flex; align-items:center; gap:10px;">${leadImgsHtml}${leadVehThumb} <div><span style="font-size:13px;font-weight:600;">${data.VisitorName}${leadBadge}</span>${leadDevStr}</div></div><input type="checkbox" class="att-chk" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)"></label>`;
             
             let origTeam = teamData.filter(m => !m.isNew); let addedTeam = teamData.filter(m => m.isNew);
             origTeam.forEach(m => {
@@ -1335,7 +1272,11 @@ async function onScanSuccess(decodedText){
                 let devHtml = m.device && m.device !== 'None' && m.device.trim() !== '' ? `<br><span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;font-weight:bold;">${m.device}</span>` : '';
                 let teamBadge = `<span style="background:rgba(255,255,255,0.2);color:white;font-size:9px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;letter-spacing:0.5px;">TEAM</span>`;
                 
-                attHtml += `<label class="team-member-scan-row" data-search="${mSearchStr}" style="display:flex; align-items:center; justify-content:space-between; color:white; background:rgba(255,255,255,0.08); padding:12px; border-radius:8px; cursor:pointer; border: 1px solid rgba(255,255,255,0.05);"><div style="display:flex; align-items:center; gap:10px;"><img src="${m.iqama}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"><img src="${m.selfie}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"> <div><span style="font-size:13px;font-weight:600;">${m.name}${teamBadge}</span><br><span style="font-size:10px;color:rgba(255,255,255,0.6);">ID: ${m.iqamaText}</span>${devHtml}</div></div><input type="checkbox" class="att-chk" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)"></label>`;
+                let iqSrc = formatImg(m.iqama); let selSrc = formatImg(m.selfie);
+                let mImgs = iqSrc ? `<img src="${iqSrc}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();" onerror="this.style.display='none'">` : '';
+                mImgs += selSrc ? `<img src="${selSrc}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();" onerror="this.style.display='none'">` : '';
+                
+                attHtml += `<label class="team-member-scan-row" data-search="${mSearchStr}" style="display:flex; align-items:center; justify-content:space-between; color:white; background:rgba(255,255,255,0.08); padding:12px; border-radius:8px; cursor:pointer; border: 1px solid rgba(255,255,255,0.05);"><div style="display:flex; align-items:center; gap:10px;">${mImgs} <div><span style="font-size:13px;font-weight:600;">${m.name}${teamBadge}</span><br><span style="font-size:10px;color:rgba(255,255,255,0.6);">ID: ${m.iqamaText}</span>${devHtml}</div></div><input type="checkbox" class="att-chk" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)"></label>`;
             });
 
             if (addedTeam.length > 0) {
@@ -1345,7 +1286,11 @@ async function onScanSuccess(decodedText){
                     let devHtml = m.device && m.device !== 'None' && m.device.trim() !== '' ? `<br><span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;font-weight:bold;">${m.device}</span>` : '';
                     let newBadge = `<span style="background:var(--success); color:white; font-size:10px; padding:2px 5px; border-radius:4px; margin-left:5px; font-weight:bold;">${t('new_badge')}</span>`;
                     
-                    attHtml += `<label class="team-member-scan-row" data-search="${mSearchStr}" style="display:flex; align-items:center; justify-content:space-between; color:white; background:rgba(255,255,255,0.08); padding:12px; border-radius:8px; cursor:pointer; border: 1px solid rgba(255,255,255,0.05);"><div style="display:flex; align-items:center; gap:10px;"><img src="${m.iqama}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"><img src="${m.selfie}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"> <div><span style="font-size:13px;font-weight:600;">${m.name}${newBadge}</span><br><span style="font-size:10px;color:rgba(255,255,255,0.6);">ID: ${m.iqamaText}</span>${devHtml}</div></div><input type="checkbox" class="att-chk" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)"></label>`;
+                    let iqSrc = formatImg(m.iqama); let selSrc = formatImg(m.selfie);
+                    let mImgs = iqSrc ? `<img src="${iqSrc}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();" onerror="this.style.display='none'">` : '';
+                    mImgs += selSrc ? `<img src="${selSrc}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();" onerror="this.style.display='none'">` : '';
+                    
+                    attHtml += `<label class="team-member-scan-row" data-search="${mSearchStr}" style="display:flex; align-items:center; justify-content:space-between; color:white; background:rgba(255,255,255,0.08); padding:12px; border-radius:8px; cursor:pointer; border: 1px solid rgba(255,255,255,0.05);"><div style="display:flex; align-items:center; gap:10px;">${mImgs} <div><span style="font-size:13px;font-weight:600;">${m.name}${newBadge}</span><br><span style="font-size:10px;color:rgba(255,255,255,0.6);">ID: ${m.iqamaText}</span>${devHtml}</div></div><input type="checkbox" class="att-chk" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)"></label>`;
                 });
             }
             attHtml += `</div></div>`; teamSec.innerHTML = attHtml;
@@ -1358,15 +1303,19 @@ async function onScanSuccess(decodedText){
             let hasLeadVehicle = data.VehiclePlateNo && (data.VehiclePlateNo.startsWith('http') || data.VehiclePlateNo.startsWith('data:image'));
             let showLeadPreview = hasLeadDevice || hasLeadVehicle;
             
-            const makeImg = (lbl, url) => `<div><strong style="font-size:10px; display:block; color:rgba(255,255,255,0.7); margin-bottom:4px;">${lbl}</strong><img src="${url}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; cursor:zoom-in; border:2px solid rgba(255,255,255,0.2);" onclick="openFullscreenImage(this.src)"></div>`;
+            const makeImg = (lbl, url) => {
+                let src = formatImg(url);
+                if(!src) return '';
+                return `<div><strong style="font-size:10px; display:block; color:rgba(255,255,255,0.7); margin-bottom:4px;">${lbl}</strong><img src="${src}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; cursor:zoom-in; border:2px solid rgba(255,255,255,0.2);" onclick="openFullscreenImage(this.src)" onerror="this.parentElement.style.display='none'"></div>`;
+            };
 
             if (showLeadPreview) {
                 let leadSearchStr = String(data.VisitorName + " " + safeImei + " lead " + data.UniqueID).toLowerCase();
                 let leadTitleExt = hasLeadDevice ? `- ${t('device_label')}: <span style="color:var(--noon-yellow)">${safeImei}</span>` : ``;
                 cardsHtml += `<div class="device-photo-card" data-search="${leadSearchStr}" style="margin-bottom:15px; text-align:left; padding:10px; background:rgba(255,255,255,0.05); border-radius:6px; border:1px solid rgba(255,255,255,0.1);"><strong style="display:block; color:white; margin-bottom:8px;">${t('lead')} (${data.VisitorName}) ${leadTitleExt}</strong><div style="display:flex; gap:10px; flex-wrap:wrap;">`;
-                if(data.IqamaURL && data.IqamaURL !== 'No File') cardsHtml += makeImg(t('iqama_id'), data.IqamaURL);
-                if(data.SelfieURL && data.SelfieURL !== 'No File') cardsHtml += makeImg(t('selfie'), data.SelfieURL);
-                if(hasLeadDevice && data.ImeiPhotoURL && data.ImeiPhotoURL !== 'No File') cardsHtml += makeImg(t('device_screen'), data.ImeiPhotoURL);
+                cardsHtml += makeImg(t('iqama_id'), data.IqamaURL);
+                cardsHtml += makeImg(t('selfie'), data.SelfieURL);
+                if(hasLeadDevice) cardsHtml += makeImg(t('device_screen'), data.ImeiPhotoURL);
                 if(hasLeadVehicle) cardsHtml += makeImg(t('vehicle'), data.VehiclePlateNo);
                 cardsHtml += `</div></div>`;
             }
@@ -1376,9 +1325,9 @@ async function onScanSuccess(decodedText){
                 if (mDevStr !== 'None') {
                     let mSearchStr = String(m.name + " " + m.iqamaText + " " + m.device).toLowerCase();
                     cardsHtml += `<div class="device-photo-card" data-search="${mSearchStr}" style="margin-bottom:15px; text-align:left; padding:10px; background:rgba(255,255,255,0.05); border-radius:6px; border:1px solid rgba(255,255,255,0.1);"><strong style="display:block; color:white; margin-bottom:8px;">${m.name} ${m.isNew ? `<span style="color:var(--success)">[${t('new_badge')}]</span>` : ''} - ${t('device_label')}: <span style="color:var(--noon-yellow)">${mDevStr}</span></strong><div style="display:flex; gap:10px; flex-wrap:wrap;">`;
-                    if(m.iqama && m.iqama !== 'No File') cardsHtml += makeImg(t('iqama_id'), m.iqama);
-                    if(m.selfie && m.selfie !== 'No File') cardsHtml += makeImg(t('selfie'), m.selfie);
-                    if(m.devicePhoto && m.devicePhoto !== 'No File') cardsHtml += makeImg(t('device_screen'), m.devicePhoto);
+                    cardsHtml += makeImg(t('iqama_id'), m.iqama);
+                    cardsHtml += makeImg(t('selfie'), m.selfie);
+                    cardsHtml += makeImg(t('device_screen'), m.devicePhoto);
                     cardsHtml += `</div></div>`;
                 }
             });
@@ -1417,97 +1366,52 @@ async function onScanSuccess(decodedText){
     showScanResult(scanState, scanMsg, scanColor, isFullscreen);
 }
 
-async function confirmAction(){
-    const btn=document.getElementById('btn-confirm-action'); let hcVal=1;
-    const teamSec = document.getElementById('guard-team-section');
-    if(teamSec && !teamSec.classList.contains('hidden')) {
-        const chks = document.querySelectorAll('.att-chk');
-        if(chks.length > 0) {
-            hcVal = document.querySelectorAll('.att-chk:checked').length;
-            if(hcVal === 0) return alert("Please select at least one person.");
+// Window load function with fail-safe splash screen removal
+window.onload = function() {
+    // Fail-safe: Always hide splash after 2.5 seconds regardless of errors
+    setTimeout(() => {
+        const s = document.getElementById('splash');
+        if(s && s.style.display !== 'none') {
+            s.classList.add('fade-out');
+            setTimeout(() => s.style.display = 'none', 600);
+        }
+    }, 2500);
+
+    try {
+        updateUI();
+        const params = new URLSearchParams(window.location.search);
+        const r = params.get('role');
+        if(r === 'staff' || r === 'guard' || r === 'admin') {
+            const rt = document.getElementById('role-tabs'); if(rt) rt.style.display = 'flex';
+            switchLoginTab(r === 'admin' ? 'admin' : 'guard');
+        }
+        
+        const session = localStorage.getItem(SESSION_KEY);
+        if(session) {
+            const p = JSON.parse(session);
+            const h = (Date.now() - p.time) / (1000 * 60 * 60);
+            if(h < 12) { 
+                currentUser = p.user; 
+                initApp(); 
+                const s = document.getElementById('splash'); 
+                if(s) s.style.display = 'none'; 
+            } else { 
+                localStorage.removeItem(SESSION_KEY); 
+                setTimeout(() => {
+                    const s = document.getElementById('splash');
+                    if(s) { s.classList.add('fade-out'); setTimeout(() => s.style.display = 'none', 600); }
+                }, 1500); 
+            }
         } else {
-            const hcInput = document.getElementById('guard-headcount');
-            if(hcInput && !hcInput.parentElement.classList.contains('hidden')){ hcVal = hcInput.value; if(!hcVal||hcVal<1) return alert("Please enter the number of workers present."); }
+            setTimeout(() => {
+                const s = document.getElementById('splash');
+                if(s) { s.classList.add('fade-out'); setTimeout(() => s.style.display = 'none', 600); }
+            }, 1500);
         }
+    } catch (e) {
+        console.error("Initialization Error:", e);
     }
-    
-    btn.innerText="SAVING & REFRESHING..."; btn.disabled=true;
-    const gInfo = `${currentUser.name} (${currentUser.location})`;
-    const payload = JSON.stringify({ action: currentScanAction, id: currentScannedID, guardInfo: gInfo, headCount: hcVal });
-    
-    try {
-        const res = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: payload });
-        if(res.ok) { window.location.reload(); } else {
-            alert("Sync failed. Please try again."); btn.innerText = t("confirm_action"); btn.disabled = false; isProcessingScan = false;
-        }
-    } catch(e) {
-        alert("Network error. Please try again."); btn.innerText = t("confirm_action"); btn.disabled = false; isProcessingScan = false;
-    }
-}
-
-let addMorePassId = null;
-let addMoreTeamList = [];
-
-function openAddMoreModal(passId) { addMorePassId = passId; addMoreTeamList = []; renderAddTeamRoster(); document.getElementById('add-more-modal').classList.remove('hidden'); }
-function closeAddMoreModal() { document.getElementById('add-more-modal').classList.add('hidden'); }
-
-function toggleAddTeamDeviceInput() {
-    let type = document.getElementById('req-add-team-device-type').value; let group = document.getElementById('req-add-team-device-id-group'); let input = document.getElementById('req-add-team-device-id'); let tDev = document.getElementById('req-add-team-imeiphoto');
-    if(type === 'None') { group.classList.add('hidden'); input.value = ''; if(tDev) tDev.value = ''; clearCapturedData('add_team_imeiphoto'); } 
-    else { group.classList.remove('hidden'); input.placeholder = type === 'Mobile' ? 'IMEI Number' : 'Serial Number'; }
-}
-
-async function saveAddTeamMember() {
-    let iB64='',sB64='',tDevB64='',ii=document.getElementById('req-add-team-iqama'),si=document.getElementById('req-add-team-selfie'),tName=document.getElementById('req-add-team-name'),tIqama=document.getElementById('req-add-team-iqamatext');
-    let devType=document.getElementById('req-add-team-device-type').value, devId=document.getElementById('req-add-team-device-id').value; let tDev=document.getElementById('req-add-team-imeiphoto');
-    if(!tName || !tName.value.trim()) return alert("Provide Name."); if(!tIqama || !tIqama.value.trim()) return alert("Provide Iqama/ID.");
-    if(devType !== 'None') {
-        if(!devId.trim()) return alert("Provide IMEI/Serial number.");
-        if(capturedImages.add_team_imeiphoto) tDevB64=capturedImages.add_team_imeiphoto.split(',')[1];
-        else if(tDev&&tDev.files.length>0){let f=await getBase64(tDev.files[0]); tDevB64=f.split(',')[1]}
-        else return alert("Provide Device Screen photo.");
-    }
-    if(capturedImages.add_team_iqama)iB64=capturedImages.add_team_iqama.split(',')[1];
-    else if(ii&&ii.files.length>0){let f=await getBase64(ii.files[0]);iB64=f.split(',')[1]} else return alert("Provide Iqama photo.");
-
-    if(capturedImages.add_team_selfie)sB64=capturedImages.add_team_selfie.split(',')[1];
-    else if(si&&si.files.length>0){let f=await getBase64(si.files[0]);sB64=f.split(',')[1]} else return alert("Provide Selfie photo.");
-
-    addMoreTeamList.push({ iqama:"data:image/jpeg;base64,"+iB64, selfie:"data:image/jpeg;base64,"+sB64, rawIqama:iB64, rawSelfie:sB64, rawDevicePhoto:tDevB64, name: tName.value.trim() + " *NEW_MEMBER*", iqamaText: tIqama.value.trim(), deviceType: devType, deviceId: devId.trim() });
-    renderAddTeamRoster();
-    if(ii)ii.value="";if(si)si.value="";if(tName)tName.value="";if(tIqama)tIqama.value="";
-    document.getElementById('req-add-team-device-type').value = "None"; document.getElementById('req-add-team-device-id').value = ""; 
-    toggleAddTeamDeviceInput(); clearCapturedData('add_team_iqama');clearCapturedData('add_team_selfie');clearCapturedData('add_team_imeiphoto');
-}
-
-function renderAddTeamRoster(){
-    const div=document.getElementById('add-team-roster-display');
-    if(addMoreTeamList.length>0){
-        div.classList.remove('hidden');let h='';
-        addMoreTeamList.forEach((m,idx)=>{
-            let cleanName = m.name.replace(/\*NEW_MEMBER\*/gi, '').trim();
-            let devHtml = m.deviceType !== 'None' ? `<span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">${m.deviceType}</span>` : '';
-            let imgsHtml = `<img src="${m.iqama}" class="team-member-img" onclick="openFullscreenImage(this.src)"><img src="${m.selfie}" class="team-member-img" onclick="openFullscreenImage(this.src)">`;
-            h+=`<div class="team-member-row"><span style="color:white;font-size:13px;font-weight:bold;">${cleanName} <span style="background:var(--success);color:white;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">${t('new_badge')}</span>${devHtml}</span><div style="display:flex;gap:10px;">${imgsHtml}<button type="button" style="background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:16px;" onclick="addMoreTeamList.splice(${idx},1);renderAddTeamRoster();">❌</button></div></div>`;
-        });
-        div.innerHTML=h;
-    }else div.classList.add('hidden');
-}
-
-async function submitAddMorePeople() {
-    if(addMoreTeamList.length === 0) return alert("Please add at least one person to the list first.");
-    if(!confirm("WARNING: This will reset the pass status back to PENDING. Do you want to proceed?")) return;
-    let btn = document.getElementById('btn-submit-add-more'); btn.innerText = "SUBMITTING..."; btn.disabled = true;
-    let cleanTeam = [];
-    addMoreTeamList.forEach(m => { let devStr = m.deviceType !== 'None' ? `${m.deviceType} (${m.deviceId})` : 'None'; cleanTeam.push({ iqama: m.rawIqama, selfie: m.rawSelfie, devicePhoto: m.rawDevicePhoto, name: m.name, iqamaText: m.iqamaText, deviceString: devStr }); });
-    try {
-        const payload = { action: 'add_team_members', id: addMorePassId, team: cleanTeam };
-        const res = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
-        let json = await res.json();
-        if (json.status === 'success') { closeAddMoreModal(); loadMyPasses(true, true); alert("People added successfully! The pass is now PENDING approval."); } 
-        else throw new Error(json.message);
-    } catch(e) { alert("Upload failed. Try again. Error: " + e.message); } 
-    finally { btn.innerText = "SUBMIT & SEND FOR APPROVAL"; btn.disabled = false; }
-}
+};
 </script>
-</body></html>
+</body>
+</html>
