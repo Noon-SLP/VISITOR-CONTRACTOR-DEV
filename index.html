@@ -358,7 +358,7 @@ function showTeamEntry(){const tb=document.getElementById('team-entry-box'),b=do
 function hideTeamEntry(){const tb=document.getElementById('team-entry-box'),b=document.getElementById('btn-show-team-entry');if(tb)tb.classList.add('hidden');if(b)b.classList.remove('hidden');const ii=document.getElementById('req-team-iqama'),si=document.getElementById('req-team-selfie'),tName=document.getElementById('req-team-name'),tIqama=document.getElementById('req-team-iqamatext');const devType=document.getElementById('req-team-device-type'),devId=document.getElementById('req-team-device-id');const tDev=document.getElementById('req-team-imeiphoto');if(ii)ii.value="";if(si)si.value="";if(tName)tName.value="";if(tIqama)tIqama.value="";if(devType)devType.value="None";if(devId)devId.value="";if(tDev)tDev.value="";toggleTeamDeviceInput();clearCapturedData('team_iqama');clearCapturedData('team_selfie');clearCapturedData('team_imeiphoto')}
 function toggleLeadDeviceInput(){let type=document.getElementById('req-lead-device-type').value;let input=document.getElementById('req-lead-device-id');if(type==='None'){input.classList.add('hidden');input.value=''}else{input.classList.remove('hidden');input.placeholder=type==='Mobile'?'IMEI Number':'Serial Number'}}
 function toggleTeamDeviceInput(){let type=document.getElementById('req-team-device-type').value;let group=document.getElementById('req-team-device-id-group');let input=document.getElementById('req-team-device-id');let tDev=document.getElementById('req-team-imeiphoto');if(type==='None'){group.classList.add('hidden');input.value='';if(tDev)tDev.value='';clearCapturedData('team_imeiphoto')}else{group.classList.remove('hidden');input.placeholder=type==='Mobile'?'IMEI Number':'Serial Number'}}
-async function saveCurrentTeamMember(){let iB64='',sB64='',tDevB64='',ii=document.getElementById('req-team-iqama'),si=document.getElementById('req-team-selfie'),tName=document.getElementById('req-team-name'),tIqama=document.getElementById('req-team-iqamatext');let devType=document.getElementById('req-team-device-type').value,devId=document.getElementById('req-team-device-id').value;let tDev=document.getElementById('req-team-imeiphoto');if(!tName||!tName.value.trim())return alert("Please provide Team Member Name.");if(!tIqama||!tIqama.value.trim())return alert("Please provide Team Member Iqama / ID Number.");let currentDeviceCount=teamList.filter(m=>m.deviceType!=='None').length;let leadDevType=document.getElementById('req-lead-device-type').value;if(leadDevType!=='None')currentDeviceCount++;if(devType!=='None'&&currentDeviceCount>=10)return alert("Maximum of 10 devices allowed per request.");if(devType!=='None'){if(!devId.trim())return alert("Please provide the device IMEI/Serial number.");if(capturedImages.team_imeiphoto)tDevB64=capturedImages.team_imeiphoto.split(',')[1];else if(tDev&&tDev.files.length>0){let f=await getBase64(tDev.files[0]);tDevB64=f.split(',')[1]}else return alert("Please provide Device Screen photo for the team member.");}if(capturedImages.team_iqama)iB64=capturedImages.team_iqama.split(',')[1];else if(ii&&ii.files.length>0){let f=await getBase64(ii.files[0]);iB64=f.split(',')[1]}else return alert("Please provide Iqama photo.");if(capturedImages.team_selfie)sB64=capturedImages.team_selfie.split(',')[1];else if(si&&si.files.length>0){let f=await getBase64(si.files[0]);sB64=f.split(',')[1]}else return alert("Please provide Selfie photo.");teamList.push({iqama:"data:image/jpeg;base64,"+iB64,selfie:"data:image/jpeg;base64,"+sB64,rawIqama:iB64,rawSelfie:sB64,rawDevicePhoto:tDevB64,name:tName.value.trim(),iqamaText:tIqama.value.trim(),deviceType:devType,deviceId:devId.trim()});currentTeamCounter++;renderTeamRoster();if(ii)ii.value="";if(si)si.value="";if(tName)tName.value="";if(tIqama)tIqama.value="";document.getElementById('req-team-device-type').value="None";document.getElementById('req-team-device-id').value="";toggleTeamDeviceInput();clearCapturedData('team_iqama');clearCapturedData('team_selfie');clearCapturedData('team_imeiphoto');const tt=document.getElementById('team-entry-title');if(tt)tt.innerText=`Team Member ${currentTeamCounter}`}
+async function saveCurrentTeamMember(){let iB64='',sB64='',tDevB64='',ii=document.getElementById('req-team-iqama'),si=document.getElementById('req-team-selfie'),tName=document.getElementById('req-team-name'),tIqama=document.getElementById('req-team-iqamatext');let devType=document.getElementById('req-team-device-type').value,devId=document.getElementById('req-team-device-id').value;let tDev=document.getElementById('req-team-imeiphoto');if(!tName||!tName.value.trim())return alert("Please provide Team Member Name.");if(!tIqama||!tIqama.value.trim())return alert("Please provide Team Member Iqama / ID Number.");if(teamList.length>=10)return alert("Batch limit reached: You can only add up to 10 team members at a time. Please submit this pass first, then use '➕ Add More People' to add the rest.");if(devType!=='None'){if(!devId.trim())return alert("Please provide the device IMEI/Serial number.");if(capturedImages.team_imeiphoto)tDevB64=capturedImages.team_imeiphoto.split(',')[1];else if(tDev&&tDev.files.length>0){let f=await getBase64(tDev.files[0]);tDevB64=f.split(',')[1]}else return alert("Please provide Device Screen photo for the team member.");}if(capturedImages.team_iqama)iB64=capturedImages.team_iqama.split(',')[1];else if(ii&&ii.files.length>0){let f=await getBase64(ii.files[0]);iB64=f.split(',')[1]}else return alert("Please provide Iqama photo.");if(capturedImages.team_selfie)sB64=capturedImages.team_selfie.split(',')[1];else if(si&&si.files.length>0){let f=await getBase64(si.files[0]);sB64=f.split(',')[1]}else return alert("Please provide Selfie photo.");teamList.push({iqama:"data:image/jpeg;base64,"+iB64,selfie:"data:image/jpeg;base64,"+sB64,rawIqama:iB64,rawSelfie:sB64,rawDevicePhoto:tDevB64,name:tName.value.trim(),iqamaText:tIqama.value.trim(),deviceType:devType,deviceId:devId.trim()});currentTeamCounter++;renderTeamRoster();if(ii)ii.value="";if(si)si.value="";if(tName)tName.value="";if(tIqama)tIqama.value="";document.getElementById('req-team-device-type').value="None";document.getElementById('req-team-device-id').value="";toggleTeamDeviceInput();clearCapturedData('team_iqama');clearCapturedData('team_selfie');clearCapturedData('team_imeiphoto');const tt=document.getElementById('team-entry-title');if(tt)tt.innerText=`Team Member ${currentTeamCounter}`}
 function renderTeamRoster(){const div=document.getElementById('team-roster-display');if(!div)return;if(teamList.length>0){div.classList.remove('hidden');let h='';teamList.forEach((m,idx)=>{let devHtml=m.deviceType!=='None'?`<span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">${m.deviceType}</span>`:'';let imgsHtml=`<img src="${m.iqama}" class="team-member-img" onclick="openFullscreenImage(this.src)" title="Iqama"><img src="${m.selfie}" class="team-member-img" onclick="openFullscreenImage(this.src)" title="Selfie">`;if(m.rawDevicePhoto&&m.rawDevicePhoto!=='No File'){let devPhotoUri="data:image/jpeg;base64,"+m.rawDevicePhoto;imgsHtml+=`<img src="${devPhotoUri}" class="team-member-img" onclick="openFullscreenImage(this.src)" title="Device Screen">`;}h+=`<div class="team-member-row"><span style="color:white;font-size:13px;font-weight:bold;">${m.name} <span style="font-size:11px;color:var(--text-muted);">(ID: ${m.iqamaText})</span>${devHtml}</span><div style="display:flex;gap:10px;">${imgsHtml}<button type="button" style="background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:16px;" onclick="removeTeamMember(${idx})">❌</button></div></div>`;});div.innerHTML=h}else div.classList.add('hidden')}
 function removeTeamMember(idx){teamList.splice(idx,1);currentTeamCounter=teamList.length+1;renderTeamRoster();const tt=document.getElementById('team-entry-title');if(tt)tt.innerText=`Team Member ${currentTeamCounter}`}
 async function openLiveCamera(type){targetPhotoType=type;const m=document.getElementById('custom-camera-modal');if(m){m.classList.remove('hidden');await startStream('camera-video-stream')}}
@@ -474,10 +474,6 @@ async function submitRequest(){
     let leadDevId = document.getElementById('req-lead-device-id').value;
     if(leadDevType !== 'None' && !leadDevId.trim()) return alert("Please provide the Lead device IMEI/Serial number.");
     let leadImeiVal = leadDevType !== 'None' ? `${leadDevType} (${leadDevId.trim()})` : '';
-
-    let currentDeviceCount = teamList.filter(m => m.deviceType !== 'None').length;
-    if(leadDevType !== 'None') currentDeviceCount++;
-    if(currentDeviceCount > 10) return alert("Maximum of 10 devices allowed per request.");
 
     if(capturedImages.iqama)iB64=capturedImages.iqama.split(',')[1];
     else if(ii&&ii.files.length>0){let f=await getBase64(ii.files[0]);iB64=f.split(',')[1];iMime=ii.files[0].type}
@@ -1040,11 +1036,21 @@ async function adminResetPin(email) {
     } catch(e) { alert("Error resetting PIN"); }
 }
 
-async function adminRemoveTeamMember(passId, memberIndex) {
+async function adminRemoveTeamMember(passId, memberIndex, btn) {
     if(!confirm(`Are you sure you want to completely remove this team member from pass ${passId}?`)) return;
+    
+    let originalText = btn.innerText;
+    btn.innerText = "REMOVING...";
+    btn.disabled = true;
+
     try {
-        const res = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'remove_team_member', id: passId, memberIndex: memberIndex }) });
+        const res = await fetch(SCRIPT_URL, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+            body: JSON.stringify({ action: 'remove_team_member', id: passId, memberIndex: memberIndex }) 
+        });
         const json = await res.json();
+        
         if(json.status === 'success') {
             alert("Team member removed successfully.");
             localStorage.removeItem('cached_admin_data');
@@ -1055,12 +1061,16 @@ async function adminRemoveTeamMember(passId, memberIndex) {
             localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData));
             
             renderAdminData(globalAdminData);
-            openViewRecord(passId);
+            openViewRecord(passId); 
         } else {
             alert("Failed to remove member: " + json.message);
+            btn.innerText = originalText;
+            btn.disabled = false;
         }
     } catch(e) {
         alert("Network error. Could not remove member.");
+        btn.innerText = originalText;
+        btn.disabled = false;
     }
 }
 
@@ -1123,7 +1133,7 @@ function openViewRecord(id){
                 
                 let removeBtnHtml = '';
                 if(currentUser && currentUser.role === 'admin') {
-                    removeBtnHtml = `<button onclick="adminRemoveTeamMember('${r.UniqueID}', ${m.originalIndex})" style="background:var(--danger); border:none; color:white; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer;">🗑️ REMOVE</button>`;
+                    removeBtnHtml = `<button onclick="adminRemoveTeamMember('${r.UniqueID}', ${m.originalIndex}, this)" style="background:var(--danger); border:none; color:white; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer;">🗑️ REMOVE</button>`;
                 }
                 
                 h+=`<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;"><div><span style="color:var(--noon-yellow);font-weight:bold;">${m.name}</span>${newBadge}${devHtml}<br><span style="font-size:11px;color:var(--text-muted);">ID: ${m.iqamaText}</span></div><div style="display:flex;gap:10px;align-items:center;">${imgsHtml} ${removeBtnHtml}</div></div>`;
@@ -1491,6 +1501,7 @@ async function saveAddTeamMember() {
     let iB64='',sB64='',tDevB64='',ii=document.getElementById('req-add-team-iqama'),si=document.getElementById('req-add-team-selfie'),tName=document.getElementById('req-add-team-name'),tIqama=document.getElementById('req-add-team-iqamatext');
     let devType=document.getElementById('req-add-team-device-type').value, devId=document.getElementById('req-add-team-device-id').value; let tDev=document.getElementById('req-add-team-imeiphoto');
     if(!tName || !tName.value.trim()) return alert("Provide Name."); if(!tIqama || !tIqama.value.trim()) return alert("Provide Iqama/ID.");
+    if(addMoreTeamList.length>=10)return alert("Batch limit reached: You can only add up to 10 team members per batch. Please submit these members first.");
     if(devType !== 'None') {
         if(!devId.trim()) return alert("Provide IMEI/Serial number.");
         if(capturedImages.add_team_imeiphoto) tDevB64=capturedImages.add_team_imeiphoto.split(',')[1];
