@@ -448,11 +448,10 @@ function initApp(){
         const lv=document.getElementById('login-view'),al=document.getElementById('app-layout');
         if(lv)lv.classList.add('hidden');if(al)al.classList.remove('hidden');
         if(currentUser&&currentUser.role==='admin'){
-            const vn=document.getElementById('req-vname'),ae=document.getElementById('req-admin-email'),ag=document.getElementById('admin-email-group'),sb=document.getElementById('sidebar'),han=document.getElementById('header-admin-name'),sun=document.getElementById('sidebar-user-name'),na=document.getElementById('nav-sidebar-admin'),glt=document.getElementById('guard-loc-text');
+            const vn=document.getElementById('req-vname'),ae=document.getElementById('req-admin-email'),ag=document.getElementById('admin-email-group'),sb=document.getElementById('sidebar'),han=document.getElementById('header-admin-name'),sun=document.getElementById('sidebar-user-name'),na=document.getElementById('nav-sidebar-admin');
             const msb=document.getElementById('admin-manual-search-box');
             if(vn)vn.value='';if(ae)ae.value='';if(ag)ag.classList.remove('hidden');if(sb)sb.style.display='flex';
             if(han)han.innerText=currentUser.name;if(sun)sun.innerText=currentUser.name;if(na)na.classList.remove('hidden');
-            if(glt)glt.classList.add('hidden');
             if(msb)msb.classList.remove('hidden');
             document.querySelectorAll('.admin-tab').forEach(el => el.classList.remove('hidden'));
             loadAdminData(false);switchMainView('admin');
@@ -914,30 +913,29 @@ function renderAdminData(data){
         if (!isPassExpiredOrFinished) {
             if(inRange){
                 
-                let pendingActions = [];
+                let newCount = 0;
+                let removeCount = 0;
+                let revokeCount = 0;
+
                 let tMembersStr = String(row.TeamMembers || '');
                 if (tMembersStr.trim() !== '') {
                     let lines = tMembersStr.split(/\n\s*\n/).filter(b => b.trim() !== '');
                     lines.forEach(block => {
-                        let nameMatch = block.match(/Name:\s*([^\|]+)/);
-                        let nameRaw = nameMatch ? nameMatch[1].trim() : 'Unknown';
-                        let cleanName = nameRaw.replace(/\*NEW_MEMBER\*|\[NEW\]|\*NEW\*|\(NEW\)|\[REMOVE_REQUESTED\]|\*\[REMOVE_REQUESTED\]\*/gi, '').trim();
-
                         let blockUpper = block.toUpperCase();
                         if (blockUpper.includes('[REMOVE_REQUESTED]')) {
-                            pendingActions.push({ type: 'remove', name: cleanName, target: cleanName });
+                            removeCount++;
                         }
                         if (blockUpper.includes('[DEVICE_REVOKE_REQUESTED]')) {
-                            pendingActions.push({ type: 'revoke', name: cleanName, target: cleanName });
+                            revokeCount++;
                         }
                         if (blockUpper.includes('*NEW_MEMBER*') || blockUpper.includes('[NEW]')) {
-                            pendingActions.push({ type: 'add', name: cleanName, target: cleanName });
+                            newCount++;
                         }
                     });
                 }
                 
                 let hasActionPending = false;
-                if (rStatus === 'Approved' && pendingActions.some(pa => pa.type === 'remove' || pa.type === 'revoke')) {
+                if (rStatus === 'Approved' && (removeCount > 0 || revokeCount > 0)) {
                     hasActionPending = true;
                 }
 
@@ -950,18 +948,23 @@ function renderAdminData(data){
                     actionBtns += `<button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button></div>`;
 
                     let actionBadges = '';
-                    if (pendingActions.length > 0) {
-                        pendingActions.forEach(pa => {
-                            let badgeColor = pa.type === 'remove' ? 'var(--danger)' : (pa.type === 'revoke' ? '#eab308' : 'var(--success)');
-                            let badgeText = pa.type === 'remove' ? `🔴 REMOVAL REQUEST: ${pa.name}` : (pa.type === 'revoke' ? `🟠 DEVICE REVOKE: ${pa.name}` : `🟢 ADDED: ${pa.name}`);
-                            let textCol = pa.type === 'revoke' ? '#000' : '#fff';
-                            actionBadges += `<br><button onclick="openViewRecord('${row.UniqueID}', '${pa.target}')" style="background:${badgeColor};color:${textCol};font-size:10px;padding:3px 6px;border-radius:4px;font-weight:bold;margin-top:4px;border:none;cursor:pointer;text-align:left;display:block;width:fit-content;">${badgeText}</button>`;
-                        });
+                    if (newCount > 0 || removeCount > 0 || revokeCount > 0) {
+                        actionBadges = `<div style="display:flex; gap:10px; margin-top:8px; flex-wrap:wrap;">`;
+                        if (newCount > 0) {
+                            actionBadges += `<button onclick="openViewRecord('${row.UniqueID}')" style="background:var(--success);color:#fff;font-size:10px;padding:4px 8px;border-radius:4px;font-weight:bold;border:none;cursor:pointer;">🟢 ${newCount} NEW ADDED</button>`;
+                        }
+                        if (removeCount > 0) {
+                            actionBadges += `<button onclick="openViewRecord('${row.UniqueID}')" style="background:var(--danger);color:#fff;font-size:10px;padding:4px 8px;border-radius:4px;font-weight:bold;border:none;cursor:pointer;">🔴 ${removeCount} REMOVAL NEEDED</button>`;
+                        }
+                        if (revokeCount > 0) {
+                            actionBadges += `<button onclick="openViewRecord('${row.UniqueID}')" style="background:#eab308;color:#000;font-size:10px;padding:4px 8px;border-radius:4px;font-weight:bold;border:none;cursor:pointer;">🟠 ${revokeCount} DEVICE REMOVAL NEEDED</button>`;
+                        }
+                        actionBadges += `</div>`;
                     } else if (rStatus === 'Pending') {
-                        actionBadges = `<br><span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:bold;">NEW PASS REQUEST</span>`;
+                        actionBadges = `<div style="margin-top:8px;"><span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:4px 8px;border-radius:4px;font-weight:bold;">NEW PASS REQUEST</span></div>`;
                     }
 
-                    hPending += `<tr ${rowStyle}><td style="color:var(--text-muted);">${finalDateStr}</td><td><strong>${rVisitorName}</strong>${actionBadges}<br><span style="font-size:10px;color:var(--text-muted);">Email: ${rHostEmail}</span></td><td>${t(rType.toLowerCase())}</td><td>${rLocation}</td><td>${actionBtns}</td></tr>`;
+                    hPending += `<tr ${rowStyle}><td style="color:var(--text-muted);">${finalDateStr}</td><td><strong>${rVisitorName}</strong><br><span style="font-size:10px;color:var(--text-muted);">Email: ${rHostEmail}</span>${actionBadges}</td><td>${t(rType.toLowerCase())}</td><td>${rLocation}</td><td>${actionBtns}</td></tr>`;
                     pendingCount++;
                 }
                 
@@ -1367,7 +1370,7 @@ function openViewRecord(id, targetName = null){
                 let revokeDevHtml = '';
 
                 if(currentUser && currentUser.role === 'admin') {
-                    removeBtnHtml = `<button onclick="adminRemoveTeamMember('${r.UniqueID}', ${m.originalIndex}, this)" style="background:var(--danger); border:none; color:white; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer;">🗑️ REMOVE</button>`;
+                    removeBtnHtml = `<button onclick="adminRemoveTeamMember('${r.UniqueID}', ${m.originalIndex}, this)" style="background:var(--danger); border:none; color:white; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; margin-left:5px;">🗑️ REMOVE</button>`;
                     if (hasDevice) {
                         revokeDevHtml = `<button onclick="adminRevokeDevice('${r.UniqueID}', ${m.originalIndex}, this)" style="background:#eab308; border:none; color:#000; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer;">🚫 REVOKE DEVICE</button>`;
                     }
