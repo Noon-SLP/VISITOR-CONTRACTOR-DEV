@@ -1116,6 +1116,74 @@ async function adminResetPin(email) {
     } catch(e) { alert("Error resetting PIN"); }
 }
 
+async function requestRemoveTeamMember(passId, memberIndex, btn) {
+    if(!confirm(`Request admin to permanently remove this team member?`)) return;
+    let originalText = btn.innerText;
+    btn.innerText = "REQUESTING...";
+    btn.disabled = true;
+
+    try {
+        const res = await fetch(SCRIPT_URL, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+            body: JSON.stringify({ action: 'request_remove_member', id: passId, memberIndex: memberIndex }) 
+        });
+        const json = await res.json();
+        
+        if(json.status === 'success') {
+            alert("Removal requested successfully. An Admin will review it.");
+            localStorage.removeItem('cached_passes_' + currentUser.email);
+            loadMyPasses(true, true);
+            openViewRecord(passId); 
+        } else {
+            alert("Failed to request removal: " + json.message);
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+    } catch(e) {
+        alert("Network error. Could not request removal.");
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
+}
+
+async function adminRevokeDevice(passId, memberIndex, btn) {
+    if(!confirm(`Are you sure you want to completely revoke device access for this team member?`)) return;
+    let originalText = btn.innerText;
+    btn.innerText = "REVOKING...";
+    btn.disabled = true;
+
+    try {
+        const res = await fetch(SCRIPT_URL, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+            body: JSON.stringify({ action: 'revoke_device', id: passId, memberIndex: memberIndex }) 
+        });
+        const json = await res.json();
+        
+        if(json.status === 'success') {
+            alert("Device access revoked successfully.");
+            localStorage.removeItem('cached_admin_data');
+            
+            const resMain = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'get_all' }) });
+            const dataMain = convertDriveUrls(await resMain.json());
+            globalAdminData = dataMain.reverse();
+            localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData));
+            
+            renderAdminData(globalAdminData);
+            openViewRecord(passId); 
+        } else {
+            alert("Failed to revoke device: " + json.message);
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+    } catch(e) {
+        alert("Network error. Could not revoke device.");
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
+}
+
 async function adminRemoveTeamMember(passId, memberIndex, btn) {
     if(!confirm(`Are you sure you want to completely remove this team member from pass ${passId}?`)) return;
     
@@ -1196,28 +1264,42 @@ function openViewRecord(id){
                 let blockUpper = block.toUpperCase();
                 let nameUpper = nameRaw.toUpperCase();
                 let isNew = nameUpper.includes('*NEW_MEMBER*') || blockUpper.includes('*NEW_MEMBER*') || nameUpper.includes('[NEW]') || blockUpper.includes('[NEW]'); 
+                let isRemoveRequested = nameUpper.includes('[REMOVE_REQUESTED]');
                 
-                let cleanName = nameRaw.replace(/\*NEW_MEMBER\*|\[NEW\]|\*NEW\*|\(NEW\)/gi, '').trim();
+                let cleanName = nameRaw.replace(/\*NEW_MEMBER\*|\[NEW\]|\*NEW\*|\(NEW\)|\[REMOVE_REQUESTED\]|\*\[REMOVE_REQUESTED\]\*/gi, '').trim();
                 
-                td.push({ originalIndex: idx, person: idx+1, name: cleanName, isNew: isNew, iqamaText: iqamaMatch ? iqamaMatch[1].trim() : 'N/A', device: deviceMatch ? deviceMatch[1].trim() : 'None', iqama: extractedUrls[0], selfie: extractedUrls[1], devicePhoto: extractedUrls.length > 2 ? extractedUrls[2] : 'No File' });
+                td.push({ originalIndex: idx, person: idx+1, name: cleanName, isNew: isNew, isRemoveRequested: isRemoveRequested, iqamaText: iqamaMatch ? iqamaMatch[1].trim() : 'N/A', device: deviceMatch ? deviceMatch[1].trim() : 'None', iqama: extractedUrls[0], selfie: extractedUrls[1], devicePhoto: extractedUrls.length > 2 ? extractedUrls[2] : 'No File' });
             }
         });
 
         if(td.length>0){
             h+=`<div style="grid-column:span 2;background:transparent;border-top:1px solid var(--border-color);padding-top:15px;margin-top:10px;"><strong style="font-size:14px;margin-bottom:15px;">TEAM MEMBERS (${td.length})</strong><div style="display:flex;flex-direction:column;gap:10px;">`;
             td.forEach(m=>{
-                let devHtml = m.device !== 'None' ? `<span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">${m.device}</span>` : '';
+                let hasDevice = m.device !== 'None' && m.device !== '';
+                let devHtml = hasDevice ? `<span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">${m.device}</span>` : '';
                 let newBadge = m.isNew ? `<span style="background:var(--success);color:white;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">${t('new_badge')}</span>` : `<span style="background:rgba(255,255,255,0.2);color:white;font-size:9px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;letter-spacing:0.5px;">TEAM</span>`;
+                let removalBadge = m.isRemoveRequested ? `<span style="background:var(--danger);color:white;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">REMOVAL REQUESTED</span>` : '';
+                
                 let imgsHtml = `<img src="${m.iqama}" style="width:50px;height:50px;border-radius:6px;object-fit:cover;cursor:zoom-in;border:1px solid #444;" onclick="openFullscreenImage(this.src)" title="Iqama">`;
                 imgsHtml += `<img src="${m.selfie}" style="width:50px;height:50px;border-radius:6px;object-fit:cover;cursor:zoom-in;border:1px solid #444;" onclick="openFullscreenImage(this.src)" title="Selfie">`;
                 if(m.devicePhoto && m.devicePhoto !== 'No File' && m.devicePhoto.startsWith('http')) imgsHtml += `<img src="${m.devicePhoto}" style="width:50px;height:50px;border-radius:6px;object-fit:cover;cursor:zoom-in;border:1px solid #444;" onclick="openFullscreenImage(this.src)" title="Device Screen">`;
                 
+                let removeReqHtml = '';
                 let removeBtnHtml = '';
+                let revokeDevHtml = '';
+
                 if(currentUser && currentUser.role === 'admin') {
-                    removeBtnHtml = `<button onclick="adminRemoveTeamMember('${r.UniqueID}', ${m.originalIndex}, this)" style="background:var(--danger); border:none; color:white; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer;">🗑️ REMOVE</button>`;
+                    removeBtnHtml = `<button onclick="adminRemoveTeamMember('${r.UniqueID}', ${m.originalIndex}, this)" style="background:var(--danger); border:none; color:white; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; margin-left:5px;">🗑️ REMOVE</button>`;
+                    if (hasDevice) {
+                        revokeDevHtml = `<button onclick="adminRevokeDevice('${r.UniqueID}', ${m.originalIndex}, this)" style="background:#eab308; border:none; color:#000; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; margin-left:5px;">🚫 REVOKE DEVICE</button>`;
+                    }
+                } else {
+                    if (!m.isRemoveRequested) {
+                        removeReqHtml = `<button onclick="requestRemoveTeamMember('${r.UniqueID}', ${m.originalIndex}, this)" style="background:#ef4444; border:none; color:white; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; margin-left:5px;">⚠️ REQUEST REMOVAL</button>`;
+                    }
                 }
                 
-                h+=`<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;"><div><span style="color:var(--noon-yellow);font-weight:bold;">${m.name}</span>${newBadge}${devHtml}<br><span style="font-size:11px;color:var(--text-muted);">ID: ${m.iqamaText}</span></div><div style="display:flex;gap:10px;align-items:center;">${imgsHtml} ${removeBtnHtml}</div></div>`;
+                h+=`<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;"><div><span style="color:var(--noon-yellow);font-weight:bold;">${m.name}</span>${newBadge}${removalBadge}${devHtml}<br><span style="font-size:11px;color:var(--text-muted);">ID: ${m.iqamaText}</span></div><div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">${imgsHtml} ${revokeDevHtml} ${removeBtnHtml} ${removeReqHtml}</div></div>`;
             });
             h+=`</div></div>`;
         }
@@ -1412,7 +1494,7 @@ async function onScanSuccess(decodedText){
                 let nameUpper = nameRaw.toUpperCase();
                 let isNew = nameUpper.includes('*NEW_MEMBER*') || blockUpper.includes('*NEW_MEMBER*') || nameUpper.includes('[NEW]') || blockUpper.includes('[NEW]'); 
                 
-                let cleanName = nameRaw.replace(/\*NEW_MEMBER\*|\[NEW\]|\*NEW\*|\(NEW\)/gi, '').trim();
+                let cleanName = nameRaw.replace(/\*NEW_MEMBER\*|\[NEW\]|\*NEW\*|\(NEW\)|\[REMOVE_REQUESTED\]|\*\[REMOVE_REQUESTED\]\*/gi, '').trim();
                 
                 teamData.push({ person: idx+1, name: cleanName, isNew: isNew, iqamaText: iqamaMatch ? iqamaMatch[1].trim() : 'N/A', device: deviceMatch ? deviceMatch[1].trim() : 'None', iqama: extractedUrls[0], selfie: extractedUrls[1], devicePhoto: extractedUrls.length > 2 ? extractedUrls[2] : 'No File' });
             }
