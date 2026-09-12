@@ -328,9 +328,11 @@ let html5QrCode=null; let scannerFacingMode='environment'; let currentUser=null;
 
 // Convert old Drive URLs to raw image thumbnail URLs dynamically
 function convertDriveUrls(dataObj) {
+    if (!dataObj) return dataObj;
     let str = JSON.stringify(dataObj);
-    str = str.replace(/https:\/\/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)\/view[^\s"'\\]*/g, "https://drive.google.com/thumbnail?id=$1&sz=w1000");
-    str = str.replace(/https:\/\/drive\.google\.com\/uc\?[^\s"'\\]*id=([a-zA-Z0-9_-]+)[^\s"'\\]*/g, "https://drive.google.com/thumbnail?id=$1&sz=w1000");
+    str = str.replace(/https:\/\/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)[^\s"'\\]*/g, "https://lh3.googleusercontent.com/d/$1");
+    str = str.replace(/https:\/\/drive\.google\.com\/uc\?[^\s"'\\]*id=([a-zA-Z0-9_-]+)[^\s"'\\]*/g, "https://lh3.googleusercontent.com/d/$1");
+    str = str.replace(/https:\/\/drive\.google\.com\/thumbnail\?[^\s"'\\]*id=([a-zA-Z0-9_-]+)[^\s"'\\]*/g, "https://lh3.googleusercontent.com/d/$1");
     return JSON.parse(str);
 }
 
