@@ -1040,6 +1040,30 @@ async function adminResetPin(email) {
     } catch(e) { alert("Error resetting PIN"); }
 }
 
+async function adminRemoveTeamMember(passId, memberIndex) {
+    if(!confirm(`Are you sure you want to completely remove this team member from pass ${passId}?`)) return;
+    try {
+        const res = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'remove_team_member', id: passId, memberIndex: memberIndex }) });
+        const json = await res.json();
+        if(json.status === 'success') {
+            alert("Team member removed successfully.");
+            localStorage.removeItem('cached_admin_data');
+            
+            const resMain = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'get_all' }) });
+            const dataMain = convertDriveUrls(await resMain.json());
+            globalAdminData = dataMain.reverse();
+            localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData));
+            
+            renderAdminData(globalAdminData);
+            openViewRecord(passId);
+        } else {
+            alert("Failed to remove member: " + json.message);
+        }
+    } catch(e) {
+        alert("Network error. Could not remove member.");
+    }
+}
+
 function openViewRecord(id){
     const r=globalAdminData.find(x=>String(x.UniqueID)===String(id));if(!r)return;
     let rType = String(r.Type || ''); let displayHostName = (r.HostName || '-').split('||PIN:')[0]; let actualPin = (r.HostName || '').includes('||PIN:') ? (r.HostName || '').split('||PIN:')[1] : null;
@@ -1068,7 +1092,7 @@ function openViewRecord(id){
 
     let tMembers = String(r.TeamMembers || '');
     if(tMembers.trim()!==""){
-        let td=[]; let lines = tMembers.split('\n\n');
+        let td=[]; let lines = tMembers.split(/\n\s*\n/).filter(b => b.trim() !== '');
         lines.forEach((block, idx)=>{
             let nameMatch = block.match(/Name:\s*([^\|]+)/); 
             let iqamaMatch = block.match(/Iqama:\s*(.*?)(?:\s*\||\n)/); 
@@ -1084,7 +1108,7 @@ function openViewRecord(id){
                 
                 let cleanName = nameRaw.replace(/\*NEW_MEMBER\*|\[NEW\]|\*NEW\*|\(NEW\)/gi, '').trim();
                 
-                td.push({ person: idx+1, name: cleanName, isNew: isNew, iqamaText: iqamaMatch ? iqamaMatch[1].trim() : 'N/A', device: deviceMatch ? deviceMatch[1].trim() : 'None', iqama: extractedUrls[0], selfie: extractedUrls[1], devicePhoto: extractedUrls.length > 2 ? extractedUrls[2] : 'No File' });
+                td.push({ originalIndex: idx, person: idx+1, name: cleanName, isNew: isNew, iqamaText: iqamaMatch ? iqamaMatch[1].trim() : 'N/A', device: deviceMatch ? deviceMatch[1].trim() : 'None', iqama: extractedUrls[0], selfie: extractedUrls[1], devicePhoto: extractedUrls.length > 2 ? extractedUrls[2] : 'No File' });
             }
         });
 
@@ -1096,7 +1120,13 @@ function openViewRecord(id){
                 let imgsHtml = `<img src="${m.iqama}" style="width:50px;height:50px;border-radius:6px;object-fit:cover;cursor:zoom-in;border:1px solid #444;" onclick="openFullscreenImage(this.src)" title="Iqama">`;
                 imgsHtml += `<img src="${m.selfie}" style="width:50px;height:50px;border-radius:6px;object-fit:cover;cursor:zoom-in;border:1px solid #444;" onclick="openFullscreenImage(this.src)" title="Selfie">`;
                 if(m.devicePhoto && m.devicePhoto !== 'No File' && m.devicePhoto.startsWith('http')) imgsHtml += `<img src="${m.devicePhoto}" style="width:50px;height:50px;border-radius:6px;object-fit:cover;cursor:zoom-in;border:1px solid #444;" onclick="openFullscreenImage(this.src)" title="Device Screen">`;
-                h+=`<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;"><div><span style="color:var(--noon-yellow);font-weight:bold;">${m.name}</span>${newBadge}${devHtml}<br><span style="font-size:11px;color:var(--text-muted);">ID: ${m.iqamaText}</span></div><div style="display:flex;gap:10px;">${imgsHtml}</div></div>`;
+                
+                let removeBtnHtml = '';
+                if(currentUser && currentUser.role === 'admin') {
+                    removeBtnHtml = `<button onclick="adminRemoveTeamMember('${r.UniqueID}', ${m.originalIndex})" style="background:var(--danger); border:none; color:white; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer;">🗑️ REMOVE</button>`;
+                }
+                
+                h+=`<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;"><div><span style="color:var(--noon-yellow);font-weight:bold;">${m.name}</span>${newBadge}${devHtml}<br><span style="font-size:11px;color:var(--text-muted);">ID: ${m.iqamaText}</span></div><div style="display:flex;gap:10px;align-items:center;">${imgsHtml} ${removeBtnHtml}</div></div>`;
             });
             h+=`</div></div>`;
         }
