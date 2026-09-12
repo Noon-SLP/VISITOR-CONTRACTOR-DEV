@@ -177,7 +177,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
 
     <div id="dashboard-guard" class="dashboard hidden text-center">
       <div class="header">
-        <h2><span data-i18n="gate_scanner">Gate Scanner</span> <span id="guard-loc-text" style="color: var(--text-muted); font-size: 18px;">(<span id="guard-loc-display"></span>)</span><select id="admin-guard-loc" class="input-field hidden" style="width: auto; padding: 6px 12px; font-size: 14px; margin: 0; min-width: 150px;" onchange="updateAdminGuardLoc()"><option value="" data-i18n="select_guard_loc">Select Guard Location...</option><option value="RUH01">RUH01</option><option value="JED01">JED01</option></select></h2>
+        <h2><span data-i18n="gate_scanner">Gate Scanner</span> <span id="guard-loc-text" style="color: var(--text-muted); font-size: 18px;">(<span id="guard-loc-display"></span>)</span></h2>
         <div class="header-controls"><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 16px;" onclick="hardRefreshApp()" title="Hard Refresh Cache">🔄</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 16px;" onclick="toggleFullScreen()" title="Fullscreen">⛶</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 12px;" onclick="toggleLang()">عربي / EN</button><button class="btn-primary btn-outline" style="width: auto; padding: 6px 16px; font-size: 12px;" onclick="logout()" data-i18n="logout">LOGOUT</button></div>
       </div>
       <div style="max-width: 450px; margin: 0 auto;">
@@ -379,7 +379,6 @@ function hardRefreshApp(){if(confirm("Perform a Hard Refresh? This will clear al
 function toggleDateFields(){const te=document.getElementById('req-type');if(!te)return;const type=te.value,vf=document.getElementById('req-visitor-fields'),cf=document.getElementById('req-contractor-fields'),tms=document.getElementById('team-members-section');if(vf)vf.classList.toggle('hidden',type==='Contractor');if(cf)cf.classList.toggle('hidden',type==='Visitor');if(tms)tms.classList.toggle('hidden',type==='Visitor')}
 function switchLoginTab(role){document.querySelectorAll('.role-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('#login-guard, #login-ops, #login-admin').forEach(f=>f.classList.add('hidden'));const te=document.getElementById(`tab-${role}`);if(te)te.classList.add('active');const le=document.getElementById(`login-${role}`);if(le)le.classList.remove('hidden')}
 function switchMainView(vId){document.querySelectorAll('.dashboard').forEach(e=>e.classList.add('hidden'));const tv=document.getElementById(`dashboard-${vId}`);if(tv)tv.classList.remove('hidden');document.querySelectorAll('.sidebar-nav a').forEach(a=>a.classList.remove('active'));const an=document.getElementById(`nav-sidebar-${vId}`);if(an)an.classList.add('active');const sb=document.getElementById('sidebar');if(window.innerWidth<=900&&sb&&!sb.classList.contains('minimized'))toggleSidebar();if(vId==='ops'&&currentUser&&currentUser.role==='admin')loadMyPasses(false,false)}
-function updateAdminGuardLoc(){if(currentUser&&currentUser.role==='admin'){const agl=document.getElementById('admin-guard-loc');if(agl)currentUser.location=agl.value||''}}
 function openFullscreenImage(src){if(!src)return;const fi=document.getElementById('fullscreen-img'),fm=document.getElementById('fullscreen-image-modal');if(fi&&fm){fi.src=src;fm.classList.remove('hidden')}}
 function showTeamEntry(){const tb=document.getElementById('team-entry-box'),b=document.getElementById('btn-show-team-entry'),tt=document.getElementById('team-entry-title');if(tb)tb.classList.remove('hidden');if(b)b.classList.add('hidden');if(tt)tt.innerText=`Team Member ${currentTeamCounter}`}
 function hideTeamEntry(){const tb=document.getElementById('team-entry-box'),b=document.getElementById('btn-show-team-entry');if(tb)tb.classList.add('hidden');if(b)b.classList.remove('hidden');const ii=document.getElementById('req-team-iqama'),si=document.getElementById('req-team-selfie'),tName=document.getElementById('req-team-name'),tIqama=document.getElementById('req-team-iqamatext');const devType=document.getElementById('req-team-device-type'),devId=document.getElementById('req-team-device-id');const tDev=document.getElementById('req-team-imeiphoto');if(ii)ii.value="";if(si)si.value="";if(tName)tName.value="";if(tIqama)tIqama.value="";if(devType)devType.value="None";if(devId)devId.value="";if(tDev)tDev.value="";toggleTeamDeviceInput();clearCapturedData('team_iqama');clearCapturedData('team_selfie');clearCapturedData('team_imeiphoto')}
@@ -449,11 +448,11 @@ function initApp(){
         const lv=document.getElementById('login-view'),al=document.getElementById('app-layout');
         if(lv)lv.classList.add('hidden');if(al)al.classList.remove('hidden');
         if(currentUser&&currentUser.role==='admin'){
-            const vn=document.getElementById('req-vname'),ae=document.getElementById('req-admin-email'),ag=document.getElementById('admin-email-group'),sb=document.getElementById('sidebar'),han=document.getElementById('header-admin-name'),sun=document.getElementById('sidebar-user-name'),na=document.getElementById('nav-sidebar-admin'),glt=document.getElementById('guard-loc-text'),agl=document.getElementById('admin-guard-loc');
+            const vn=document.getElementById('req-vname'),ae=document.getElementById('req-admin-email'),ag=document.getElementById('admin-email-group'),sb=document.getElementById('sidebar'),han=document.getElementById('header-admin-name'),sun=document.getElementById('sidebar-user-name'),na=document.getElementById('nav-sidebar-admin'),glt=document.getElementById('guard-loc-text');
             const msb=document.getElementById('admin-manual-search-box');
             if(vn)vn.value='';if(ae)ae.value='';if(ag)ag.classList.remove('hidden');if(sb)sb.style.display='flex';
             if(han)han.innerText=currentUser.name;if(sun)sun.innerText=currentUser.name;if(na)na.classList.remove('hidden');
-            if(glt)glt.classList.add('hidden');if(agl){agl.classList.remove('hidden');agl.value=currentUser.location||'';currentUser.location=agl.value||''}
+            if(glt)glt.classList.add('hidden');
             if(msb)msb.classList.remove('hidden');
             document.querySelectorAll('.admin-tab').forEach(el => el.classList.remove('hidden'));
             loadAdminData(false);switchMainView('admin');
@@ -463,8 +462,8 @@ function initApp(){
             if(sb)sb.style.display='none';document.body.classList.add('sidebar-minimized');if(mc)mc.style.margin='0';
             if(currentUser.role==='ops'){switchMainView('ops');loadMyPasses(false,false)}
             else if(currentUser.role==='guard'){
-                const glt=document.getElementById('guard-loc-text'),agl=document.getElementById('admin-guard-loc'),ld=document.getElementById('guard-loc-display'),dg=document.getElementById('dashboard-guard');
-                if(glt)glt.classList.remove('hidden');if(agl)agl.classList.add('hidden');if(ld)ld.innerText=currentUser.location||'';
+                const glt=document.getElementById('guard-loc-text'),ld=document.getElementById('guard-loc-display'),dg=document.getElementById('dashboard-guard');
+                if(glt)glt.classList.remove('hidden');if(ld)ld.innerText=currentUser.location||'';
                 document.querySelectorAll('.dashboard').forEach(e=>e.classList.add('hidden'));
                 if(dg)dg.classList.remove('hidden');
             }
@@ -519,10 +518,9 @@ async function performManualSearch() {
                 let endObj = parseFlexibleDate(m.EndDate); let endNum = endObj ? endObj.setHours(0,0,0,0) : startNum;
                 let displayStatus = dStatus; let sc = 'var(--noon-yellow)';
                 
-                if (currentUser && currentUser.role === 'admin' && !currentUser.location) { displayStatus = "NO FACILITY SELECTED"; sc = "var(--danger)"; }
-                else if (dStatus === 'Pending') { displayStatus = "PENDING"; sc = "var(--noon-yellow)"; }
+                if (dStatus === 'Pending') { displayStatus = "PENDING"; sc = "var(--noon-yellow)"; }
                 else if (dStatus !== 'Approved') { displayStatus = "DENIED"; sc = "var(--danger)"; }
-                else if (currentUser && dLoc !== currentUser.location) { displayStatus = "WRONG FACILITY"; sc = "var(--danger)"; }
+                else if (currentUser.role === 'guard' && dLoc !== currentUser.location) { displayStatus = "WRONG FACILITY"; sc = "var(--danger)"; }
                 else if (todayNum < startNum || todayNum > endNum) { displayStatus = todayNum > endNum ? "EXPIRED" : "INVALID DATE"; sc = "var(--danger)"; }
                 else { displayStatus = "APPROVED"; sc = "var(--success)"; }
                 
@@ -915,22 +913,55 @@ function renderAdminData(data){
 
         if (!isPassExpiredOrFinished) {
             if(inRange){
+                
+                let pendingActions = [];
+                let tMembersStr = String(row.TeamMembers || '');
+                if (tMembersStr.trim() !== '') {
+                    let lines = tMembersStr.split(/\n\s*\n/).filter(b => b.trim() !== '');
+                    lines.forEach(block => {
+                        let nameMatch = block.match(/Name:\s*([^\|]+)/);
+                        let nameRaw = nameMatch ? nameMatch[1].trim() : 'Unknown';
+                        let cleanName = nameRaw.replace(/\*NEW_MEMBER\*|\[NEW\]|\*NEW\*|\(NEW\)|\[REMOVE_REQUESTED\]|\*\[REMOVE_REQUESTED\]\*/gi, '').trim();
+
+                        let blockUpper = block.toUpperCase();
+                        if (blockUpper.includes('[REMOVE_REQUESTED]')) {
+                            pendingActions.push({ type: 'remove', name: cleanName, target: cleanName });
+                        }
+                        if (blockUpper.includes('[DEVICE_REVOKE_REQUESTED]')) {
+                            pendingActions.push({ type: 'revoke', name: cleanName, target: cleanName });
+                        }
+                        if (blockUpper.includes('*NEW_MEMBER*') || blockUpper.includes('[NEW]')) {
+                            pendingActions.push({ type: 'add', name: cleanName, target: cleanName });
+                        }
+                    });
+                }
+                
                 let hasActionPending = false;
-                if (rStatus === 'Approved' && row.TeamMembers && (row.TeamMembers.includes('[REMOVE_REQUESTED]') || row.TeamMembers.includes('[DEVICE_REVOKE_REQUESTED]'))) {
+                if (rStatus === 'Approved' && pendingActions.some(pa => pa.type === 'remove' || pa.type === 'revoke')) {
                     hasActionPending = true;
                 }
 
                 // PENDING TAB LOGIC
-                if(rStatus==='Pending' || hasActionPending){
-                    let actionBtns=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;">`;
+                if (rStatus === 'Pending' || hasActionPending) {
+                    let actionBtns = `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;">`;
                     if (rStatus === 'Pending') {
                         actionBtns += `<button class="btn-primary btn-success btn-sm" style="width:auto;white-space:nowrap;" onclick="updateStatus('${row.UniqueID}','Approved')">${t('btn_approve')}</button><button class="btn-primary btn-danger btn-sm" style="width:auto;white-space:nowrap;" onclick="updateStatus('${row.UniqueID}','Rejected')">${t('btn_reject')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button>`;
                     }
                     actionBtns += `<button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button></div>`;
-                    
-                    let pBadge = rStatus==='Pending' ? '' : `<br><span style="background:var(--danger);color:white;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:bold;">MEMBER ACTION PENDING</span>`;
-                    
-                    hPending+=`<tr ${rowStyle}><td style="color:var(--text-muted);">${finalDateStr}</td><td><strong>${rVisitorName}</strong>${pBadge}<br><span style="font-size:10px;color:var(--text-muted);">Email: ${rHostEmail}</span></td><td>${t(rType.toLowerCase())}</td><td>${rLocation}</td><td>${actionBtns}</td></tr>`;
+
+                    let actionBadges = '';
+                    if (pendingActions.length > 0) {
+                        pendingActions.forEach(pa => {
+                            let badgeColor = pa.type === 'remove' ? 'var(--danger)' : (pa.type === 'revoke' ? '#eab308' : 'var(--success)');
+                            let badgeText = pa.type === 'remove' ? `🔴 REMOVAL REQUEST: ${pa.name}` : (pa.type === 'revoke' ? `🟠 DEVICE REVOKE: ${pa.name}` : `🟢 ADDED: ${pa.name}`);
+                            let textCol = pa.type === 'revoke' ? '#000' : '#fff';
+                            actionBadges += `<br><button onclick="openViewRecord('${row.UniqueID}', '${pa.target}')" style="background:${badgeColor};color:${textCol};font-size:10px;padding:3px 6px;border-radius:4px;font-weight:bold;margin-top:4px;border:none;cursor:pointer;text-align:left;display:block;width:fit-content;">${badgeText}</button>`;
+                        });
+                    } else if (rStatus === 'Pending') {
+                        actionBadges = `<br><span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:bold;">NEW PASS REQUEST</span>`;
+                    }
+
+                    hPending += `<tr ${rowStyle}><td style="color:var(--text-muted);">${finalDateStr}</td><td><strong>${rVisitorName}</strong>${actionBadges}<br><span style="font-size:10px;color:var(--text-muted);">Email: ${rHostEmail}</span></td><td>${t(rType.toLowerCase())}</td><td>${rLocation}</td><td>${actionBtns}</td></tr>`;
                     pendingCount++;
                 }
                 
@@ -1066,7 +1097,7 @@ async function submitAdminGateAction(actionType) {
     
     if(autoRefreshTimer) clearInterval(autoRefreshTimer);
     try{
-        const adminInfo=`Admin: ${currentUser.name} (${currentUser.email})`;
+        const adminInfo = currentUser.role === 'admin' ? `Admin: ${currentUser.name}` : `${currentUser.name} (${currentUser.location})`;
         const res=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:actionType,id:id,guardInfo:adminInfo,headCount:1})});
         if(!res.ok)throw new Error("HTTP error");
         localStorage.removeItem('cached_admin_data'); 
@@ -1090,7 +1121,7 @@ async function adminRevokePass(id){
         }
     }
     try{
-        const adminInfo=`Admin: ${currentUser.name} (${currentUser.email})`;
+        const adminInfo = currentUser.role === 'admin' ? `Admin: ${currentUser.name}` : `${currentUser.name} (${currentUser.location})`;
         const res=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'check_out',id:id,guardInfo:adminInfo,headCount:1,forceStatus:'Completed'})});
         if(!res.ok)throw new Error("HTTP error");
         localStorage.removeItem('cached_admin_data'); setTimeout(()=>{loadAdminData(true)},1000);
@@ -1266,7 +1297,7 @@ async function adminRemoveTeamMember(passId, memberIndex, btn) {
     }
 }
 
-function openViewRecord(id){
+function openViewRecord(id, targetName = null){
     const r=globalAdminData.find(x=>String(x.UniqueID)===String(id)) || myPassesData.find(x=>String(x.UniqueID)===String(id));
     if(!r)return;
     let rType = String(r.Type || ''); let displayHostName = (r.HostName || '-').split('||PIN:')[0]; let actualPin = (r.HostName || '').includes('||PIN:') ? (r.HostName || '').split('||PIN:')[1] : null;
@@ -1349,13 +1380,30 @@ function openViewRecord(id){
                     }
                 }
                 
-                h+=`<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;"><div><span style="color:var(--noon-yellow);font-weight:bold;">${m.name}</span>${newBadge}${removalBadge}<br><span style="font-size:11px;color:var(--text-muted);">ID: ${m.iqamaText}</span><br>${devHtml}${devRevokeBadge}</div><div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">${imgsHtml} ${revokeDevHtml} ${removeBtnHtml} ${removeReqHtml}</div></div>`;
+                h+=`<div class="modal-team-row" data-member-name="${m.name}" style="display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.2);padding:10px;border-radius:8px; border:1px solid rgba(255,255,255,0.05); transition: all 0.3s ease;"><div><span style="color:var(--noon-yellow);font-weight:bold;">${m.name}</span>${newBadge}${removalBadge}<br><span style="font-size:11px;color:var(--text-muted);">ID: ${m.iqamaText}</span><br>${devHtml}${devRevokeBadge}</div><div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">${imgsHtml} ${revokeDevHtml} ${removeBtnHtml} ${removeReqHtml}</div></div>`;
             });
             h+=`</div></div>`;
         }
     }
     const mc=document.getElementById('view-record-content'),modal=document.getElementById('view-record-modal');
     if(mc)mc.innerHTML=h;if(modal)modal.classList.remove('hidden');
+
+    if (targetName) {
+        setTimeout(() => {
+            let rows = document.querySelectorAll('.modal-team-row');
+            rows.forEach(r => {
+                if (r.getAttribute('data-member-name') === targetName) {
+                    r.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    r.style.boxShadow = '0 0 20px var(--noon-yellow)';
+                    r.style.borderColor = 'var(--noon-yellow)';
+                    setTimeout(() => {
+                        r.style.boxShadow = '';
+                        r.style.borderColor = 'rgba(255,255,255,0.05)';
+                    }, 3000);
+                }
+            });
+        }, 300);
+    }
 }
 
 function closeViewRecord(){const modal=document.getElementById('view-record-modal');if(modal)modal.classList.add('hidden')}
@@ -1507,10 +1555,9 @@ async function onScanSuccess(decodedText){
     let isInside = !!data.CheckInTime && !data.CheckOutTime;
 
     let scanState = t("allowed"), scanMsg = t("pass_validated"), scanColor = "bg-green"; let allowAction = true;
-    if(currentUser.role==='admin'&&!currentUser.location) { scanState=t("denied"); scanMsg=t("admin_select_fac"); scanColor="bg-red"; allowAction=false; }
-    else if(dStatus === 'Pending') { scanState=t("pending"); scanMsg=t("awaiting_admin"); scanColor="bg-yellow"; allowAction=false; }
+    if(dStatus === 'Pending') { scanState=t("pending"); scanMsg=t("awaiting_admin"); scanColor="bg-yellow"; allowAction=false; }
     else if(dStatus !== 'Approved') { scanState=t("denied"); scanMsg=t("not_approved"); scanColor="bg-red"; allowAction=false; }
-    else if(dLoc !== currentUser.location) { scanState=t("wrong_facility"); scanMsg=t("wrong_fac_msg")+" ("+dLoc+")"; scanColor="bg-red"; allowAction=false; }
+    else if(currentUser.role === 'guard' && dLoc !== currentUser.location) { scanState=t("wrong_facility"); scanMsg=t("wrong_fac_msg")+" ("+dLoc+")"; scanColor="bg-red"; allowAction=false; }
     else if(todayNum < startNum || todayNum > endNum) { scanState = todayNum > endNum ? t("expired") : t("invalid_date"); scanMsg = todayNum > endNum ? t("expired") : t("not_valid_today"); scanColor="bg-red"; allowAction=false; }
 
     let isFullscreen = (dType === 'Contractor' || dType === 'Visitor');
