@@ -34,10 +34,24 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:14px 20px
 <div id="fullscreen-image-modal" class="popup-modal hidden" onclick="this.classList.add('hidden')" style="z-index: 9999999; cursor: zoom-out;"><img id="fullscreen-img" src="" style="max-width: 95vw; max-height: 95vh; border-radius: 8px; object-fit: contain;"><div style="position: absolute; bottom: 20px; color: white; background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 20px;" data-i18n="click_to_close">Click anywhere to close</div></div>
 <div id="view-record-modal" class="popup-modal hidden"><div class="record-modal-box"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;" data-i18n="detailed_record">Detailed Record View</h3><button onclick="closeViewRecord()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div id="view-record-content" class="record-modal-content"></div></div></div>
 <div id="extend-pass-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 400px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;" data-i18n="extend_pass">Extend Pass Validity</h3><button onclick="closeExtendPass()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; display: flex; flex-direction: column; gap: 15px;"><input type="hidden" id="extend-id"><input type="hidden" id="extend-type"><div class="input-group" id="extend-start-group"><label style="color: var(--noon-yellow); font-size: 13px;" data-i18n="new_start_date">New Visit / Start Date</label><input type="date" id="extend-start" class="input-field"></div><div class="input-group" id="extend-end-group"><label style="color: var(--noon-yellow); font-size: 13px;" data-i18n="new_end_date">New End Date</label><input type="date" id="extend-end" class="input-field"></div><button id="btn-submit-extend" class="btn-primary" onclick="submitExtendPass()" data-i18n="save_extension">SAVE EXTENSION</button></div></div></div>
+
+<div id="batch-limit-modal" class="popup-modal hidden" style="z-index: 999999;">
+    <div class="record-modal-box" style="max-width: 400px; text-align: center;">
+        <div class="record-modal-header">
+            <h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">BATCH LIMIT REACHED</h3>
+        </div>
+        <div style="padding: 25px; display: flex; flex-direction: column; gap: 15px;">
+            <p style="color:var(--text-muted); font-size:13px;">You have added 10 members. Please submit this batch before adding more.</p>
+            <button class="btn-primary btn-success" onclick="handleBatchChoice('done')">✅ SUBMIT & DONE</button>
+            <button class="btn-primary btn-warning" style="color:#000;" onclick="handleBatchChoice('more')">🔄 SUBMIT & KEEP ADDING</button>
+        </div>
+    </div>
+</div>
+
 <div id="custom-camera-modal" class="popup-modal hidden"><div style="display: flex; flex-direction: column; align-items: center; background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color);"><video id="camera-video-stream" autoplay playsinline></video><canvas id="camera-hidden-canvas" class="hidden"></canvas><div class="cam-controls"><button class="btn-primary btn-success" style="width: auto;" onclick="captureLivePhoto()" data-i18n="capture">📸 CAPTURE</button><button class="btn-primary btn-outline" style="width: auto;" onclick="switchLiveCamera()" data-i18n="flip_cam">🔄 FLIP CAM</button><button class="btn-primary btn-danger" style="width: auto;" onclick="closeLiveCamera()" data-i18n="cancel">❌ CANCEL</button></div></div></div>
 <div id="pin-create-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 350px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">Set Security PIN</h3><button onclick="closePinCreate()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; display: flex; flex-direction: column; gap: 15px; text-align:center;"><p style="color:var(--text-muted); font-size:13px;">Create a 4-digit PIN to secure your passes. You will need this to view your QR codes on other devices.</p><input type="password" id="new-pin-input" class="input-field" placeholder="****" maxlength="4" style="text-align:center; font-size:24px; letter-spacing:10px;" oninput="this.value=this.value.replace(/[^0-9]/g,'')"><button class="btn-primary" onclick="confirmPinCreate()">SAVE PIN</button></div></div></div>
 <div id="pin-verify-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 350px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">Security PIN Required</h3><button onclick="closePinVerify()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; display: flex; flex-direction: column; gap: 15px; text-align:center;"><p style="color:var(--text-muted); font-size:13px;">Please enter your 4-digit PIN to unlock and view your passes.</p><input type="password" id="verify-pin-input" class="input-field" placeholder="****" maxlength="4" style="text-align:center; font-size:24px; letter-spacing:10px;" oninput="this.value=this.value.replace(/[^0-9]/g,'')"><p id="pin-error-msg" class="hidden" style="color:var(--danger); font-size:12px; margin:0;">Incorrect PIN.</p><button class="btn-primary" onclick="confirmPinVerify()">UNLOCK</button></div></div></div>
-<div id="add-more-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 500px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;" data-i18n="add_more_people">➕ Add More People</h3><button onclick="closeAddMoreModal()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; display: flex; flex-direction: column; gap: 15px;"><p style="color:var(--danger); font-size:12px; font-weight:bold; margin-bottom:5px;" data-i18n="add_more_warning">⚠️ WARNING: Submitting this will change the pass status back to PENDING. It cannot be used until the Admin approves it again.</p><div id="add-team-roster-display" class="team-roster hidden"></div><div id="add-team-entry-box" style="border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; background: rgba(255,255,255,0.02);"><div class="input-group" style="margin-bottom: 15px;"><input type="text" id="req-add-team-name" class="input-field" data-i18n="full_name_ph" placeholder="Full Name"></div><div class="input-group" style="margin-bottom: 15px;"><input type="text" id="req-add-team-iqamatext" class="input-field" data-i18n="iqama_id_ph" placeholder="Iqama / ID Number"></div><div class="input-group" style="margin-bottom: 15px;"><label style="font-size: 11px; color:var(--noon-yellow);" data-i18n="device_type_label">Device Type</label><select id="req-add-team-device-type" class="input-field" onchange="toggleAddTeamDeviceInput()"><option value="None" data-i18n="no_device">No Device</option><option value="Mobile">Mobile</option><option value="Laptop">Laptop</option></select></div><div class="input-group hidden" id="req-add-team-device-id-group" style="margin-bottom: 15px;"><input type="text" id="req-add-team-device-id" class="input-field" placeholder="IMEI / Serial Number"><label style="font-size: 11px; margin-top:10px;" data-i18n="upload_device_photo">Upload Device Photo/Screen</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_imeiphoto')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-add-team-imeiphoto" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_imeiphoto')"></div><img id="preview-add_team_imeiphoto" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div><div class="input-group"><label style="font-size: 11px;" data-i18n="upload_iqama">Upload Iqama/ID Copy</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_iqama')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-add-team-iqama" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_iqama')"></div><img id="preview-add_team_iqama" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div><div class="input-group" style="margin-bottom: 15px;"><label style="font-size: 11px;" data-i18n="upload_selfie">Upload Selfie Photo</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_selfie')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-add-team-selfie" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_selfie')"></div><img id="preview-add_team_selfie" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div><button type="button" class="btn-primary btn-success" style="font-size: 12px;" onclick="saveAddTeamMember()" data-i18n="save_person_list">✅ SAVE PERSON TO LIST</button></div><button id="btn-submit-add-more" class="btn-primary" onclick="submitAddMorePeople()" data-i18n="submit_send_approval">SUBMIT & SEND FOR APPROVAL</button></div></div></div>
+<div id="add-more-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 500px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;" data-i18n="add_more_people">➕ Add More People</h3><button onclick="closeAddMoreModal()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; max-height: calc(90vh - 65px);"><p style="color:var(--danger); font-size:12px; font-weight:bold; margin-bottom:5px;" data-i18n="add_more_warning">⚠️ WARNING: Submitting this will change the pass status back to PENDING. It cannot be used until the Admin approves it again.</p><div id="add-team-roster-display" class="team-roster hidden"></div><div id="add-team-entry-box" style="border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; background: rgba(255,255,255,0.02);"><div class="input-group" style="margin-bottom: 15px;"><input type="text" id="req-add-team-name" class="input-field" data-i18n="full_name_ph" placeholder="Full Name"></div><div class="input-group" style="margin-bottom: 15px;"><input type="text" id="req-add-team-iqamatext" class="input-field" data-i18n="iqama_id_ph" placeholder="Iqama / ID Number"></div><div class="input-group" style="margin-bottom: 15px;"><label style="font-size: 11px; color:var(--noon-yellow);" data-i18n="device_type_label">Device Type</label><select id="req-add-team-device-type" class="input-field" onchange="toggleAddTeamDeviceInput()"><option value="None" data-i18n="no_device">No Device</option><option value="Mobile">Mobile</option><option value="Laptop">Laptop</option></select></div><div class="input-group hidden" id="req-add-team-device-id-group" style="margin-bottom: 15px;"><input type="text" id="req-add-team-device-id" class="input-field" placeholder="IMEI / Serial Number"><label style="font-size: 11px; margin-top:10px;" data-i18n="upload_device_photo">Upload Device Photo/Screen</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_imeiphoto')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-add-team-imeiphoto" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_imeiphoto')"></div><img id="preview-add_team_imeiphoto" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div><div class="input-group"><label style="font-size: 11px;" data-i18n="upload_iqama">Upload Iqama/ID Copy</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_iqama')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-add-team-iqama" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_iqama')"></div><img id="preview-add_team_iqama" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div><div class="input-group" style="margin-bottom: 15px;"><label style="font-size: 11px;" data-i18n="upload_selfie">Upload Selfie Photo</label><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button type="button" class="btn-primary btn-outline" style="flex: 1; padding: 10px; font-size: 12px;" onclick="openLiveCamera('add_team_selfie')" data-i18n="live_camera">📷 Live Camera</button><input type="file" id="req-add-team-selfie" class="file-input" accept="image/*" style="flex: 1; padding: 8px;" onchange="clearCapturedData('add_team_selfie')"></div><img id="preview-add_team_selfie" class="hidden" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); cursor: pointer;" onclick="openFullscreenImage(this.src)"></div><button type="button" class="btn-primary btn-success" style="font-size: 12px;" onclick="saveAddTeamMember()" data-i18n="save_person_list">✅ SAVE PERSON TO LIST</button></div><button id="btn-submit-add-more" class="btn-primary" onclick="submitAddMorePeople()" data-i18n="submit_send_approval">SUBMIT & SEND FOR APPROVAL</button></div></div></div>
 <div id="admin-gate-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 400px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">🚪 GATE ACTION</h3><button onclick="closeAdminGateModal()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; display: flex; flex-direction: column; gap: 15px; text-align: center;"><p style="color:var(--text-muted); font-size:13px; margin-bottom:10px;">Select an action for pass <strong id="admin-gate-id-display" style="color:white;"></strong></p><input type="hidden" id="admin-gate-id"><button class="btn-primary btn-success" style="font-size: 14px; padding: 14px;" onclick="submitAdminGateAction('check_in')">✅ CHECK IN</button><button class="btn-primary btn-warning" style="font-size: 14px; padding: 14px; color:#000;" onclick="submitAdminGateAction('check_out')">🚪 CHECK OUT</button></div></div></div>
 
 <div id="timeline-modal" class="popup-modal hidden"><div class="record-modal-box" style="max-width: 700px;"><div class="record-modal-header"><h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">📜 Access Timeline</h3><button onclick="closeTimeline()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button></div><div style="padding: 25px; overflow-y: auto; max-height: 70vh;"><h4 id="timeline-pass-name" style="color: white; margin-bottom: 20px; font-size: 15px;"></h4><div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse;"><thead><tr><th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Check-In</th><th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Check-Out</th><th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Duration</th><th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Guard</th></tr></thead><tbody id="timeline-table-body"></tbody></table></div></div></div></div>
@@ -324,7 +338,20 @@ const SCRIPT_URL='https://script.google.com/macros/s/AKfycbzFQCv1Ng_n-U13NiMLz1Z
 const urlParams = new URLSearchParams(window.location.search);
 const currentRoleParam = urlParams.get('role') || 'default';
 const SESSION_KEY = 'noon_session_' + currentRoleParam;
-let html5QrCode=null; let scannerFacingMode='environment'; let currentUser=null; let currentScannedID=null; let currentScanAction='check_in'; let currentAdminFilter='all'; let autoRefreshTimer=null; let globalAdminData=[]; let checkedPrintIds=new Set(); let liveStream=null; let currentFacingMode='environment'; let targetPhotoType=''; let capturedImages={iqama:null,selfie:null,imeiphoto:null,vehicle:null,fmpoc:null}; let teamList=[]; let currentTeamCounter=1; let isProcessingScan = false; let userSecurityPin = null; let lockedPassesData = null; let pinCreateMode = 'submit';
+let html5QrCode=null; let scannerFacingMode='environment'; let currentUser=null; let currentScannedID=null; let currentScanAction='check_in'; let currentAdminFilter='all'; let autoRefreshTimer=null; let globalAdminData=[]; let myPassesData=[]; let checkedPrintIds=new Set(); let liveStream=null; let currentFacingMode='environment'; let targetPhotoType=''; let capturedImages={iqama:null,selfie:null,imeiphoto:null,vehicle:null,fmpoc:null}; let teamList=[]; let currentTeamCounter=1; let isProcessingScan = false; let userSecurityPin = null; let lockedPassesData = null; let pinCreateMode = 'submit';
+
+let currentBatchType = 'new';
+function checkBatchLimit(type) {
+    currentBatchType = type;
+    document.getElementById('batch-limit-modal').classList.remove('hidden');
+}
+
+function handleBatchChoice(choice) {
+    document.getElementById('batch-limit-modal').classList.add('hidden');
+    let keepAdding = (choice === 'more');
+    if (currentBatchType === 'new') submitRequest(keepAdding);
+    else submitAddMorePeople(keepAdding);
+}
 
 // Convert old Drive URLs to raw image thumbnail URLs dynamically
 function convertDriveUrls(dataObj) {
@@ -336,7 +363,7 @@ function convertDriveUrls(dataObj) {
     return JSON.parse(str);
 }
 
-async function confirmPinCreate(){let pin=document.getElementById('new-pin-input').value.trim();if(pin.length!==4)return alert("Please enter a valid 4-digit PIN.");userSecurityPin=pin;let email=currentUser.email;if(currentUser.role==='admin'){const ei=document.getElementById('req-admin-email');if(ei&&ei.value)email=ei.value.toLowerCase().trim();}localStorage.setItem('user_pin_'+email,pin);document.getElementById('pin-create-modal').classList.add('hidden');if(pinCreateMode==='reset'){try{await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'update_pin',email:email,pin:pin})});}catch(e){}setTimeout(()=>loadMyPasses(true,true),1000);renderMyPasses(lockedPassesData);}else{submitRequest();}}
+async function confirmPinCreate(){let pin=document.getElementById('new-pin-input').value.trim();if(pin.length!==4)return alert("Please enter a valid 4-digit PIN.");userSecurityPin=pin;let email=currentUser.email;if(currentUser.role==='admin'){const ei=document.getElementById('req-admin-email');if(ei&&ei.value)email=ei.value.toLowerCase().trim();}localStorage.setItem('user_pin_'+email,pin);document.getElementById('pin-create-modal').classList.add('hidden');if(pinCreateMode==='reset'){try{await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'update_pin',email:email,pin:pin})});}catch(e){}setTimeout(()=>loadMyPasses(true,true),1000);renderMyPasses(lockedPassesData);}else{submitRequest();} }
 function closePinCreate(){document.getElementById('pin-create-modal').classList.add('hidden');}
 function processAndRenderPasses(data,email,isSilent){if(currentUser&&currentUser.role==='admin'){renderMyPasses(data);return;}let hasActive=false;const todayNum=new Date().setHours(0,0,0,0);if(Array.isArray(data)){data.forEach(p=>{let safeType=String(p.Type||'');let safeStatus=String(p.Status||'Pending');let endObj=parseFlexibleDate(p.EndDate)||parseFlexibleDate(p.StartDate);let endNum=endObj?endObj.setHours(0,0,0,0):todayNum;let isComp=(todayNum>endNum)||safeStatus==='Rejected'||safeStatus==='Completed';if(!isComp)hasActive=true;});}let backendPin=null;if(Array.isArray(data)){for(let i=data.length-1;i>=0;i--){if(data[i].HostName&&data[i].HostName.includes('||PIN:')){backendPin=data[i].HostName.split('||PIN:')[1];break;}}}let localPin=localStorage.getItem('user_pin_'+email);if(!hasActive&&data.length>0){localStorage.removeItem('user_pin_'+email);userSecurityPin=null;if(backendPin){fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'reset_pin',email:email})}).catch(e=>{});}renderMyPasses(data);return;}if(!hasActive&&data.length===0){renderMyPasses(data);return;}if(!backendPin&&localPin){backendPin=localPin;fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'update_pin',email:email,pin:localPin})}).catch(e=>{});}if(backendPin&&backendPin!==localPin){lockedPassesData=data;const verifyModal=document.getElementById('pin-verify-modal');if(!isSilent&&verifyModal){verifyModal.classList.remove('hidden');document.getElementById('pin-error-msg').classList.add('hidden');document.getElementById('verify-pin-input').value='';}const listDiv=document.getElementById('my-passes-list');if(listDiv)listDiv.innerHTML='<p style="color:var(--text-muted);font-size:13px;margin-top:20px;text-align:center;">Passes locked. <button class="btn-primary btn-sm" style="width:auto;padding:4px 10px;margin-left:10px;" onclick="loadMyPasses(true,false)">UNLOCK</button></p>';return;}if(!backendPin&&!localPin&&Array.isArray(data)&&data.length>0){lockedPassesData=data;const createModal=document.getElementById('pin-create-modal');if(!isSilent&&createModal){pinCreateMode='reset';createModal.classList.remove('hidden');document.getElementById('new-pin-input').value='';}const listDiv=document.getElementById('my-passes-list');if(listDiv)listDiv.innerHTML='<p style="color:var(--text-muted);font-size:13px;margin-top:20px;text-align:center;">Passes locked. Awaiting new PIN.</p>';return;}userSecurityPin=backendPin||localPin;renderMyPasses(data);}
 function confirmPinVerify(){let pin=document.getElementById('verify-pin-input').value.trim();let email=currentUser.email;if(currentUser.role==='admin'){const ei=document.getElementById('req-admin-email');if(ei&&ei.value)email=ei.value.toLowerCase().trim();}let backendPin=null;for(let i=lockedPassesData.length-1;i>=0;i--){if(lockedPassesData[i].HostName&&lockedPassesData[i].HostName.includes('||PIN:')){backendPin=lockedPassesData[i].HostName.split('||PIN:')[1];break;}}if(pin===backendPin){userSecurityPin=pin;localStorage.setItem('user_pin_'+email,pin);document.getElementById('pin-verify-modal').classList.add('hidden');renderMyPasses(lockedPassesData);}else{document.getElementById('pin-error-msg').classList.remove('hidden');}}
@@ -358,7 +385,48 @@ function showTeamEntry(){const tb=document.getElementById('team-entry-box'),b=do
 function hideTeamEntry(){const tb=document.getElementById('team-entry-box'),b=document.getElementById('btn-show-team-entry');if(tb)tb.classList.add('hidden');if(b)b.classList.remove('hidden');const ii=document.getElementById('req-team-iqama'),si=document.getElementById('req-team-selfie'),tName=document.getElementById('req-team-name'),tIqama=document.getElementById('req-team-iqamatext');const devType=document.getElementById('req-team-device-type'),devId=document.getElementById('req-team-device-id');const tDev=document.getElementById('req-team-imeiphoto');if(ii)ii.value="";if(si)si.value="";if(tName)tName.value="";if(tIqama)tIqama.value="";if(devType)devType.value="None";if(devId)devId.value="";if(tDev)tDev.value="";toggleTeamDeviceInput();clearCapturedData('team_iqama');clearCapturedData('team_selfie');clearCapturedData('team_imeiphoto')}
 function toggleLeadDeviceInput(){let type=document.getElementById('req-lead-device-type').value;let input=document.getElementById('req-lead-device-id');if(type==='None'){input.classList.add('hidden');input.value=''}else{input.classList.remove('hidden');input.placeholder=type==='Mobile'?'IMEI Number':'Serial Number'}}
 function toggleTeamDeviceInput(){let type=document.getElementById('req-team-device-type').value;let group=document.getElementById('req-team-device-id-group');let input=document.getElementById('req-team-device-id');let tDev=document.getElementById('req-team-imeiphoto');if(type==='None'){group.classList.add('hidden');input.value='';if(tDev)tDev.value='';clearCapturedData('team_imeiphoto')}else{group.classList.remove('hidden');input.placeholder=type==='Mobile'?'IMEI Number':'Serial Number'}}
-async function saveCurrentTeamMember(){let iB64='',sB64='',tDevB64='',ii=document.getElementById('req-team-iqama'),si=document.getElementById('req-team-selfie'),tName=document.getElementById('req-team-name'),tIqama=document.getElementById('req-team-iqamatext');let devType=document.getElementById('req-team-device-type').value,devId=document.getElementById('req-team-device-id').value;let tDev=document.getElementById('req-team-imeiphoto');if(!tName||!tName.value.trim())return alert("Please provide Team Member Name.");if(!tIqama||!tIqama.value.trim())return alert("Please provide Team Member Iqama / ID Number.");if(teamList.length>=10)return alert("Batch limit reached: You can only add up to 10 team members at a time. Please submit this pass first, then use '➕ Add More People' to add the rest.");if(devType!=='None'){if(!devId.trim())return alert("Please provide the device IMEI/Serial number.");if(capturedImages.team_imeiphoto)tDevB64=capturedImages.team_imeiphoto.split(',')[1];else if(tDev&&tDev.files.length>0){let f=await getBase64(tDev.files[0]);tDevB64=f.split(',')[1]}else return alert("Please provide Device Screen photo for the team member.");}if(capturedImages.team_iqama)iB64=capturedImages.team_iqama.split(',')[1];else if(ii&&ii.files.length>0){let f=await getBase64(ii.files[0]);iB64=f.split(',')[1]}else return alert("Please provide Iqama photo.");if(capturedImages.team_selfie)sB64=capturedImages.team_selfie.split(',')[1];else if(si&&si.files.length>0){let f=await getBase64(si.files[0]);sB64=f.split(',')[1]}else return alert("Please provide Selfie photo.");teamList.push({iqama:"data:image/jpeg;base64,"+iB64,selfie:"data:image/jpeg;base64,"+sB64,rawIqama:iB64,rawSelfie:sB64,rawDevicePhoto:tDevB64,name:tName.value.trim(),iqamaText:tIqama.value.trim(),deviceType:devType,deviceId:devId.trim()});currentTeamCounter++;renderTeamRoster();if(ii)ii.value="";if(si)si.value="";if(tName)tName.value="";if(tIqama)tIqama.value="";document.getElementById('req-team-device-type').value="None";document.getElementById('req-team-device-id').value="";toggleTeamDeviceInput();clearCapturedData('team_iqama');clearCapturedData('team_selfie');clearCapturedData('team_imeiphoto');const tt=document.getElementById('team-entry-title');if(tt)tt.innerText=`Team Member ${currentTeamCounter}`}
+
+async function saveCurrentTeamMember(){
+    let iB64='',sB64='',tDevB64='',ii=document.getElementById('req-team-iqama'),si=document.getElementById('req-team-selfie'),tName=document.getElementById('req-team-name'),tIqama=document.getElementById('req-team-iqamatext');
+    let devType=document.getElementById('req-team-device-type').value,devId=document.getElementById('req-team-device-id').value;let tDev=document.getElementById('req-team-imeiphoto');
+    
+    if(!tName||!tName.value.trim())return alert("Please provide Team Member Name.");
+    if(!tIqama||!tIqama.value.trim())return alert("Please provide Team Member Iqama / ID Number.");
+    
+    let iqamaVal = tIqama.value.trim();
+    let leadIqama = document.getElementById('req-iqamatext') ? document.getElementById('req-iqamatext').value.trim() : '';
+    if (iqamaVal === leadIqama && leadIqama !== '') return alert("Duplicate! This ID matches the Lead Visitor/Contractor.");
+    if (teamList.some(m => m.iqamaText === iqamaVal)) return alert("Duplicate! This ID is already in the team list.");
+
+    let currentDeviceCount=teamList.filter(m=>m.deviceType!=='None').length;
+    let leadDevType=document.getElementById('req-lead-device-type').value;
+    if(leadDevType!=='None')currentDeviceCount++;
+    if(devType!=='None'&&currentDeviceCount>=10)return alert("Maximum of 10 devices allowed per request.");
+    
+    if(devType!=='None'){
+        if(!devId.trim())return alert("Please provide the device IMEI/Serial number.");
+        if(capturedImages.team_imeiphoto)tDevB64=capturedImages.team_imeiphoto.split(',')[1];
+        else if(tDev&&tDev.files.length>0){let f=await getBase64(tDev.files[0]);tDevB64=f.split(',')[1]}
+        else return alert("Please provide Device Screen photo for the team member.");
+    }
+    if(capturedImages.team_iqama)iB64=capturedImages.team_iqama.split(',')[1];
+    else if(ii&&ii.files.length>0){let f=await getBase64(ii.files[0]);iB64=f.split(',')[1]}
+    else return alert("Please provide Iqama photo.");
+    if(capturedImages.team_selfie)sB64=capturedImages.team_selfie.split(',')[1];
+    else if(si&&si.files.length>0){let f=await getBase64(si.files[0]);sB64=f.split(',')[1]}
+    else return alert("Please provide Selfie photo.");
+
+    teamList.push({iqama:"data:image/jpeg;base64,"+iB64,selfie:"data:image/jpeg;base64,"+sB64,rawIqama:iB64,rawSelfie:sB64,rawDevicePhoto:tDevB64,name:tName.value.trim(),iqamaText:iqamaVal,deviceType:devType,deviceId:devId.trim()});
+    currentTeamCounter++;renderTeamRoster();
+    
+    if(ii)ii.value="";if(si)si.value="";if(tName)tName.value="";if(tIqama)tIqama.value="";
+    document.getElementById('req-team-device-type').value="None";document.getElementById('req-team-device-id').value="";
+    toggleTeamDeviceInput();clearCapturedData('team_iqama');clearCapturedData('team_selfie');clearCapturedData('team_imeiphoto');
+    const tt=document.getElementById('team-entry-title');if(tt)tt.innerText=`Team Member ${currentTeamCounter}`;
+
+    if (teamList.length === 10) { checkBatchLimit('new'); }
+}
+
 function renderTeamRoster(){const div=document.getElementById('team-roster-display');if(!div)return;if(teamList.length>0){div.classList.remove('hidden');let h='';teamList.forEach((m,idx)=>{let devHtml=m.deviceType!=='None'?`<span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">${m.deviceType}</span>`:'';let imgsHtml=`<img src="${m.iqama}" class="team-member-img" onclick="openFullscreenImage(this.src)" title="Iqama"><img src="${m.selfie}" class="team-member-img" onclick="openFullscreenImage(this.src)" title="Selfie">`;if(m.rawDevicePhoto&&m.rawDevicePhoto!=='No File'){let devPhotoUri="data:image/jpeg;base64,"+m.rawDevicePhoto;imgsHtml+=`<img src="${devPhotoUri}" class="team-member-img" onclick="openFullscreenImage(this.src)" title="Device Screen">`;}h+=`<div class="team-member-row"><span style="color:white;font-size:13px;font-weight:bold;">${m.name} <span style="font-size:11px;color:var(--text-muted);">(ID: ${m.iqamaText})</span>${devHtml}</span><div style="display:flex;gap:10px;">${imgsHtml}<button type="button" style="background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:16px;" onclick="removeTeamMember(${idx})">❌</button></div></div>`;});div.innerHTML=h}else div.classList.add('hidden')}
 function removeTeamMember(idx){teamList.splice(idx,1);currentTeamCounter=teamList.length+1;renderTeamRoster();const tt=document.getElementById('team-entry-title');if(tt)tt.innerText=`Team Member ${currentTeamCounter}`}
 async function openLiveCamera(type){targetPhotoType=type;const m=document.getElementById('custom-camera-modal');if(m){m.classList.remove('hidden');await startStream('camera-video-stream')}}
@@ -465,7 +533,7 @@ async function performManualSearch() {
     } catch(e) { resDiv.innerHTML = '<p style="color:var(--danger); font-size:12px;">Search failed.</p>'; }
 }
 
-async function submitRequest(){
+async function submitRequest(keepAdding = false){
     const ti=document.getElementById('req-type');if(!ti)return;
     const type=ti.value,ii=document.getElementById('req-iqama'),si=document.getElementById('req-selfie'),imPho=document.getElementById('req-imeiphoto'),vi=document.getElementById('req-vehicle'),btn=document.getElementById('btn-submit-req');
     if(!btn)return;
@@ -543,20 +611,31 @@ async function submitRequest(){
     const fmPocInput = document.getElementById('req-con-fmpoc'); if(fmPocInput) fmPocInput.value="";
     document.getElementById('req-lead-device-type').value = "None"; toggleLeadDeviceInput();
     clearCapturedData('iqama');clearCapturedData('selfie');clearCapturedData('imeiphoto');clearCapturedData('vehicle');
+    
     teamList=[];currentTeamCounter=1;renderTeamRoster();hideTeamEntry();
 
-    btn.innerText="SUBMITTING...";btn.disabled=true;
-    try{
-        const payload={ action:'create', UniqueID: tempId, hostName:hName, hostEmail:hMail, visitorName:vName, type:type, location:document.getElementById('req-location').value, startDate:startDateVal, endDate:endDateVal, iqamaBase64:iB64, iqamaMimeType:iMime, selfieBase64:sB64, selfieMimeType:sMime, imeiNumber:leadImeiVal, imeiPhotoBase64:imB64, fmPoc:fmPocVal, vehicleBase64:vB64, vehicleMimeType:vMime, vehiclePlateNo:'', team:cleanTeam, slpTicketNo:type==='Visitor'?document.getElementById('req-vis-slp').value:document.getElementById('req-con-slp').value, contactNo:type==='Visitor'?document.getElementById('req-vis-contact').value:document.getElementById('req-con-contact').value, invitedBy:type==='Visitor'?document.getElementById('req-vis-invitedby').value:'', projectName:type==='Contractor'?document.getElementById('req-con-project').value:'', companyName:type==='Contractor'?document.getElementById('req-con-company').value:'', projectManager:type==='Contractor'?document.getElementById('req-con-pm').value:'' };
-        const res = await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
-        let responseJson = await res.json();
-        if (responseJson.status === 'success') { btn.innerText=t("submit_approval");btn.disabled=false; loadMyPasses(true, true); } 
-        else throw new Error(responseJson.message || "Server Error");
-    }catch(e){
-        alert("Upload failed. Error: " + e.message);
-        existingPasses.pop(); localStorage.setItem(cachedKey, JSON.stringify(existingPasses)); renderMyPasses(existingPasses);
-        btn.innerText=t("submit_approval");btn.disabled=false;
-    } finally { startAutoRefresh(currentUser.role); }
+    const payload={ action:'create', UniqueID: tempId, hostName:hName, hostEmail:hMail, visitorName:vName, type:type, location:document.getElementById('req-location').value, startDate:startDateVal, endDate:endDateVal, iqamaBase64:iB64, iqamaMimeType:iMime, selfieBase64:sB64, selfieMimeType:sMime, imeiNumber:leadImeiVal, imeiPhotoBase64:imB64, fmPoc:fmPocVal, vehicleBase64:vB64, vehicleMimeType:vMime, vehiclePlateNo:'', team:cleanTeam, slpTicketNo:type==='Visitor'?document.getElementById('req-vis-slp').value:document.getElementById('req-con-slp').value, contactNo:type==='Visitor'?document.getElementById('req-vis-contact').value:document.getElementById('req-con-contact').value, invitedBy:type==='Visitor'?document.getElementById('req-vis-invitedby').value:'', projectName:type==='Contractor'?document.getElementById('req-con-project').value:'', companyName:type==='Contractor'?document.getElementById('req-con-company').value:'', projectManager:type==='Contractor'?document.getElementById('req-con-pm').value:'' };
+
+    if (keepAdding) {
+        btn.innerText = t("submit_approval"); btn.disabled = false;
+        fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) })
+        .then(() => loadMyPasses(true, true)).catch(e => console.error(e));
+        
+        openAddMoreModal(tempId);
+        startAutoRefresh(currentUser.role);
+    } else {
+        btn.innerText="SUBMITTING...";btn.disabled=true;
+        try{
+            const res = await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+            let responseJson = await res.json();
+            if (responseJson.status === 'success') { btn.innerText=t("submit_approval");btn.disabled=false; loadMyPasses(true, true); } 
+            else throw new Error(responseJson.message || "Server Error");
+        }catch(e){
+            alert("Upload failed. Error: " + e.message);
+            existingPasses.pop(); localStorage.setItem(cachedKey, JSON.stringify(existingPasses)); renderMyPasses(existingPasses);
+            btn.innerText=t("submit_approval");btn.disabled=false;
+        } finally { startAutoRefresh(currentUser.role); }
+    }
 }
 
 function downloadQR(id) {
@@ -578,6 +657,7 @@ function renderMyPasses(data){
     let h='';
     if(!Array.isArray(data) || data.length===0){ listDiv.innerHTML=`<p style="color:var(--text-muted);font-size:13px;">${t("msg_no_history")}</p>`; return; }
     let displayData = [...data].reverse();
+    myPassesData = displayData;
 
     displayData.forEach(pass=>{
         let safeId = String(pass.UniqueID).replace(/[^a-zA-Z0-9_-]/g, '');
@@ -594,7 +674,7 @@ function renderMyPasses(data){
         h+=`<div class="pass-item" id="pass-card-${safeId}"><div class="pass-header"><div><strong style="color:white;font-size:14px;">${pass.VisitorName}</strong><br><span style="font-size:11px;color:var(--text-muted);">${t(safeType.toLowerCase())} • ${safeLoc}</span><br><span style="font-size:10px;color:var(--noon-yellow);">${valText}</span></div><div style="text-align:right;"><span style="font-size:11px;font-weight:bold;color:${sc};text-transform:uppercase;">${st}</span><br><span style="font-size:10px;color:var(--text-muted);">${pass.UniqueID}</span></div></div>`;
         
         if(!isComp && safeStatus !== 'Rejected') {
-            h+=`<div style="text-align:center;margin-top:10px;"><div class="qr-box" id="qr-${safeId}" style="background:white;padding:10px;border-radius:6px;display:inline-block;min-width:140px;min-height:140px;"></div><div style="margin-top:15px;" id="save-btn-container-${safeId}"><button class="btn-primary btn-outline btn-sm" style="margin-bottom:8px;" onclick="downloadQR('${pass.UniqueID}')" data-i18n="save_qr">${t('save_qr')}</button><br><button class="btn-primary btn-warning btn-sm" style="color:#000;" onclick="openAddMoreModal('${pass.UniqueID}')">➕ ${t('add_more_people')}</button></div></div>`;
+            h+=`<div style="text-align:center;margin-top:10px;"><div class="qr-box" id="qr-${safeId}" style="background:white;padding:10px;border-radius:6px;display:inline-block;min-width:140px;min-height:140px;"></div><div style="margin-top:15px;" id="save-btn-container-${safeId}"><button class="btn-primary btn-outline btn-sm" style="margin-bottom:8px;" onclick="downloadQR('${pass.UniqueID}')" data-i18n="save_qr">${t('save_qr')}</button><br><button class="btn-primary btn-warning btn-sm" style="color:#000; margin-bottom:8px;" onclick="openAddMoreModal('${pass.UniqueID}')">➕ ${t('add_more_people')}</button><br><button class="btn-primary btn-outline btn-sm" style="color:var(--text-main);" onclick="openViewRecord('${pass.UniqueID}')">👁️ SEE MEMBERS</button></div></div>`;
         } else if (safeStatus === 'Rejected') {
             h+=`<div style="text-align:center;margin-top:15px;font-size:12px;color:var(--danger);font-weight:bold;"><em>${t("status_rejected")} - Access Denied</em></div>`;
         } else if (safeStatus === 'Completed') {
@@ -1075,7 +1155,8 @@ async function adminRemoveTeamMember(passId, memberIndex, btn) {
 }
 
 function openViewRecord(id){
-    const r=globalAdminData.find(x=>String(x.UniqueID)===String(id));if(!r)return;
+    const r=globalAdminData.find(x=>String(x.UniqueID)===String(id)) || myPassesData.find(x=>String(x.UniqueID)===String(id));
+    if(!r)return;
     let rType = String(r.Type || ''); let displayHostName = (r.HostName || '-').split('||PIN:')[0]; let actualPin = (r.HostName || '').includes('||PIN:') ? (r.HostName || '').split('||PIN:')[1] : null;
     let h=`<div><strong>${t('lbl_host_name')}</strong>${displayHostName}</div>`;
     
@@ -1500,7 +1581,14 @@ function toggleAddTeamDeviceInput() {
 async function saveAddTeamMember() {
     let iB64='',sB64='',tDevB64='',ii=document.getElementById('req-add-team-iqama'),si=document.getElementById('req-add-team-selfie'),tName=document.getElementById('req-add-team-name'),tIqama=document.getElementById('req-add-team-iqamatext');
     let devType=document.getElementById('req-add-team-device-type').value, devId=document.getElementById('req-add-team-device-id').value; let tDev=document.getElementById('req-add-team-imeiphoto');
-    if(!tName || !tName.value.trim()) return alert("Provide Name."); if(!tIqama || !tIqama.value.trim()) return alert("Provide Iqama/ID.");
+    
+    if(!tName || !tName.value.trim()) return alert("Provide Name."); 
+    if(!tIqama || !tIqama.value.trim()) return alert("Provide Iqama/ID.");
+    
+    let iqamaVal = tIqama.value.trim();
+    let leadIqama = document.getElementById('req-iqamatext') ? document.getElementById('req-iqamatext').value.trim() : '';
+    if (addMoreTeamList.some(m => m.iqamaText === iqamaVal)) return alert("Duplicate! This ID is already in the current batch.");
+    
     if(addMoreTeamList.length>=10)return alert("Batch limit reached: You can only add up to 10 team members per batch. Please submit these members first.");
     if(devType !== 'None') {
         if(!devId.trim()) return alert("Provide IMEI/Serial number.");
@@ -1519,6 +1607,8 @@ async function saveAddTeamMember() {
     if(ii)ii.value="";if(si)si.value="";if(tName)tName.value="";if(tIqama)tIqama.value="";
     document.getElementById('req-add-team-device-type').value = "None"; document.getElementById('req-add-team-device-id').value = ""; 
     toggleAddTeamDeviceInput(); clearCapturedData('add_team_iqama');clearCapturedData('add_team_selfie');clearCapturedData('add_team_imeiphoto');
+    
+    if (addMoreTeamList.length === 10) { checkBatchLimit('more'); }
 }
 
 function renderAddTeamRoster(){
@@ -1535,20 +1625,37 @@ function renderAddTeamRoster(){
     }else div.classList.add('hidden');
 }
 
-async function submitAddMorePeople() {
+async function submitAddMorePeople(keepAdding = false) {
     if(addMoreTeamList.length === 0) return alert("Please add at least one person to the list first.");
-    if(!confirm("WARNING: This will reset the pass status back to PENDING. Do you want to proceed?")) return;
-    let btn = document.getElementById('btn-submit-add-more'); btn.innerText = "SUBMITTING..."; btn.disabled = true;
+    if(!keepAdding && !confirm("WARNING: This will reset the pass status back to PENDING. Do you want to proceed?")) return;
+    
+    let btn = document.getElementById('btn-submit-add-more'); 
+    btn.innerText = "SUBMITTING..."; btn.disabled = true;
+    
     let cleanTeam = [];
     addMoreTeamList.forEach(m => { let devStr = m.deviceType !== 'None' ? `${m.deviceType} (${m.deviceId})` : 'None'; cleanTeam.push({ iqama: m.rawIqama, selfie: m.rawSelfie, devicePhoto: m.rawDevicePhoto, name: m.name, iqamaText: m.iqamaText, deviceString: devStr }); });
+    
     try {
         const payload = { action: 'add_team_members', id: addMorePassId, team: cleanTeam };
-        const res = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
-        let json = await res.json();
-        if (json.status === 'success') { closeAddMoreModal(); loadMyPasses(true, true); alert("People added successfully! The pass is now PENDING approval."); } 
-        else throw new Error(json.message);
-    } catch(e) { alert("Upload failed. Try again. Error: " + e.message); } 
-    finally { btn.innerText = "SUBMIT & SEND FOR APPROVAL"; btn.disabled = false; }
+        
+        if (keepAdding) {
+            fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) })
+            .then(() => loadMyPasses(true, true)).catch(e => console.error(e));
+            
+            addMoreTeamList = [];
+            renderAddTeamRoster();
+            btn.innerText = "SUBMIT & SEND FOR APPROVAL"; btn.disabled = false;
+        } else {
+            const res = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
+            let json = await res.json();
+            if (json.status === 'success') { closeAddMoreModal(); loadMyPasses(true, true); alert("People added successfully! The pass is now PENDING approval."); } 
+            else throw new Error(json.message);
+        }
+    } catch(e) { 
+        alert("Upload failed. Try again. Error: " + e.message); 
+    } finally { 
+        if(!keepAdding){ btn.innerText = "SUBMIT & SEND FOR APPROVAL"; btn.disabled = false; }
+    }
 }
 </script>
 </body>
