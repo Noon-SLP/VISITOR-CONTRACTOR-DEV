@@ -749,17 +749,38 @@ async function apiCall(payload) {
                 formData.append(key, payload[key]);
             }
         }
-        const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: formData.toString()
-        });
+
+        let isGetAction = payload && payload.action && (payload.action === 'get_all' || payload.action === 'get_single' || payload.action === 'get_by_email');
+        let response;
+        
+        if (isGetAction) {
+            let fetchUrl = SCRIPT_URL + '?action=' + encodeURIComponent(payload.action);
+            if (payload.email) fetchUrl += '&email=' + encodeURIComponent(payload.email);
+            if (payload.id) fetchUrl += '&id=' + encodeURIComponent(payload.id);
+            response = await fetch(fetchUrl, { method: 'GET' });
+        } else {
+            response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: formData.toString()
+            });
+        }
 
         const text = await response.text();
         try {
             return JSON.parse(text);
         } catch (jsonErr) {
-            console.warn("API returned non-JSON response:", text);
+            let firstBracket = text.indexOf('[');
+            let lastBracket = text.lastIndexOf(']');
+            let firstBrace = text.indexOf('{');
+            let lastBrace = text.lastIndexOf('}');
+            
+            if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+                return JSON.parse(text.substring(firstBracket, lastBracket + 1));
+            }
+            if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+                return JSON.parse(text.substring(firstBrace, lastBrace + 1));
+            }
             return { status: "success", raw: text };
         }
     } catch (e) {
@@ -1453,8 +1474,33 @@ function toggleSelectAll(src) { const cbs = _q('.print-checkbox.row-checkbox'); 
 
 async function loadAdminData(isSilent = false) {
     const cachedM = localStorage.getItem('cached_admin_data');
-    if (cachedM && !isSilent) { try { let parsedM = JSON.parse(cachedM); if (Array.isArray(parsedM)) renderAdminData(parsedM.reverse()); else localStorage.removeItem('cached_admin_data'); } catch (e) { localStorage.removeItem('cached_admin_data'); } }
-    try { const res = await apiCall({ action: 'get_all' }); const dataMain = convertDriveUrls(res); if (Array.isArray(dataMain)) { const newMStr = JSON.stringify(dataMain); if (isSilent && cachedM === newMStr) return; localStorage.setItem('cached_admin_data', newMStr); renderAdminData(dataMain.reverse()); } else renderAdminData([]); } catch (e) { renderAdminData(globalAdminData || []); if (!isSilent && !cachedM) console.error("Fetch admin data error:", e); }
+    if (cachedM && !isSilent) { 
+        try { 
+            let parsedM = JSON.parse(cachedM); 
+            if (Array.isArray(parsedM)) renderAdminData(parsedM.reverse()); 
+            else localStorage.removeItem('cached_admin_data'); 
+        } catch (e) { 
+            localStorage.removeItem('cached_admin_data'); 
+        } 
+    }
+    
+    try { 
+        const res = await apiCall({ action: 'get_all' }); 
+        const dataMain = convertDriveUrls(res); 
+        if (Array.isArray(dataMain)) { 
+            const newMStr = JSON.stringify(dataMain); 
+            localStorage.setItem('cached_admin_data', newMStr); 
+            renderAdminData(dataMain.reverse()); 
+        } else if (dataMain && Array.isArray(dataMain.data)) {
+            const newMStr = JSON.stringify(dataMain.data); 
+            localStorage.setItem('cached_admin_data', newMStr); 
+            renderAdminData(dataMain.data.reverse()); 
+        } else {
+            if (!cachedM) renderAdminData(globalAdminData || []); 
+        }
+    } catch (e) { 
+        if (!isSilent && !cachedM) console.error("Fetch admin data error:", e); 
+    }
 }
 
 async function updateStatus(id, newStatus) {
@@ -1498,7 +1544,8 @@ async function submitAdminGateAction(actionType) {
     closeAdminGateModal();
     try {
         await apiCall({ action: actionType, id: id, guardInfo: adminInfo, headCount: 1 });
-        loadAdminData(true);
+        localStorage.removeItem('cached_admin_data');
+        await loadAdminData(true);
     } catch(e) {
         console.error(e);
     }
