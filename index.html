@@ -879,7 +879,7 @@ function toggleFullScreen() {
     if (!d.fullscreenElement && !d.mozFullScreenElement && !d.webkitFullscreenElement && !d.msFullscreenElement) {
         if (req) req.call(de).catch(e => console.log(e)); else alert("Fullscreen not supported");
     } else {
-        if (exit) exit.call(d).catch(e => console.log(e));
+        if (exit) exit.call(de).catch(e => console.log(e));
     }
 }
 
@@ -1761,7 +1761,12 @@ async function confirmAction() {
     const gInfo = `${currentUser.name} (${currentUser.location})`;
     try {
         await apiCall({ action: currentScanAction, id: currentScannedID, guardInfo: gInfo, headCount: hcVal });
-        window.location.reload();
+        localStorage.removeItem('cached_admin_data');
+        if (currentUser && currentUser.role === 'admin') {
+            await loadAdminData(true);
+        } else {
+            window.location.reload();
+        }
     } catch (e) {
         alert("Network error. Please try again."); btn.innerText = t("confirm_action"); btn.disabled = false; isProcessingScan = false;
     }
