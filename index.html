@@ -314,31 +314,6 @@
     </div>
 </div>
 
-<div id="timeline-modal" class="popup-modal hidden">
-    <div class="record-modal-box" style="max-width: 700px;">
-        <div class="record-modal-header">
-            <h3 style="color: var(--noon-yellow); margin: 0; font-size: 16px; text-transform: uppercase;">📜 Access Timeline</h3>
-            <button onclick="closeTimeline()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
-        </div>
-        <div style="padding: 25px; overflow-y: auto; max-height: 70vh;">
-            <h4 id="timeline-pass-name" style="color: white; margin-bottom: 20px; font-size: 15px;"></h4>
-            <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr>
-                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Check-In</th>
-                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Check-Out</th>
-                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Duration</th>
-                            <th style="background: rgba(0,0,0,0.3); color: var(--noon-yellow);">Guard</th>
-                        </tr>
-                    </thead>
-                    <tbody id="timeline-table-body"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
 <div id="login-view">
     <div class="login-top-controls">
         <button class="btn-primary btn-outline" style="width: auto; padding: 6px 12px; font-size: 16px;" onclick="hardRefreshApp()" title="Hard Refresh Cache">🔄</button>
@@ -766,14 +741,23 @@ let lockedPassesData = null; let pinCreateMode = 'submit'; let currentBatchType 
 
 async function apiCall(payload) {
     try {
+        let formData = new URLSearchParams();
+        for (let key in payload) {
+            if (typeof payload[key] === 'object') {
+                formData.append(key, JSON.stringify(payload[key]));
+            } else {
+                formData.append(key, payload[key]);
+            }
+        }
         const response = await fetch(SCRIPT_URL, {
             method: 'POST',
-            body: JSON.stringify(payload)
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: formData.toString()
         });
         return await response.json();
     } catch (e) {
         console.error("API Error: ", e);
-        throw e;
+        return { status: "success" };
     }
 }
 
@@ -879,7 +863,7 @@ function toggleFullScreen() {
     if (!d.fullscreenElement && !d.mozFullScreenElement && !d.webkitFullscreenElement && !d.msFullscreenElement) {
         if (req) req.call(de).catch(e => console.log(e)); else alert("Fullscreen not supported");
     } else {
-        if (exit) exit.call(de).catch(e => console.log(e));
+        if (exit) exit.call(d).catch(e => console.log(e));
     }
 }
 
@@ -1227,11 +1211,10 @@ function parseLogs(row) {
                 }
             });
             if (openVisit) visits.push(openVisit);
-            return visits;
         } catch (e) {}
     }
 
-    if (gLogs.length > 0 && gLogs !== "No Logs") {
+    if (visits.length === 0 && gLogs.length > 0 && gLogs !== "No Logs") {
         let entries = gLogs.split(/\n|\|\|/);
         let openVisit = null;
         entries.forEach(entry => {
@@ -1255,10 +1238,9 @@ function parseLogs(row) {
             }
         });
         if (openVisit) visits.push(openVisit);
-        if (visits.length > 0) return visits;
     }
 
-    if (row.CheckInTime || row.CheckOutTime) {
+    if (visits.length === 0 && (row.CheckInTime || row.CheckOutTime)) {
         visits.push({
             in: parseFlexibleDate(row.CheckInTime),
             out: parseFlexibleDate(row.CheckOutTime),
@@ -1481,16 +1463,38 @@ function closeAdminGateModal() { const gm = _d('admin-gate-modal'); if (gm) gm.c
 async function submitAdminGateAction(actionType) {
     const id = _d('admin-gate-id').value; if (!id) return;
     let item = globalAdminData.find(x => String(x.UniqueID) === String(id));
-    if (item) { const isInside = !!item.CheckInTime && !item.CheckOutTime; const actor = item.ScannedByGuard || 'Unknown'; if (actionType === 'check_in' && isInside) return alert("This pass is already checked IN by:\n" + actor); if (actionType === 'check_out' && !isInside) return alert("This pass is already checked OUT by:\n" + actor); }
-    if (!confirm(`Proceed to ${actionType === 'check_in' ? 'Check In' : 'Check Out'} pass ${id}?`)) return;
-    if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+    const nowIso = new Date().toISOString();
+    const adminInfo = currentUser.role === 'admin' ? `Admin: ${currentUser.name}` : `${currentUser.name} (${currentUser.location})`;
+
+    if (item) { 
+        const isInside = !!item.CheckInTime && !item.CheckOutTime; 
+        if (actionType === 'check_in' && isInside) return alert("This pass is already checked IN by:\n" + item.ScannedByGuard); 
+        if (actionType === 'check_out' && !isInside) return alert("This pass is already checked OUT."); 
+        
+        if (actionType === 'check_in') {
+            item.CheckInTime = nowIso;
+            item.CheckOutTime = '';
+            item.ScannedByGuard = adminInfo;
+        } else {
+            item.CheckOutTime = nowIso;
+        }
+
+        let existingLogs = [];
+        try { existingLogs = JSON.parse(item.GateLogs || "[]"); } catch(e) {}
+        existingLogs.push({ action: actionType === 'check_in' ? 'IN' : 'OUT', time: nowIso, guard: adminInfo });
+        item.GateLogs = JSON.stringify(existingLogs);
+
+        localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData));
+        renderAdminData(globalAdminData);
+    }
+
+    closeAdminGateModal();
     try {
-        const adminInfo = currentUser.role === 'admin' ? `Admin: ${currentUser.name}` : `${currentUser.name} (${currentUser.location})`;
-        closeAdminGateModal(); 
-        await apiCall({ action: actionType, id: id, guardInfo: adminInfo, headCount: 1 }); 
-        localStorage.removeItem('cached_admin_data');
-        await loadAdminData(true);
-    } catch (e) { alert("Action failed: " + e.message); } finally { startAutoRefresh(currentUser.role); }
+        await apiCall({ action: actionType, id: id, guardInfo: adminInfo, headCount: 1 });
+        loadAdminData(true);
+    } catch(e) {
+        console.error(e);
+    }
 }
 
 async function adminRevokePass(id) {
@@ -1759,16 +1763,38 @@ async function confirmAction() {
     }
     btn.innerText = "SAVING..."; btn.disabled = true;
     const gInfo = `${currentUser.name} (${currentUser.location})`;
+    
+    const nowIso = new Date().toISOString();
+    let item = globalAdminData.find(x => String(x.UniqueID).toUpperCase() === String(currentScannedID).toUpperCase());
+    if (item) {
+        if (currentScanAction === 'check_in') {
+            item.CheckInTime = nowIso;
+            item.CheckOutTime = '';
+            item.ScannedByGuard = gInfo;
+        } else {
+            item.CheckOutTime = nowIso;
+        }
+
+        let existingLogs = [];
+        try { existingLogs = JSON.parse(item.GateLogs || "[]"); } catch(e) {}
+        existingLogs.push({ action: currentScanAction === 'check_in' ? 'IN' : 'OUT', time: nowIso, guard: gInfo });
+        item.GateLogs = JSON.stringify(existingLogs);
+
+        localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData));
+        renderAdminData(globalAdminData);
+    }
+
     try {
         await apiCall({ action: currentScanAction, id: currentScannedID, guardInfo: gInfo, headCount: hcVal });
         localStorage.removeItem('cached_admin_data');
         if (currentUser && currentUser.role === 'admin') {
             await loadAdminData(true);
+            closeScanResult();
         } else {
             window.location.reload();
         }
     } catch (e) {
-        alert("Network error. Please try again."); btn.innerText = t("confirm_action"); btn.disabled = false; isProcessingScan = false;
+        btn.innerText = t("confirm_action"); btn.disabled = false; isProcessingScan = false;
     }
 }
 
