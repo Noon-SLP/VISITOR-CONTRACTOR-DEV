@@ -1202,9 +1202,71 @@ async function loadMyPasses(forceRefresh = false, isSilent = false) {
 }
 
 function parseLogs(row) {
-    let visits = []; let gLogs = String(row.GateLogs || "");
-    if (!gLogs.trim() && row.CheckInTime) { visits.push({ in: new Date(row.CheckInTime), out: row.CheckOutTime ? new Date(row.CheckOutTime) : null, guardIn: row.ScannedByGuard || 'Unknown', guardOut: row.ScannedByGuard || 'Unknown' }); return visits; }
-    if (gLogs.startsWith("[")) { try { let logs = JSON.parse(gLogs); let currentVisit = null; logs.forEach(l => { if (l.action === 'IN') { currentVisit = { in: new Date(l.time), out: null, guardIn: l.guard || 'Unknown', guardOut: '' }; visits.push(currentVisit); } else if (l.action === 'OUT') { if (currentVisit && !currentVisit.out) { currentVisit.out = new Date(l.time); currentVisit.guardOut = l.guard || 'Unknown'; } else { visits.push({ in: null, out: new Date(l.time), guardIn: '', guardOut: l.guard || 'Unknown' }); } } }); } catch (e) {} }
+    let visits = [];
+    let gLogs = String(row.GateLogs || "").trim();
+
+    if (gLogs.startsWith("[")) {
+        try {
+            let logs = JSON.parse(gLogs);
+            let openVisit = null;
+            logs.forEach(l => {
+                let actionUpper = String(l.action || '').toUpperCase();
+                let eventTime = parseFlexibleDate(l.time);
+                if (actionUpper === 'IN' || actionUpper === 'CHECK_IN') {
+                    if (openVisit) visits.push(openVisit);
+                    openVisit = { in: eventTime, out: null, guardIn: l.guard || 'Unknown', guardOut: '' };
+                } else if (actionUpper === 'OUT' || actionUpper === 'CHECK_OUT') {
+                    if (openVisit) {
+                        openVisit.out = eventTime;
+                        openVisit.guardOut = l.guard || 'Unknown';
+                        visits.push(openVisit);
+                        openVisit = null;
+                    } else {
+                        visits.push({ in: null, out: eventTime, guardIn: '', guardOut: l.guard || 'Unknown' });
+                    }
+                }
+            });
+            if (openVisit) visits.push(openVisit);
+            return visits;
+        } catch (e) {}
+    }
+
+    if (gLogs.length > 0 && gLogs !== "No Logs") {
+        let entries = gLogs.split(/\n|\|\|/);
+        let openVisit = null;
+        entries.forEach(entry => {
+            let parts = entry.split('|').map(p => p.trim());
+            let actionPart = parts[0] || '';
+            let timePart = parts[1] || '';
+            let guardPart = parts[2] || 'Unknown';
+
+            if (actionPart.includes('IN')) {
+                if (openVisit) visits.push(openVisit);
+                openVisit = { in: parseFlexibleDate(timePart), out: null, guardIn: guardPart, guardOut: '' };
+            } else if (actionPart.includes('OUT')) {
+                if (openVisit) {
+                    openVisit.out = parseFlexibleDate(timePart);
+                    openVisit.guardOut = guardPart;
+                    visits.push(openVisit);
+                    openVisit = null;
+                } else {
+                    visits.push({ in: null, out: parseFlexibleDate(timePart), guardIn: '', guardOut: guardPart });
+                }
+            }
+        });
+        if (openVisit) visits.push(openVisit);
+        if (visits.length > 0) return visits;
+    }
+
+    if (row.CheckInTime || row.CheckOutTime) {
+        visits.push({
+            in: parseFlexibleDate(row.CheckInTime),
+            out: parseFlexibleDate(row.CheckOutTime),
+            guardIn: row.ScannedByGuard || 'Unknown',
+            guardOut: row.ScannedByGuard || 'Unknown'
+        });
+    }
+
     return visits;
 }
 
@@ -1269,7 +1331,6 @@ function renderAdminData(data) {
         if (dateBadge !== '') dateBadge = '<br>' + dateBadge; 
         const finalDateStr = dateStr + dateBadge;
 
-        // --- GOOGLE SHEETS STYLE HISTORY RENDERING ---
         if (inRange) {
             let visits = parseLogs(row);
             if (visits.length > 0) {
@@ -1320,7 +1381,6 @@ function renderAdminData(data) {
             }
         }
 
-        // --- PENDING & ACTIVE APPROVALS ---
         if (!isPassExpiredOrFinished && inRange) {
             let newCount = 0, removeCount = 0, revokeCount = 0;
             let tMembersStr = String(row.TeamMembers || '');
@@ -1371,8 +1431,8 @@ function renderAdminData(data) {
                 </div>`;
                 let ciTime = '-'; let durHtml = '-'; const isInside = !!row.CheckInTime && !row.CheckOutTime;
                 if (isInside) { 
-                    let ciObj = new Date(row.CheckInTime); 
-                    if (!isNaN(ciObj.getTime())) { 
+                    let ciObj = parseFlexibleDate(row.CheckInTime); 
+                    if (ciObj && !isNaN(ciObj.getTime())) { 
                         ciTime = formatTime(ciObj); 
                         let now = new Date().getTime(); 
                         let diffMins = Math.floor((now - ciObj.getTime()) / 60000); 
@@ -1426,8 +1486,10 @@ async function submitAdminGateAction(actionType) {
     if (autoRefreshTimer) clearInterval(autoRefreshTimer);
     try {
         const adminInfo = currentUser.role === 'admin' ? `Admin: ${currentUser.name}` : `${currentUser.name} (${currentUser.location})`;
-        if(item) { if (actionType === 'check_in') { item.CheckInTime = new Date().toISOString(); item.ScannedByGuard = adminInfo; } else { item.CheckOutTime = new Date().toISOString(); } localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData)); renderAdminData(globalAdminData); }
-        closeAdminGateModal(); await apiCall({ action: actionType, id: id, guardInfo: adminInfo, headCount: 1 }); setTimeout(() => { loadAdminData(true) }, 1000);
+        closeAdminGateModal(); 
+        await apiCall({ action: actionType, id: id, guardInfo: adminInfo, headCount: 1 }); 
+        localStorage.removeItem('cached_admin_data');
+        await loadAdminData(true);
     } catch (e) { alert("Action failed: " + e.message); } finally { startAutoRefresh(currentUser.role); }
 }
 
