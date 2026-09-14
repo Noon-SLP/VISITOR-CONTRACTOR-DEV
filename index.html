@@ -739,8 +739,36 @@ let targetPhotoType = ''; let capturedImages = { iqama: null, selfie: null, imei
 let teamList = []; let currentTeamCounter = 1; let isProcessingScan = false; let userSecurityPin = null;
 let lockedPassesData = null; let pinCreateMode = 'submit'; let currentBatchType = 'new';
 
+function fetchJSONP(url) {
+    return new Promise((resolve, reject) => {
+        const callbackName = 'jsonp_cb_' + Math.round(100000 * Math.random());
+        window[callbackName] = function(data) {
+            delete window[callbackName];
+            if (script && script.parentNode) script.parentNode.removeChild(script);
+            resolve(data);
+        };
+        const script = document.createElement('script');
+        script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + callbackName;
+        script.onerror = function(err) {
+            delete window[callbackName];
+            if (script && script.parentNode) script.parentNode.removeChild(script);
+            reject(err);
+        };
+        document.body.appendChild(script);
+    });
+}
+
 async function apiCall(payload) {
     try {
+        let isGetAction = payload && payload.action && (payload.action === 'get_all' || payload.action === 'get_single' || payload.action === 'get_by_email');
+        
+        if (isGetAction) {
+            let fetchUrl = SCRIPT_URL + '?action=' + encodeURIComponent(payload.action);
+            if (payload.email) fetchUrl += '&email=' + encodeURIComponent(payload.email);
+            if (payload.id) fetchUrl += '&id=' + encodeURIComponent(payload.id);
+            return await fetchJSONP(fetchUrl);
+        }
+
         let formData = new URLSearchParams();
         for (let key in payload) {
             if (typeof payload[key] === 'object') {
@@ -749,21 +777,6 @@ async function apiCall(payload) {
                 formData.append(key, payload[key]);
             }
         }
-
-        let isGetAction = payload && payload.action && (payload.action === 'get_all' || payload.action === 'get_single' || payload.action === 'get_by_email');
-        if (isGetAction) {
-            let fetchUrl = SCRIPT_URL + '?action=' + encodeURIComponent(payload.action);
-            if (payload.email) fetchUrl += '&email=' + encodeURIComponent(payload.email);
-            if (payload.id) fetchUrl += '&id=' + encodeURIComponent(payload.id);
-            try {
-                const getRes = await fetch(fetchUrl);
-                return await getRes.json();
-            } catch(getErr) {
-                console.warn("Direct GET failed, using cached payload", getErr);
-                return globalAdminData || [];
-            }
-        }
-
         await fetch(SCRIPT_URL, {
             method: 'POST',
             mode: 'no-cors',
@@ -772,7 +785,7 @@ async function apiCall(payload) {
         });
         return { status: "success" };
     } catch (e) {
-        console.error("API Error: ", e);
+        console.error("API Fetch Error: ", e);
         return { status: "error", message: e.message };
     }
 }
