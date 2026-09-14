@@ -863,6 +863,72 @@ function checkBatchLimit(t) { currentBatchType = t; _d('batch-limit-modal').clas
 function handleBatchChoice(c) { _d('batch-limit-modal').classList.add('hidden'); let k = (c === 'more'); if (currentBatchType === 'new') submitRequest(k); else submitAddMorePeople(k); }
 function convertDriveUrls(o) { if (!o) return o; let s = JSON.stringify(o); s = s.replace(/https:\/\/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)[^\s"'\\]*/g, "https://lh3.googleusercontent.com/d/$1"); s = s.replace(/https:\/\/drive\.google\.com\/uc\?[^\s"'\\]*id=([a-zA-Z0-9_-]+)[^\s"'\\]*/g, "https://lh3.googleusercontent.com/d/$1"); s = s.replace(/https:\/\/drive\.google\.com\/thumbnail\?[^\s"'\\]*id=([a-zA-Z0-9_-]+)[^\s"'\\]*/g, "https://lh3.googleusercontent.com/d/$1"); return JSON.parse(s); }
 
+async function confirmPinCreate() {
+    let p = _d('new-pin-input').value.trim();
+    if (p.length !== 4) return alert("Please enter a valid 4-digit PIN.");
+    userSecurityPin = p;
+    let e = currentUser.email;
+    if (currentUser.role === 'admin') { const ei = _d('req-admin-email'); if (ei && ei.value) e = ei.value.toLowerCase().trim(); }
+    localStorage.setItem('user_pin_' + e, p);
+    _d('pin-create-modal').classList.add('hidden');
+    if (pinCreateMode === 'reset') {
+        try { await apiCall({ action: 'update_pin', email: e, pin: p }); } catch (er) { console.error(er); }
+        setTimeout(() => loadMyPasses(true, true), 1000);
+        renderMyPasses(lockedPassesData);
+    } else {
+        submitRequest();
+    }
+}
+
+function closePinCreate() { _d('pin-create-modal').classList.add('hidden'); }
+
+function processAndRenderPasses(d, e, s) {
+    if (currentUser && currentUser.role === 'admin') { renderMyPasses(d); return; }
+    let ha = false; const tn = new Date().setHours(0, 0, 0, 0);
+    if (Array.isArray(d)) { d.forEach(p => { let ss = String(p.Status || 'Pending'); let eo = parseFlexibleDate(p.EndDate) || parseFlexibleDate(p.StartDate); let en = eo ? eo.setHours(0, 0, 0, 0) : tn; let ic = (tn > en) || ss === 'Rejected' || ss === 'Completed'; if (!ic) ha = true; }); }
+    let bp = null;
+    if (Array.isArray(d)) { for (let i = d.length - 1; i >= 0; i--) { if (d[i].HostName && d[i].HostName.includes('||PIN:')) { bp = d[i].HostName.split('||PIN:')[1]; break; } } }
+    let lp = localStorage.getItem('user_pin_' + e);
+    
+    if (!ha && d.length > 0) { localStorage.removeItem('user_pin_' + e); userSecurityPin = null; if (bp) { apiCall({ action: 'reset_pin', email: e }).catch(er => {}); } renderMyPasses(d); return; }
+    if (!ha && d.length === 0) { renderMyPasses(d); return; }
+    if (!bp && lp) { bp = lp; apiCall({ action: 'update_pin', email: e, pin: lp }).catch(er => {}); }
+    
+    if (bp && bp !== lp) {
+        lockedPassesData = d;
+        const vm = _d('pin-verify-modal');
+        if (!s && vm) { vm.classList.remove('hidden'); _d('pin-error-msg').classList.add('hidden'); _d('verify-pin-input').value = ''; }
+        const ld = _d('my-passes-list');
+        if (ld) ld.innerHTML = '<p style="color:var(--text-muted);font-size:13px;margin-top:20px;text-align:center;">Passes locked. <button class="btn-primary btn-sm" style="width:auto;padding:4px 10px;margin-left:10px;" onclick="showPinVerifyModal()">UNLOCK</button></p>';
+        return;
+    }
+    
+    if (!bp && !lp && Array.isArray(d) && d.length > 0) {
+        lockedPassesData = d;
+        const cm = _d('pin-create-modal');
+        if (!s && cm) { pinCreateMode = 'reset'; cm.classList.remove('hidden'); _d('new-pin-input').value = ''; }
+        const ld = _d('my-passes-list');
+        if (ld) ld.innerHTML = '<p style="color:var(--text-muted);font-size:13px;margin-top:20px;text-align:center;">Passes locked. Awaiting new PIN.</p>';
+        return;
+    }
+    userSecurityPin = bp || lp; renderMyPasses(d);
+}
+
+function confirmPinVerify() {
+    let p = _d('verify-pin-input').value.trim(); let e = currentUser.email;
+    if (currentUser.role === 'admin') { const ei = _d('req-admin-email'); if (ei && ei.value) e = ei.value.toLowerCase().trim(); }
+    let bp = null;
+    for (let i = lockedPassesData.length - 1; i >= 0; i--) { if (lockedPassesData[i].HostName && lockedPassesData[i].HostName.includes('||PIN:')) { bp = lockedPassesData[i].HostName.split('||PIN:')[1]; break; } }
+    if (p === bp) { userSecurityPin = p; localStorage.setItem('user_pin_' + e, p); _d('pin-verify-modal').classList.add('hidden'); renderMyPasses(lockedPassesData); } 
+    else { _d('pin-error-msg').classList.remove('hidden'); }
+}
+
+function closePinVerify() {
+    _d('pin-verify-modal').classList.add('hidden');
+    const ld = _d('my-passes-list');
+    if (ld) ld.innerHTML = '<p style="color:var(--text-muted);font-size:13px; margin-top:20px; text-align:center;">Passes locked. <button class="btn-primary btn-sm" style="width:auto; padding:4px 10px; margin-left:10px;" onclick="showPinVerifyModal()">UNLOCK</button></p>';
+}
+
 const dict = {
     en: {"guard":"🛡️ Guard","visitor_ops":"📋 Visitor/Ops","admin":"⚙️ Admin","name":"Name","noon_id":"Noon ID","select_guard_loc":"Select Guard Location...","login_gate":"LOGIN TO GATE","your_full_name":"Your Full Name","your_email":"Your Gmail / Email","login_portal":"LOGIN TO PORTAL","admin_name":"Admin Name","admin_email":"Admin Gmail","admin_password":"Admin Password","login_admin":"LOGIN AS ADMIN","system_admin":"System Admin","visitor_portal":"Visitor Portal","gate_scanner":"Gate Scanner","admin_dashboard":"Admin Dashboard","logout":"LOGOUT","visitor_contractor_portal":"Visitor & Contractor Portal","submit_new_request":"Submit New Request","type":"Type","visitor":"Visitor","contractor":"Contractor","req_email_ph":"Email Address","req_vname_ph":"Visitor / Contractor Full Name","iqama_id_ph":"Lead Iqama / ID Number","visit_date":"Visit Date / Validity (From - To)","slp_ticket":"SLP Ticket No.","contact_no":"Contact No.","invited_by":"Invited by Whom","vehicle_plate":"Vehicle Plate / Picture","live_camera":"📷 Live Camera","contract_exp":"Contract Expiration (From - To)","project_name":"Project Name","company_name":"Company / Contractor Name","project_manager":"Project Manager","fm_poc":"FM POC Name / Details","upload_iqama":"Upload Iqama/ID Copy","upload_selfie":"Upload Selfie Photo","submit_approval":"Submit for Approval","my_passes":"My Passes","refresh":"Refresh","fetching":"Fetching your passes...","start_camera":"START CAMERA SCANNER","name_label":"Name:","type_label":"Type:","location_label":"Location:","confirm_action":"CONFIRM ACTION","access_approvals":"📋 Access Approvals","history":"🕰️ History","analytics":"📊 Analytics","all_time":"All Time","today":"Today","weekly":"Weekly","monthly":"Monthly","6months":"6 Months","1year":"1 Year","custom":"Custom","to":"TO","apply":"APPLY","pending_req":"Pending Requests","active_req":"Active Requests","print_selected":"🖨️ PRINT SELECTED","val_period":"Validity Period","name_header":"Name","type_header":"Type","facility_header":"Facility","action":"Action","access_history":"Access & Gate History","final_status":"Final Status","check_in":"Check-In","check_out":"Check-Out","scanned_by":"Scanned By","live_gate":"Live Gate Operations","check_in_time":"Check-In Time","check_out_time":"Check-Out Time","visitor_name":"Visitor Name","date_analytics":"📅 Date Analytics","type_analytics":"👤 Type Analytics","facility_analytics":"🏢 Facility Analytics","status_analytics":"✅ Status Analytics","detailed_record":"Detailed Record View","extend_pass":"Extend Pass Validity","new_start_date":"New Visit / Start Date","new_end_date":"New End Date","save_extension":"SAVE EXTENSION","capture":"📸 CAPTURE","flip_cam":"🔄 FLIP CAM","cancel":"❌ CANCEL","click_to_close":"Click anywhere to close","btn_approve":"Approve","btn_reject":"Reject","btn_extend":"📅 EXTEND","btn_view":"🔍 VIEW DATA","btn_print":"🖨️ PRINT PASS","btn_checkout":"🚪 CHECK OUT","lbl_host_name":"Host Name","lbl_host_email":"Host Email","lbl_validity":"Validity Period","lbl_iqama":"IQAMA/ID COPY","lbl_selfie":"SELFIE PHOTO","lbl_vehicle":"VEHICLE PLATE","status_approved":"Approved","status_pending":"Pending","status_rejected":"Rejected","status_expired":"EXPIRED","status_completed":"COMPLETED","msg_no_pending":"No pending requests found in this timeframe.","msg_no_active":"No active requests found in this timeframe.","msg_no_history":"No history found in this timeframe.","msg_enter_email":"Enter an Email Address on the left to view passes.","msg_loading":"Loading requests...","msg_inside":"Inside Facility","msg_admin_select_loc":"Admin: Please select a facility first.","btn_add_team":"➕ ADD TEAM MEMBER","camera_scanner_btn":"📷 CAMERA SCANNER","hardware_gun_btn":"🔌 HARDWARE GUN","hw_scanner_ready":"HARDWARE SCANNER READY","hw_scanner_inst":"Point your handheld gun scanner at the QR code and trigger.","awaiting_scan":"Awaiting hardware scan...","save_qr":"⬇️ SAVE QR CODE","allowed":"ALLOWED","pass_validated":"Pass Validated","denied":"DENIED","admin_select_fac":"Admin: Please select a facility first.","pending":"PENDING","awaiting_admin":"Pass is awaiting Admin approval","not_approved":"Pass not approved by Admin","wrong_facility":"WRONG FACILITY","wrong_fac_msg":"Wrong Facility","invalid_date":"INVALID DATE","not_valid_today":"Pass is not valid for today","expired":"EXPIRED","contractor_expired":"Contractor Pass Expired","check_out":"CHECK OUT","scanning_out":"Scanning Out.<br><span style='color:#000; font-size:14px; font-weight:bold;'>⚠️ TAKE ID CARD FROM LEAD.</span>","select_all_members":"SELECT ALL MEMBERS","lead":"Lead","device_photos_all":"DEVICE & PHOTOS FOR ALL","device_label":"Device","iqama_id":"IQAMA / ID","selfie":"SELFIE","device_screen":"DEVICE SCREEN","vehicle":"VEHICLE","add_more_people":"➕ Add More People","add_more_warning":"⚠️ WARNING: Submitting this will change the pass status back to PENDING. It cannot be used until the Admin approves it again.","device_type_label":"Device Type","no_device":"No Device","upload_device_photo":"Upload Device Photo/Screen","full_name_ph":"Full Name","save_person_list":"✅ SAVE PERSON TO LIST","submit_send_approval":"SUBMIT & SEND FOR APPROVAL","save_add_next":"✅ SAVE & ADD NEXT","lead_device_details":"Lead Device Details & Photo Screen","max_devices_note":"* Note: A maximum of 10 members are allowed to bring devices.","total_people":"Total People","new_members_added":"➕ NEW MEMBERS ADDED","new_badge":"NEW","notice_new_people":"NOTICE: New people have been added to this pass!"},
     ar: {"guard":"🛡️ الحارس","visitor_ops":"📋 الزوار/العمليات","admin":"⚙️ الإدارة","name":"الاسم","noon_id":"الرقم الوظيفي (Noon ID)","select_guard_loc":"اختر موقع الحارس...","login_gate":"الدخول للبوابة","your_full_name":"الاسم الكامل","your_email":"البريد الإلكتروني","login_portal":"تسجيل الدخول للبوابة","admin_name":"اسم المشرف","admin_email":"بريد المشرف","admin_password":"كلمة المرور","login_admin":"دخول كمسؤول","system_admin":"إدارة النظام","visitor_portal":"بوابة الزوار","gate_scanner":"ماسح البوابة","admin_dashboard":"لوحة التحكم","logout":"تسجيل خروج","visitor_contractor_portal":"بوابة الزوار والمقاولين","submit_new_request":"تقديم طلب جديد","type":"النوع","visitor":"زائر","contractor":"مقاول","req_email_ph":"البريد الإلكتروني (لتتبع التصريح)","req_vname_ph":"الاسم الكامل للزائر/المقاول","iqama_id_ph":"رقم الهوية / الإقامة للقائد","visit_date":"تاريخ الزيارة / الصلاحية (من - إلى)","slp_ticket":"رقم تذكرة SLP","contact_no":"رقم الاتصال","invited_by":"بدعوة من","vehicle_plate":"صورة / لوحة السيارة","live_camera":"📷 كاميرا مباشرة","contract_exp":"صلاحية العقد (من - إلى)","project_name":"اسم المشروع","company_name":"اسم الشركة / المقاول","project_manager":"مدير المشروع","fm_poc":"اسم/تفاصيل مسؤول المرافق (FM POC)","upload_iqama":"رفع صورة الهوية/الإقامة","upload_selfie":"رفع صورة شخصية","submit_approval":"إرسال للموافقة","my_passes":"تصاريحي","refresh":"تحديث","fetching":"جاري جلب التصاريح...","start_camera":"تشغيل ماسح الكاميرا","name_label":"الاسم:","type_label":"النوع:","location_label":"الموقع:","confirm_action":"تأكيد الإجراء","access_approvals":"📋 موافقات الدخول","history":"🕰️ السجل","analytics":"📊 الإحصائيات","all_time":"الكل","today":"اليوم","weekly":"أسبوعي","monthly":"شهري","6months":"٦ أشهر","1year":"سنة","custom":"مخصص","to":"إلى","apply":"تطبيق","pending_req":"الطلبات المعلقة","active_req":"الطلبات النشطة","print_selected":"🖨️ طباعة المحدد","val_period":"فترة الصلاحية","name_header":"الاسم","type_header":"النوع","facility_header":"المنشأة","action":"الإجراء","access_history":"سجل الدخول والبوابة","final_status":"الحالة النهائية","check_in":"دخول","check_out":"خروج","scanned_by":"تم المسح بواسطة","live_gate":"عمليات البوابة المباشرة","check_in_time":"وقت الدخول","check_out_time":"وقت الخروج","visitor_name":"اسم الزائر","date_analytics":"📅 إحصائيات التواريخ","type_analytics":"👤 إحصائيات الأنواع","facility_analytics":"🏢 إحصائيات المنشآت","status_analytics":"✅ إحصائيات الحالات","detailed_record":"عرض السجل التفصيلي","extend_pass":"تمديد صلاحية التصريح","new_start_date":"تاريخ الزيارة/البداية الجديد","new_end_date":"تاريخ النهاية الجديد","save_extension":"حفظ التمديد","capture":"📸 التقاط","flip_cam":"🔄 قلب الكاميرا","cancel":"❌ إلغاء","click_to_close":"انقر في أي مكان للإغلاق","btn_approve":"موافقة","btn_reject":"رفض","btn_extend":"📅 تمديد","btn_view":"🔍 عرض البيانات","btn_print":"🖨️ طباعة","btn_checkout":"🚪 خروج","lbl_host_name":"اسم المضيف","lbl_host_email":"بريد المضيف","lbl_validity":"فترة الصلاحية","lbl_iqama":"صورة الهوية/الإقامة","lbl_selfie":"الصورة الشخصية","lbl_vehicle":"لوحة السيارة","status_approved":"مقبول","status_pending":"قيد الانتظار","status_rejected":"مرفوض","status_expired":"منتهي","status_completed":"مكتمل","msg_no_pending":"لا توجد طلبات معلقة في هذه الفترة.","msg_no_active":"لا توجد طلبات نشطة في هذه الفترة.","msg_no_history":"لا يوجد سجل في هذه الفترة.","msg_enter_email":"أدخل بريداً إلكترونياً لعرض التصاريح.","msg_loading":"جاري التحميل...","msg_inside":"داخل المنشأة","msg_admin_select_loc":"المشرف: يرجى تحديد المنشأة أولاً من القائمة العلوية.","btn_add_team":"➕ إضافة عضو للفريق","camera_scanner_btn":"📷 ماسح الكاميرا","hardware_gun_btn":"🔌 ماسح الباركود اليدوي","hw_scanner_ready":"ماسح الباركود جاهز","hw_scanner_inst":"قم بتوجيه الماسح الضوئي نحو رمز الاستجابة السريعة (QR).","awaiting_scan":"بانتظار المسح...","save_qr":"⬇️ حفظ الرمز","allowed":"مسموح","pass_validated":"تم التحقق من التصريح","denied":"مرفوض","admin_select_fac":"المشرف: يرجى تحديد المنشأة أولاً.","pending":"قيد الانتظار","awaiting_admin":"التصريح بانتظار موافقة المشرف","not_approved":"لم تتم الموافقة على التصريح","wrong_facility":"منشأة خاطئة","wrong_fac_msg":"منشأة خاطئة","invalid_date":"تاريخ غير صالح","not_valid_today":"التصريح غير صالح لهذا اليوم","expired":"منتهي","contractor_expired":"تصريح المقاول منتهي","check_out":"تسجيل خروج","scanning_out":"تسجيل الخروج.<br><span style='color:#000; font-size:14px; font-weight:bold;'>⚠️ خذ بطاقة الهوية من القائد.</span>","select_all_members":"تحديد جميع الأعضاء","lead":"القائد","device_photos_all":"الأجهزة والصور للجميع","device_label":"الجهاز","iqama_id":"الإقامة / الهوية","selfie":"الصورة الشخصية","device_screen":"شاشة الجهاز","vehicle":"المركبة","add_more_people":"➕ إضافة المزيد من الأشخاص","add_more_warning":"⚠️ تحذير: سيؤدي هذا إلى إعادة حالة التصريح إلى قيد الانتظار. لا يمكن استخدامه حتى يوافق عليه المشرف مرة أخرى.","device_type_label":"نوع الجهاز","no_device":"لا يوجد جهاز","upload_device_photo":"رفع صورة الجهاز/الشاشة","full_name_ph":"الاسم الكامل","save_person_list":"✅ حفظ الشخص في القائمة","submit_send_approval":"إرسال وطلب الموافقة","save_add_next":"✅ حفظ وإضافة التالي","lead_device_details":"تفاصيل جهاز القائد وصورة الشاشة","max_devices_note":"* ملاحظة: يُسمح لـ 10 أعضاء كحد أقصى بإحضار أجهزة.","total_people":"إجمالي الأشخاص","new_members_added":"➕ أعضاء جدد مضافون","new_badge":"جديد","notice_new_people":"تنبيه: تم إضافة أشخاص جدد إلى هذا التصريح!"}
@@ -1180,6 +1246,38 @@ async function submitRequest(ka = false) {
     }
 }
 
+function downloadQR(id) {
+    let safeId = String(id).replace(/[^a-zA-Z0-9_-]/g, ''); const qrBox = _d('qr-' + safeId); if (!qrBox) return; let canvas = qrBox.querySelector('canvas'); let img = qrBox.querySelector('img'); let sourceImage = canvas && canvas.style.display !== 'none' ? canvas : (img && img.src ? img : null); if (!sourceImage) return alert("QR Code not ready yet."); let size = 150; let padding = 20; let newCanvas = document.createElement('canvas'); newCanvas.width = size + (padding * 2); newCanvas.height = size + (padding * 2); let ctx = newCanvas.getContext('2d'); ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, newCanvas.width, newCanvas.height); ctx.drawImage(sourceImage, padding, padding, size, size); const link = document.createElement('a'); link.href = newCanvas.toDataURL('image/png'); link.download = `Noon_Pass_QR_${safeId}.png`; document.body.appendChild(link); link.click(); document.body.removeChild(link);
+}
+
+function renderMyPasses(data) {
+    const listDiv = _d('my-passes-list'); if (!listDiv) return; let h = ''; if (!Array.isArray(data) || data.length === 0) { listDiv.innerHTML = `<p style="color:var(--text-muted);font-size:13px;">${t("msg_no_history")}</p>`; return; }
+    let displayData = [...data].reverse(); myPassesData = displayData;
+    displayData.forEach(pass => {
+        let safeId = String(pass.UniqueID).replace(/[^a-zA-Z0-9_-]/g, ''); let safeType = String(pass.Type || ''); let safeStatus = String(pass.Status || 'Pending'); let safeLoc = String(pass.Location || ''); const todayNum = new Date().setHours(0, 0, 0, 0); let endObj = parseFlexibleDate(pass.EndDate) || parseFlexibleDate(pass.StartDate); let endNum = endObj ? endObj.setHours(0, 0, 0, 0) : todayNum; const isExp = todayNum > endNum, isComp = isExp || safeStatus === 'Completed';
+        let st = t(safeStatus === 'Approved' ? 'status_approved' : safeStatus === 'Rejected' ? 'status_rejected' : safeStatus === 'Completed' ? 'status_completed' : 'status_pending'); let sc = (safeStatus === 'Approved' ? 'var(--success)' : safeStatus === 'Rejected' ? 'var(--danger)' : safeStatus === 'Completed' ? 'var(--text-muted)' : 'var(--noon-yellow)'); if (isExp && safeStatus !== 'Rejected' && safeStatus !== 'Completed') { st = t('status_expired'); sc = 'var(--text-muted)'; }
+        const valText = `(${formatToDDMMYYYY(pass.StartDate)} - ${formatToDDMMYYYY(pass.EndDate || pass.StartDate)})`;
+        h += `<div class="pass-item" id="pass-card-${safeId}"><div class="pass-header"><div><strong style="color:white;font-size:14px;">${pass.VisitorName}</strong><br><span style="font-size:11px;color:var(--text-muted);">${t(safeType.toLowerCase())} • ${safeLoc}</span><br><span style="font-size:10px;color:var(--noon-yellow);">${valText}</span></div><div style="text-align:right;"><span style="font-size:11px;font-weight:bold;color:${sc};text-transform:uppercase;">${st}</span><br><span style="font-size:10px;color:var(--text-muted);">${pass.UniqueID}</span></div></div>`;
+        if (!isComp && safeStatus !== 'Rejected') { h += `<div style="text-align:center;margin-top:10px;"><div class="qr-box" id="qr-${safeId}" style="background:white;padding:10px;border-radius:6px;display:inline-block;min-width:140px;min-height:140px;"></div><div style="margin-top:15px;" id="save-btn-container-${safeId}"><button class="btn-primary btn-outline btn-sm" style="margin-bottom:8px;" onclick="downloadQR('${pass.UniqueID}')" data-i18n="save_qr">${t('save_qr')}</button><br><button class="btn-primary btn-warning btn-sm" style="color:#000; margin-bottom:8px;" onclick="openAddMoreModal('${pass.UniqueID}')">➕ ${t('add_more_people')}</button><br><button class="btn-primary btn-outline btn-sm" style="color:var(--text-main);" onclick="openViewRecord('${pass.UniqueID}')">👁️ SEE MEMBERS</button></div></div>`; }
+        else if (safeStatus === 'Rejected') { h += `<div style="text-align:center;margin-top:15px;font-size:12px;color:var(--danger);font-weight:bold;"><em>${t("status_rejected")} - Access Denied</em></div>`; }
+        else if (safeStatus === 'Completed') { h += `<div style="text-align:center;margin-top:15px;font-size:12px;color:var(--text-muted);font-weight:bold;"><em>PASS REVOKED / COMPLETED</em></div>`; }
+        else { h += `<div style="text-align:center;margin-top:15px;font-size:12px;color:var(--text-muted);"><em>${t("status_expired")}</em></div>`; } h += `</div>`;
+    });
+    listDiv.innerHTML = h;
+    displayData.forEach(pass => {
+        let safeId = String(pass.UniqueID).replace(/[^a-zA-Z0-9_-]/g, ''); let safeStatus = String(pass.Status || 'Pending'); const todayNum = new Date().setHours(0, 0, 0, 0); let endObj = parseFlexibleDate(pass.EndDate) || parseFlexibleDate(pass.StartDate); let endNum = endObj ? endObj.setHours(0, 0, 0, 0) : todayNum; const isExp = todayNum > endNum, isComp = isExp || safeStatus === 'Completed';
+        if (!isComp && safeStatus !== 'Rejected') { setTimeout(() => { const qre = _d(`qr-${safeId}`); if (qre) { qre.innerHTML = ""; try { new QRCode(qre, { text: String(pass.UniqueID), width: 120, height: 120, colorDark: "#000", colorLight: "#fff", correctLevel: QRCode.CorrectLevel.H }); } catch (err) {} } }, 200); }
+    });
+}
+
+async function loadMyPasses(forceRefresh = false, isSilent = false) {
+    const listDiv = _d('my-passes-list'); if (!listDiv) return; let targetEmail = currentUser.email;
+    if (currentUser.role === 'admin') { const ei = _d('req-admin-email'), inputEmail = ei ? ei.value.toLowerCase().trim() : ''; if (inputEmail) targetEmail = inputEmail; else { if (!isSilent) listDiv.innerHTML = `<p style="color:var(--text-muted);font-size:13px;">${t("msg_enter_email")}</p>`; return; } }
+    const cachedKey = 'cached_passes_' + targetEmail, cached = localStorage.getItem(cachedKey);
+    if (!forceRefresh && cached && !isSilent) { try { let parsed = JSON.parse(cached); if (Array.isArray(parsed)) { processAndRenderPasses(parsed, targetEmail, false); } else localStorage.removeItem(cachedKey); } catch (e) { localStorage.removeItem(cachedKey); } } else if (!isSilent || forceRefresh) listDiv.innerHTML = `<p style="color:var(--text-muted);font-size:13px;">${t("fetching")}</p>`;
+    try { const res = await apiCall({ action: 'get_by_email', email: targetEmail }); const data = convertDriveUrls(res); if (Array.isArray(data)) { const newDataStr = JSON.stringify(data); if (isSilent && cached === newDataStr) return; localStorage.setItem(cachedKey, newDataStr); processAndRenderPasses(data, targetEmail, isSilent); } } catch (e) { if (!isSilent && !cached) listDiv.innerHTML = '<p style="color:var(--danger);font-size:13px;">Error.</p>'; }
+}
+
 function parseLogs(row) {
     let visits = [];
     let gLogs = String(row.GateLogs || "").trim();
@@ -1468,331 +1566,421 @@ async function loadAdminData(isSilent = false) {
         if (!isSilent && !cachedM) console.error("Fetch admin data error:", e); 
     }
 }
+    async function updateStatus(id, newStatus) {
+        if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+        if (!confirm(`Mark ${id} as ${newStatus}?`)) { startAutoRefresh(currentUser.role); return; }
+        if (Array.isArray(globalAdminData)) { let item = globalAdminData.find(x => String(x.UniqueID) === String(id)); if (item) { item.Status = newStatus; if (newStatus === 'Approved' && item.TeamMembers) { item.TeamMembers = String(item.TeamMembers).replace(/\*NEW_MEMBER\*/gi, '').replace(/\[NEW\]/gi, '').replace(/\*\[REMOVE_REQUESTED\]\*/gi, '').replace(/\[REMOVE_REQUESTED\]/gi, '').replace(/\*\[DEVICE_REVOKE_REQUESTED\]\*/gi, '').replace(/\[DEVICE_REVOKE_REQUESTED\]/gi, ''); } localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData)); renderAdminData(globalAdminData); if (item.HostEmail) localStorage.removeItem('cached_passes_' + String(item.HostEmail).toLowerCase().trim()); } }
+        try { await apiCall({ action: 'update_status', id: id, newStatus: newStatus }); loadAdminData(true); if (currentUser && currentUser.role === 'ops') loadMyPasses(true, true); } catch (e) { alert("Network error: " + e.message); } finally { startAutoRefresh(currentUser.role); }
+    }
 
-async function updateStatus(id, newStatus) {
-    if (autoRefreshTimer) clearInterval(autoRefreshTimer);
-    if (!confirm(`Mark ${id} as ${newStatus}?`)) { startAutoRefresh(currentUser.role); return; }
-    if (Array.isArray(globalAdminData)) { let item = globalAdminData.find(x => String(x.UniqueID) === String(id)); if (item) { item.Status = newStatus; if (newStatus === 'Approved' && item.TeamMembers) { item.TeamMembers = String(item.TeamMembers).replace(/\*NEW_MEMBER\*/gi, '').replace(/\[NEW\]/gi, '').replace(/\*\[REMOVE_REQUESTED\]\*/gi, '').replace(/\[REMOVE_REQUESTED\]/gi, '').replace(/\*\[DEVICE_REVOKE_REQUESTED\]\*/gi, '').replace(/\[DEVICE_REVOKE_REQUESTED\]/gi, ''); } localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData)); renderAdminData(globalAdminData); if (item.HostEmail) localStorage.removeItem('cached_passes_' + String(item.HostEmail).toLowerCase().trim()); } }
-    try { await apiCall({ action: 'update_status', id: id, newStatus: newStatus }); loadAdminData(true); if (currentUser && currentUser.role === 'ops') loadMyPasses(true, true); } catch (e) { alert("Network error: " + e.message); } finally { startAutoRefresh(currentUser.role); }
-}
+    function openAdminGateModal(id) { const gi = _d('admin-gate-id'), gd = _d('admin-gate-id-display'), gm = _d('admin-gate-modal'); if (gi) gi.value = id; if (gd) gd.innerText = id; if (gm) gm.classList.remove('hidden'); }
+    function closeAdminGateModal() { const gm = _d('admin-gate-modal'); if (gm) gm.classList.add('hidden'); }
 
-function openAdminGateModal(id) { const gi = _d('admin-gate-id'), gd = _d('admin-gate-id-display'), gm = _d('admin-gate-modal'); if (gi) gi.value = id; if (gd) gd.innerText = id; if (gm) gm.classList.remove('hidden'); }
-function closeAdminGateModal() { const gm = _d('admin-gate-modal'); if (gm) gm.classList.add('hidden'); }
+    async function submitAdminGateAction(actionType) {
+        const id = _d('admin-gate-id').value; if (!id) return;
+        let item = globalAdminData.find(x => String(x.UniqueID) === String(id));
+        const nowIso = new Date().toISOString();
+        const adminInfo = currentUser.role === 'admin' ? `Admin: ${currentUser.name}` : `${currentUser.name} (${currentUser.location})`;
 
-async function submitAdminGateAction(actionType) {
-    const id = _d('admin-gate-id').value; if (!id) return;
-    let item = globalAdminData.find(x => String(x.UniqueID) === String(id));
-    const nowIso = new Date().toISOString();
-    const adminInfo = currentUser.role === 'admin' ? `Admin: ${currentUser.name}` : `${currentUser.name} (${currentUser.location})`;
+        if (item) { 
+            const isInside = !!item.CheckInTime && !item.CheckOutTime; 
+            if (actionType === 'check_in' && isInside) return alert("This pass is already checked IN by:\n" + item.ScannedByGuard); 
+            if (actionType === 'check_out' && !isInside) return alert("This pass is already checked OUT."); 
+            
+            if (actionType === 'check_in') {
+                item.CheckInTime = nowIso;
+                item.CheckOutTime = '';
+                item.ScannedByGuard = adminInfo;
+            } else {
+                item.CheckOutTime = nowIso;
+            }
 
-    if (item) { 
-        const isInside = !!item.CheckInTime && !item.CheckOutTime; 
-        if (actionType === 'check_in' && isInside) return alert("This pass is already checked IN by:\n" + item.ScannedByGuard); 
-        if (actionType === 'check_out' && !isInside) return alert("This pass is already checked OUT."); 
+            let existingLogs = [];
+            try { existingLogs = JSON.parse(item.GateLogs || "[]"); } catch(e) {}
+            existingLogs.push({ action: actionType === 'check_in' ? 'IN' : 'OUT', time: nowIso, guard: adminInfo });
+            item.GateLogs = JSON.stringify(existingLogs);
+
+            localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData));
+            renderAdminData(globalAdminData);
+        }
+
+        closeAdminGateModal();
+        try {
+            await apiCall({ action: actionType, id: id, guardInfo: adminInfo, headCount: 1 });
+            localStorage.removeItem('cached_admin_data');
+            await loadAdminData(true);
+        } catch(e) {
+            console.error(e);
+        }
+    }
+
+    async function adminRevokePass(id) {
+        if (autoRefreshTimer) clearInterval(autoRefreshTimer); if (!confirm(`Revoke pass ${id} completely? This will kill the QR code permanently.`)) { startAutoRefresh(currentUser.role); return; }
+        if (Array.isArray(globalAdminData)) { let item = globalAdminData.find(x => String(x.UniqueID) === String(id)); if (item) { item.Status = 'Completed'; item.CheckOutTime = new Date().toISOString(); localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData)); renderAdminData(globalAdminData); if (item.HostEmail) localStorage.removeItem('cached_passes_' + String(item.HostEmail).toLowerCase().trim()); } }
+        try { const adminInfo = currentUser.role === 'admin' ? `Admin: ${currentUser.name}` : `${currentUser.name} (${currentUser.location})`; await apiCall({ action: 'check_out', id: id, guardInfo: adminInfo, headCount: 1, forceStatus: 'Completed' }); localStorage.removeItem('cached_admin_data'); setTimeout(() => { loadAdminData(true) }, 1000); } catch (e) { console.error(e); } finally { startAutoRefresh(currentUser.role); }
+    }
+
+    function openExtendPass(id, type) { const ei = _d('extend-id'), et = _d('extend-type'), eg = _d('extend-end-group'), em = _d('extend-pass-modal'); if (ei) ei.value = id; if (et) et.value = type; if (eg) eg.classList.remove('hidden'); if (em) em.classList.remove('hidden'); }
+    function closeExtendPass() { const em = _d('extend-pass-modal'); if (em) em.classList.add('hidden'); }
+
+    async function submitExtendPass() {
+        const id = _d('extend-id').value, type = _d('extend-type').value, ns = _d('extend-start').value, ei = _d('extend-end'); const ne = ei ? ei.value : ''; const btn = _d('btn-submit-extend');
+        if (!ns || !ne) return alert('Please select both Start and End dates.'); if (!confirm(`Extend pass ${id}?`)) return; btn.innerText = 'SAVING...'; btn.disabled = true;
+        try { await apiCall({ action: 'extend_pass', id: id, newStartDate: ns, newEndDate: ne }); closeExtendPass(); loadAdminData(false); } catch (e) { alert('Error: ' + e.message); } finally { btn.innerText = t("save_extension"); btn.disabled = false; }
+    }
+
+    async function adminResetPin(email) { if (!confirm(`Reset PIN for ${email}? They will be prompted to create a new one next time.`)) return; try { await apiCall({ action: 'reset_pin', email: email }); localStorage.removeItem('cached_admin_data'); localStorage.removeItem('cached_passes_' + email); alert("PIN Reset Successful."); closeViewRecord(); loadAdminData(true); } catch (e) { alert("Error resetting PIN: " + e.message); } }
+    async function requestRevokeDevice(passId, memberIndex, btn) { if (!confirm(`Request admin to revoke device access for this member?`)) return; let originalText = btn.innerText; btn.innerText = "REQUESTING..."; btn.disabled = true; try { const json = await apiCall({ action: 'request_revoke_device', id: passId, memberIndex: memberIndex }); if (json.status === 'success') { alert("Device Revoke requested successfully."); localStorage.removeItem('cached_passes_' + currentUser.email); loadMyPasses(true, true); openViewRecord(passId); } else { alert("Failed to request: " + json.message); btn.innerText = originalText; btn.disabled = false; } } catch (e) { console.error(e); alert("Network error: " + e.message); btn.innerText = originalText; btn.disabled = false; } }
+    async function requestRemoveTeamMember(passId, memberIndex, btn) { if (!confirm(`Request admin to permanently remove this team member?`)) return; let originalText = btn.innerText; btn.innerText = "REQUESTING..."; btn.disabled = true; try { const json = await apiCall({ action: 'request_remove_member', id: passId, memberIndex: memberIndex }); if (json.status === 'success') { alert("Removal requested successfully."); localStorage.removeItem('cached_passes_' + currentUser.email); loadMyPasses(true, true); openViewRecord(passId); } else { alert("Failed to request removal: " + json.message); btn.innerText = originalText; btn.disabled = false; } } catch (e) { console.error(e); alert("Network error: " + e.message); btn.innerText = originalText; btn.disabled = false; } }
+    async function cancelRemoveRequest(passId, memberIndex, btn) { if (!confirm(`Cancel this removal request?`)) return; let ot = btn.innerText; btn.innerText = "CANCELLING..."; btn.disabled = true; try { const json = await apiCall({ action: 'cancel_remove_request', id: passId, memberIndex: memberIndex }); if (json.status === 'success') { localStorage.removeItem('cached_admin_data'); loadAdminData(true); openViewRecord(passId); } else { alert("Failed to cancel: " + json.message); btn.innerText = ot; btn.disabled = false; } } catch (e) { console.error(e); alert("Network error: " + e.message); btn.innerText = ot; btn.disabled = false; } }
+    async function cancelRevokeDeviceRequest(passId, memberIndex, btn) { if (!confirm(`Cancel this device revoke request?`)) return; let ot = btn.innerText; btn.innerText = "CANCELLING..."; btn.disabled = true; try { const json = await apiCall({ action: 'cancel_revoke_device_request', id: passId, memberIndex: memberIndex }); if (json.status === 'success') { localStorage.removeItem('cached_admin_data'); loadAdminData(true); openViewRecord(passId); } else { alert("Failed to cancel: " + json.message); btn.innerText = ot; btn.disabled = false; } } catch (e) { console.error(e); alert("Network error: " + e.message); btn.innerText = ot; btn.disabled = false; } }
+    async function adminRevokeDevice(passId, memberIndex, btn) { if (!confirm(`Are you sure you want to completely revoke device access for this team member?`)) return; let ot = btn.innerText; btn.innerText = "REVOKING..."; btn.disabled = true; try { const json = await apiCall({ action: 'revoke_device', id: passId, memberIndex: memberIndex }); if (json.status === 'success') { alert("Device access revoked successfully."); localStorage.removeItem('cached_admin_data'); const res = await apiCall({ action: 'get_all' }); const dataMain = convertDriveUrls(res); globalAdminData = dataMain.reverse(); localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData)); renderAdminData(globalAdminData); openViewRecord(passId); } else { alert("Failed to revoke: " + json.message); btn.innerText = ot; btn.disabled = false; } } catch (e) { console.error(e); alert("Network error: " + e.message); btn.innerText = ot; btn.disabled = false; } }
+    async function adminRemoveTeamMember(passId, memberIndex, btn) { if (!confirm(`Are you sure you want to completely remove this team member from pass ${passId}?`)) return; let ot = btn.innerText; btn.innerText = "REMOVING..."; btn.disabled = true; try { const json = await apiCall({ action: 'remove_team_member', id: passId, memberIndex: memberIndex }); if (json.status === 'success') { alert("Team member removed successfully."); localStorage.removeItem('cached_admin_data'); const res = await apiCall({ action: 'get_all' }); const dataMain = convertDriveUrls(res); globalAdminData = dataMain.reverse(); localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData)); renderAdminData(globalAdminData); openViewRecord(passId); } else { alert("Failed to remove: " + json.message); btn.innerText = ot; btn.disabled = false; } } catch (e) { console.error(e); alert("Network error: " + e.message); btn.innerText = ot; btn.disabled = false; } }
+
+    function openViewRecord(id, targetCategory = null) {
+        const r = globalAdminData.find(x => String(x.UniqueID) === String(id)) || myPassesData.find(x => String(x.UniqueID) === String(id)); if (!r) return;
         
-        if (actionType === 'check_in') {
-            item.CheckInTime = nowIso;
-            item.CheckOutTime = '';
-            item.ScannedByGuard = adminInfo;
-        } else {
-            item.CheckOutTime = nowIso;
+        let parsedTeam = parseTeamMembersString(r.TeamMembers);
+        let teamCount = parsedTeam.length; 
+        let totalHeadcount = 1 + teamCount;
+        let rType = String(r.Type || ''); let displayHostName = (r.HostName || '-').split('||PIN:')[0]; let actualPin = (r.HostName || '').includes('||PIN:') ? (r.HostName || '').split('||PIN:')[1] : null; let h = `<div><strong>${t('lbl_host_name')}</strong>${displayHostName}</div>`;
+        
+        if (currentUser && currentUser.role === 'admin') { let pinDisplay = actualPin ? actualPin : 'NOT SET'; let actionBtn = actualPin ? `<button onclick="adminResetPin('${r.HostEmail}')" class="btn-primary btn-danger btn-sm" style="width:auto; padding:4px 10px; font-size:11px;">🔄 RESET</button>` : ''; h += `<div style="margin-bottom:10px;"><strong>ACCOUNT PIN</strong><div style="display:flex; gap:10px; align-items:center; margin-top:5px;"><span id="admin-view-pin" style="color:${actualPin ? 'var(--danger)' : 'var(--text-muted)'}; font-weight:bold; font-size:16px; letter-spacing: 2px; background:rgba(0,0,0,0.3); padding:4px 10px; border-radius:4px;">****</span><button onclick="document.getElementById('admin-view-pin').innerText='${pinDisplay}'; this.style.display='none';" class="btn-primary btn-outline btn-sm" style="width:auto; padding:4px 10px; font-size:11px;">👁️ SHOW</button>${actionBtn}</div></div>`; }
+        
+        h += `<div><strong>${t('lbl_host_email')}</strong>${r.HostEmail || '-'}</div><div><strong>TOTAL HEADCOUNT</strong><span style="color:var(--noon-yellow); font-size:16px; font-weight:bold;">${totalHeadcount}</span> (1 Lead + ${teamCount} Team)</div><div><strong>${t('visitor_name')}</strong>${r.VisitorName || '-'}</div><div><strong>${t('type_header')}</strong>${t(rType.toLowerCase()) || '-'}</div><div><strong>${t('location_label')}</strong>${r.Location || '-'}</div><div><strong>${t('lbl_validity')}</strong>${rType === 'Visitor' ? formatToDDMMYYYY(r.StartDate) : formatToDDMMYYYY(r.StartDate) + ' - ' + formatToDDMMYYYY(r.EndDate || r.StartDate)}</div><div><strong>${t('slp_ticket')}</strong>${r.SlpTicketNo || '-'}</div><div><strong>${t('contact_no')}</strong>${r.ContactNo || '-'}</div><div><strong>IMEI NUMBER</strong>${r.ImeiNumber || '-'}</div>`;
+        if (rType === 'Visitor') h += `<div><strong>${t('invited_by')}</strong>${r.InvitedBy || '-'}</div>`; else h += `<div><strong>${t('project_name')}</strong>${r.ProjectName || '-'}</div><div><strong>${t('company_name')}</strong>${r.CompanyName || '-'}</div><div><strong>${t('project_manager')}</strong>${r.ProjectManager || '-'}</div><div><strong>${t('fm_poc')}</strong>${r.FmPoc || '-'}</div>`;
+        h += `<div class="record-img-box" style="margin-top:15px;"><div style="flex:1;background:transparent;border:none;padding:0;"><strong>${t('lbl_iqama')} (Lead)</strong><img src="${r.IqamaURL || ''}" onclick="openFullscreenImage(this.src)"></div><div style="flex:1;background:transparent;border:none;padding:0;"><strong>${t('lbl_selfie')} (Lead)</strong><img src="${r.SelfieURL || ''}" onclick="openFullscreenImage(this.src)"></div>`;
+        if (r.ImeiPhotoURL && r.ImeiPhotoURL !== "No File") h += `<div style="flex:1;background:transparent;border:none;padding:0;"><strong>IMEI PHOTO (Lead)</strong><img src="${r.ImeiPhotoURL}" onclick="openFullscreenImage(this.src)"></div>`;
+        let fmpocStr = String(r.FmPoc || ''); if (rType === 'Contractor' && fmpocStr && (fmpocStr.startsWith('http') || fmpocStr.startsWith('data:image'))) h += `<div style="flex:1;background:transparent;border:none;padding:0;"><strong>${t('fm_poc')} (Legacy Image)</strong><img src="${fmpocStr}" onclick="openFullscreenImage(this.src)"></div>`;
+        let vehStr = String(r.VehiclePlateNo || ''); if (vehStr) { if (vehStr.startsWith('http') || vehStr.startsWith('data:image')) h += `<div style="flex:1;background:transparent;border:none;padding:0;"><strong>${t('lbl_vehicle')}</strong><img src="${vehStr}" onclick="openFullscreenImage(this.src)"></div>`; else h += `<div style="flex:1;background:transparent;border:none;padding:0;"><strong>${t('lbl_vehicle')}</strong><div style="margin-top:5px;color:var(--text-muted);">${vehStr}</div></div>`; } h += `</div>`;
+
+        if (parsedTeam.length > 0) {
+            let arrRemoval = []; let arrDeviceRevoke = []; let arrNew = []; let arrActive = [];
+            parsedTeam.forEach(m => { if (m.isRemoveRequested) arrRemoval.push(m); else if (m.isDeviceRevokeReq) arrDeviceRevoke.push(m); else if (m.isNew) arrNew.push(m); else arrActive.push(m); });
+            
+            const sortByDevice = (a, b) => { let aHas = (a.device && a.device !== 'None' && a.device.trim() !== '') ? 1 : 0; let bHas = (b.device && b.device !== 'None' && b.device.trim() !== '') ? 1 : 0; return bHas - aHas; };
+            arrRemoval.sort(sortByDevice); arrDeviceRevoke.sort(sortByDevice); arrNew.sort(sortByDevice); arrActive.sort(sortByDevice);
+            
+            const renderMemberRow = (m) => {
+                let hasDevice = m.device !== 'None' && m.device !== ''; 
+                let devHtml = hasDevice ? `<span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">${m.device}</span>` : ''; 
+                let newBadge = m.isNew ? `<span style="background:var(--success);color:white;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">${t('new_badge')}</span>` : `<span style="background:rgba(255,255,255,0.2);color:white;font-size:9px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;letter-spacing:0.5px;">TEAM</span>`; 
+                let removalBadge = m.isRemoveRequested ? `<span style="background:var(--danger);color:white;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">REMOVAL REQUESTED</span>` : ''; 
+                let devRevokeBadge = m.isDeviceRevokeReq ? `<span style="background:#eab308;color:#000;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">DEVICE REVOKE REQUESTED</span>` : '';
+                
+                let imgsHtml = '';
+                if (m.iqama) imgsHtml += `<img src="${m.iqama}" style="width:50px;height:50px;border-radius:6px;object-fit:cover;cursor:zoom-in;border:1px solid #444;" onclick="openFullscreenImage(this.src)" title="Iqama">`;
+                if (m.selfie) imgsHtml += `<img src="${m.selfie}" style="width:50px;height:50px;border-radius:6px;object-fit:cover;cursor:zoom-in;border:1px solid #444;" onclick="openFullscreenImage(this.src)" title="Selfie">`;
+                if (m.devicePhoto && m.devicePhoto !== 'No File') imgsHtml += `<img src="${m.devicePhoto}" style="width:50px;height:50px;border-radius:6px;object-fit:cover;cursor:zoom-in;border:1px solid #444;" onclick="openFullscreenImage(this.src)" title="Device Screen">`;
+
+                let removeReqHtml = ''; let removeBtnHtml = ''; let revokeDevHtml = ''; let cancelReqHtml = '';
+                if (currentUser && currentUser.role === 'admin') { 
+                    removeBtnHtml = `<button onclick="adminRemoveTeamMember('${r.UniqueID}', ${m.originalIndex}, this)" style="background:var(--danger); border:none; color:white; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; margin-left:5px;">🗑️ ACCEPT REMOVAL</button>`; 
+                    if (m.isRemoveRequested) { cancelReqHtml = `<button onclick="cancelRemoveRequest('${r.UniqueID}', ${m.originalIndex}, this)" style="background:gray; border:none; color:white; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; margin-left:5px;">❌ CANCEL</button>`; } 
+                    if (hasDevice) { revokeDevHtml = `<button onclick="adminRevokeDevice('${r.UniqueID}', ${m.originalIndex}, this)" style="background:#eab308; border:none; color:#000; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; margin-left:5px;">🚫 REVOKE DEVICE</button>`; if (m.isDeviceRevokeReq) { cancelReqHtml += `<button onclick="cancelRevokeDeviceRequest('${r.UniqueID}', ${m.originalIndex}, this)" style="background:gray; border:none; color:white; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; margin-left:5px;">❌ CANCEL</button>`; } } 
+                } else { 
+                    if (!m.isRemoveRequested) { removeReqHtml = `<button onclick="requestRemoveTeamMember('${r.UniqueID}', ${m.originalIndex}, this)" style="background:#ef4444; border:none; color:white; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; margin-left:5px;">⚠️ REQUEST REMOVAL</button>`; } 
+                    if (hasDevice && !m.isDeviceRevokeReq) { revokeDevHtml = `<button onclick="requestRevokeDevice('${r.UniqueID}', ${m.originalIndex}, this)" style="background:#eab308; border:none; color:#000; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; margin-left:5px;">⚠️ REQUEST DEVICE REVOKE</button>`; } 
+                }
+
+                let rowStyle = "display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.2);padding:10px;border-radius:8px; border:1px solid rgba(255,255,255,0.05); transition: all 0.3s ease;";
+                if (m.isRemoveRequested) rowStyle = "display:flex;align-items:center;justify-content:space-between;background:rgba(239, 68, 68, 0.1);padding:10px;border-radius:8px; border:1px solid rgba(239, 68, 68, 0.4); transition: all 0.3s ease;"; 
+                else if (m.isDeviceRevokeReq) rowStyle = "display:flex;align-items:center;justify-content:space-between;background:rgba(234, 179, 8, 0.1);padding:10px;border-radius:8px; border:1px solid rgba(234, 179, 8, 0.4); transition: all 0.3s ease;"; 
+                else if (m.isNew) rowStyle = "display:flex;align-items:center;justify-content:space-between;background:rgba(16, 185, 129, 0.1);padding:10px;border-radius:8px; border:1px solid rgba(16, 185, 129, 0.4); transition: all 0.3s ease;";
+
+                return `<div class="modal-team-row" style="${rowStyle}"><div><span style="color:var(--noon-yellow);font-weight:bold;">${m.name}</span>${newBadge}${removalBadge}<br><span style="font-size:11px;color:var(--text-muted);">ID: ${m.iqamaText}</span><br>${devHtml}${devRevokeBadge}</div><div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">${imgsHtml} ${revokeDevHtml} ${removeBtnHtml} ${removeReqHtml} ${cancelReqHtml}</div></div>`;
+            };
+
+            h += `<div style="grid-column:span 2;background:transparent;border-top:1px solid var(--border-color);padding-top:15px;margin-top:10px;">`;
+            if (arrRemoval.length > 0) { h += `<div id="section-remove"><strong style="font-size:14px; margin-bottom:10px; display:block; color:var(--danger); border-bottom:1px solid rgba(239,68,68,0.3); padding-bottom:5px;">🔴 REMOVAL REQUESTS (${arrRemoval.length})</strong><div style="display:flex;flex-direction:column;gap:10px; margin-bottom:20px;">`; arrRemoval.forEach(m => h += renderMemberRow(m)); h += `</div></div>`; }
+            if (arrDeviceRevoke.length > 0) { h += `<div id="section-revoke"><strong style="font-size:14px; margin-bottom:10px; display:block; color:#eab308; border-bottom:1px solid rgba(234,179,8,0.3); padding-bottom:5px;">🟠 DEVICE REVOKE REQUESTS (${arrDeviceRevoke.length})</strong><div style="display:flex;flex-direction:column;gap:10px; margin-bottom:20px;">`; arrDeviceRevoke.forEach(m => h += renderMemberRow(m)); h += `</div></div>`; }
+            if (arrNew.length > 0) { h += `<div id="section-add"><strong style="font-size:14px; margin-bottom:10px; display:block; color:var(--success); border-bottom:1px solid rgba(16,185,129,0.3); padding-bottom:5px;">🟢 NEW MEMBERS ADDED (${arrNew.length})</strong><div style="display:flex;flex-direction:column;gap:10px; margin-bottom:20px;">`; arrNew.forEach(m => h += renderMemberRow(m)); h += `</div></div>`; }
+            if (arrActive.length > 0) { h += `<div id="section-active"><strong style="font-size:14px; margin-bottom:10px; display:block; color:white; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:5px;">⚪ ACTIVE TEAM MEMBERS (${arrActive.length})</strong><div style="display:flex;flex-direction:column;gap:10px; margin-bottom:20px;">`; arrActive.forEach(m => h += renderMemberRow(m)); h += `</div></div>`; }
+            h += `</div>`;
         }
 
-        let existingLogs = [];
-        try { existingLogs = JSON.parse(item.GateLogs || "[]"); } catch(e) {}
-        existingLogs.push({ action: actionType === 'check_in' ? 'IN' : 'OUT', time: nowIso, guard: adminInfo });
-        item.GateLogs = JSON.stringify(existingLogs);
-
-        localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData));
-        renderAdminData(globalAdminData);
+        const mc = _d('view-record-content'), modal = _d('view-record-modal'); if (mc) mc.innerHTML = h; if (modal) modal.classList.remove('hidden');
+        if (targetCategory) { setTimeout(() => { let targetElem = _d('section-' + targetCategory); if (targetElem) { targetElem.scrollIntoView({ behavior: 'smooth', block: 'center' }); let origBg = targetElem.style.backgroundColor; targetElem.style.transition = 'background-color 0.5s ease'; targetElem.style.backgroundColor = 'rgba(255, 199, 0, 0.2)'; targetElem.style.borderRadius = '8px'; targetElem.style.padding = '10px'; setTimeout(() => { targetElem.style.backgroundColor = origBg; }, 2000); } }, 300); }
     }
 
-    closeAdminGateModal();
-    try {
-        await apiCall({ action: actionType, id: id, guardInfo: adminInfo, headCount: 1 });
-        localStorage.removeItem('cached_admin_data');
-        await loadAdminData(true);
-    } catch(e) {
-        console.error(e);
+    function closeViewRecord() { const modal = _d('view-record-modal'); if (modal) modal.classList.add('hidden'); }
+
+    function printSelected() {
+        const cbs = _q('.print-checkbox.row-checkbox:checked'); if (cbs.length === 0) return alert("Please select at least one approved pass."); const pm = confirm("Print Layout Selection:\n\n[OK] = MULTIPLE passes per page\n[Cancel] = SINGLE pass per page"); let copiesInput = prompt("How many copies of EACH selected pass do you want to print?", "1"); let copies = parseInt(copiesInput, 10); if (isNaN(copies) || copies < 1) copies = 1;
+        const pw = window.open('', '', 'width=800,height=600'); let cardsHtml = '';
+        cbs.forEach((cb) => { const id = cb.value, name = cb.getAttribute('data-name'), type = cb.getAttribute('data-type'), loc = cb.getAttribute('data-location'), st = cb.getAttribute('data-status'), date = cb.getAttribute('data-date'); let tempDiv = document.createElement("div"); new QRCode(tempDiv, { text: id, width: 110, height: 110, colorDark: "#000", colorLight: "#fff", correctLevel: QRCode.CorrectLevel.H }); let canvas = tempDiv.querySelector("canvas"); let qrDataUrl = canvas ? canvas.toDataURL() : ''; for (let i = 0; i < copies; i++) { cardsHtml += `<div class="card"><div class="top-row"><div><p class="name">${name}</p><p class="sub">${type} &bull; ${loc}</p><p class="date">Valid: ${date}</p></div><div><p class="status">${st}</p><p class="id">${id}</p></div></div><div class="qr-box"><img src="${qrDataUrl}"></div></div>`; } });
+        let ps = pm ? `@media print{@page{margin:10mm}body{display:flex;flex-wrap:wrap;gap:5mm;align-content:flex-start;justify-content:flex-start}.card{page-break-inside:avoid;border:1px solid #ccc !important}}` : `@media print{@page{size:85.6mm 54mm;margin:0}body{display:block;margin:0;padding:0;background:#fff}.card{border:none !important;border-radius:0;margin:0;padding:4mm;width:85.6mm;height:54mm;page-break-after:always;box-sizing:border-box}.card:last-child{page-break-after:auto}}`;
+        pw.document.write(`<html><head><title>Batch Print Passes</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"><style>*{box-sizing:border-box;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}body{margin:0;padding:20px;background:#fff;font-family:'Inter',sans-serif;display:flex;flex-wrap:wrap;gap:15px}.card{width:85.6mm;height:54mm;background:white;border-radius:2mm;padding:4mm;border:1px solid #ccc;position:relative;overflow:hidden}.top-row{display:flex;justify-content:space-between;align-items:flex-start}.name{font-size:10pt;font-weight:700;margin:0;color:black;line-height:1.1;max-width:48mm;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.sub{font-size:7pt;color:#555;margin:2px 0 0 0}.date{font-size:6pt;font-weight:600;color:#444;margin:2px 0 0 0}.status{font-size:8pt;font-weight:700;color:#10b981;margin:0;text-align:right;text-transform:uppercase}.id{font-size:6pt;color:#555;margin:2px 0 0 0;text-align:right}.qr-box{display:flex;justify-content:center;align-items:center;margin-top:2mm}${ps}</style></head><body>${cardsHtml}</body></html>`);
+        pw.document.close(); pw.focus(); setTimeout(() => { pw.print(); pw.close(); }, 250);
     }
-}
 
-async function adminRevokePass(id) {
-    if (autoRefreshTimer) clearInterval(autoRefreshTimer); if (!confirm(`Revoke pass ${id} completely? This will kill the QR code permanently.`)) { startAutoRefresh(currentUser.role); return; }
-    if (Array.isArray(globalAdminData)) { let item = globalAdminData.find(x => String(x.UniqueID) === String(id)); if (item) { item.Status = 'Completed'; item.CheckOutTime = new Date().toISOString(); localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData)); renderAdminData(globalAdminData); if (item.HostEmail) localStorage.removeItem('cached_passes_' + String(item.HostEmail).toLowerCase().trim()); } }
-    try { const adminInfo = currentUser.role === 'admin' ? `Admin: ${currentUser.name}` : `${currentUser.name} (${currentUser.location})`; await apiCall({ action: 'check_out', id: id, guardInfo: adminInfo, headCount: 1, forceStatus: 'Completed' }); localStorage.removeItem('cached_admin_data'); setTimeout(() => { loadAdminData(true) }, 1000); } catch (e) { console.error(e); } finally { startAutoRefresh(currentUser.role); }
-}
+    function printQR(name, type, location, id, status, date) {
+        const pm = confirm("Print Layout Selection:\n\n[OK] = Standard Printer\n[Cancel] = ID Card Printer"); let copiesInput = prompt("How many copies do you want to print on the page?", "1"); let copies = parseInt(copiesInput, 10); if (isNaN(copies) || copies < 1) copies = 1;
+        const pw = window.open('', '', 'width=800,height=600'); let tempDiv = document.createElement("div"); new QRCode(tempDiv, { text: id, width: 110, height: 110, colorDark: "#000", colorLight: "#fff", correctLevel: QRCode.CorrectLevel.H }); let canvas = tempDiv.querySelector("canvas"); let qrDataUrl = canvas ? canvas.toDataURL() : ''; let cardsHtml = '';
+        for (let i = 0; i < copies; i++) { cardsHtml += `<div class="card"><div class="top-row"><div><p class="name">${name}</p><p class="sub">${type} &bull; ${location}</p><p class="date">Valid: ${date}</p></div><div><p class="status">${status}</p><p class="id">${id}</p></div></div><div class="qr-box"><img src="${qrDataUrl}"></div></div>`; }
+        let ps = pm ? `@media print{@page{margin:10mm}body{display:flex;flex-wrap:wrap;gap:5mm;align-content:flex-start;justify-content:flex-start}.card{page-break-inside:avoid;border:1px solid #ccc !important}}` : `@media print{@page{size:85.6mm 54mm;margin:0}body{display:block;margin:0;padding:0;background:#fff}.card{border:none !important;border-radius:0;margin:0;padding:4mm;width:85.6mm;height:54mm;page-break-inside:avoid;box-sizing:border-box}}`;
+        pw.document.write(`<html><head><title>Print QR Pass</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"><style>*{box-sizing:border-box;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}body{margin:0;padding:20px;background:#fff;font-family:'Inter',sans-serif;display:flex;flex-wrap:wrap;justify-content:flex-start;gap:15px;}.card{width:85.6mm;height:54mm;background:white;border-radius:2mm;padding:4mm;border:1px solid #ccc;position:relative;overflow:hidden}.top-row{display:flex;justify-content:space-between;align-items:flex-start}.name{font-size:10pt;font-weight:700;margin:0;color:black;line-height:1.1;max-width:48mm;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.sub{font-size:7pt;color:#555;margin:2px 0 0 0}.date{font-size:6pt;font-weight:600;color:#444;margin:2px 0 0 0}.status{font-size:8pt;font-weight:700;color:#10b981;margin:0;text-align:right;text-transform:uppercase}.id{font-size:6pt;color:#555;margin:2px 0 0 0;text-align:right}.qr-box{display:flex;justify-content:center;align-items:center;margin-top:2mm}${ps}</style></head><body>${cardsHtml}</body></html>`);
+        pw.document.close(); pw.focus(); setTimeout(() => { pw.print(); pw.close(); }, 250);
+    }
 
-function openExtendPass(id, type) { const ei = _d('extend-id'), et = _d('extend-type'), eg = _d('extend-end-group'), em = _d('extend-pass-modal'); if (ei) ei.value = id; if (et) et.value = type; if (eg) eg.classList.remove('hidden'); if (em) em.classList.remove('hidden'); }
-function closeExtendPass() { const em = _d('extend-pass-modal'); if (em) em.classList.add('hidden'); }
-
-async function submitExtendPass() {
-    const id = _d('extend-id').value, type = _d('extend-type').value, ns = _d('extend-start').value, ei = _d('extend-end'); const ne = ei ? ei.value : ''; const btn = _d('btn-submit-extend');
-    if (!ns || !ne) return alert('Please select both Start and End dates.'); if (!confirm(`Extend pass ${id}?`)) return; btn.innerText = 'SAVING...'; btn.disabled = true;
-    try { await apiCall({ action: 'extend_pass', id: id, newStartDate: ns, newEndDate: ne }); closeExtendPass(); loadAdminData(false); } catch (e) { alert('Error: ' + e.message); } finally { btn.innerText = t("save_extension"); btn.disabled = false; }
-}
-
-async function adminResetPin(email) { if (!confirm(`Reset PIN for ${email}? They will be prompted to create a new one next time.`)) return; try { await apiCall({ action: 'reset_pin', email: email }); localStorage.removeItem('cached_admin_data'); localStorage.removeItem('cached_passes_' + email); alert("PIN Reset Successful."); closeViewRecord(); loadAdminData(true); } catch (e) { alert("Error resetting PIN: " + e.message); } }
-function downloadQR(id) { let safeId = String(id).replace(/[^a-zA-Z0-9_-]/g, ''); const qrBox = _d('qr-' + safeId); if (!qrBox) return; let canvas = qrBox.querySelector('canvas'); let img = qrBox.querySelector('img'); let sourceImage = canvas && canvas.style.display !== 'none' ? canvas : (img && img.src ? img : null); if (!sourceImage) return alert("QR Code not ready yet."); let size = 150; let padding = 20; let newCanvas = document.createElement('canvas'); newCanvas.width = size + (padding * 2); newCanvas.height = size + (padding * 2); let ctx = newCanvas.getContext('2d'); ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, newCanvas.width, newCanvas.height); ctx.drawImage(sourceImage, padding, padding, size, size); const link = document.createElement('a'); link.href = newCanvas.toDataURL('image/png'); link.download = `Noon_Pass_QR_${safeId}.png`; document.body.appendChild(link); link.click(); document.body.removeChild(link); }
-function printQR(name, type, location, id, status, date) { const pm = confirm("Print Layout Selection:\n\n[OK] = Standard Printer\n[Cancel] = ID Card Printer"); let copiesInput = prompt("How many copies do you want to print on the page?", "1"); let copies = parseInt(copiesInput, 10); if (isNaN(copies) || copies < 1) copies = 1; const pw = window.open('', '', 'width=800,height=600'); let tempDiv = document.createElement("div"); new QRCode(tempDiv, { text: id, width: 110, height: 110, colorDark: "#000", colorLight: "#fff", correctLevel: QRCode.CorrectLevel.H }); let canvas = tempDiv.querySelector("canvas"); let qrDataUrl = canvas ? canvas.toDataURL() : ''; let cardsHtml = ''; for (let i = 0; i < copies; i++) { cardsHtml += `<div class="card"><div class="top-row"><div><p class="name">${name}</p><p class="sub">${type} &bull; ${location}</p><p class="date">Valid: ${date}</p></div><div><p class="status">${status}</p><p class="id">${id}</p></div></div><div class="qr-box"><img src="${qrDataUrl}"></div></div>`; } let ps = pm ? `@media print{@page{margin:10mm}body{display:flex;flex-wrap:wrap;gap:5mm;align-content:flex-start;justify-content:flex-start}.card{page-break-inside:avoid;border:1px solid #ccc !important}}` : `@media print{@page{size:85.6mm 54mm;margin:0}body{display:block;margin:0;padding:0;background:#fff}.card{border:none !important;border-radius:0;margin:0;padding:4mm;width:85.6mm;height:54mm;page-break-inside:avoid;box-sizing:border-box}}`; pw.document.write(`<html><head><title>Print QR Pass</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"><style>*{box-sizing:border-box;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}body{margin:0;padding:20px;background:#fff;font-family:'Inter',sans-serif;display:flex;flex-wrap:wrap;justify-content:flex-start;gap:15px;}.card{width:85.6mm;height:54mm;background:white;border-radius:2mm;padding:4mm;border:1px solid #ccc;position:relative;overflow:hidden}.top-row{display:flex;justify-content:space-between;align-items:flex-start}.name{font-size:10pt;font-weight:700;margin:0;color:black;line-height:1.1;max-width:48mm;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.sub{font-size:7pt;color:#555;margin:2px 0 0 0}.date{font-size:6pt;font-weight:600;color:#444;margin:2px 0 0 0}.status{font-size:8pt;font-weight:700;color:#10b981;margin:0;text-align:right;text-transform:uppercase}.id{font-size:6pt;color:#555;margin:2px 0 0 0;text-align:right}.qr-box{display:flex;justify-content:center;align-items:center;margin-top:2mm}${ps}</style></head><body>${cardsHtml}</body></html>`); pw.document.close(); pw.focus(); setTimeout(() => { pw.print(); pw.close(); }, 250); }
     function switchScanMode(mode) { const btnCam = _d('btn-mode-camera'); const btnGun = _d('btn-mode-gun'); const gunContainer = _d('gun-scanner-container'); const camWrapper = _d('camera-mode-wrapper'); const gunInput = _d('gun-scan-input'); if (mode === 'gun') { if (btnCam) btnCam.className = "btn-primary btn-outline"; if (btnGun) btnGun.className = "btn-primary"; if (camWrapper) camWrapper.classList.add('hidden'); if (gunContainer) gunContainer.classList.remove('hidden'); stopScanner(); if (gunInput) { gunInput.focus(); gunInput.value = ""; } } else { if (btnCam) btnCam.className = "btn-primary"; if (btnGun) btnGun.className = "btn-primary btn-outline"; if (gunContainer) gunContainer.classList.add('hidden'); if (camWrapper) camWrapper.classList.remove('hidden'); } }
-function handleGunScan(event) { if (event.key === 'Enter') { event.preventDefault(); const code = event.target.value.replace(/\s+/g, '').trim().toUpperCase(); if (code) { event.target.value = ""; onScanSuccess(code); } } }
-function startScanner() { const btn = _d('btn-start-scan'); const readerCont = _d('reader-container'); const scanResult = _d('scan-result'); if (btn) btn.classList.add('hidden'); if (scanResult) scanResult.classList.add('hidden'); if (readerCont) readerCont.classList.remove('hidden'); if (!html5QrCode) { html5QrCode = new Html5Qrcode("reader"); } startQrCodeStream(); }
-function startQrCodeStream() { if (html5QrCode && html5QrCode.isScanning) { html5QrCode.stop().then(() => { playQrCodeStream(); }).catch(e => { playQrCodeStream(); }); } else { playQrCodeStream(); } }
-function playQrCodeStream() { html5QrCode.start({ facingMode: scannerFacingMode }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess, (errorMessage) => { }).catch((err) => { alert("Camera access error. Please check permissions."); hideScannerUI(); }); }
-function switchScannerCamera() { scannerFacingMode = scannerFacingMode === "environment" ? "user" : "environment"; startQrCodeStream(); }
-function stopScanner() { if (html5QrCode && html5QrCode.isScanning) { html5QrCode.stop().then(() => { hideScannerUI(); }).catch(e => { hideScannerUI(); }); } else { hideScannerUI(); } }
-function hideScannerUI() { _d('reader-container').classList.add('hidden'); _d('btn-start-scan').classList.remove('hidden'); }
+    function handleGunScan(event) { if (event.key === 'Enter') { event.preventDefault(); const code = event.target.value.replace(/\s+/g, '').trim().toUpperCase(); if (code) { event.target.value = ""; onScanSuccess(code); } } }
+    function startScanner() { const btn = _d('btn-start-scan'); const readerCont = _d('reader-container'); const scanResult = _d('scan-result'); if (btn) btn.classList.add('hidden'); if (scanResult) scanResult.classList.add('hidden'); if (readerCont) readerCont.classList.remove('hidden'); if (!html5QrCode) { html5QrCode = new Html5Qrcode("reader"); } startQrCodeStream(); }
+    function startQrCodeStream() { if (html5QrCode && html5QrCode.isScanning) { html5QrCode.stop().then(() => { playQrCodeStream(); }).catch(e => { playQrCodeStream(); }); } else { playQrCodeStream(); } }
+    function playQrCodeStream() { html5QrCode.start({ facingMode: scannerFacingMode }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess, (errorMessage) => { }).catch((err) => { alert("Camera access error. Please check permissions."); hideScannerUI(); }); }
+    function switchScannerCamera() { scannerFacingMode = scannerFacingMode === "environment" ? "user" : "environment"; startQrCodeStream(); }
+    function stopScanner() { if (html5QrCode && html5QrCode.isScanning) { html5QrCode.stop().then(() => { hideScannerUI(); }).catch(e => { hideScannerUI(); }); } else { hideScannerUI(); } }
+    function hideScannerUI() { _d('reader-container').classList.add('hidden'); _d('btn-start-scan').classList.remove('hidden'); }
 
-function showScanResult(d, rHtml, cClass, isContractor = false) {
-    const sr = _d('scan-result'); sr.className = ''; _d('r-decision').innerText = d; _d('r-reason').innerHTML = rHtml;
-    setTimeout(() => { sr.className = `scan-result-card ${cClass} ${isContractor ? 'fullscreen-scan' : ''}`; }, 10);
-    if (cClass === "bg-red") { setTimeout(() => { if (_d('r-decision').innerText === d) { sr.className = 'scan-result-card hidden'; isProcessingScan = false; try { if (html5QrCode) html5QrCode.resume(); } catch (e) {} } }, 3500); }
-}
-
-window.closeScanResult = function () { isProcessingScan = false; const sr = _d('scan-result'); if (sr) sr.className = 'scan-result-card hidden'; try { if (html5QrCode) html5QrCode.resume(); } catch (e) {} const gunInput = _d('gun-scan-input'); if (gunInput && !_d('gun-scanner-container').classList.contains('hidden')) { gunInput.focus(); gunInput.value = ""; } }
-function filterTeamMembers(query) { let q = query.toLowerCase(); let rows = _q('.team-member-scan-row'); rows.forEach(row => { if (row.innerText.toLowerCase().includes(q)) { row.style.display = 'flex'; } else { row.style.display = 'none'; } }); let deviceCards = _q('.device-photo-card'); deviceCards.forEach(card => { if (card.getAttribute('data-search').includes(q)) { card.style.display = 'block'; } else { card.style.display = 'none'; } }); }
-
-async function onScanSuccess(decodedText) {
-    if (isProcessingScan) return; isProcessingScan = true; try { if (html5QrCode && html5QrCode.isScanning) html5QrCode.pause(); } catch (e) {}
-    let rawText = String(decodedText).toUpperCase(); let exactMatch = rawText.match(/NOON-\d+/); decodedText = exactMatch ? exactMatch[0] : rawText.replace(/\s+/g, '').trim();
-    if (!decodedText) { isProcessingScan = false; return; }
-
-    const resultCard = _d('scan-result'), selfieImg = _d('r-selfie'), confirmBtn = _d('btn-confirm-action'), teamSec = _d('guard-team-section'), detailsPrev = _d('guard-details-preview'), topInfoBox = _d('scan-result-top-info');
-    if (resultCard) { resultCard.className = 'scan-result-card hidden'; void resultCard.offsetWidth; resultCard.classList.remove('hidden'); resultCard.classList.add('bg-blue'); if (decodedText) resultCard.classList.add('fullscreen-scan'); }
-    if (confirmBtn) confirmBtn.classList.add('hidden'); if (teamSec) teamSec.classList.add('hidden');
-    const rDecision = _d('r-decision'), rReason = _d('r-reason'); if (rDecision) rDecision.innerText = t("fetching"); if (rReason) rReason.innerHTML = "";
-    if (selfieImg) { selfieImg.style.display = 'none'; selfieImg.src = ""; }
-    if (teamSec) teamSec.innerHTML = ""; if (detailsPrev) detailsPrev.innerHTML = ""; if (topInfoBox) topInfoBox.innerHTML = "";
-    const searchFilterBox = _d('guard-search-filter-container'); if (searchFilterBox) { searchFilterBox.classList.add('hidden'); _d('team-search-filter').value = ""; }
-    currentScannedID = decodedText; let data = null;
-
-    if (Array.isArray(globalAdminData)) { let cachedMatch = globalAdminData.find(x => String(x.UniqueID).toUpperCase() === String(decodedText).toUpperCase()); if (cachedMatch) data = cachedMatch; }
-    if (!data && Array.isArray(myPassesData)) { let cachedMatch = myPassesData.find(x => String(x.UniqueID).toUpperCase() === String(decodedText).toUpperCase()); if (cachedMatch) data = cachedMatch; }
-    if (!data) { try { const res = await apiCall({ action: 'get_single', id: decodedText }); if (res && !res.error) data = convertDriveUrls(res); } catch (err) {} }
-    if (!data || data.error) { showScanResult(t("denied"), t("invalid_date"), "bg-red", false); return; }
-
-    let dType = String(data.Type || ''); let dStatus = String(data.Status || ''); let dLoc = String(data.Location || '');
-    const todayNum = new Date().setHours(0, 0, 0, 0); let startObj = parseFlexibleDate(data.StartDate), startNum = startObj ? startObj.setHours(0, 0, 0, 0) : todayNum; let endObj = parseFlexibleDate(data.EndDate), endNum = endObj ? endObj.setHours(0, 0, 0, 0) : startNum;
-    let isInside = !!data.CheckInTime && !data.CheckOutTime;
-
-    let scanState = t("allowed"), scanMsg = t("pass_validated"), scanColor = "bg-green"; let allowAction = true;
-    if (dStatus === 'Pending') { scanState = t("pending"); scanMsg = t("awaiting_admin"); scanColor = "bg-yellow"; allowAction = false; }
-    else if (dStatus !== 'Approved') { scanState = t("denied"); scanMsg = t("not_approved"); scanColor = "bg-red"; allowAction = false; }
-    else if (currentUser.role === 'guard' && dLoc !== currentUser.location) { scanState = t("wrong_facility"); scanMsg = t("wrong_fac_msg") + " (" + dLoc + ")"; scanColor = "bg-red"; allowAction = false; }
-    else if (todayNum < startNum || todayNum > endNum) { scanState = todayNum > endNum ? t("expired") : t("invalid_date"); scanMsg = todayNum > endNum ? t("expired") : t("not_valid_today"); scanColor = "bg-red"; allowAction = false; }
-
-    let isFullscreen = (dType === 'Contractor' || dType === 'Visitor');
-
-    if (allowAction) {
-        if (isInside) {
-            currentScanAction = 'check_out'; scanState = t("check_out"); scanMsg = t("scanning_out"); scanColor = "bg-blue";
-            if (data.ScannedByGuard && String(data.ScannedByGuard).toLowerCase().includes('admin')) { scanMsg = `Checked in by: <span style="color:var(--noon-yellow); font-weight:bold;">${data.ScannedByGuard}</span><br><span style="font-size:14px; font-weight:normal;">Do you want to check out?</span>`; }
-        } else { currentScanAction = 'check_in'; }
+    function showScanResult(d, rHtml, cClass, isContractor = false) {
+        const sr = _d('scan-result'); sr.className = ''; _d('r-decision').innerText = d; _d('r-reason').innerHTML = rHtml;
+        setTimeout(() => { sr.className = `scan-result-card ${cClass} ${isContractor ? 'fullscreen-scan' : ''}`; }, 10);
+        if (cClass === "bg-red") { setTimeout(() => { if (_d('r-decision').innerText === d) { sr.className = 'scan-result-card hidden'; isProcessingScan = false; try { if (html5QrCode) html5QrCode.resume(); } catch (e) {} } }, 3500); }
     }
 
-    let teamData = parseTeamMembersString(data.TeamMembers);
-    let maxWorkers = teamData.length + 1;
+    window.closeScanResult = function () { isProcessingScan = false; const sr = _d('scan-result'); if (sr) sr.className = 'scan-result-card hidden'; try { if (html5QrCode) html5QrCode.resume(); } catch (e) {} const gunInput = _d('gun-scan-input'); if (gunInput && !_d('gun-scanner-container').classList.contains('hidden')) { gunInput.focus(); gunInput.value = ""; } }
+    function filterTeamMembers(query) { let q = query.toLowerCase(); let rows = _q('.team-member-scan-row'); rows.forEach(row => { if (row.innerText.toLowerCase().includes(q)) { row.style.display = 'flex'; } else { row.style.display = 'none'; } }); let deviceCards = _q('.device-photo-card'); deviceCards.forEach(card => { if (card.getAttribute('data-search').includes(q)) { card.style.display = 'block'; } else { card.style.display = 'none'; } }); }
 
-    if (topInfoBox) {
-        const row = (lbl, val) => `<p><strong style="color:rgba(255,255,255,0.8); display:inline-block; width:130px;">${lbl}:</strong> <span style="color:#fff; font-weight:bold; font-size:15px;">${val}</span></p>`;
-        let topInfo = `<div style="background: rgba(0,0,0,0.5); padding: 20px; border-radius: 10px; text-align: start; font-size: 14px; line-height: 1.8; margin-bottom:15px; border: 1px solid rgba(255,255,255,0.1);">`;
-        topInfo += `<p><strong style="color:rgba(255,255,255,0.8); display:inline-block; width:130px;">${t('total_people')}:</strong> <span style="color:var(--noon-yellow); font-weight:bold; font-size:16px;">${maxWorkers}</span></p>`;
-        if (dType === 'Contractor') {
-            topInfo += row(t('project_name'), data.ProjectName || 'N/A'); topInfo += row(t('project_manager'), data.ProjectManager || 'N/A'); topInfo += row(t('location_label').replace(':', ''), dLoc); topInfo += row(t('fm_poc'), data.FmPoc || 'N/A'); topInfo += row(t('type_label').replace(':', ''), `<span style="color:var(--noon-yellow); font-weight:bold; font-size:15px;">${t('contractor')}</span>`);
-        } else {
-            topInfo += row(t('name_label').replace(':', ''), data.VisitorName); topInfo += row(t('type_label').replace(':', ''), `<span style="color:var(--noon-yellow); font-weight:bold; font-size:15px;">${t('visitor')}</span>`); topInfo += row(t('location_label').replace(':', ''), dLoc);
+    async function onScanSuccess(decodedText) {
+        if (isProcessingScan) return; isProcessingScan = true; try { if (html5QrCode && html5QrCode.isScanning) html5QrCode.pause(); } catch (e) {}
+        let rawText = String(decodedText).toUpperCase(); let exactMatch = rawText.match(/NOON-\d+/); decodedText = exactMatch ? exactMatch[0] : rawText.replace(/\s+/g, '').trim();
+        if (!decodedText) { isProcessingScan = false; return; }
+
+        const resultCard = _d('scan-result'), selfieImg = _d('r-selfie'), confirmBtn = _d('btn-confirm-action'), teamSec = _d('guard-team-section'), detailsPrev = _d('guard-details-preview'), topInfoBox = _d('scan-result-top-info');
+        if (resultCard) { resultCard.className = 'scan-result-card hidden'; void resultCard.offsetWidth; resultCard.classList.remove('hidden'); resultCard.classList.add('bg-blue'); if (decodedText) resultCard.classList.add('fullscreen-scan'); }
+        if (confirmBtn) confirmBtn.classList.add('hidden'); if (teamSec) teamSec.classList.add('hidden');
+        const rDecision = _d('r-decision'), rReason = _d('r-reason'); if (rDecision) rDecision.innerText = t("fetching"); if (rReason) rReason.innerHTML = "";
+        if (selfieImg) { selfieImg.style.display = 'none'; selfieImg.src = ""; }
+        if (teamSec) teamSec.innerHTML = ""; if (detailsPrev) detailsPrev.innerHTML = ""; if (topInfoBox) topInfoBox.innerHTML = "";
+        const searchFilterBox = _d('guard-search-filter-container'); if (searchFilterBox) { searchFilterBox.classList.add('hidden'); _d('team-search-filter').value = ""; }
+        currentScannedID = decodedText; let data = null;
+
+        if (Array.isArray(globalAdminData)) { let cachedMatch = globalAdminData.find(x => String(x.UniqueID).toUpperCase() === String(decodedText).toUpperCase()); if (cachedMatch) data = cachedMatch; }
+        if (!data && Array.isArray(myPassesData)) { let cachedMatch = myPassesData.find(x => String(x.UniqueID).toUpperCase() === String(decodedText).toUpperCase()); if (cachedMatch) data = cachedMatch; }
+        if (!data) { try { const res = await apiCall({ action: 'get_single', id: decodedText }); if (res && !res.error) data = convertDriveUrls(res); } catch (err) {} }
+        if (!data || data.error) { showScanResult(t("denied"), t("invalid_date"), "bg-red", false); return; }
+
+        let dType = String(data.Type || ''); let dStatus = String(data.Status || ''); let dLoc = String(data.Location || '');
+        const todayNum = new Date().setHours(0, 0, 0, 0); let startObj = parseFlexibleDate(data.StartDate), startNum = startObj ? startObj.setHours(0, 0, 0, 0) : todayNum; let endObj = parseFlexibleDate(data.EndDate), endNum = endObj ? endObj.setHours(0, 0, 0, 0) : startNum;
+        let isInside = !!data.CheckInTime && !data.CheckOutTime;
+
+        let scanState = t("allowed"), scanMsg = t("pass_validated"), scanColor = "bg-green"; let allowAction = true;
+        if (dStatus === 'Pending') { scanState = t("pending"); scanMsg = t("awaiting_admin"); scanColor = "bg-yellow"; allowAction = false; }
+        else if (dStatus !== 'Approved') { scanState = t("denied"); scanMsg = t("not_approved"); scanColor = "bg-red"; allowAction = false; }
+        else if (currentUser.role === 'guard' && dLoc !== currentUser.location) { scanState = t("wrong_facility"); scanMsg = t("wrong_fac_msg") + " (" + dLoc + ")"; scanColor = "bg-red"; allowAction = false; }
+        else if (todayNum < startNum || todayNum > endNum) { scanState = todayNum > endNum ? t("expired") : t("invalid_date"); scanMsg = todayNum > endNum ? t("expired") : t("not_valid_today"); scanColor = "bg-red"; allowAction = false; }
+
+        let isFullscreen = (dType === 'Contractor' || dType === 'Visitor');
+
+        if (allowAction) {
+            if (isInside) {
+                currentScanAction = 'check_out'; scanState = t("check_out"); scanMsg = t("scanning_out"); scanColor = "bg-blue";
+                if (data.ScannedByGuard && String(data.ScannedByGuard).toLowerCase().includes('admin')) { scanMsg = `Checked in by: <span style="color:var(--noon-yellow); font-weight:bold;">${data.ScannedByGuard}</span><br><span style="font-size:14px; font-weight:normal;">Do you want to check out?</span>`; }
+            } else { currentScanAction = 'check_in'; }
         }
-        topInfo += `</div>`; topInfoBox.innerHTML = topInfo;
-    }
 
-    if (dType === 'Contractor' || dType === 'Visitor') {
-        if (searchFilterBox) searchFilterBox.classList.remove('hidden');
-        if (teamSec) {
-            teamSec.classList.remove('hidden');
-            let attHtml = `<div style="text-align: left; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);"><label style="display:flex; align-items:center; gap:10px; color:var(--noon-yellow); font-weight:bold; margin-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px; cursor:pointer;"><input type="checkbox" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)" onchange="document.querySelectorAll('.att-chk').forEach(c=>c.checked=this.checked)"> ${t('select_all_members')}</label><div id="team-members-list-container" style="display:flex; flex-direction:column; gap:12px;">`;
+        let teamData = parseTeamMembersString(data.TeamMembers);
+        let maxWorkers = teamData.length + 1;
 
-            let safeImei = data.ImeiNumber ? String(data.ImeiNumber).trim() : ''; let leadDevStr = safeImei && safeImei !== 'None' && safeImei !== '' ? `<br><span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;font-weight:bold;">${safeImei}</span>` : ''; let leadSearchStr = String(data.VisitorName + " " + safeImei + " lead " + data.UniqueID).toLowerCase(); let leadVehThumb = (data.VehiclePlateNo && (data.VehiclePlateNo.startsWith('http') || data.VehiclePlateNo.startsWith('data:image'))) ? `<img src="${data.VehiclePlateNo}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();" title="Vehicle">` : ''; let leadBadge = `<span style="background:var(--noon-yellow);color:#000;font-size:9px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;letter-spacing:0.5px;">LEAD</span>`;
-            attHtml += `<label class="team-member-scan-row" data-search="${leadSearchStr}" style="display:flex; align-items:center; justify-content:space-between; color:white; background:rgba(255,255,255,0.08); padding:12px; border-radius:8px; cursor:pointer; border: 1px solid rgba(255,255,255,0.05);"><div style="display:flex; align-items:center; gap:10px;"><img src="${data.IqamaURL}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"><img src="${data.SelfieBase64 || data.SelfieURL}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();">${leadVehThumb} <div><span style="font-size:13px;font-weight:600;">${data.VisitorName}${leadBadge}</span>${leadDevStr}</div></div><input type="checkbox" class="att-chk" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)"></label>`;
+        if (topInfoBox) {
+            const row = (lbl, val) => `<p><strong style="color:rgba(255,255,255,0.8); display:inline-block; width:130px;">${lbl}:</strong> <span style="color:#fff; font-weight:bold; font-size:15px;">${val}</span></p>`;
+            let topInfo = `<div style="background: rgba(0,0,0,0.5); padding: 20px; border-radius: 10px; text-align: start; font-size: 14px; line-height: 1.8; margin-bottom:15px; border: 1px solid rgba(255,255,255,0.1);">`;
+            topInfo += `<p><strong style="color:rgba(255,255,255,0.8); display:inline-block; width:130px;">${t('total_people')}:</strong> <span style="color:var(--noon-yellow); font-weight:bold; font-size:16px;">${maxWorkers}</span></p>`;
+            if (dType === 'Contractor') {
+                topInfo += row(t('project_name'), data.ProjectName || 'N/A'); topInfo += row(t('project_manager'), data.ProjectManager || 'N/A'); topInfo += row(t('location_label').replace(':', ''), dLoc); topInfo += row(t('fm_poc'), data.FmPoc || 'N/A'); topInfo += row(t('type_label').replace(':', ''), `<span style="color:var(--noon-yellow); font-weight:bold; font-size:15px;">${t('contractor')}</span>`);
+            } else {
+                topInfo += row(t('name_label').replace(':', ''), data.VisitorName); topInfo += row(t('type_label').replace(':', ''), `<span style="color:var(--noon-yellow); font-weight:bold; font-size:15px;">${t('visitor')}</span>`); topInfo += row(t('location_label').replace(':', ''), dLoc);
+            }
+            topInfo += `</div>`; topInfoBox.innerHTML = topInfo;
+        }
 
-            let origTeam = teamData.filter(m => !m.isNew); let addedTeam = teamData.filter(m => m.isNew);
-            origTeam.forEach(m => {
-                let mSearchStr = String(m.name + " " + m.iqamaText + " " + m.device).toLowerCase(); let devHtml = m.device && m.device !== 'None' && m.device.trim() !== '' ? `<br><span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;font-weight:bold;">${m.device}</span>` : ''; let teamBadge = `<span style="background:rgba(255,255,255,0.2);color:white;font-size:9px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;letter-spacing:0.5px;">TEAM</span>`;
-                if (m.isRemoveRequested) { attHtml += `<div class="team-member-scan-row" data-search="${mSearchStr}" style="display:flex; align-items:center; justify-content:space-between; color:white; background:rgba(239, 68, 68, 0.2); padding:12px; border-radius:8px; border: 1px solid rgba(239, 68, 68, 0.5);"><div style="display:flex; align-items:center; gap:10px;"><img src="${m.iqama}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"><img src="${m.selfie}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"> <div><span style="font-size:13px;font-weight:600; text-decoration: line-through;">${m.name}</span><br><span style="font-size:10px;color:rgba(255,255,255,0.6);">ID: ${m.iqamaText}</span></div></div><div style="color:#ef4444; font-weight:bold; font-size:12px; max-width: 120px; text-align:right;">🚫 REMOVAL PENDING - DO NOT ALLOW</div></div>`; }
-                else { attHtml += `<label class="team-member-scan-row" data-search="${mSearchStr}" style="display:flex; align-items:center; justify-content:space-between; color:white; background:rgba(255,255,255,0.08); padding:12px; border-radius:8px; cursor:pointer; border: 1px solid rgba(255,255,255,0.05);"><div style="display:flex; align-items:center; gap:10px;"><img src="${m.iqama}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"><img src="${m.selfie}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"> <div><span style="font-size:13px;font-weight:600;">${m.name}${teamBadge}</span><br><span style="font-size:10px;color:rgba(255,255,255,0.6);">ID: ${m.iqamaText}</span>${devHtml}</div></div><input type="checkbox" class="att-chk" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)"></label>`; }
-            });
+        if (dType === 'Contractor' || dType === 'Visitor') {
+            if (searchFilterBox) searchFilterBox.classList.remove('hidden');
+            if (teamSec) {
+                teamSec.classList.remove('hidden');
+                let attHtml = `<div style="text-align: left; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);"><label style="display:flex; align-items:center; gap:10px; color:var(--noon-yellow); font-weight:bold; margin-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px; cursor:pointer;"><input type="checkbox" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)" onchange="document.querySelectorAll('.att-chk').forEach(c=>c.checked=this.checked)"> ${t('select_all_members')}</label><div id="team-members-list-container" style="display:flex; flex-direction:column; gap:12px;">`;
 
-            if (addedTeam.length > 0) {
-                attHtml += `<div style="margin-top:10px; margin-bottom:5px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:5px;"><strong style="color:var(--success); text-transform:uppercase;">${t('new_members_added')}</strong></div>`;
-                addedTeam.forEach(m => {
-                    let mSearchStr = String(m.name + " " + m.iqamaText + " " + m.device).toLowerCase(); let devHtml = m.device && m.device !== 'None' && m.device.trim() !== '' ? `<br><span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;font-weight:bold;">${m.device}</span>` : ''; let newBadge = `<span style="background:var(--success); color:white; font-size:10px; padding:2px 5px; border-radius:4px; margin-left:5px; font-weight:bold;">${t('new_badge')}</span>`;
+                let safeImei = data.ImeiNumber ? String(data.ImeiNumber).trim() : ''; let leadDevStr = safeImei && safeImei !== 'None' && safeImei !== '' ? `<br><span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;font-weight:bold;">${safeImei}</span>` : ''; let leadSearchStr = String(data.VisitorName + " " + safeImei + " lead " + data.UniqueID).toLowerCase(); let leadVehThumb = (data.VehiclePlateNo && (data.VehiclePlateNo.startsWith('http') || data.VehiclePlateNo.startsWith('data:image'))) ? `<img src="${data.VehiclePlateNo}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();" title="Vehicle">` : ''; let leadBadge = `<span style="background:var(--noon-yellow);color:#000;font-size:9px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;letter-spacing:0.5px;">LEAD</span>`;
+                attHtml += `<label class="team-member-scan-row" data-search="${leadSearchStr}" style="display:flex; align-items:center; justify-content:space-between; color:white; background:rgba(255,255,255,0.08); padding:12px; border-radius:8px; cursor:pointer; border: 1px solid rgba(255,255,255,0.05);"><div style="display:flex; align-items:center; gap:10px;"><img src="${data.IqamaURL}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"><img src="${data.SelfieBase64 || data.SelfieURL}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();">${leadVehThumb} <div><span style="font-size:13px;font-weight:600;">${data.VisitorName}${leadBadge}</span>${leadDevStr}</div></div><input type="checkbox" class="att-chk" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)"></label>`;
+
+                let origTeam = teamData.filter(m => !m.isNew); let addedTeam = teamData.filter(m => m.isNew);
+                origTeam.forEach(m => {
+                    let mSearchStr = String(m.name + " " + m.iqamaText + " " + m.device).toLowerCase(); let devHtml = m.device && m.device !== 'None' && m.device.trim() !== '' ? `<br><span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;font-weight:bold;">${m.device}</span>` : ''; let teamBadge = `<span style="background:rgba(255,255,255,0.2);color:white;font-size:9px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;letter-spacing:0.5px;">TEAM</span>`;
                     if (m.isRemoveRequested) { attHtml += `<div class="team-member-scan-row" data-search="${mSearchStr}" style="display:flex; align-items:center; justify-content:space-between; color:white; background:rgba(239, 68, 68, 0.2); padding:12px; border-radius:8px; border: 1px solid rgba(239, 68, 68, 0.5);"><div style="display:flex; align-items:center; gap:10px;"><img src="${m.iqama}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"><img src="${m.selfie}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"> <div><span style="font-size:13px;font-weight:600; text-decoration: line-through;">${m.name}</span><br><span style="font-size:10px;color:rgba(255,255,255,0.6);">ID: ${m.iqamaText}</span></div></div><div style="color:#ef4444; font-weight:bold; font-size:12px; max-width: 120px; text-align:right;">🚫 REMOVAL PENDING - DO NOT ALLOW</div></div>`; }
-                    else { attHtml += `<label class="team-member-scan-row" data-search="${mSearchStr}" style="display:flex; align-items:center; justify-content:space-between; color:white; background:rgba(255,255,255,0.08); padding:12px; border-radius:8px; cursor:pointer; border: 1px solid rgba(255,255,255,0.05);"><div style="display:flex; align-items:center; gap:10px;"><img src="${m.iqama}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"><img src="${m.selfie}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"> <div><span style="font-size:13px;font-weight:600;">${m.name}${newBadge}</span><br><span style="font-size:10px;color:rgba(255,255,255,0.6);">ID: ${m.iqamaText}</span>${devHtml}</div></div><input type="checkbox" class="att-chk" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)"></label>`; }
+                    else { attHtml += `<label class="team-member-scan-row" data-search="${mSearchStr}" style="display:flex; align-items:center; justify-content:space-between; color:white; background:rgba(255,255,255,0.08); padding:12px; border-radius:8px; cursor:pointer; border: 1px solid rgba(255,255,255,0.05);"><div style="display:flex; align-items:center; gap:10px;"><img src="${m.iqama}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"><img src="${m.selfie}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"> <div><span style="font-size:13px;font-weight:600;">${m.name}${teamBadge}</span><br><span style="font-size:10px;color:rgba(255,255,255,0.6);">ID: ${m.iqamaText}</span>${devHtml}</div></div><input type="checkbox" class="att-chk" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)"></label>`; }
                 });
-            }
-            attHtml += `</div></div>`; teamSec.innerHTML = attHtml;
-        }
 
-        if (detailsPrev) {
-            let cardsHtml = ''; let safeImei = data.ImeiNumber ? String(data.ImeiNumber).trim() : ''; let hasLeadDevice = safeImei && safeImei !== 'None' && safeImei !== ''; let hasLeadVehicle = data.VehiclePlateNo && (data.VehiclePlateNo.startsWith('http') || data.VehiclePlateNo.startsWith('data:image')); let showLeadPreview = hasLeadDevice || hasLeadVehicle;
-            const makeImg = (lbl, url) => `<div><strong style="font-size:10px; display:block; color:rgba(255,255,255,0.7); margin-bottom:4px;">${lbl}</strong><img src="${url}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; cursor:zoom-in; border:2px solid rgba(255,255,255,0.2);" onclick="openFullscreenImage(this.src)"></div>`;
-
-            if (showLeadPreview) {
-                let leadSearchStr = String(data.VisitorName + " " + safeImei + " lead " + data.UniqueID).toLowerCase(); let leadTitleExt = hasLeadDevice ? `- ${t('device_label')}: <span style="color:var(--noon-yellow)">${safeImei}</span>` : ``;
-                cardsHtml += `<div class="device-photo-card" data-search="${leadSearchStr}" style="margin-bottom:15px; text-align:left; padding:10px; background:rgba(255,255,255,0.05); border-radius:6px; border:1px solid rgba(255,255,255,0.1);"><strong style="display:block; color:white; margin-bottom:8px;">${t('lead')} (${data.VisitorName}) ${leadTitleExt}</strong><div style="display:flex; gap:10px; flex-wrap:wrap;">`;
-                if (data.IqamaURL && data.IqamaURL !== 'No File') cardsHtml += makeImg(t('iqama_id'), data.IqamaURL); if (data.SelfieURL && data.SelfieURL !== 'No File') cardsHtml += makeImg(t('selfie'), data.SelfieURL); if (hasLeadDevice && data.ImeiPhotoURL && data.ImeiPhotoURL !== 'No File') cardsHtml += makeImg(t('device_screen'), data.ImeiPhotoURL); if (hasLeadVehicle) cardsHtml += makeImg(t('vehicle'), data.VehiclePlateNo);
-                cardsHtml += `</div></div>`;
+                if (addedTeam.length > 0) {
+                    attHtml += `<div style="margin-top:10px; margin-bottom:5px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:5px;"><strong style="color:var(--success); text-transform:uppercase;">${t('new_members_added')}</strong></div>`;
+                    addedTeam.forEach(m => {
+                        let mSearchStr = String(m.name + " " + m.iqamaText + " " + m.device).toLowerCase(); let devHtml = m.device && m.device !== 'None' && m.device.trim() !== '' ? `<br><span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;font-weight:bold;">${m.device}</span>` : ''; let newBadge = `<span style="background:var(--success); color:white; font-size:10px; padding:2px 5px; border-radius:4px; margin-left:5px; font-weight:bold;">${t('new_badge')}</span>`;
+                        if (m.isRemoveRequested) { attHtml += `<div class="team-member-scan-row" data-search="${mSearchStr}" style="display:flex; align-items:center; justify-content:space-between; color:white; background:rgba(239, 68, 68, 0.2); padding:12px; border-radius:8px; border: 1px solid rgba(239, 68, 68, 0.5);"><div style="display:flex; align-items:center; gap:10px;"><img src="${m.iqama}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"><img src="${m.selfie}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"> <div><span style="font-size:13px;font-weight:600; text-decoration: line-through;">${m.name}</span><br><span style="font-size:10px;color:rgba(255,255,255,0.6);">ID: ${m.iqamaText}</span></div></div><div style="color:#ef4444; font-weight:bold; font-size:12px; max-width: 120px; text-align:right;">🚫 REMOVAL PENDING - DO NOT ALLOW</div></div>`; }
+                        else { attHtml += `<label class="team-member-scan-row" data-search="${mSearchStr}" style="display:flex; align-items:center; justify-content:space-between; color:white; background:rgba(255,255,255,0.08); padding:12px; border-radius:8px; cursor:pointer; border: 1px solid rgba(255,255,255,0.05);"><div style="display:flex; align-items:center; gap:10px;"><img src="${m.iqama}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"><img src="${m.selfie}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"> <div><span style="font-size:13px;font-weight:600;">${m.name}${newBadge}</span><br><span style="font-size:10px;color:rgba(255,255,255,0.6);">ID: ${m.iqamaText}</span>${devHtml}</div></div><input type="checkbox" class="att-chk" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)"></label>`; }
+                    });
+                }
+                attHtml += `</div></div>`; teamSec.innerHTML = attHtml;
             }
 
-            teamData.forEach(m => {
-                let mDevStr = m.device && m.device !== 'None' && m.device.trim() !== '' ? m.device : 'None';
-                if (mDevStr !== 'None' && !m.isRemoveRequested) {
-                    let mSearchStr = String(m.name + " " + m.iqamaText + " " + m.device).toLowerCase();
-                    cardsHtml += `<div class="device-photo-card" data-search="${mSearchStr}" style="margin-bottom:15px; text-align:left; padding:10px; background:rgba(255,255,255,0.05); border-radius:6px; border:1px solid rgba(255,255,255,0.1);"><strong style="display:block; color:white; margin-bottom:8px;">${m.name} ${m.isNew ? `<span style="color:var(--success)">[${t('new_badge')}]</span>` : ''} - ${t('device_label')}: <span style="color:var(--noon-yellow)">${mDevStr}</span></strong><div style="display:flex; gap:10px; flex-wrap:wrap;">`;
-                    if (m.iqama && m.iqama !== 'No File') cardsHtml += makeImg(t('iqama_id'), m.iqama); if (m.selfie && m.selfie !== 'No File') cardsHtml += makeImg(t('selfie'), m.selfie); if (m.devicePhoto && m.devicePhoto !== 'No File') cardsHtml += makeImg(t('device_screen'), m.devicePhoto);
+            if (detailsPrev) {
+                let cardsHtml = ''; let safeImei = data.ImeiNumber ? String(data.ImeiNumber).trim() : ''; let hasLeadDevice = safeImei && safeImei !== 'None' && safeImei !== ''; let hasLeadVehicle = data.VehiclePlateNo && (data.VehiclePlateNo.startsWith('http') || data.VehiclePlateNo.startsWith('data:image')); let showLeadPreview = hasLeadDevice || hasLeadVehicle;
+                const makeImg = (lbl, url) => `<div><strong style="font-size:10px; display:block; color:rgba(255,255,255,0.7); margin-bottom:4px;">${lbl}</strong><img src="${url}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; cursor:zoom-in; border:2px solid rgba(255,255,255,0.2);" onclick="openFullscreenImage(this.src)"></div>`;
+
+                if (showLeadPreview) {
+                    let leadSearchStr = String(data.VisitorName + " " + safeImei + " lead " + data.UniqueID).toLowerCase(); let leadTitleExt = hasLeadDevice ? `- ${t('device_label')}: <span style="color:var(--noon-yellow)">${safeImei}</span>` : ``;
+                    cardsHtml += `<div class="device-photo-card" data-search="${leadSearchStr}" style="margin-bottom:15px; text-align:left; padding:10px; background:rgba(255,255,255,0.05); border-radius:6px; border:1px solid rgba(255,255,255,0.1);"><strong style="display:block; color:white; margin-bottom:8px;">${t('lead')} (${data.VisitorName}) ${leadTitleExt}</strong><div style="display:flex; gap:10px; flex-wrap:wrap;">`;
+                    if (data.IqamaURL && data.IqamaURL !== 'No File') cardsHtml += makeImg(t('iqama_id'), data.IqamaURL); if (data.SelfieURL && data.SelfieURL !== 'No File') cardsHtml += makeImg(t('selfie'), data.SelfieURL); if (hasLeadDevice && data.ImeiPhotoURL && data.ImeiPhotoURL !== 'No File') cardsHtml += makeImg(t('device_screen'), data.ImeiPhotoURL); if (hasLeadVehicle) cardsHtml += makeImg(t('vehicle'), data.VehiclePlateNo);
                     cardsHtml += `</div></div>`;
                 }
-            });
 
-            if (cardsHtml !== '') {
-                let previewHtml = `<div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; font-size: 13px; font-weight: normal; margin-bottom: 15px; margin-top:20px;"><div style="margin-bottom:8px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px;"><strong style="color:var(--noon-yellow); text-transform:uppercase;">${t('device_photos_all')}</strong></div>${cardsHtml}</div>`;
-                detailsPrev.innerHTML = previewHtml; detailsPrev.classList.remove('hidden');
-            } else { detailsPrev.innerHTML = ""; detailsPrev.classList.add('hidden'); }
+                teamData.forEach(m => {
+                    let mDevStr = m.device && m.device !== 'None' && m.device.trim() !== '' ? m.device : 'None';
+                    if (mDevStr !== 'None' && !m.isRemoveRequested) {
+                        let mSearchStr = String(m.name + " " + m.iqamaText + " " + m.device).toLowerCase();
+                        cardsHtml += `<div class="device-photo-card" data-search="${mSearchStr}" style="margin-bottom:15px; text-align:left; padding:10px; background:rgba(255,255,255,0.05); border-radius:6px; border:1px solid rgba(255,255,255,0.1);"><strong style="display:block; color:white; margin-bottom:8px;">${m.name} ${m.isNew ? `<span style="color:var(--success)">[${t('new_badge')}]</span>` : ''} - ${t('device_label')}: <span style="color:var(--noon-yellow)">${mDevStr}</span></strong><div style="display:flex; gap:10px; flex-wrap:wrap;">`;
+                        if (m.iqama && m.iqama !== 'No File') cardsHtml += makeImg(t('iqama_id'), m.iqama); if (m.selfie && m.selfie !== 'No File') cardsHtml += makeImg(t('selfie'), m.selfie); if (m.devicePhoto && m.devicePhoto !== 'No File') cardsHtml += makeImg(t('device_screen'), m.devicePhoto);
+                        cardsHtml += `</div></div>`;
+                    }
+                });
+
+                if (cardsHtml !== '') {
+                    let previewHtml = `<div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; font-size: 13px; font-weight: normal; margin-bottom: 15px; margin-top:20px;"><div style="margin-bottom:8px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px;"><strong style="color:var(--noon-yellow); text-transform:uppercase;">${t('device_photos_all')}</strong></div>${cardsHtml}</div>`;
+                    detailsPrev.innerHTML = previewHtml; detailsPrev.classList.remove('hidden');
+                } else { detailsPrev.innerHTML = ""; detailsPrev.classList.add('hidden'); }
+            }
+
+            const hcSec = _d('guard-headcount-section'); if (hcSec) hcSec.classList.add('hidden');
+            if (selfieImg) selfieImg.style.display = 'none';
+
+            let addedTeam = teamData.filter(m => m.isNew);
+            if (addedTeam.length > 0 && allowAction) { setTimeout(() => { alert(t('notice_new_people')); }, 300); }
         }
 
-        const hcSec = _d('guard-headcount-section'); if (hcSec) hcSec.classList.add('hidden');
-        if (selfieImg) selfieImg.style.display = 'none';
-
-        let addedTeam = teamData.filter(m => m.isNew);
-        if (addedTeam.length > 0 && allowAction) { setTimeout(() => { alert(t('notice_new_people')); }, 300); }
-    }
-
-    const hcSec = _d('guard-headcount-section');
-    if (allowAction) {
-        if (hcSec) hcSec.classList.add('hidden');
-        if (confirmBtn) {
-            confirmBtn.classList.remove('hidden');
-            if (isInside) { confirmBtn.innerText = t("btn_checkout"); confirmBtn.className = "btn-primary btn-warning"; confirmBtn.style.color = "#000"; }
-            else { confirmBtn.innerText = t("confirm_action"); confirmBtn.className = "btn-primary btn-success"; confirmBtn.style.color = "#fff"; }
+        const hcSec = _d('guard-headcount-section');
+        if (allowAction) {
+            if (hcSec) hcSec.classList.add('hidden');
+            if (confirmBtn) {
+                confirmBtn.classList.remove('hidden');
+                if (isInside) { confirmBtn.innerText = t("btn_checkout"); confirmBtn.className = "btn-primary btn-warning"; confirmBtn.style.color = "#000"; }
+                else { confirmBtn.innerText = t("confirm_action"); confirmBtn.className = "btn-primary btn-success"; confirmBtn.style.color = "#fff"; }
+            }
+        } else {
+            if (confirmBtn) confirmBtn.classList.add('hidden'); if (hcSec) hcSec.classList.add('hidden');
         }
-    } else {
-        if (confirmBtn) confirmBtn.classList.add('hidden'); if (hcSec) hcSec.classList.add('hidden');
-    }
 
-    showScanResult(scanState, scanMsg, scanColor, isFullscreen);
-}
+        showScanResult(scanState, scanMsg, scanColor, isFullscreen);
+    }
     async function confirmAction() {
-    const btn = _d('btn-confirm-action'); let hcVal = 1; const teamSec = _d('guard-team-section');
-    if (teamSec && !teamSec.classList.contains('hidden')) {
-        const chks = _q('.att-chk');
-        if (chks.length > 0) { hcVal = _q('.att-chk:checked').length; if (hcVal === 0) return alert("Please select at least one person."); }
-        else { const hcInput = _d('guard-headcount'); if (hcInput && !hcInput.parentElement.classList.contains('hidden')) { hcVal = hcInput.value; if (!hcVal || hcVal < 1) return alert("Please enter the number of workers present."); } }
-    }
-    btn.innerText = "SAVING..."; btn.disabled = true;
-    const gInfo = `${currentUser.name} (${currentUser.location})`;
-    
-    const nowIso = new Date().toISOString();
-    let item = globalAdminData.find(x => String(x.UniqueID).toUpperCase() === String(currentScannedID).toUpperCase());
-    if (item) {
-        if (currentScanAction === 'check_in') {
-            item.CheckInTime = nowIso;
-            item.CheckOutTime = '';
-            item.ScannedByGuard = gInfo;
-        } else {
-            item.CheckOutTime = nowIso;
+        const btn = _d('btn-confirm-action'); let hcVal = 1; const teamSec = _d('guard-team-section');
+        if (teamSec && !teamSec.classList.contains('hidden')) {
+            const chks = _q('.att-chk');
+            if (chks.length > 0) { hcVal = _q('.att-chk:checked').length; if (hcVal === 0) return alert("Please select at least one person."); }
+            else { const hcInput = _d('guard-headcount'); if (hcInput && !hcInput.parentElement.classList.contains('hidden')) { hcVal = hcInput.value; if (!hcVal || hcVal < 1) return alert("Please enter the number of workers present."); } }
+        }
+        btn.innerText = "SAVING..."; btn.disabled = true;
+        const gInfo = `${currentUser.name} (${currentUser.location})`;
+        
+        const nowIso = new Date().toISOString();
+        let item = globalAdminData.find(x => String(x.UniqueID).toUpperCase() === String(currentScannedID).toUpperCase());
+        if (item) {
+            if (currentScanAction === 'check_in') {
+                item.CheckInTime = nowIso;
+                item.CheckOutTime = '';
+                item.ScannedByGuard = gInfo;
+            } else {
+                item.CheckOutTime = nowIso;
+            }
+
+            let existingLogs = [];
+            try { existingLogs = JSON.parse(item.GateLogs || "[]"); } catch(e) {}
+            existingLogs.push({ action: currentScanAction === 'check_in' ? 'IN' : 'OUT', time: nowIso, guard: gInfo });
+            item.GateLogs = JSON.stringify(existingLogs);
+
+            localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData));
+            if (currentUser && currentUser.role === 'admin') renderAdminData(globalAdminData);
         }
 
-        let existingLogs = [];
-        try { existingLogs = JSON.parse(item.GateLogs || "[]"); } catch(e) {}
-        existingLogs.push({ action: currentScanAction === 'check_in' ? 'IN' : 'OUT', time: nowIso, guard: gInfo });
-        item.GateLogs = JSON.stringify(existingLogs);
-
-        localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData));
-        if (currentUser && currentUser.role === 'admin') renderAdminData(globalAdminData);
-    }
-
-    try {
-        await apiCall({ action: currentScanAction, id: currentScannedID, guardInfo: gInfo, headCount: hcVal });
-        localStorage.removeItem('cached_admin_data');
-        
-        btn.innerText = t("confirm_action"); 
-        btn.disabled = false;
-        closeScanResult();
-        loadAdminData(true);
-        
-    } catch (e) {
-        btn.innerText = t("confirm_action"); btn.disabled = false; isProcessingScan = false;
-    }
-}
-
-let addMorePassId = null; let addMoreTeamList = [];
-function openAddMoreModal(passId) { addMorePassId = passId; addMoreTeamList = []; renderAddTeamRoster(); _d('add-more-modal').classList.remove('hidden'); }
-function closeAddMoreModal() { _d('add-more-modal').classList.add('hidden'); }
-function toggleAddTeamDeviceInput() {
-    let type = _d('req-add-team-device-type').value; let group = _d('req-add-team-device-id-group'); let input = _d('req-add-team-device-id'); let tDev = _d('req-add-team-imeiphoto');
-    if (type === 'None') { group.classList.add('hidden'); input.value = ''; if (tDev) tDev.value = ''; clearCapturedData('add_team_imeiphoto'); }
-    else { group.classList.remove('hidden'); input.placeholder = type === 'Mobile' ? 'IMEI Number' : 'Serial Number'; }
-}
-
-async function saveAddTeamMember() {
-    let iB64 = '', sB64 = '', tDevB64 = '', ii = _d('req-add-team-iqama'), si = _d('req-add-team-selfie'), tName = _d('req-add-team-name'), tIqama = _d('req-add-team-iqamatext');
-    let devType = _d('req-add-team-device-type').value, devId = _d('req-add-team-device-id').value; let tDev = _d('req-add-team-imeiphoto');
-    if (!tName || !tName.value.trim()) return alert("Provide Name."); if (!tIqama || !tIqama.value.trim()) return alert("Provide Iqama/ID.");
-    let iqamaVal = tIqama.value.trim(); let leadIqama = _d('req-iqamatext') ? _d('req-iqamatext').value.trim() : '';
-    if (addMoreTeamList.some(m => m.iqamaText === iqamaVal)) return alert("Duplicate! This ID is already in the current batch.");
-    if (addMoreTeamList.length >= 10) return alert("Batch limit reached: You can only add up to 10 team members per batch. Please submit these members first.");
-    if (devType !== 'None') {
-        if (!devId.trim()) return alert("Provide IMEI/Serial number.");
-        if (capturedImages.add_team_imeiphoto) tDevB64 = capturedImages.add_team_imeiphoto.split(',')[1];
-        else if (tDev && tDev.files.length > 0) { let f = await getBase64(tDev.files[0]); tDevB64 = f.split(',')[1] } else return alert("Provide Device Screen photo.");
-    }
-    if (capturedImages.add_team_iqama) iB64 = capturedImages.add_team_iqama.split(',')[1]; else if (ii && ii.files.length > 0) { let f = await getBase64(ii.files[0]); iB64 = f.split(',')[1] } else return alert("Provide Iqama photo.");
-    if (capturedImages.add_team_selfie) sB64 = capturedImages.add_team_selfie.split(',')[1]; else if (si && si.files.length > 0) { let f = await getBase64(si.files[0]); sB64 = f.split(',')[1] } else return alert("Provide Selfie photo.");
-
-    addMoreTeamList.push({ iqama: "data:image/jpeg;base64," + iB64, selfie: "data:image/jpeg;base64," + sB64, rawIqama: iB64, rawSelfie: sB64, rawDevicePhoto: tDevB64, name: tName.value.trim() + " *NEW_MEMBER*", iqamaText: tIqama.value.trim(), deviceType: devType, deviceId: devId.trim() });
-    renderAddTeamRoster();
-    if (ii) ii.value = ""; if (si) si.value = ""; if (tName) tName.value = ""; if (tIqama) tIqama.value = ""; _d('req-add-team-device-type').value = "None"; _d('req-add-team-device-id').value = ""; toggleAddTeamDeviceInput(); clearCapturedData('add_team_iqama'); clearCapturedData('add_team_selfie'); clearCapturedData('add_team_imeiphoto');
-    if (addMoreTeamList.length === 10) { checkBatchLimit('more'); }
-}
-
-function renderAddTeamRoster() {
-    const div = _d('add-team-roster-display');
-    if (addMoreTeamList.length > 0) {
-        div.classList.remove('hidden'); let h = '';
-        addMoreTeamList.forEach((m, idx) => {
-            let cleanName = m.name.replace(/\*NEW_MEMBER\*/gi, '').trim();
-            let devHtml = m.deviceType !== 'None' ? `<span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">${m.deviceType}</span>` : '';
-            let imgsHtml = `<img src="${m.iqama}" class="team-member-img" onclick="openFullscreenImage(this.src)"><img src="${m.selfie}" class="team-member-img" onclick="openFullscreenImage(this.src)">`;
-            h += `<div class="team-member-row"><span style="color:white;font-size:13px;font-weight:bold;">${cleanName} <span style="background:var(--success);color:white;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">${t('new_badge')}</span>${devHtml}</span><div style="display:flex;gap:10px;">${imgsHtml}<button type="button" style="background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:16px;" onclick="addMoreTeamList.splice(${idx},1);renderAddTeamRoster();">❌</button></div></div>`;
-        });
-        div.innerHTML = h;
-    } else div.classList.add('hidden');
-}
-
-async function submitAddMorePeople(keepAdding = false) {
-    if (addMoreTeamList.length === 0) return alert("Please add at least one person to the list first.");
-    if (!keepAdding && !confirm("WARNING: This will reset the pass status back to PENDING. Do you want to proceed?")) return;
-    let btn = _d('btn-submit-add-more'); btn.innerText = "SUBMITTING..."; btn.disabled = true; let cleanTeam = [];
-    addMoreTeamList.forEach(m => { let devStr = m.deviceType !== 'None' ? `${m.deviceType} (${m.deviceId})` : 'None'; cleanTeam.push({ iqama: m.rawIqama, selfie: m.rawSelfie, devicePhoto: m.rawDevicePhoto, name: m.name, iqamaText: m.iqamaText, deviceString: devStr }); });
-
-    try {
-        const payload = { action: 'add_team_members', id: addMorePassId, team: cleanTeam };
-        if (keepAdding) {
-            apiCall(payload).then(() => loadMyPasses(true, true)).catch(e => console.error(e));
-            addMoreTeamList = []; renderAddTeamRoster(); btn.innerText = "SUBMIT & SEND FOR APPROVAL"; btn.disabled = false;
-        } else {
-            const res = await apiCall(payload);
-            if (res.status === 'success') { closeAddMoreModal(); loadMyPasses(true, true); alert("People added successfully! The pass is now PENDING approval."); }
-            else throw new Error(res.message);
+        try {
+            await apiCall({ action: currentScanAction, id: currentScannedID, guardInfo: gInfo, headCount: hcVal });
+            localStorage.removeItem('cached_admin_data');
+            
+            btn.innerText = t("confirm_action"); 
+            btn.disabled = false;
+            closeScanResult();
+            loadAdminData(true);
+            
+        } catch (e) {
+            btn.innerText = t("confirm_action"); btn.disabled = false; isProcessingScan = false;
         }
-    } catch (e) {
-        alert("Upload failed. Try again. Error: " + e.message);
-    } finally {
-        if (!keepAdding) { btn.innerText = "SUBMIT & SEND FOR APPROVAL"; btn.disabled = false; }
     }
-}
 
-function closeTimeline() { _d('timeline-modal').classList.add('hidden'); }
+    let addMorePassId = null; let addMoreTeamList = [];
+    function openAddMoreModal(passId) { addMorePassId = passId; addMoreTeamList = []; renderAddTeamRoster(); _d('add-more-modal').classList.remove('hidden'); }
+    function closeAddMoreModal() { _d('add-more-modal').classList.add('hidden'); }
+    function toggleAddTeamDeviceInput() {
+        let type = _d('req-add-team-device-type').value; let group = _d('req-add-team-device-id-group'); let input = _d('req-add-team-device-id'); let tDev = _d('req-add-team-imeiphoto');
+        if (type === 'None') { group.classList.add('hidden'); input.value = ''; if (tDev) tDev.value = ''; clearCapturedData('add_team_imeiphoto'); }
+        else { group.classList.remove('hidden'); input.placeholder = type === 'Mobile' ? 'IMEI Number' : 'Serial Number'; }
+    }
+
+    async function saveAddTeamMember() {
+        let iB64 = '', sB64 = '', tDevB64 = '', ii = _d('req-add-team-iqama'), si = _d('req-add-team-selfie'), tName = _d('req-add-team-name'), tIqama = _d('req-add-team-iqamatext');
+        let devType = _d('req-add-team-device-type').value, devId = _d('req-add-team-device-id').value; let tDev = _d('req-add-team-imeiphoto');
+        if (!tName || !tName.value.trim()) return alert("Provide Name."); if (!tIqama || !tIqama.value.trim()) return alert("Provide Iqama/ID.");
+        let iqamaVal = tIqama.value.trim(); let leadIqama = _d('req-iqamatext') ? _d('req-iqamatext').value.trim() : '';
+        if (addMoreTeamList.some(m => m.iqamaText === iqamaVal)) return alert("Duplicate! This ID is already in the current batch.");
+        if (addMoreTeamList.length >= 10) return alert("Batch limit reached: You can only add up to 10 team members per batch. Please submit these members first.");
+        if (devType !== 'None') {
+            if (!devId.trim()) return alert("Provide IMEI/Serial number.");
+            if (capturedImages.add_team_imeiphoto) tDevB64 = capturedImages.add_team_imeiphoto.split(',')[1];
+            else if (tDev && tDev.files.length > 0) { let f = await getBase64(tDev.files[0]); tDevB64 = f.split(',')[1] } else return alert("Provide Device Screen photo.");
+        }
+        if (capturedImages.add_team_iqama) iB64 = capturedImages.add_team_iqama.split(',')[1]; else if (ii && ii.files.length > 0) { let f = await getBase64(ii.files[0]); iB64 = f.split(',')[1] } else return alert("Provide Iqama photo.");
+        if (capturedImages.add_team_selfie) sB64 = capturedImages.add_team_selfie.split(',')[1]; else if (si && si.files.length > 0) { let f = await getBase64(si.files[0]); sB64 = f.split(',')[1] } else return alert("Provide Selfie photo.");
+
+        addMoreTeamList.push({ iqama: "data:image/jpeg;base64," + iB64, selfie: "data:image/jpeg;base64," + sB64, rawIqama: iB64, rawSelfie: sB64, rawDevicePhoto: tDevB64, name: tName.value.trim() + " *NEW_MEMBER*", iqamaText: tIqama.value.trim(), deviceType: devType, deviceId: devId.trim() });
+        renderAddTeamRoster();
+        if (ii) ii.value = ""; if (si) si.value = ""; if (tName) tName.value = ""; if (tIqama) tIqama.value = ""; _d('req-add-team-device-type').value = "None"; _d('req-add-team-device-id').value = ""; toggleAddTeamDeviceInput(); clearCapturedData('add_team_iqama'); clearCapturedData('add_team_selfie'); clearCapturedData('add_team_imeiphoto');
+        if (addMoreTeamList.length === 10) { checkBatchLimit('more'); }
+    }
+
+    function renderAddTeamRoster() {
+        const div = _d('add-team-roster-display');
+        if (addMoreTeamList.length > 0) {
+            div.classList.remove('hidden'); let h = '';
+            addMoreTeamList.forEach((m, idx) => {
+                let cleanName = m.name.replace(/\*NEW_MEMBER\*/gi, '').trim();
+                let devHtml = m.deviceType !== 'None' ? `<span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">${m.deviceType}</span>` : '';
+                let imgsHtml = `<img src="${m.iqama}" class="team-member-img" onclick="openFullscreenImage(this.src)"><img src="${m.selfie}" class="team-member-img" onclick="openFullscreenImage(this.src)">`;
+                h += `<div class="team-member-row"><span style="color:white;font-size:13px;font-weight:bold;">${cleanName} <span style="background:var(--success);color:white;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">${t('new_badge')}</span>${devHtml}</span><div style="display:flex;gap:10px;">${imgsHtml}<button type="button" style="background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:16px;" onclick="addMoreTeamList.splice(${idx},1);renderAddTeamRoster();">❌</button></div></div>`;
+            });
+            div.innerHTML = h;
+        } else div.classList.add('hidden');
+    }
+
+    async function submitAddMorePeople(keepAdding = false) {
+        if (addMoreTeamList.length === 0) return alert("Please add at least one person to the list first.");
+        if (!keepAdding && !confirm("WARNING: This will reset the pass status back to PENDING. Do you want to proceed?")) return;
+        let btn = _d('btn-submit-add-more'); btn.innerText = "SUBMITTING..."; btn.disabled = true; let cleanTeam = [];
+        addMoreTeamList.forEach(m => { let devStr = m.deviceType !== 'None' ? `${m.deviceType} (${m.deviceId})` : 'None'; cleanTeam.push({ iqama: m.rawIqama, selfie: m.rawSelfie, devicePhoto: m.rawDevicePhoto, name: m.name, iqamaText: m.iqamaText, deviceString: devStr }); });
+
+        try {
+            const payload = { action: 'add_team_members', id: addMorePassId, team: cleanTeam };
+            if (keepAdding) {
+                apiCall(payload).then(() => loadMyPasses(true, true)).catch(e => console.error(e));
+                addMoreTeamList = []; renderAddTeamRoster(); btn.innerText = "SUBMIT & SEND FOR APPROVAL"; btn.disabled = false;
+            } else {
+                const res = await apiCall(payload);
+                if (res.status === 'success') { closeAddMoreModal(); loadMyPasses(true, true); alert("People added successfully! The pass is now PENDING approval."); }
+                else throw new Error(res.message);
+            }
+        } catch (e) {
+            alert("Upload failed. Try again. Error: " + e.message);
+        } finally {
+            if (!keepAdding) { btn.innerText = "SUBMIT & SEND FOR APPROVAL"; btn.disabled = false; }
+        }
+    }
+
+    function closeTimeline() { const modal = _d('timeline-modal'); if (modal) modal.classList.add('hidden'); }
 </script>
 </body>
 </html>
