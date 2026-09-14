@@ -754,10 +754,17 @@ async function apiCall(payload) {
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: formData.toString()
         });
-        return await response.json();
+
+        const text = await response.text();
+        try {
+            return JSON.parse(text);
+        } catch (jsonErr) {
+            console.warn("API returned non-JSON response:", text);
+            return { status: "success", raw: text };
+        }
     } catch (e) {
-        console.error("API Error: ", e);
-        return { status: "success" };
+        console.error("API Fetch Error: ", e);
+        return { status: "error", message: e.message };
     }
 }
 
