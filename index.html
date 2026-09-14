@@ -1108,9 +1108,23 @@ function getBase64(file) {
         const reader = new FileReader(); reader.readAsDataURL(file);
         reader.onload = (e) => {
             const img = new Image(); img.onload = () => {
-                const canvas = document.createElement('canvas'); const MAX_WIDTH = 400; let width = img.width; let height = img.height;
+                const canvas = document.createElement('canvas'); const MAX_WIDTH = 300; let width = img.width; let height = img.height;
                 if (width > MAX_WIDTH) { height = Math.round((height * MAX_WIDTH) / width); width = MAX_WIDTH; }
                 canvas.width = width; canvas.height = height; canvas.getContext('2d').drawImage(img, 0, 0, width, height); resolve(canvas.toDataURL('image/jpeg', 0.4));
+            }; img.onerror = reject; img.src = e.target.result;
+        }; reader.onerror = reject;
+    });
+}
+
+// Ultra-compression specifically to prevent Google Sheets 50k char limit crash for Team Members
+function getTinyBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader(); reader.readAsDataURL(file);
+        reader.onload = (e) => {
+            const img = new Image(); img.onload = () => {
+                const canvas = document.createElement('canvas'); const MAX_WIDTH = 120; let width = img.width; let height = img.height;
+                if (width > MAX_WIDTH) { height = Math.round((height * MAX_WIDTH) / width); width = MAX_WIDTH; }
+                canvas.width = width; canvas.height = height; canvas.getContext('2d').drawImage(img, 0, 0, width, height); resolve(canvas.toDataURL('image/jpeg', 0.2));
             }; img.onerror = reject; img.src = e.target.result;
         }; reader.onerror = reject;
     });
@@ -1279,69 +1293,12 @@ async function loadMyPasses(forceRefresh = false, isSilent = false) {
 }
 
 function parseLogs(row) {
-    let visits = [];
-    let gLogs = String(row.GateLogs || "").trim();
-
+    let visits = []; let gLogs = String(row.GateLogs || "").trim();
     if (gLogs.startsWith("[")) {
-        try {
-            let logs = JSON.parse(gLogs);
-            let openVisit = null;
-            logs.forEach(l => {
-                let actionUpper = String(l.action || '').toUpperCase();
-                let eventTime = parseFlexibleDate(l.time);
-                if (actionUpper === 'IN' || actionUpper === 'CHECK_IN') {
-                    if (openVisit) visits.push(openVisit);
-                    openVisit = { in: eventTime, out: null, guardIn: l.guard || 'Unknown', guardOut: '' };
-                } else if (actionUpper === 'OUT' || actionUpper === 'CHECK_OUT') {
-                    if (openVisit) {
-                        openVisit.out = eventTime;
-                        openVisit.guardOut = l.guard || 'Unknown';
-                        visits.push(openVisit);
-                        openVisit = null;
-                    } else {
-                        visits.push({ in: null, out: eventTime, guardIn: '', guardOut: l.guard || 'Unknown' });
-                    }
-                }
-            });
-            if (openVisit) visits.push(openVisit);
-        } catch (e) {}
+        try { let logs = JSON.parse(gLogs); let openVisit = null; logs.forEach(l => { let actionUpper = String(l.action || '').toUpperCase(); let eventTime = parseFlexibleDate(l.time); if (actionUpper === 'IN' || actionUpper === 'CHECK_IN') { if (openVisit) visits.push(openVisit); openVisit = { in: eventTime, out: null, guardIn: l.guard || 'Unknown', guardOut: '' }; } else if (actionUpper === 'OUT' || actionUpper === 'CHECK_OUT') { if (openVisit) { openVisit.out = eventTime; openVisit.guardOut = l.guard || 'Unknown'; visits.push(openVisit); openVisit = null; } else { visits.push({ in: null, out: eventTime, guardIn: '', guardOut: l.guard || 'Unknown' }); } } }); if (openVisit) visits.push(openVisit); } catch (e) {}
     }
-
-    if (visits.length === 0 && gLogs.length > 0 && gLogs !== "No Logs") {
-        let entries = gLogs.split(/\n|\|\|/);
-        let openVisit = null;
-        entries.forEach(entry => {
-            let parts = entry.split('|').map(p => p.trim());
-            let actionPart = parts[0] || '';
-            let timePart = parts[1] || '';
-            let guardPart = parts[2] || 'Unknown';
-
-            if (actionPart.includes('IN')) {
-                if (openVisit) visits.push(openVisit);
-                openVisit = { in: parseFlexibleDate(timePart), out: null, guardIn: guardPart, guardOut: '' };
-            } else if (actionPart.includes('OUT')) {
-                if (openVisit) {
-                    openVisit.out = parseFlexibleDate(timePart);
-                    openVisit.guardOut = guardPart;
-                    visits.push(openVisit);
-                    openVisit = null;
-                } else {
-                    visits.push({ in: null, out: parseFlexibleDate(timePart), guardIn: '', guardOut: guardPart });
-                }
-            }
-        });
-        if (openVisit) visits.push(openVisit);
-    }
-
-    if (visits.length === 0 && (row.CheckInTime || row.CheckOutTime)) {
-        visits.push({
-            in: parseFlexibleDate(row.CheckInTime),
-            out: parseFlexibleDate(row.CheckOutTime),
-            guardIn: row.ScannedByGuard || 'Unknown',
-            guardOut: row.ScannedByGuard || 'Unknown'
-        });
-    }
-
+    if (visits.length === 0 && gLogs.length > 0 && gLogs !== "No Logs") { let entries = gLogs.split(/\n|\|\|/); let openVisit = null; entries.forEach(entry => { let parts = entry.split('|').map(p => p.trim()); let actionPart = parts[0] || ''; let timePart = parts[1] || ''; let guardPart = parts[2] || 'Unknown'; if (actionPart.includes('IN')) { if (openVisit) visits.push(openVisit); openVisit = { in: parseFlexibleDate(timePart), out: null, guardIn: guardPart, guardOut: '' }; } else if (actionPart.includes('OUT')) { if (openVisit) { openVisit.out = parseFlexibleDate(timePart); openVisit.guardOut = guardPart; visits.push(openVisit); openVisit = null; } else { visits.push({ in: null, out: parseFlexibleDate(timePart), guardIn: '', guardOut: guardPart }); } } }); if (openVisit) visits.push(openVisit); }
+    if (visits.length === 0 && (row.CheckInTime || row.CheckOutTime)) { visits.push({ in: parseFlexibleDate(row.CheckInTime), out: parseFlexibleDate(row.CheckOutTime), guardIn: row.ScannedByGuard || 'Unknown', guardOut: row.ScannedByGuard || 'Unknown' }); }
     return visits;
 }
 
@@ -1352,172 +1309,63 @@ function renderAdminData(data) {
     if (!Array.isArray(data)) { data = []; } globalAdminData = data;
     const tPending = _d('admin-table-pending'), tActive = _d('admin-table-active'), tHistory = _d('admin-table-history');
     let hPending = '', hActive = '', hHistory = ''; 
-    const today = new Date(); today.setHours(0, 0, 0, 0); 
-    const tomorrow = new Date(today.getTime()); tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    let si = _d('filter-start'), ei = _d('filter-end'); 
-    let fStart = (si && si.value) ? si.value : ''; 
-    let fEnd = (ei && ei.value) ? ei.value : '';
-    let pendingCount = 0, activeCount = 0, historyCount = 0; 
-    let aDate = {}, aType = {}, aFacility = {}, aStatus = {};
+    const today = new Date(); today.setHours(0, 0, 0, 0); const tomorrow = new Date(today.getTime()); tomorrow.setDate(tomorrow.getDate() + 1);
+    let si = _d('filter-start'), ei = _d('filter-end'); let fStart = (si && si.value) ? si.value : ''; let fEnd = (ei && ei.value) ? ei.value : '';
+    let pendingCount = 0, activeCount = 0, historyCount = 0; let aDate = {}, aType = {}, aFacility = {}, aStatus = {};
 
     data.forEach(row => {
         if (!row || !row.UniqueID) return;
-        let rType = String(row.Type || ''); 
-        let rLocation = String(row.Location || ''); 
-        let rStatus = String(row.Status || 'Pending'); 
-        let rVisitorName = String(row.VisitorName || ''); 
-        let rHostEmail = String(row.HostEmail || '');
-        
-        let endDateObj = new Date((parseFlexibleDate(row.EndDate) || parseFlexibleDate(row.StartDate) || new Date()).getTime()); 
-        endDateObj.setHours(23, 59, 59, 999); 
-        const isExpired = endDateObj < today; 
-        const isPassExpiredOrFinished = isExpired || rStatus === 'Rejected' || rStatus === 'Completed'; 
-        const inRange = isDateInRange(row.StartDate, currentAdminFilter, fStart, fEnd);
-        
-        let formattedStart = formatToDDMMYYYY(row.StartDate); 
-        let formattedEnd = formatToDDMMYYYY(row.EndDate || row.StartDate); 
-        const dateStr = (formattedStart === formattedEnd) ? formattedStart : `${formattedStart} - ${formattedEnd}`;
+        let rType = String(row.Type || ''); let rLocation = String(row.Location || ''); let rStatus = String(row.Status || 'Pending'); let rVisitorName = String(row.VisitorName || ''); let rHostEmail = String(row.HostEmail || '');
+        let endDateObj = new Date((parseFlexibleDate(row.EndDate) || parseFlexibleDate(row.StartDate) || new Date()).getTime()); endDateObj.setHours(23, 59, 59, 999); 
+        const isExpired = endDateObj < today; const isPassExpiredOrFinished = isExpired || rStatus === 'Rejected' || rStatus === 'Completed'; const inRange = isDateInRange(row.StartDate, currentAdminFilter, fStart, fEnd);
+        let formattedStart = formatToDDMMYYYY(row.StartDate); let formattedEnd = formatToDDMMYYYY(row.EndDate || row.StartDate); const dateStr = (formattedStart === formattedEnd) ? formattedStart : `${formattedStart} - ${formattedEnd}`;
 
-        if (inRange) { 
-            aType[rType] = (aType[rType] || 0) + 1; 
-            aFacility[rLocation] = (aFacility[rLocation] || 0) + 1; 
-            aStatus[rStatus] = (aStatus[rStatus] || 0) + 1; 
-            let dClean = formatToDDMMYYYY(row.StartDate); 
-            if (dClean !== '-') aDate[dClean] = (aDate[dClean] || 0) + 1; 
-        }
-
-        let startD = parseFlexibleDate(row.StartDate); if (startD) startD.setHours(0, 0, 0, 0); 
-        let endD = parseFlexibleDate(row.EndDate || row.StartDate); if (endD) endD.setHours(0, 0, 0, 0); 
-        let isMultiDay = (startD && endD && endD.getTime() > startD.getTime());
+        if (inRange) { aType[rType] = (aType[rType] || 0) + 1; aFacility[rLocation] = (aFacility[rLocation] || 0) + 1; aStatus[rStatus] = (aStatus[rStatus] || 0) + 1; let dClean = formatToDDMMYYYY(row.StartDate); if (dClean !== '-') aDate[dClean] = (aDate[dClean] || 0) + 1; }
+        let startD = parseFlexibleDate(row.StartDate); if (startD) startD.setHours(0, 0, 0, 0); let endD = parseFlexibleDate(row.EndDate || row.StartDate); if (endD) endD.setHours(0, 0, 0, 0); let isMultiDay = (startD && endD && endD.getTime() > startD.getTime());
         
         let rowStyle = '', dateBadge = ''; 
-        if (startD && startD.getTime() === today.getTime() && !isPassExpiredOrFinished) { 
-            rowStyle = 'style="background: rgba(16, 185, 129, 0.1);"'; 
-            dateBadge += `<span style="display:inline-block;margin-top:4px;background:var(--success);color:#000;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;margin-right:5px;">TODAY</span>`; 
-        } else if (startD && startD.getTime() === tomorrow.getTime() && !isPassExpiredOrFinished) { 
-            rowStyle = 'style="background: rgba(59, 130, 246, 0.1);"'; 
-            dateBadge += `<span style="display:inline-block;margin-top:4px;background:#3b82f6;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;margin-right:5px;">TOMORROW</span>`; 
-        }
-        if (isMultiDay && !isPassExpiredOrFinished) { 
-            rowStyle = 'style="background: rgba(139, 92, 246, 0.15); border-left: 3px solid #8b5cf6;"'; 
-            dateBadge += `<span style="display:inline-block;margin-top:4px;background:#8b5cf6;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;letter-spacing:0.5px;">MULTI-DAY</span>`; 
-        }
-        if (dateBadge !== '') dateBadge = '<br>' + dateBadge; 
-        const finalDateStr = dateStr + dateBadge;
+        if (startD && startD.getTime() === today.getTime() && !isPassExpiredOrFinished) { rowStyle = 'style="background: rgba(16, 185, 129, 0.1);"'; dateBadge += `<span style="display:inline-block;margin-top:4px;background:var(--success);color:#000;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;margin-right:5px;">TODAY</span>`; } else if (startD && startD.getTime() === tomorrow.getTime() && !isPassExpiredOrFinished) { rowStyle = 'style="background: rgba(59, 130, 246, 0.1);"'; dateBadge += `<span style="display:inline-block;margin-top:4px;background:#3b82f6;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;margin-right:5px;">TOMORROW</span>`; }
+        if (isMultiDay && !isPassExpiredOrFinished) { rowStyle = 'style="background: rgba(139, 92, 246, 0.15); border-left: 3px solid #8b5cf6;"'; dateBadge += `<span style="display:inline-block;margin-top:4px;background:#8b5cf6;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;letter-spacing:0.5px;">MULTI-DAY</span>`; }
+        if (dateBadge !== '') dateBadge = '<br>' + dateBadge; const finalDateStr = dateStr + dateBadge;
 
         if (inRange) {
             let visits = parseLogs(row);
             if (visits.length > 0) {
                 visits.forEach(v => {
-                    let inStr = v.in ? formatTime(v.in) : '-'; 
-                    let outStr = v.out ? formatTime(v.out) : '-'; 
-                    let durStr = '-';
-                    if (v.in && v.out) { 
-                        let diffMins = Math.floor((v.out.getTime() - v.in.getTime()) / 60000); 
-                        if (diffMins < 0) diffMins = 0; 
-                        let hs = Math.floor(diffMins / 60); 
-                        let ms = diffMins % 60; 
-                        durStr = `${hs}h ${ms}m`; 
-                    }
-                    let gStr = v.guardIn || '-'; 
-                    if (v.guardOut && v.guardOut !== v.guardIn) gStr += ` / ${v.guardOut}`;
-
-                    hHistory += `<tr>
-                        <td style="color:var(--text-muted);">${dateStr}</td>
-                        <td><strong>${rVisitorName}</strong></td>
-                        <td><strong style="color:var(--noon-yellow);">${t(rType.toLowerCase())}</strong></td>
-                        <td>${rLocation}</td>
-                        <td style="color:var(--text-main);font-size:11px;">${inStr}</td>
-                        <td style="color:var(--text-main);font-size:11px;">${outStr}</td>
-                        <td style="font-size:12px;">${durStr}</td>
-                        <td style="color:var(--text-muted);font-size:11px;">${gStr}</td>
-                    </tr>`;
-                    historyCount++;
+                    let inStr = v.in ? formatTime(v.in) : '-'; let outStr = v.out ? formatTime(v.out) : '-'; let durStr = '-';
+                    if (v.in && v.out) { let diffMins = Math.floor((v.out.getTime() - v.in.getTime()) / 60000); if (diffMins < 0) diffMins = 0; let hs = Math.floor(diffMins / 60); let ms = diffMins % 60; durStr = `${hs}h ${ms}m`; }
+                    let gStr = v.guardIn || '-'; if (v.guardOut && v.guardOut !== v.guardIn) gStr += ` / ${v.guardOut}`;
+                    hHistory += `<tr><td style="color:var(--text-muted);">${dateStr}</td><td><strong>${rVisitorName}</strong></td><td><strong style="color:var(--noon-yellow);">${t(rType.toLowerCase())}</strong></td><td>${rLocation}</td><td style="color:var(--text-main);font-size:11px;">${inStr}</td><td style="color:var(--text-main);font-size:11px;">${outStr}</td><td style="font-size:12px;">${durStr}</td><td style="color:var(--text-muted);font-size:11px;">${gStr}</td></tr>`; historyCount++;
                 });
             } else if (isPassExpiredOrFinished) {
                 let finalStatus = rStatus, sColor = 'var(--text-muted)';
-                if (rStatus === 'Rejected') { finalStatus = t('status_rejected'); sColor = 'var(--danger)'; }
-                else if (isExpired) { finalStatus = t('status_expired'); sColor = 'var(--danger)'; }
-                else if (rStatus === 'Completed') { finalStatus = t('status_completed'); sColor = 'var(--success)'; }
+                if (rStatus === 'Rejected') { finalStatus = t('status_rejected'); sColor = 'var(--danger)'; } else if (isExpired) { finalStatus = t('status_expired'); sColor = 'var(--danger)'; } else if (rStatus === 'Completed') { finalStatus = t('status_completed'); sColor = 'var(--success)'; }
                 let badge = `<br><span style="color:${sColor};font-size:10px;font-weight:bold;">${finalStatus}</span>`;
-                
-                hHistory += `<tr>
-                    <td style="color:var(--text-muted);">${dateStr}</td>
-                    <td><strong>${rVisitorName}</strong>${badge}</td>
-                    <td><strong style="color:var(--noon-yellow);">${t(rType.toLowerCase())}</strong></td>
-                    <td>${rLocation}</td>
-                    <td style="color:var(--text-muted);font-size:11px;">-</td>
-                    <td style="color:var(--text-muted);font-size:11px;">-</td>
-                    <td style="color:var(--text-muted);font-size:11px;">-</td>
-                    <td style="color:var(--text-muted);font-size:11px;">-</td>
-                </tr>`;
-                historyCount++;
+                hHistory += `<tr><td style="color:var(--text-muted);">${dateStr}</td><td><strong>${rVisitorName}</strong>${badge}</td><td><strong style="color:var(--noon-yellow);">${t(rType.toLowerCase())}</strong></td><td>${rLocation}</td><td style="color:var(--text-muted);font-size:11px;">-</td><td style="color:var(--text-muted);font-size:11px;">-</td><td style="color:var(--text-muted);font-size:11px;">-</td><td style="color:var(--text-muted);font-size:11px;">-</td></tr>`; historyCount++;
             }
         }
 
         if (!isPassExpiredOrFinished && inRange) {
-            let newCount = 0, removeCount = 0, revokeCount = 0;
-            let tMembersStr = String(row.TeamMembers || '');
-            if (tMembersStr.trim() !== '') { 
-                var parsedMembers = parseTeamMembersString(tMembersStr);
-                parsedMembers.forEach(function(m) {
-                    if (m.isRemoveRequested) removeCount++;
-                    if (m.isDeviceRevokeReq) revokeCount++;
-                    if (m.isNew) newCount++;
-                });
-            }
-            let hasActionPending = false; 
-            if (rStatus === 'Approved' && (removeCount > 0 || revokeCount > 0 || newCount > 0)) hasActionPending = true;
+            let newCount = 0, removeCount = 0, revokeCount = 0; let tMembersStr = String(row.TeamMembers || '');
+            if (tMembersStr.trim() !== '') { var parsedMembers = parseTeamMembersString(tMembersStr); parsedMembers.forEach(function(m) { if (m.isRemoveRequested) removeCount++; if (m.isDeviceRevokeReq) revokeCount++; if (m.isNew) newCount++; }); }
+            let hasActionPending = false; if (rStatus === 'Approved' && (removeCount > 0 || revokeCount > 0 || newCount > 0)) hasActionPending = true;
 
             if (rStatus === 'Pending' || hasActionPending) {
                 let actionBtns = `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;">`;
-                if (rStatus === 'Pending') { 
-                    actionBtns += `<button class="btn-primary btn-success btn-sm" style="width:auto;white-space:nowrap;" onclick="updateStatus('${row.UniqueID}','Approved')">${t('btn_approve')}</button>
-                    <button class="btn-primary btn-danger btn-sm" style="width:auto;white-space:nowrap;" onclick="updateStatus('${row.UniqueID}','Rejected')">${t('btn_reject')}</button>
-                    <button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button>`; 
-                }
+                if (rStatus === 'Pending') { actionBtns += `<button class="btn-primary btn-success btn-sm" style="width:auto;white-space:nowrap;" onclick="updateStatus('${row.UniqueID}','Approved')">${t('btn_approve')}</button><button class="btn-primary btn-danger btn-sm" style="width:auto;white-space:nowrap;" onclick="updateStatus('${row.UniqueID}','Rejected')">${t('btn_reject')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button>`; }
                 actionBtns += `<button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button></div>`;
-                
                 let actionBadges = '';
-                if (newCount > 0 || removeCount > 0 || revokeCount > 0) { 
-                    actionBadges = `<div style="display:flex; gap:10px; margin-top:8px; flex-wrap:wrap;">`; 
-                    if (newCount > 0) actionBadges += `<button onclick="openViewRecord('${row.UniqueID}', 'add')" style="background:var(--success);color:#fff;font-size:10px;padding:4px 8px;border-radius:4px;font-weight:bold;border:none;cursor:pointer;">🟢 ${newCount} NEW ADDED</button>`; 
-                    if (removeCount > 0) actionBadges += `<button onclick="openViewRecord('${row.UniqueID}', 'remove')" style="background:var(--danger);color:#fff;font-size:10px;padding:4px 8px;border-radius:4px;font-weight:bold;border:none;cursor:pointer;">🔴 ${removeCount} REMOVAL NEEDED</button>`; 
-                    if (revokeCount > 0) actionBadges += `<button onclick="openViewRecord('${row.UniqueID}', 'revoke')" style="background:#eab308;color:#000;font-size:10px;padding:4px 8px;border-radius:4px;font-weight:bold;border:none;cursor:pointer;">🟠 ${revokeCount} DEVICE REMOVAL NEEDED</button>`; 
-                    actionBadges += `</div>`; 
-                } else if (rStatus === 'Pending') { 
-                    actionBadges = `<div style="margin-top:8px;"><span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:4px 8px;border-radius:4px;font-weight:bold;">NEW PASS REQUEST</span></div>`; 
-                }
-                hPending += `<tr ${rowStyle}><td style="color:var(--text-muted);">${finalDateStr}</td><td><strong>${rVisitorName}</strong><br><span style="font-size:10px;color:var(--text-muted);">Email: ${rHostEmail}</span>${actionBadges}</td><td>${t(rType.toLowerCase())}</td><td>${rLocation}</td><td>${actionBtns}</td></tr>`; 
-                pendingCount++;
+                if (newCount > 0 || removeCount > 0 || revokeCount > 0) { actionBadges = `<div style="display:flex; gap:10px; margin-top:8px; flex-wrap:wrap;">`; if (newCount > 0) actionBadges += `<button onclick="openViewRecord('${row.UniqueID}', 'add')" style="background:var(--success);color:#fff;font-size:10px;padding:4px 8px;border-radius:4px;font-weight:bold;border:none;cursor:pointer;">🟢 ${newCount} NEW ADDED</button>`; if (removeCount > 0) actionBadges += `<button onclick="openViewRecord('${row.UniqueID}', 'remove')" style="background:var(--danger);color:#fff;font-size:10px;padding:4px 8px;border-radius:4px;font-weight:bold;border:none;cursor:pointer;">🔴 ${removeCount} REMOVAL NEEDED</button>`; if (revokeCount > 0) actionBadges += `<button onclick="openViewRecord('${row.UniqueID}', 'revoke')" style="background:#eab308;color:#000;font-size:10px;padding:4px 8px;border-radius:4px;font-weight:bold;border:none;cursor:pointer;">🟠 ${revokeCount} DEVICE REMOVAL NEEDED</button>`; actionBadges += `</div>`; } else if (rStatus === 'Pending') { actionBadges = `<div style="margin-top:8px;"><span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:4px 8px;border-radius:4px;font-weight:bold;">NEW PASS REQUEST</span></div>`; }
+                hPending += `<tr ${rowStyle}><td style="color:var(--text-muted);">${finalDateStr}</td><td><strong>${rVisitorName}</strong><br><span style="font-size:10px;color:var(--text-muted);">Email: ${rHostEmail}</span>${actionBadges}</td><td>${t(rType.toLowerCase())}</td><td>${rLocation}</td><td>${actionBtns}</td></tr>`; pendingCount++;
             }
 
             if (rStatus === 'Approved' && !hasActionPending) {
                 const isChecked = checkedPrintIds.has(row.UniqueID) ? 'checked' : '';
                 let cbHtml = `<input type="checkbox" class="print-checkbox row-checkbox" value="${row.UniqueID}" data-name="${rVisitorName}" data-type="${rType}" data-location="${rLocation}" data-status="${rStatus}" data-date="${dateStr}" ${isChecked} onchange="handlePrintCheckbox(this)">`;
-                let actionBtns = `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;">
-                    <button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button>
-                    <button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="printQR('${rVisitorName}','${rType}','${rLocation}','${row.UniqueID}','${rStatus}','${dateStr}')">${t('btn_print')}</button>
-                    <button class="btn-primary btn-warning btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;color:#000;" onclick="openAdminGateModal('${row.UniqueID}')">🚪 GATE ACTION</button>
-                    <button class="btn-primary btn-danger btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="adminRevokePass('${row.UniqueID}')">🚫 REVOKE PASS</button>
-                    <button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button>
-                </div>`;
+                let actionBtns = `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;"><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="printQR('${rVisitorName}','${rType}','${rLocation}','${row.UniqueID}','${rStatus}','${dateStr}')">${t('btn_print')}</button><button class="btn-primary btn-warning btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;color:#000;" onclick="openAdminGateModal('${row.UniqueID}')">🚪 GATE ACTION</button><button class="btn-primary btn-danger btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="adminRevokePass('${row.UniqueID}')">🚫 REVOKE PASS</button><button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button></div>`;
                 let ciTime = '-'; let durHtml = '-'; const isInside = !!row.CheckInTime && !row.CheckOutTime;
-                if (isInside) { 
-                    let ciObj = parseFlexibleDate(row.CheckInTime); 
-                    if (ciObj && !isNaN(ciObj.getTime())) { 
-                        ciTime = formatTime(ciObj); 
-                        let now = new Date().getTime(); 
-                        let diffMins = Math.floor((now - ciObj.getTime()) / 60000); 
-                        if (diffMins < 0) diffMins = 0; 
-                        let h = Math.floor(diffMins / 60); 
-                        let m = diffMins % 60; 
-                        durHtml = `<span style="color:var(--noon-yellow); font-weight:bold;">${h}h ${m}m</span>`; 
-                    } 
-                }
-                hActive += `<tr ${rowStyle}><td>${cbHtml}</td><td style="color:var(--text-muted);">${finalDateStr}</td><td><strong>${rVisitorName}</strong><br><span style="font-size:10px;color:var(--text-muted);">Email: ${rHostEmail}</span></td><td>${t(rType.toLowerCase())}</td><td>${rLocation}</td><td style="color:var(--text-muted);font-size:11px;">${ciTime}</td><td>${durHtml}</td><td>${actionBtns}</td></tr>`; 
-                activeCount++;
+                if (isInside) { let ciObj = parseFlexibleDate(row.CheckInTime); if (ciObj && !isNaN(ciObj.getTime())) { ciTime = formatTime(ciObj); let now = new Date().getTime(); let diffMins = Math.floor((now - ciObj.getTime()) / 60000); if (diffMins < 0) diffMins = 0; let h = Math.floor(diffMins / 60); let m = diffMins % 60; durHtml = `<span style="color:var(--noon-yellow); font-weight:bold;">${h}h ${m}m</span>`; } }
+                hActive += `<tr ${rowStyle}><td>${cbHtml}</td><td style="color:var(--text-muted);">${finalDateStr}</td><td><strong>${rVisitorName}</strong><br><span style="font-size:10px;color:var(--text-muted);">Email: ${rHostEmail}</span></td><td>${t(rType.toLowerCase())}</td><td>${rLocation}</td><td style="color:var(--text-muted);font-size:11px;">${ciTime}</td><td>${durHtml}</td><td>${actionBtns}</td></tr>`; activeCount++;
             }
         }
     });
@@ -1539,448 +1387,315 @@ function toggleSelectAll(src) { const cbs = _q('.print-checkbox.row-checkbox'); 
 async function loadAdminData(isSilent = false) {
     const cachedM = localStorage.getItem('cached_admin_data');
     if (cachedM && !isSilent) { 
-        try { 
-            let parsedM = JSON.parse(cachedM); 
-            if (Array.isArray(parsedM)) renderAdminData(parsedM.reverse()); 
-            else localStorage.removeItem('cached_admin_data'); 
-        } catch (e) { 
-            localStorage.removeItem('cached_admin_data'); 
-        } 
+        try { let parsedM = JSON.parse(cachedM); if (Array.isArray(parsedM)) renderAdminData(parsedM.reverse()); else localStorage.removeItem('cached_admin_data'); } catch (e) { localStorage.removeItem('cached_admin_data'); } 
     }
-    
     try { 
-        const res = await apiCall({ action: 'get_all' }); 
-        const dataMain = convertDriveUrls(res); 
-        if (Array.isArray(dataMain)) { 
-            const newMStr = JSON.stringify(dataMain); 
-            localStorage.setItem('cached_admin_data', newMStr); 
-            renderAdminData(dataMain.reverse()); 
-        } else if (dataMain && Array.isArray(dataMain.data)) {
-            const newMStr = JSON.stringify(dataMain.data); 
-            localStorage.setItem('cached_admin_data', newMStr); 
-            renderAdminData(dataMain.data.reverse()); 
-        } else {
-            if (!cachedM) renderAdminData(globalAdminData || []); 
-        }
-    } catch (e) { 
-        if (!isSilent && !cachedM) console.error("Fetch admin data error:", e); 
-    }
+        const res = await apiCall({ action: 'get_all' }); const dataMain = convertDriveUrls(res); 
+        if (Array.isArray(dataMain)) { const newMStr = JSON.stringify(dataMain); localStorage.setItem('cached_admin_data', newMStr); renderAdminData(dataMain.reverse()); } else if (dataMain && Array.isArray(dataMain.data)) { const newMStr = JSON.stringify(dataMain.data); localStorage.setItem('cached_admin_data', newMStr); renderAdminData(dataMain.data.reverse()); } else { if (!cachedM) renderAdminData(globalAdminData || []); }
+    } catch (e) { if (!isSilent && !cachedM) console.error("Fetch admin data error:", e); }
 }
-    async function updateStatus(id, newStatus) {
-        if (autoRefreshTimer) clearInterval(autoRefreshTimer);
-        if (!confirm(`Mark ${id} as ${newStatus}?`)) { startAutoRefresh(currentUser.role); return; }
-        if (Array.isArray(globalAdminData)) { let item = globalAdminData.find(x => String(x.UniqueID) === String(id)); if (item) { item.Status = newStatus; if (newStatus === 'Approved' && item.TeamMembers) { item.TeamMembers = String(item.TeamMembers).replace(/\*NEW_MEMBER\*/gi, '').replace(/\[NEW\]/gi, '').replace(/\*\[REMOVE_REQUESTED\]\*/gi, '').replace(/\[REMOVE_REQUESTED\]/gi, '').replace(/\*\[DEVICE_REVOKE_REQUESTED\]\*/gi, '').replace(/\[DEVICE_REVOKE_REQUESTED\]/gi, ''); } localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData)); renderAdminData(globalAdminData); if (item.HostEmail) localStorage.removeItem('cached_passes_' + String(item.HostEmail).toLowerCase().trim()); } }
-        try { await apiCall({ action: 'update_status', id: id, newStatus: newStatus }); loadAdminData(true); if (currentUser && currentUser.role === 'ops') loadMyPasses(true, true); } catch (e) { alert("Network error: " + e.message); } finally { startAutoRefresh(currentUser.role); }
+
+async function updateStatus(id, newStatus) {
+    if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+    if (!confirm(`Mark ${id} as ${newStatus}?`)) { startAutoRefresh(currentUser.role); return; }
+    if (Array.isArray(globalAdminData)) { let item = globalAdminData.find(x => String(x.UniqueID) === String(id)); if (item) { item.Status = newStatus; if (newStatus === 'Approved' && item.TeamMembers) { item.TeamMembers = String(item.TeamMembers).replace(/\*NEW_MEMBER\*/gi, '').replace(/\[NEW\]/gi, '').replace(/\*\[REMOVE_REQUESTED\]\*/gi, '').replace(/\[REMOVE_REQUESTED\]/gi, '').replace(/\*\[DEVICE_REVOKE_REQUESTED\]\*/gi, '').replace(/\[DEVICE_REVOKE_REQUESTED\]/gi, ''); } localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData)); renderAdminData(globalAdminData); if (item.HostEmail) localStorage.removeItem('cached_passes_' + String(item.HostEmail).toLowerCase().trim()); } }
+    try { await apiCall({ action: 'update_status', id: id, newStatus: newStatus }); loadAdminData(true); if (currentUser && currentUser.role === 'ops') loadMyPasses(true, true); } catch (e) { alert("Network error: " + e.message); } finally { startAutoRefresh(currentUser.role); }
+}
+
+function openAdminGateModal(id) { const gi = _d('admin-gate-id'), gd = _d('admin-gate-id-display'), gm = _d('admin-gate-modal'); if (gi) gi.value = id; if (gd) gd.innerText = id; if (gm) gm.classList.remove('hidden'); }
+function closeAdminGateModal() { const gm = _d('admin-gate-modal'); if (gm) gm.classList.add('hidden'); }
+
+async function submitAdminGateAction(actionType) {
+    const id = _d('admin-gate-id').value; if (!id) return; let item = globalAdminData.find(x => String(x.UniqueID) === String(id)); const nowIso = new Date().toISOString(); const adminInfo = currentUser.role === 'admin' ? `Admin: ${currentUser.name}` : `${currentUser.name} (${currentUser.location})`;
+    if (item) { 
+        const isInside = !!item.CheckInTime && !item.CheckOutTime; 
+        if (actionType === 'check_in' && isInside) return alert("This pass is already checked IN by:\n" + item.ScannedByGuard); 
+        if (actionType === 'check_out' && !isInside) return alert("This pass is already checked OUT."); 
+        if (actionType === 'check_in') { item.CheckInTime = nowIso; item.CheckOutTime = ''; item.ScannedByGuard = adminInfo; } else { item.CheckOutTime = nowIso; }
+        let existingLogs = []; try { existingLogs = JSON.parse(item.GateLogs || "[]"); } catch(e) {}
+        existingLogs.push({ action: actionType === 'check_in' ? 'IN' : 'OUT', time: nowIso, guard: adminInfo }); item.GateLogs = JSON.stringify(existingLogs);
+        localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData)); renderAdminData(globalAdminData);
+    }
+    closeAdminGateModal(); try { await apiCall({ action: actionType, id: id, guardInfo: adminInfo, headCount: 1 }); localStorage.removeItem('cached_admin_data'); await loadAdminData(true); } catch(e) { console.error(e); }
+}
+
+async function adminRevokePass(id) {
+    if (autoRefreshTimer) clearInterval(autoRefreshTimer); if (!confirm(`Revoke pass ${id} completely? This will kill the QR code permanently.`)) { startAutoRefresh(currentUser.role); return; }
+    if (Array.isArray(globalAdminData)) { let item = globalAdminData.find(x => String(x.UniqueID) === String(id)); if (item) { item.Status = 'Completed'; item.CheckOutTime = new Date().toISOString(); localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData)); renderAdminData(globalAdminData); if (item.HostEmail) localStorage.removeItem('cached_passes_' + String(item.HostEmail).toLowerCase().trim()); } }
+    try { const adminInfo = currentUser.role === 'admin' ? `Admin: ${currentUser.name}` : `${currentUser.name} (${currentUser.location})`; await apiCall({ action: 'check_out', id: id, guardInfo: adminInfo, headCount: 1, forceStatus: 'Completed' }); localStorage.removeItem('cached_admin_data'); setTimeout(() => { loadAdminData(true) }, 1000); } catch (e) { console.error(e); } finally { startAutoRefresh(currentUser.role); }
+}
+
+function openExtendPass(id, type) { const ei = _d('extend-id'), et = _d('extend-type'), eg = _d('extend-end-group'), em = _d('extend-pass-modal'); if (ei) ei.value = id; if (et) et.value = type; if (eg) eg.classList.remove('hidden'); if (em) em.classList.remove('hidden'); }
+function closeExtendPass() { const em = _d('extend-pass-modal'); if (em) em.classList.add('hidden'); }
+
+async function submitExtendPass() {
+    const id = _d('extend-id').value, type = _d('extend-type').value, ns = _d('extend-start').value, ei = _d('extend-end'); const ne = ei ? ei.value : ''; const btn = _d('btn-submit-extend');
+    if (!ns || !ne) return alert('Please select both Start and End dates.'); if (!confirm(`Extend pass ${id}?`)) return; btn.innerText = 'SAVING...'; btn.disabled = true;
+    try { await apiCall({ action: 'extend_pass', id: id, newStartDate: ns, newEndDate: ne }); closeExtendPass(); loadAdminData(false); } catch (e) { alert('Error: ' + e.message); } finally { btn.innerText = t("save_extension"); btn.disabled = false; }
+}
+
+async function adminResetPin(email) { if (!confirm(`Reset PIN for ${email}? They will be prompted to create a new one next time.`)) return; try { await apiCall({ action: 'reset_pin', email: email }); localStorage.removeItem('cached_admin_data'); localStorage.removeItem('cached_passes_' + email); alert("PIN Reset Successful."); closeViewRecord(); loadAdminData(true); } catch (e) { alert("Error resetting PIN: " + e.message); } }
+function downloadQR(id) { let safeId = String(id).replace(/[^a-zA-Z0-9_-]/g, ''); const qrBox = _d('qr-' + safeId); if (!qrBox) return; let canvas = qrBox.querySelector('canvas'); let img = qrBox.querySelector('img'); let sourceImage = canvas && canvas.style.display !== 'none' ? canvas : (img && img.src ? img : null); if (!sourceImage) return alert("QR Code not ready yet."); let size = 150; let padding = 20; let newCanvas = document.createElement('canvas'); newCanvas.width = size + (padding * 2); newCanvas.height = size + (padding * 2); let ctx = newCanvas.getContext('2d'); ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, newCanvas.width, newCanvas.height); ctx.drawImage(sourceImage, padding, padding, size, size); const link = document.createElement('a'); link.href = newCanvas.toDataURL('image/png'); link.download = `Noon_Pass_QR_${safeId}.png`; document.body.appendChild(link); link.click(); document.body.removeChild(link); }
+function printQR(name, type, location, id, status, date) { const pm = confirm("Print Layout Selection:\n\n[OK] = Standard Printer\n[Cancel] = ID Card Printer"); let copiesInput = prompt("How many copies do you want to print on the page?", "1"); let copies = parseInt(copiesInput, 10); if (isNaN(copies) || copies < 1) copies = 1; const pw = window.open('', '', 'width=800,height=600'); let tempDiv = document.createElement("div"); new QRCode(tempDiv, { text: id, width: 110, height: 110, colorDark: "#000", colorLight: "#fff", correctLevel: QRCode.CorrectLevel.H }); let canvas = tempDiv.querySelector("canvas"); let qrDataUrl = canvas ? canvas.toDataURL() : ''; let cardsHtml = ''; for (let i = 0; i < copies; i++) { cardsHtml += `<div class="card"><div class="top-row"><div><p class="name">${name}</p><p class="sub">${type} &bull; ${location}</p><p class="date">Valid: ${date}</p></div><div><p class="status">${status}</p><p class="id">${id}</p></div></div><div class="qr-box"><img src="${qrDataUrl}"></div></div>`; } let ps = pm ? `@media print{@page{margin:10mm}body{display:flex;flex-wrap:wrap;gap:5mm;align-content:flex-start;justify-content:flex-start}.card{page-break-inside:avoid;border:1px solid #ccc !important}}` : `@media print{@page{size:85.6mm 54mm;margin:0}body{display:block;margin:0;padding:0;background:#fff}.card{border:none !important;border-radius:0;margin:0;padding:4mm;width:85.6mm;height:54mm;page-break-inside:avoid;box-sizing:border-box}}`; pw.document.write(`<html><head><title>Print QR Pass</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"><style>*{box-sizing:border-box;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}body{margin:0;padding:20px;background:#fff;font-family:'Inter',sans-serif;display:flex;flex-wrap:wrap;justify-content:flex-start;gap:15px;}.card{width:85.6mm;height:54mm;background:white;border-radius:2mm;padding:4mm;border:1px solid #ccc;position:relative;overflow:hidden}.top-row{display:flex;justify-content:space-between;align-items:flex-start}.name{font-size:10pt;font-weight:700;margin:0;color:black;line-height:1.1;max-width:48mm;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.sub{font-size:7pt;color:#555;margin:2px 0 0 0}.date{font-size:6pt;font-weight:600;color:#444;margin:2px 0 0 0}.status{font-size:8pt;font-weight:700;color:#10b981;margin:0;text-align:right;text-transform:uppercase}.id{font-size:6pt;color:#555;margin:2px 0 0 0;text-align:right}.qr-box{display:flex;justify-content:center;align-items:center;margin-top:2mm}${ps}</style></head><body>${cardsHtml}</body></html>`); pw.document.close(); pw.focus(); setTimeout(() => { pw.print(); pw.close(); }, 250); }
+
+function switchScanMode(mode) { const btnCam = _d('btn-mode-camera'); const btnGun = _d('btn-mode-gun'); const gunContainer = _d('gun-scanner-container'); const camWrapper = _d('camera-mode-wrapper'); const gunInput = _d('gun-scan-input'); if (mode === 'gun') { if (btnCam) btnCam.className = "btn-primary btn-outline"; if (btnGun) btnGun.className = "btn-primary"; if (camWrapper) camWrapper.classList.add('hidden'); if (gunContainer) gunContainer.classList.remove('hidden'); stopScanner(); if (gunInput) { gunInput.focus(); gunInput.value = ""; } } else { if (btnCam) btnCam.className = "btn-primary"; if (btnGun) btnGun.className = "btn-primary btn-outline"; if (gunContainer) gunContainer.classList.add('hidden'); if (camWrapper) camWrapper.classList.remove('hidden'); } }
+function handleGunScan(event) { if (event.key === 'Enter') { event.preventDefault(); const code = event.target.value.replace(/\s+/g, '').trim().toUpperCase(); if (code) { event.target.value = ""; onScanSuccess(code); } } }
+function startScanner() { const btn = _d('btn-start-scan'); const readerCont = _d('reader-container'); const scanResult = _d('scan-result'); if (btn) btn.classList.add('hidden'); if (scanResult) scanResult.classList.add('hidden'); if (readerCont) readerCont.classList.remove('hidden'); if (!html5QrCode) { html5QrCode = new Html5Qrcode("reader"); } startQrCodeStream(); }
+function startQrCodeStream() { if (html5QrCode && html5QrCode.isScanning) { html5QrCode.stop().then(() => { playQrCodeStream(); }).catch(e => { playQrCodeStream(); }); } else { playQrCodeStream(); } }
+function playQrCodeStream() { html5QrCode.start({ facingMode: scannerFacingMode }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess, (errorMessage) => { }).catch((err) => { alert("Camera access error. Please check permissions."); hideScannerUI(); }); }
+function switchScannerCamera() { scannerFacingMode = scannerFacingMode === "environment" ? "user" : "environment"; startQrCodeStream(); }
+function stopScanner() { if (html5QrCode && html5QrCode.isScanning) { html5QrCode.stop().then(() => { hideScannerUI(); }).catch(e => { hideScannerUI(); }); } else { hideScannerUI(); } }
+function hideScannerUI() { _d('reader-container').classList.add('hidden'); _d('btn-start-scan').classList.remove('hidden'); }
+
+function showScanResult(d, rHtml, cClass, isContractor = false) {
+    const sr = _d('scan-result'); sr.className = ''; _d('r-decision').innerText = d; _d('r-reason').innerHTML = rHtml;
+    setTimeout(() => { sr.className = `scan-result-card ${cClass} ${isContractor ? 'fullscreen-scan' : ''}`; }, 10);
+    if (cClass === "bg-red") { setTimeout(() => { if (_d('r-decision').innerText === d) { sr.className = 'scan-result-card hidden'; isProcessingScan = false; try { if (html5QrCode) html5QrCode.resume(); } catch (e) {} } }, 3500); }
+}
+
+window.closeScanResult = function () { isProcessingScan = false; const sr = _d('scan-result'); if (sr) sr.className = 'scan-result-card hidden'; try { if (html5QrCode) html5QrCode.resume(); } catch (e) {} const gunInput = _d('gun-scan-input'); if (gunInput && !_d('gun-scanner-container').classList.contains('hidden')) { gunInput.focus(); gunInput.value = ""; } }
+function filterTeamMembers(query) { let q = query.toLowerCase(); let rows = _q('.team-member-scan-row'); rows.forEach(row => { if (row.innerText.toLowerCase().includes(q)) { row.style.display = 'flex'; } else { row.style.display = 'none'; } }); let deviceCards = _q('.device-photo-card'); deviceCards.forEach(card => { if (card.getAttribute('data-search').includes(q)) { card.style.display = 'block'; } else { card.style.display = 'none'; } }); }
+
+async function onScanSuccess(decodedText) {
+    if (isProcessingScan) return; isProcessingScan = true; try { if (html5QrCode && html5QrCode.isScanning) html5QrCode.pause(); } catch (e) {}
+    let rawText = String(decodedText).toUpperCase(); let exactMatch = rawText.match(/NOON-\d+/); decodedText = exactMatch ? exactMatch[0] : rawText.replace(/\s+/g, '').trim();
+    if (!decodedText) { isProcessingScan = false; return; }
+
+    const resultCard = _d('scan-result'), selfieImg = _d('r-selfie'), confirmBtn = _d('btn-confirm-action'), teamSec = _d('guard-team-section'), detailsPrev = _d('guard-details-preview'), topInfoBox = _d('scan-result-top-info');
+    if (resultCard) { resultCard.className = 'scan-result-card hidden'; void resultCard.offsetWidth; resultCard.classList.remove('hidden'); resultCard.classList.add('bg-blue'); if (decodedText) resultCard.classList.add('fullscreen-scan'); }
+    if (confirmBtn) confirmBtn.classList.add('hidden'); if (teamSec) teamSec.classList.add('hidden');
+    const rDecision = _d('r-decision'), rReason = _d('r-reason'); if (rDecision) rDecision.innerText = t("fetching"); if (rReason) rReason.innerHTML = "";
+    if (selfieImg) { selfieImg.style.display = 'none'; selfieImg.src = ""; }
+    if (teamSec) teamSec.innerHTML = ""; if (detailsPrev) detailsPrev.innerHTML = ""; if (topInfoBox) topInfoBox.innerHTML = "";
+    const searchFilterBox = _d('guard-search-filter-container'); if (searchFilterBox) { searchFilterBox.classList.add('hidden'); _d('team-search-filter').value = ""; }
+    currentScannedID = decodedText; let data = null;
+
+    if (Array.isArray(globalAdminData)) { let cachedMatch = globalAdminData.find(x => String(x.UniqueID).toUpperCase() === String(decodedText).toUpperCase()); if (cachedMatch) data = cachedMatch; }
+    if (!data && Array.isArray(myPassesData)) { let cachedMatch = myPassesData.find(x => String(x.UniqueID).toUpperCase() === String(decodedText).toUpperCase()); if (cachedMatch) data = cachedMatch; }
+    if (!data) { try { const res = await apiCall({ action: 'get_single', id: decodedText }); if (res && !res.error) data = convertDriveUrls(res); } catch (err) {} }
+    if (!data || data.error) { showScanResult(t("denied"), t("invalid_date"), "bg-red", false); return; }
+
+    let dType = String(data.Type || ''); let dStatus = String(data.Status || ''); let dLoc = String(data.Location || '');
+    const todayNum = new Date().setHours(0, 0, 0, 0); let startObj = parseFlexibleDate(data.StartDate), startNum = startObj ? startObj.setHours(0, 0, 0, 0) : todayNum; let endObj = parseFlexibleDate(data.EndDate), endNum = endObj ? endObj.setHours(0, 0, 0, 0) : startNum;
+    let isInside = !!data.CheckInTime && !data.CheckOutTime;
+
+    let scanState = t("allowed"), scanMsg = t("pass_validated"), scanColor = "bg-green"; let allowAction = true;
+    if (dStatus === 'Pending') { scanState = t("pending"); scanMsg = t("awaiting_admin"); scanColor = "bg-yellow"; allowAction = false; }
+    else if (dStatus !== 'Approved') { scanState = t("denied"); scanMsg = t("not_approved"); scanColor = "bg-red"; allowAction = false; }
+    else if (currentUser.role === 'guard' && dLoc !== currentUser.location) { scanState = t("wrong_facility"); scanMsg = t("wrong_fac_msg") + " (" + dLoc + ")"; scanColor = "bg-red"; allowAction = false; }
+    else if (todayNum < startNum || todayNum > endNum) { scanState = todayNum > endNum ? t("expired") : t("invalid_date"); scanMsg = todayNum > endNum ? t("expired") : t("not_valid_today"); scanColor = "bg-red"; allowAction = false; }
+
+    let isFullscreen = (dType === 'Contractor' || dType === 'Visitor');
+
+    if (allowAction) {
+        if (isInside) {
+            currentScanAction = 'check_out'; scanState = t("check_out"); scanMsg = t("scanning_out"); scanColor = "bg-blue";
+            if (data.ScannedByGuard && String(data.ScannedByGuard).toLowerCase().includes('admin')) { scanMsg = `Checked in by: <span style="color:var(--noon-yellow); font-weight:bold;">${data.ScannedByGuard}</span><br><span style="font-size:14px; font-weight:normal;">Do you want to check out?</span>`; }
+        } else { currentScanAction = 'check_in'; }
     }
 
-    function openAdminGateModal(id) { const gi = _d('admin-gate-id'), gd = _d('admin-gate-id-display'), gm = _d('admin-gate-modal'); if (gi) gi.value = id; if (gd) gd.innerText = id; if (gm) gm.classList.remove('hidden'); }
-    function closeAdminGateModal() { const gm = _d('admin-gate-modal'); if (gm) gm.classList.add('hidden'); }
+    let teamData = parseTeamMembersString(data.TeamMembers);
+    let maxWorkers = teamData.length + 1;
 
-    async function submitAdminGateAction(actionType) {
-        const id = _d('admin-gate-id').value; if (!id) return;
-        let item = globalAdminData.find(x => String(x.UniqueID) === String(id));
-        const nowIso = new Date().toISOString();
-        const adminInfo = currentUser.role === 'admin' ? `Admin: ${currentUser.name}` : `${currentUser.name} (${currentUser.location})`;
-
-        if (item) { 
-            const isInside = !!item.CheckInTime && !item.CheckOutTime; 
-            if (actionType === 'check_in' && isInside) return alert("This pass is already checked IN by:\n" + item.ScannedByGuard); 
-            if (actionType === 'check_out' && !isInside) return alert("This pass is already checked OUT."); 
-            
-            if (actionType === 'check_in') {
-                item.CheckInTime = nowIso;
-                item.CheckOutTime = '';
-                item.ScannedByGuard = adminInfo;
-            } else {
-                item.CheckOutTime = nowIso;
-            }
-
-            let existingLogs = [];
-            try { existingLogs = JSON.parse(item.GateLogs || "[]"); } catch(e) {}
-            existingLogs.push({ action: actionType === 'check_in' ? 'IN' : 'OUT', time: nowIso, guard: adminInfo });
-            item.GateLogs = JSON.stringify(existingLogs);
-
-            localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData));
-            renderAdminData(globalAdminData);
+    if (topInfoBox) {
+        const row = (lbl, val) => `<p><strong style="color:rgba(255,255,255,0.8); display:inline-block; width:130px;">${lbl}:</strong> <span style="color:#fff; font-weight:bold; font-size:15px;">${val}</span></p>`;
+        let topInfo = `<div style="background: rgba(0,0,0,0.5); padding: 20px; border-radius: 10px; text-align: start; font-size: 14px; line-height: 1.8; margin-bottom:15px; border: 1px solid rgba(255,255,255,0.1);">`;
+        topInfo += `<p><strong style="color:rgba(255,255,255,0.8); display:inline-block; width:130px;">${t('total_people')}:</strong> <span style="color:var(--noon-yellow); font-weight:bold; font-size:16px;">${maxWorkers}</span></p>`;
+        if (dType === 'Contractor') {
+            topInfo += row(t('project_name'), data.ProjectName || 'N/A'); topInfo += row(t('project_manager'), data.ProjectManager || 'N/A'); topInfo += row(t('location_label').replace(':', ''), dLoc); topInfo += row(t('fm_poc'), data.FmPoc || 'N/A'); topInfo += row(t('type_label').replace(':', ''), `<span style="color:var(--noon-yellow); font-weight:bold; font-size:15px;">${t('contractor')}</span>`);
+        } else {
+            topInfo += row(t('name_label').replace(':', ''), data.VisitorName); topInfo += row(t('type_label').replace(':', ''), `<span style="color:var(--noon-yellow); font-weight:bold; font-size:15px;">${t('visitor')}</span>`); topInfo += row(t('location_label').replace(':', ''), dLoc);
         }
-
-        closeAdminGateModal();
-        try {
-            await apiCall({ action: actionType, id: id, guardInfo: adminInfo, headCount: 1 });
-            localStorage.removeItem('cached_admin_data');
-            await loadAdminData(true);
-        } catch(e) {
-            console.error(e);
-        }
+        topInfo += `</div>`; topInfoBox.innerHTML = topInfo;
     }
 
-    async function adminRevokePass(id) {
-        if (autoRefreshTimer) clearInterval(autoRefreshTimer); if (!confirm(`Revoke pass ${id} completely? This will kill the QR code permanently.`)) { startAutoRefresh(currentUser.role); return; }
-        if (Array.isArray(globalAdminData)) { let item = globalAdminData.find(x => String(x.UniqueID) === String(id)); if (item) { item.Status = 'Completed'; item.CheckOutTime = new Date().toISOString(); localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData)); renderAdminData(globalAdminData); if (item.HostEmail) localStorage.removeItem('cached_passes_' + String(item.HostEmail).toLowerCase().trim()); } }
-        try { const adminInfo = currentUser.role === 'admin' ? `Admin: ${currentUser.name}` : `${currentUser.name} (${currentUser.location})`; await apiCall({ action: 'check_out', id: id, guardInfo: adminInfo, headCount: 1, forceStatus: 'Completed' }); localStorage.removeItem('cached_admin_data'); setTimeout(() => { loadAdminData(true) }, 1000); } catch (e) { console.error(e); } finally { startAutoRefresh(currentUser.role); }
-    }
+    if (dType === 'Contractor' || dType === 'Visitor') {
+        if (searchFilterBox) searchFilterBox.classList.remove('hidden');
+        if (teamSec) {
+            teamSec.classList.remove('hidden');
+            let attHtml = `<div style="text-align: left; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);"><label style="display:flex; align-items:center; gap:10px; color:var(--noon-yellow); font-weight:bold; margin-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px; cursor:pointer;"><input type="checkbox" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)" onchange="document.querySelectorAll('.att-chk').forEach(c=>c.checked=this.checked)"> ${t('select_all_members')}</label><div id="team-members-list-container" style="display:flex; flex-direction:column; gap:12px;">`;
 
-    function openExtendPass(id, type) { const ei = _d('extend-id'), et = _d('extend-type'), eg = _d('extend-end-group'), em = _d('extend-pass-modal'); if (ei) ei.value = id; if (et) et.value = type; if (eg) eg.classList.remove('hidden'); if (em) em.classList.remove('hidden'); }
-    function closeExtendPass() { const em = _d('extend-pass-modal'); if (em) em.classList.add('hidden'); }
+            let safeImei = data.ImeiNumber ? String(data.ImeiNumber).trim() : ''; let leadDevStr = safeImei && safeImei !== 'None' && safeImei !== '' ? `<br><span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;font-weight:bold;">${safeImei}</span>` : ''; let leadSearchStr = String(data.VisitorName + " " + safeImei + " lead " + data.UniqueID).toLowerCase(); let leadVehThumb = (data.VehiclePlateNo && (data.VehiclePlateNo.startsWith('http') || data.VehiclePlateNo.startsWith('data:image'))) ? `<img src="${data.VehiclePlateNo}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();" title="Vehicle">` : ''; let leadBadge = `<span style="background:var(--noon-yellow);color:#000;font-size:9px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;letter-spacing:0.5px;">LEAD</span>`;
+            attHtml += `<label class="team-member-scan-row" data-search="${leadSearchStr}" style="display:flex; align-items:center; justify-content:space-between; color:white; background:rgba(255,255,255,0.08); padding:12px; border-radius:8px; cursor:pointer; border: 1px solid rgba(255,255,255,0.05);"><div style="display:flex; align-items:center; gap:10px;"><img src="${data.IqamaURL}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"><img src="${data.SelfieBase64 || data.SelfieURL}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();">${leadVehThumb} <div><span style="font-size:13px;font-weight:600;">${data.VisitorName}${leadBadge}</span>${leadDevStr}</div></div><input type="checkbox" class="att-chk" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)"></label>`;
 
-    async function submitExtendPass() {
-        const id = _d('extend-id').value, type = _d('extend-type').value, ns = _d('extend-start').value, ei = _d('extend-end'); const ne = ei ? ei.value : ''; const btn = _d('btn-submit-extend');
-        if (!ns || !ne) return alert('Please select both Start and End dates.'); if (!confirm(`Extend pass ${id}?`)) return; btn.innerText = 'SAVING...'; btn.disabled = true;
-        try { await apiCall({ action: 'extend_pass', id: id, newStartDate: ns, newEndDate: ne }); closeExtendPass(); loadAdminData(false); } catch (e) { alert('Error: ' + e.message); } finally { btn.innerText = t("save_extension"); btn.disabled = false; }
-    }
+            let origTeam = teamData.filter(m => !m.isNew); let addedTeam = teamData.filter(m => m.isNew);
+            origTeam.forEach(m => {
+                let mSearchStr = String(m.name + " " + m.iqamaText + " " + m.device).toLowerCase(); let devHtml = m.device && m.device !== 'None' && m.device.trim() !== '' ? `<br><span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;font-weight:bold;">${m.device}</span>` : ''; let teamBadge = `<span style="background:rgba(255,255,255,0.2);color:white;font-size:9px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;letter-spacing:0.5px;">TEAM</span>`;
+                if (m.isRemoveRequested) { attHtml += `<div class="team-member-scan-row" data-search="${mSearchStr}" style="display:flex; align-items:center; justify-content:space-between; color:white; background:rgba(239, 68, 68, 0.2); padding:12px; border-radius:8px; border: 1px solid rgba(239, 68, 68, 0.5);"><div style="display:flex; align-items:center; gap:10px;"><img src="${m.iqama}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"><img src="${m.selfie}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"> <div><span style="font-size:13px;font-weight:600; text-decoration: line-through;">${m.name}</span><br><span style="font-size:10px;color:rgba(255,255,255,0.6);">ID: ${m.iqamaText}</span></div></div><div style="color:#ef4444; font-weight:bold; font-size:12px; max-width: 120px; text-align:right;">🚫 REMOVAL PENDING - DO NOT ALLOW</div></div>`; }
+                else { attHtml += `<label class="team-member-scan-row" data-search="${mSearchStr}" style="display:flex; align-items:center; justify-content:space-between; color:white; background:rgba(255,255,255,0.08); padding:12px; border-radius:8px; cursor:pointer; border: 1px solid rgba(255,255,255,0.05);"><div style="display:flex; align-items:center; gap:10px;"><img src="${m.iqama}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"><img src="${m.selfie}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"> <div><span style="font-size:13px;font-weight:600;">${m.name}${teamBadge}</span><br><span style="font-size:10px;color:rgba(255,255,255,0.6);">ID: ${m.iqamaText}</span>${devHtml}</div></div><input type="checkbox" class="att-chk" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)"></label>`; }
+            });
 
-    async function adminResetPin(email) { if (!confirm(`Reset PIN for ${email}? They will be prompted to create a new one next time.`)) return; try { await apiCall({ action: 'reset_pin', email: email }); localStorage.removeItem('cached_admin_data'); localStorage.removeItem('cached_passes_' + email); alert("PIN Reset Successful."); closeViewRecord(); loadAdminData(true); } catch (e) { alert("Error resetting PIN: " + e.message); } }
-    async function requestRevokeDevice(passId, memberIndex, btn) { if (!confirm(`Request admin to revoke device access for this member?`)) return; let originalText = btn.innerText; btn.innerText = "REQUESTING..."; btn.disabled = true; try { const json = await apiCall({ action: 'request_revoke_device', id: passId, memberIndex: memberIndex }); if (json.status === 'success') { alert("Device Revoke requested successfully."); localStorage.removeItem('cached_passes_' + currentUser.email); loadMyPasses(true, true); openViewRecord(passId); } else { alert("Failed to request: " + json.message); btn.innerText = originalText; btn.disabled = false; } } catch (e) { console.error(e); alert("Network error: " + e.message); btn.innerText = originalText; btn.disabled = false; } }
-    async function requestRemoveTeamMember(passId, memberIndex, btn) { if (!confirm(`Request admin to permanently remove this team member?`)) return; let originalText = btn.innerText; btn.innerText = "REQUESTING..."; btn.disabled = true; try { const json = await apiCall({ action: 'request_remove_member', id: passId, memberIndex: memberIndex }); if (json.status === 'success') { alert("Removal requested successfully."); localStorage.removeItem('cached_passes_' + currentUser.email); loadMyPasses(true, true); openViewRecord(passId); } else { alert("Failed to request removal: " + json.message); btn.innerText = originalText; btn.disabled = false; } } catch (e) { console.error(e); alert("Network error: " + e.message); btn.innerText = originalText; btn.disabled = false; } }
-    async function cancelRemoveRequest(passId, memberIndex, btn) { if (!confirm(`Cancel this removal request?`)) return; let ot = btn.innerText; btn.innerText = "CANCELLING..."; btn.disabled = true; try { const json = await apiCall({ action: 'cancel_remove_request', id: passId, memberIndex: memberIndex }); if (json.status === 'success') { localStorage.removeItem('cached_admin_data'); loadAdminData(true); openViewRecord(passId); } else { alert("Failed to cancel: " + json.message); btn.innerText = ot; btn.disabled = false; } } catch (e) { console.error(e); alert("Network error: " + e.message); btn.innerText = ot; btn.disabled = false; } }
-    async function cancelRevokeDeviceRequest(passId, memberIndex, btn) { if (!confirm(`Cancel this device revoke request?`)) return; let ot = btn.innerText; btn.innerText = "CANCELLING..."; btn.disabled = true; try { const json = await apiCall({ action: 'cancel_revoke_device_request', id: passId, memberIndex: memberIndex }); if (json.status === 'success') { localStorage.removeItem('cached_admin_data'); loadAdminData(true); openViewRecord(passId); } else { alert("Failed to cancel: " + json.message); btn.innerText = ot; btn.disabled = false; } } catch (e) { console.error(e); alert("Network error: " + e.message); btn.innerText = ot; btn.disabled = false; } }
-    async function adminRevokeDevice(passId, memberIndex, btn) { if (!confirm(`Are you sure you want to completely revoke device access for this team member?`)) return; let ot = btn.innerText; btn.innerText = "REVOKING..."; btn.disabled = true; try { const json = await apiCall({ action: 'revoke_device', id: passId, memberIndex: memberIndex }); if (json.status === 'success') { alert("Device access revoked successfully."); localStorage.removeItem('cached_admin_data'); const res = await apiCall({ action: 'get_all' }); const dataMain = convertDriveUrls(res); globalAdminData = dataMain.reverse(); localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData)); renderAdminData(globalAdminData); openViewRecord(passId); } else { alert("Failed to revoke: " + json.message); btn.innerText = ot; btn.disabled = false; } } catch (e) { console.error(e); alert("Network error: " + e.message); btn.innerText = ot; btn.disabled = false; } }
-    async function adminRemoveTeamMember(passId, memberIndex, btn) { if (!confirm(`Are you sure you want to completely remove this team member from pass ${passId}?`)) return; let ot = btn.innerText; btn.innerText = "REMOVING..."; btn.disabled = true; try { const json = await apiCall({ action: 'remove_team_member', id: passId, memberIndex: memberIndex }); if (json.status === 'success') { alert("Team member removed successfully."); localStorage.removeItem('cached_admin_data'); const res = await apiCall({ action: 'get_all' }); const dataMain = convertDriveUrls(res); globalAdminData = dataMain.reverse(); localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData)); renderAdminData(globalAdminData); openViewRecord(passId); } else { alert("Failed to remove: " + json.message); btn.innerText = ot; btn.disabled = false; } } catch (e) { console.error(e); alert("Network error: " + e.message); btn.innerText = ot; btn.disabled = false; } }
-
-    function openViewRecord(id, targetCategory = null) {
-        const r = globalAdminData.find(x => String(x.UniqueID) === String(id)) || myPassesData.find(x => String(x.UniqueID) === String(id)); if (!r) return;
-        
-        let parsedTeam = parseTeamMembersString(r.TeamMembers);
-        let teamCount = parsedTeam.length; 
-        let totalHeadcount = 1 + teamCount;
-        let rType = String(r.Type || ''); let displayHostName = (r.HostName || '-').split('||PIN:')[0]; let actualPin = (r.HostName || '').includes('||PIN:') ? (r.HostName || '').split('||PIN:')[1] : null; let h = `<div><strong>${t('lbl_host_name')}</strong>${displayHostName}</div>`;
-        
-        if (currentUser && currentUser.role === 'admin') { let pinDisplay = actualPin ? actualPin : 'NOT SET'; let actionBtn = actualPin ? `<button onclick="adminResetPin('${r.HostEmail}')" class="btn-primary btn-danger btn-sm" style="width:auto; padding:4px 10px; font-size:11px;">🔄 RESET</button>` : ''; h += `<div style="margin-bottom:10px;"><strong>ACCOUNT PIN</strong><div style="display:flex; gap:10px; align-items:center; margin-top:5px;"><span id="admin-view-pin" style="color:${actualPin ? 'var(--danger)' : 'var(--text-muted)'}; font-weight:bold; font-size:16px; letter-spacing: 2px; background:rgba(0,0,0,0.3); padding:4px 10px; border-radius:4px;">****</span><button onclick="document.getElementById('admin-view-pin').innerText='${pinDisplay}'; this.style.display='none';" class="btn-primary btn-outline btn-sm" style="width:auto; padding:4px 10px; font-size:11px;">👁️ SHOW</button>${actionBtn}</div></div>`; }
-        
-        h += `<div><strong>${t('lbl_host_email')}</strong>${r.HostEmail || '-'}</div><div><strong>TOTAL HEADCOUNT</strong><span style="color:var(--noon-yellow); font-size:16px; font-weight:bold;">${totalHeadcount}</span> (1 Lead + ${teamCount} Team)</div><div><strong>${t('visitor_name')}</strong>${r.VisitorName || '-'}</div><div><strong>${t('type_header')}</strong>${t(rType.toLowerCase()) || '-'}</div><div><strong>${t('location_label')}</strong>${r.Location || '-'}</div><div><strong>${t('lbl_validity')}</strong>${rType === 'Visitor' ? formatToDDMMYYYY(r.StartDate) : formatToDDMMYYYY(r.StartDate) + ' - ' + formatToDDMMYYYY(r.EndDate || r.StartDate)}</div><div><strong>${t('slp_ticket')}</strong>${r.SlpTicketNo || '-'}</div><div><strong>${t('contact_no')}</strong>${r.ContactNo || '-'}</div><div><strong>IMEI NUMBER</strong>${r.ImeiNumber || '-'}</div>`;
-        if (rType === 'Visitor') h += `<div><strong>${t('invited_by')}</strong>${r.InvitedBy || '-'}</div>`; else h += `<div><strong>${t('project_name')}</strong>${r.ProjectName || '-'}</div><div><strong>${t('company_name')}</strong>${r.CompanyName || '-'}</div><div><strong>${t('project_manager')}</strong>${r.ProjectManager || '-'}</div><div><strong>${t('fm_poc')}</strong>${r.FmPoc || '-'}</div>`;
-        h += `<div class="record-img-box" style="margin-top:15px;"><div style="flex:1;background:transparent;border:none;padding:0;"><strong>${t('lbl_iqama')} (Lead)</strong><img src="${r.IqamaURL || ''}" onclick="openFullscreenImage(this.src)"></div><div style="flex:1;background:transparent;border:none;padding:0;"><strong>${t('lbl_selfie')} (Lead)</strong><img src="${r.SelfieURL || ''}" onclick="openFullscreenImage(this.src)"></div>`;
-        if (r.ImeiPhotoURL && r.ImeiPhotoURL !== "No File") h += `<div style="flex:1;background:transparent;border:none;padding:0;"><strong>IMEI PHOTO (Lead)</strong><img src="${r.ImeiPhotoURL}" onclick="openFullscreenImage(this.src)"></div>`;
-        let fmpocStr = String(r.FmPoc || ''); if (rType === 'Contractor' && fmpocStr && (fmpocStr.startsWith('http') || fmpocStr.startsWith('data:image'))) h += `<div style="flex:1;background:transparent;border:none;padding:0;"><strong>${t('fm_poc')} (Legacy Image)</strong><img src="${fmpocStr}" onclick="openFullscreenImage(this.src)"></div>`;
-        let vehStr = String(r.VehiclePlateNo || ''); if (vehStr) { if (vehStr.startsWith('http') || vehStr.startsWith('data:image')) h += `<div style="flex:1;background:transparent;border:none;padding:0;"><strong>${t('lbl_vehicle')}</strong><img src="${vehStr}" onclick="openFullscreenImage(this.src)"></div>`; else h += `<div style="flex:1;background:transparent;border:none;padding:0;"><strong>${t('lbl_vehicle')}</strong><div style="margin-top:5px;color:var(--text-muted);">${vehStr}</div></div>`; } h += `</div>`;
-
-        if (parsedTeam.length > 0) {
-            let arrRemoval = []; let arrDeviceRevoke = []; let arrNew = []; let arrActive = [];
-            parsedTeam.forEach(m => { if (m.isRemoveRequested) arrRemoval.push(m); else if (m.isDeviceRevokeReq) arrDeviceRevoke.push(m); else if (m.isNew) arrNew.push(m); else arrActive.push(m); });
-            
-            const sortByDevice = (a, b) => { let aHas = (a.device && a.device !== 'None' && a.device.trim() !== '') ? 1 : 0; let bHas = (b.device && b.device !== 'None' && b.device.trim() !== '') ? 1 : 0; return bHas - aHas; };
-            arrRemoval.sort(sortByDevice); arrDeviceRevoke.sort(sortByDevice); arrNew.sort(sortByDevice); arrActive.sort(sortByDevice);
-            
-            const renderMemberRow = (m) => {
-                let hasDevice = m.device !== 'None' && m.device !== ''; 
-                let devHtml = hasDevice ? `<span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">${m.device}</span>` : ''; 
-                let newBadge = m.isNew ? `<span style="background:var(--success);color:white;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">${t('new_badge')}</span>` : `<span style="background:rgba(255,255,255,0.2);color:white;font-size:9px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;letter-spacing:0.5px;">TEAM</span>`; 
-                let removalBadge = m.isRemoveRequested ? `<span style="background:var(--danger);color:white;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">REMOVAL REQUESTED</span>` : ''; 
-                let devRevokeBadge = m.isDeviceRevokeReq ? `<span style="background:#eab308;color:#000;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">DEVICE REVOKE REQUESTED</span>` : '';
-                
-                let imgsHtml = '';
-                if (m.iqama) imgsHtml += `<img src="${m.iqama}" style="width:50px;height:50px;border-radius:6px;object-fit:cover;cursor:zoom-in;border:1px solid #444;" onclick="openFullscreenImage(this.src)" title="Iqama">`;
-                if (m.selfie) imgsHtml += `<img src="${m.selfie}" style="width:50px;height:50px;border-radius:6px;object-fit:cover;cursor:zoom-in;border:1px solid #444;" onclick="openFullscreenImage(this.src)" title="Selfie">`;
-                if (m.devicePhoto && m.devicePhoto !== 'No File') imgsHtml += `<img src="${m.devicePhoto}" style="width:50px;height:50px;border-radius:6px;object-fit:cover;cursor:zoom-in;border:1px solid #444;" onclick="openFullscreenImage(this.src)" title="Device Screen">`;
-
-                let removeReqHtml = ''; let removeBtnHtml = ''; let revokeDevHtml = ''; let cancelReqHtml = '';
-                if (currentUser && currentUser.role === 'admin') { 
-                    removeBtnHtml = `<button onclick="adminRemoveTeamMember('${r.UniqueID}', ${m.originalIndex}, this)" style="background:var(--danger); border:none; color:white; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; margin-left:5px;">🗑️ ACCEPT REMOVAL</button>`; 
-                    if (m.isRemoveRequested) { cancelReqHtml = `<button onclick="cancelRemoveRequest('${r.UniqueID}', ${m.originalIndex}, this)" style="background:gray; border:none; color:white; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; margin-left:5px;">❌ CANCEL</button>`; } 
-                    if (hasDevice) { revokeDevHtml = `<button onclick="adminRevokeDevice('${r.UniqueID}', ${m.originalIndex}, this)" style="background:#eab308; border:none; color:#000; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; margin-left:5px;">🚫 REVOKE DEVICE</button>`; if (m.isDeviceRevokeReq) { cancelReqHtml += `<button onclick="cancelRevokeDeviceRequest('${r.UniqueID}', ${m.originalIndex}, this)" style="background:gray; border:none; color:white; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; margin-left:5px;">❌ CANCEL</button>`; } } 
-                } else { 
-                    if (!m.isRemoveRequested) { removeReqHtml = `<button onclick="requestRemoveTeamMember('${r.UniqueID}', ${m.originalIndex}, this)" style="background:#ef4444; border:none; color:white; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; margin-left:5px;">⚠️ REQUEST REMOVAL</button>`; } 
-                    if (hasDevice && !m.isDeviceRevokeReq) { revokeDevHtml = `<button onclick="requestRevokeDevice('${r.UniqueID}', ${m.originalIndex}, this)" style="background:#eab308; border:none; color:#000; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; margin-left:5px;">⚠️ REQUEST DEVICE REVOKE</button>`; } 
-                }
-
-                let rowStyle = "display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.2);padding:10px;border-radius:8px; border:1px solid rgba(255,255,255,0.05); transition: all 0.3s ease;";
-                if (m.isRemoveRequested) rowStyle = "display:flex;align-items:center;justify-content:space-between;background:rgba(239, 68, 68, 0.1);padding:10px;border-radius:8px; border:1px solid rgba(239, 68, 68, 0.4); transition: all 0.3s ease;"; 
-                else if (m.isDeviceRevokeReq) rowStyle = "display:flex;align-items:center;justify-content:space-between;background:rgba(234, 179, 8, 0.1);padding:10px;border-radius:8px; border:1px solid rgba(234, 179, 8, 0.4); transition: all 0.3s ease;"; 
-                else if (m.isNew) rowStyle = "display:flex;align-items:center;justify-content:space-between;background:rgba(16, 185, 129, 0.1);padding:10px;border-radius:8px; border:1px solid rgba(16, 185, 129, 0.4); transition: all 0.3s ease;";
-
-                return `<div class="modal-team-row" style="${rowStyle}"><div><span style="color:var(--noon-yellow);font-weight:bold;">${m.name}</span>${newBadge}${removalBadge}<br><span style="font-size:11px;color:var(--text-muted);">ID: ${m.iqamaText}</span><br>${devHtml}${devRevokeBadge}</div><div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">${imgsHtml} ${revokeDevHtml} ${removeBtnHtml} ${removeReqHtml} ${cancelReqHtml}</div></div>`;
-            };
-
-            h += `<div style="grid-column:span 2;background:transparent;border-top:1px solid var(--border-color);padding-top:15px;margin-top:10px;">`;
-            if (arrRemoval.length > 0) { h += `<div id="section-remove"><strong style="font-size:14px; margin-bottom:10px; display:block; color:var(--danger); border-bottom:1px solid rgba(239,68,68,0.3); padding-bottom:5px;">🔴 REMOVAL REQUESTS (${arrRemoval.length})</strong><div style="display:flex;flex-direction:column;gap:10px; margin-bottom:20px;">`; arrRemoval.forEach(m => h += renderMemberRow(m)); h += `</div></div>`; }
-            if (arrDeviceRevoke.length > 0) { h += `<div id="section-revoke"><strong style="font-size:14px; margin-bottom:10px; display:block; color:#eab308; border-bottom:1px solid rgba(234,179,8,0.3); padding-bottom:5px;">🟠 DEVICE REVOKE REQUESTS (${arrDeviceRevoke.length})</strong><div style="display:flex;flex-direction:column;gap:10px; margin-bottom:20px;">`; arrDeviceRevoke.forEach(m => h += renderMemberRow(m)); h += `</div></div>`; }
-            if (arrNew.length > 0) { h += `<div id="section-add"><strong style="font-size:14px; margin-bottom:10px; display:block; color:var(--success); border-bottom:1px solid rgba(16,185,129,0.3); padding-bottom:5px;">🟢 NEW MEMBERS ADDED (${arrNew.length})</strong><div style="display:flex;flex-direction:column;gap:10px; margin-bottom:20px;">`; arrNew.forEach(m => h += renderMemberRow(m)); h += `</div></div>`; }
-            if (arrActive.length > 0) { h += `<div id="section-active"><strong style="font-size:14px; margin-bottom:10px; display:block; color:white; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:5px;">⚪ ACTIVE TEAM MEMBERS (${arrActive.length})</strong><div style="display:flex;flex-direction:column;gap:10px; margin-bottom:20px;">`; arrActive.forEach(m => h += renderMemberRow(m)); h += `</div></div>`; }
-            h += `</div>`;
-        }
-
-        const mc = _d('view-record-content'), modal = _d('view-record-modal'); if (mc) mc.innerHTML = h; if (modal) modal.classList.remove('hidden');
-        if (targetCategory) { setTimeout(() => { let targetElem = _d('section-' + targetCategory); if (targetElem) { targetElem.scrollIntoView({ behavior: 'smooth', block: 'center' }); let origBg = targetElem.style.backgroundColor; targetElem.style.transition = 'background-color 0.5s ease'; targetElem.style.backgroundColor = 'rgba(255, 199, 0, 0.2)'; targetElem.style.borderRadius = '8px'; targetElem.style.padding = '10px'; setTimeout(() => { targetElem.style.backgroundColor = origBg; }, 2000); } }, 300); }
-    }
-
-    function closeViewRecord() { const modal = _d('view-record-modal'); if (modal) modal.classList.add('hidden'); }
-
-    function printSelected() {
-        const cbs = _q('.print-checkbox.row-checkbox:checked'); if (cbs.length === 0) return alert("Please select at least one approved pass."); const pm = confirm("Print Layout Selection:\n\n[OK] = MULTIPLE passes per page\n[Cancel] = SINGLE pass per page"); let copiesInput = prompt("How many copies of EACH selected pass do you want to print?", "1"); let copies = parseInt(copiesInput, 10); if (isNaN(copies) || copies < 1) copies = 1;
-        const pw = window.open('', '', 'width=800,height=600'); let cardsHtml = '';
-        cbs.forEach((cb) => { const id = cb.value, name = cb.getAttribute('data-name'), type = cb.getAttribute('data-type'), loc = cb.getAttribute('data-location'), st = cb.getAttribute('data-status'), date = cb.getAttribute('data-date'); let tempDiv = document.createElement("div"); new QRCode(tempDiv, { text: id, width: 110, height: 110, colorDark: "#000", colorLight: "#fff", correctLevel: QRCode.CorrectLevel.H }); let canvas = tempDiv.querySelector("canvas"); let qrDataUrl = canvas ? canvas.toDataURL() : ''; for (let i = 0; i < copies; i++) { cardsHtml += `<div class="card"><div class="top-row"><div><p class="name">${name}</p><p class="sub">${type} &bull; ${loc}</p><p class="date">Valid: ${date}</p></div><div><p class="status">${st}</p><p class="id">${id}</p></div></div><div class="qr-box"><img src="${qrDataUrl}"></div></div>`; } });
-        let ps = pm ? `@media print{@page{margin:10mm}body{display:flex;flex-wrap:wrap;gap:5mm;align-content:flex-start;justify-content:flex-start}.card{page-break-inside:avoid;border:1px solid #ccc !important}}` : `@media print{@page{size:85.6mm 54mm;margin:0}body{display:block;margin:0;padding:0;background:#fff}.card{border:none !important;border-radius:0;margin:0;padding:4mm;width:85.6mm;height:54mm;page-break-after:always;box-sizing:border-box}.card:last-child{page-break-after:auto}}`;
-        pw.document.write(`<html><head><title>Batch Print Passes</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"><style>*{box-sizing:border-box;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}body{margin:0;padding:20px;background:#fff;font-family:'Inter',sans-serif;display:flex;flex-wrap:wrap;gap:15px}.card{width:85.6mm;height:54mm;background:white;border-radius:2mm;padding:4mm;border:1px solid #ccc;position:relative;overflow:hidden}.top-row{display:flex;justify-content:space-between;align-items:flex-start}.name{font-size:10pt;font-weight:700;margin:0;color:black;line-height:1.1;max-width:48mm;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.sub{font-size:7pt;color:#555;margin:2px 0 0 0}.date{font-size:6pt;font-weight:600;color:#444;margin:2px 0 0 0}.status{font-size:8pt;font-weight:700;color:#10b981;margin:0;text-align:right;text-transform:uppercase}.id{font-size:6pt;color:#555;margin:2px 0 0 0;text-align:right}.qr-box{display:flex;justify-content:center;align-items:center;margin-top:2mm}${ps}</style></head><body>${cardsHtml}</body></html>`);
-        pw.document.close(); pw.focus(); setTimeout(() => { pw.print(); pw.close(); }, 250);
-    }
-
-    function printQR(name, type, location, id, status, date) {
-        const pm = confirm("Print Layout Selection:\n\n[OK] = Standard Printer\n[Cancel] = ID Card Printer"); let copiesInput = prompt("How many copies do you want to print on the page?", "1"); let copies = parseInt(copiesInput, 10); if (isNaN(copies) || copies < 1) copies = 1;
-        const pw = window.open('', '', 'width=800,height=600'); let tempDiv = document.createElement("div"); new QRCode(tempDiv, { text: id, width: 110, height: 110, colorDark: "#000", colorLight: "#fff", correctLevel: QRCode.CorrectLevel.H }); let canvas = tempDiv.querySelector("canvas"); let qrDataUrl = canvas ? canvas.toDataURL() : ''; let cardsHtml = '';
-        for (let i = 0; i < copies; i++) { cardsHtml += `<div class="card"><div class="top-row"><div><p class="name">${name}</p><p class="sub">${type} &bull; ${location}</p><p class="date">Valid: ${date}</p></div><div><p class="status">${status}</p><p class="id">${id}</p></div></div><div class="qr-box"><img src="${qrDataUrl}"></div></div>`; }
-        let ps = pm ? `@media print{@page{margin:10mm}body{display:flex;flex-wrap:wrap;gap:5mm;align-content:flex-start;justify-content:flex-start}.card{page-break-inside:avoid;border:1px solid #ccc !important}}` : `@media print{@page{size:85.6mm 54mm;margin:0}body{display:block;margin:0;padding:0;background:#fff}.card{border:none !important;border-radius:0;margin:0;padding:4mm;width:85.6mm;height:54mm;page-break-inside:avoid;box-sizing:border-box}}`;
-        pw.document.write(`<html><head><title>Print QR Pass</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"><style>*{box-sizing:border-box;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}body{margin:0;padding:20px;background:#fff;font-family:'Inter',sans-serif;display:flex;flex-wrap:wrap;justify-content:flex-start;gap:15px;}.card{width:85.6mm;height:54mm;background:white;border-radius:2mm;padding:4mm;border:1px solid #ccc;position:relative;overflow:hidden}.top-row{display:flex;justify-content:space-between;align-items:flex-start}.name{font-size:10pt;font-weight:700;margin:0;color:black;line-height:1.1;max-width:48mm;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.sub{font-size:7pt;color:#555;margin:2px 0 0 0}.date{font-size:6pt;font-weight:600;color:#444;margin:2px 0 0 0}.status{font-size:8pt;font-weight:700;color:#10b981;margin:0;text-align:right;text-transform:uppercase}.id{font-size:6pt;color:#555;margin:2px 0 0 0;text-align:right}.qr-box{display:flex;justify-content:center;align-items:center;margin-top:2mm}${ps}</style></head><body>${cardsHtml}</body></html>`);
-        pw.document.close(); pw.focus(); setTimeout(() => { pw.print(); pw.close(); }, 250);
-    }
-
-    function switchScanMode(mode) { const btnCam = _d('btn-mode-camera'); const btnGun = _d('btn-mode-gun'); const gunContainer = _d('gun-scanner-container'); const camWrapper = _d('camera-mode-wrapper'); const gunInput = _d('gun-scan-input'); if (mode === 'gun') { if (btnCam) btnCam.className = "btn-primary btn-outline"; if (btnGun) btnGun.className = "btn-primary"; if (camWrapper) camWrapper.classList.add('hidden'); if (gunContainer) gunContainer.classList.remove('hidden'); stopScanner(); if (gunInput) { gunInput.focus(); gunInput.value = ""; } } else { if (btnCam) btnCam.className = "btn-primary"; if (btnGun) btnGun.className = "btn-primary btn-outline"; if (gunContainer) gunContainer.classList.add('hidden'); if (camWrapper) camWrapper.classList.remove('hidden'); } }
-    function handleGunScan(event) { if (event.key === 'Enter') { event.preventDefault(); const code = event.target.value.replace(/\s+/g, '').trim().toUpperCase(); if (code) { event.target.value = ""; onScanSuccess(code); } } }
-    function startScanner() { const btn = _d('btn-start-scan'); const readerCont = _d('reader-container'); const scanResult = _d('scan-result'); if (btn) btn.classList.add('hidden'); if (scanResult) scanResult.classList.add('hidden'); if (readerCont) readerCont.classList.remove('hidden'); if (!html5QrCode) { html5QrCode = new Html5Qrcode("reader"); } startQrCodeStream(); }
-    function startQrCodeStream() { if (html5QrCode && html5QrCode.isScanning) { html5QrCode.stop().then(() => { playQrCodeStream(); }).catch(e => { playQrCodeStream(); }); } else { playQrCodeStream(); } }
-    function playQrCodeStream() { html5QrCode.start({ facingMode: scannerFacingMode }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess, (errorMessage) => { }).catch((err) => { alert("Camera access error. Please check permissions."); hideScannerUI(); }); }
-    function switchScannerCamera() { scannerFacingMode = scannerFacingMode === "environment" ? "user" : "environment"; startQrCodeStream(); }
-    function stopScanner() { if (html5QrCode && html5QrCode.isScanning) { html5QrCode.stop().then(() => { hideScannerUI(); }).catch(e => { hideScannerUI(); }); } else { hideScannerUI(); } }
-    function hideScannerUI() { _d('reader-container').classList.add('hidden'); _d('btn-start-scan').classList.remove('hidden'); }
-
-    function showScanResult(d, rHtml, cClass, isContractor = false) {
-        const sr = _d('scan-result'); sr.className = ''; _d('r-decision').innerText = d; _d('r-reason').innerHTML = rHtml;
-        setTimeout(() => { sr.className = `scan-result-card ${cClass} ${isContractor ? 'fullscreen-scan' : ''}`; }, 10);
-        if (cClass === "bg-red") { setTimeout(() => { if (_d('r-decision').innerText === d) { sr.className = 'scan-result-card hidden'; isProcessingScan = false; try { if (html5QrCode) html5QrCode.resume(); } catch (e) {} } }, 3500); }
-    }
-
-    window.closeScanResult = function () { isProcessingScan = false; const sr = _d('scan-result'); if (sr) sr.className = 'scan-result-card hidden'; try { if (html5QrCode) html5QrCode.resume(); } catch (e) {} const gunInput = _d('gun-scan-input'); if (gunInput && !_d('gun-scanner-container').classList.contains('hidden')) { gunInput.focus(); gunInput.value = ""; } }
-    function filterTeamMembers(query) { let q = query.toLowerCase(); let rows = _q('.team-member-scan-row'); rows.forEach(row => { if (row.innerText.toLowerCase().includes(q)) { row.style.display = 'flex'; } else { row.style.display = 'none'; } }); let deviceCards = _q('.device-photo-card'); deviceCards.forEach(card => { if (card.getAttribute('data-search').includes(q)) { card.style.display = 'block'; } else { card.style.display = 'none'; } }); }
-
-    async function onScanSuccess(decodedText) {
-        if (isProcessingScan) return; isProcessingScan = true; try { if (html5QrCode && html5QrCode.isScanning) html5QrCode.pause(); } catch (e) {}
-        let rawText = String(decodedText).toUpperCase(); let exactMatch = rawText.match(/NOON-\d+/); decodedText = exactMatch ? exactMatch[0] : rawText.replace(/\s+/g, '').trim();
-        if (!decodedText) { isProcessingScan = false; return; }
-
-        const resultCard = _d('scan-result'), selfieImg = _d('r-selfie'), confirmBtn = _d('btn-confirm-action'), teamSec = _d('guard-team-section'), detailsPrev = _d('guard-details-preview'), topInfoBox = _d('scan-result-top-info');
-        if (resultCard) { resultCard.className = 'scan-result-card hidden'; void resultCard.offsetWidth; resultCard.classList.remove('hidden'); resultCard.classList.add('bg-blue'); if (decodedText) resultCard.classList.add('fullscreen-scan'); }
-        if (confirmBtn) confirmBtn.classList.add('hidden'); if (teamSec) teamSec.classList.add('hidden');
-        const rDecision = _d('r-decision'), rReason = _d('r-reason'); if (rDecision) rDecision.innerText = t("fetching"); if (rReason) rReason.innerHTML = "";
-        if (selfieImg) { selfieImg.style.display = 'none'; selfieImg.src = ""; }
-        if (teamSec) teamSec.innerHTML = ""; if (detailsPrev) detailsPrev.innerHTML = ""; if (topInfoBox) topInfoBox.innerHTML = "";
-        const searchFilterBox = _d('guard-search-filter-container'); if (searchFilterBox) { searchFilterBox.classList.add('hidden'); _d('team-search-filter').value = ""; }
-        currentScannedID = decodedText; let data = null;
-
-        if (Array.isArray(globalAdminData)) { let cachedMatch = globalAdminData.find(x => String(x.UniqueID).toUpperCase() === String(decodedText).toUpperCase()); if (cachedMatch) data = cachedMatch; }
-        if (!data && Array.isArray(myPassesData)) { let cachedMatch = myPassesData.find(x => String(x.UniqueID).toUpperCase() === String(decodedText).toUpperCase()); if (cachedMatch) data = cachedMatch; }
-        if (!data) { try { const res = await apiCall({ action: 'get_single', id: decodedText }); if (res && !res.error) data = convertDriveUrls(res); } catch (err) {} }
-        if (!data || data.error) { showScanResult(t("denied"), t("invalid_date"), "bg-red", false); return; }
-
-        let dType = String(data.Type || ''); let dStatus = String(data.Status || ''); let dLoc = String(data.Location || '');
-        const todayNum = new Date().setHours(0, 0, 0, 0); let startObj = parseFlexibleDate(data.StartDate), startNum = startObj ? startObj.setHours(0, 0, 0, 0) : todayNum; let endObj = parseFlexibleDate(data.EndDate), endNum = endObj ? endObj.setHours(0, 0, 0, 0) : startNum;
-        let isInside = !!data.CheckInTime && !data.CheckOutTime;
-
-        let scanState = t("allowed"), scanMsg = t("pass_validated"), scanColor = "bg-green"; let allowAction = true;
-        if (dStatus === 'Pending') { scanState = t("pending"); scanMsg = t("awaiting_admin"); scanColor = "bg-yellow"; allowAction = false; }
-        else if (dStatus !== 'Approved') { scanState = t("denied"); scanMsg = t("not_approved"); scanColor = "bg-red"; allowAction = false; }
-        else if (currentUser.role === 'guard' && dLoc !== currentUser.location) { scanState = t("wrong_facility"); scanMsg = t("wrong_fac_msg") + " (" + dLoc + ")"; scanColor = "bg-red"; allowAction = false; }
-        else if (todayNum < startNum || todayNum > endNum) { scanState = todayNum > endNum ? t("expired") : t("invalid_date"); scanMsg = todayNum > endNum ? t("expired") : t("not_valid_today"); scanColor = "bg-red"; allowAction = false; }
-
-        let isFullscreen = (dType === 'Contractor' || dType === 'Visitor');
-
-        if (allowAction) {
-            if (isInside) {
-                currentScanAction = 'check_out'; scanState = t("check_out"); scanMsg = t("scanning_out"); scanColor = "bg-blue";
-                if (data.ScannedByGuard && String(data.ScannedByGuard).toLowerCase().includes('admin')) { scanMsg = `Checked in by: <span style="color:var(--noon-yellow); font-weight:bold;">${data.ScannedByGuard}</span><br><span style="font-size:14px; font-weight:normal;">Do you want to check out?</span>`; }
-            } else { currentScanAction = 'check_in'; }
-        }
-
-        let teamData = parseTeamMembersString(data.TeamMembers);
-        let maxWorkers = teamData.length + 1;
-
-        if (topInfoBox) {
-            const row = (lbl, val) => `<p><strong style="color:rgba(255,255,255,0.8); display:inline-block; width:130px;">${lbl}:</strong> <span style="color:#fff; font-weight:bold; font-size:15px;">${val}</span></p>`;
-            let topInfo = `<div style="background: rgba(0,0,0,0.5); padding: 20px; border-radius: 10px; text-align: start; font-size: 14px; line-height: 1.8; margin-bottom:15px; border: 1px solid rgba(255,255,255,0.1);">`;
-            topInfo += `<p><strong style="color:rgba(255,255,255,0.8); display:inline-block; width:130px;">${t('total_people')}:</strong> <span style="color:var(--noon-yellow); font-weight:bold; font-size:16px;">${maxWorkers}</span></p>`;
-            if (dType === 'Contractor') {
-                topInfo += row(t('project_name'), data.ProjectName || 'N/A'); topInfo += row(t('project_manager'), data.ProjectManager || 'N/A'); topInfo += row(t('location_label').replace(':', ''), dLoc); topInfo += row(t('fm_poc'), data.FmPoc || 'N/A'); topInfo += row(t('type_label').replace(':', ''), `<span style="color:var(--noon-yellow); font-weight:bold; font-size:15px;">${t('contractor')}</span>`);
-            } else {
-                topInfo += row(t('name_label').replace(':', ''), data.VisitorName); topInfo += row(t('type_label').replace(':', ''), `<span style="color:var(--noon-yellow); font-weight:bold; font-size:15px;">${t('visitor')}</span>`); topInfo += row(t('location_label').replace(':', ''), dLoc);
-            }
-            topInfo += `</div>`; topInfoBox.innerHTML = topInfo;
-        }
-
-        if (dType === 'Contractor' || dType === 'Visitor') {
-            if (searchFilterBox) searchFilterBox.classList.remove('hidden');
-            if (teamSec) {
-                teamSec.classList.remove('hidden');
-                let attHtml = `<div style="text-align: left; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);"><label style="display:flex; align-items:center; gap:10px; color:var(--noon-yellow); font-weight:bold; margin-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px; cursor:pointer;"><input type="checkbox" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)" onchange="document.querySelectorAll('.att-chk').forEach(c=>c.checked=this.checked)"> ${t('select_all_members')}</label><div id="team-members-list-container" style="display:flex; flex-direction:column; gap:12px;">`;
-
-                let safeImei = data.ImeiNumber ? String(data.ImeiNumber).trim() : ''; let leadDevStr = safeImei && safeImei !== 'None' && safeImei !== '' ? `<br><span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;font-weight:bold;">${safeImei}</span>` : ''; let leadSearchStr = String(data.VisitorName + " " + safeImei + " lead " + data.UniqueID).toLowerCase(); let leadVehThumb = (data.VehiclePlateNo && (data.VehiclePlateNo.startsWith('http') || data.VehiclePlateNo.startsWith('data:image'))) ? `<img src="${data.VehiclePlateNo}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();" title="Vehicle">` : ''; let leadBadge = `<span style="background:var(--noon-yellow);color:#000;font-size:9px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;letter-spacing:0.5px;">LEAD</span>`;
-                attHtml += `<label class="team-member-scan-row" data-search="${leadSearchStr}" style="display:flex; align-items:center; justify-content:space-between; color:white; background:rgba(255,255,255,0.08); padding:12px; border-radius:8px; cursor:pointer; border: 1px solid rgba(255,255,255,0.05);"><div style="display:flex; align-items:center; gap:10px;"><img src="${data.IqamaURL}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"><img src="${data.SelfieBase64 || data.SelfieURL}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();">${leadVehThumb} <div><span style="font-size:13px;font-weight:600;">${data.VisitorName}${leadBadge}</span>${leadDevStr}</div></div><input type="checkbox" class="att-chk" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)"></label>`;
-
-                let origTeam = teamData.filter(m => !m.isNew); let addedTeam = teamData.filter(m => m.isNew);
-                origTeam.forEach(m => {
-                    let mSearchStr = String(m.name + " " + m.iqamaText + " " + m.device).toLowerCase(); let devHtml = m.device && m.device !== 'None' && m.device.trim() !== '' ? `<br><span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;font-weight:bold;">${m.device}</span>` : ''; let teamBadge = `<span style="background:rgba(255,255,255,0.2);color:white;font-size:9px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;letter-spacing:0.5px;">TEAM</span>`;
+            if (addedTeam.length > 0) {
+                attHtml += `<div style="margin-top:10px; margin-bottom:5px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:5px;"><strong style="color:var(--success); text-transform:uppercase;">${t('new_members_added')}</strong></div>`;
+                addedTeam.forEach(m => {
+                    let mSearchStr = String(m.name + " " + m.iqamaText + " " + m.device).toLowerCase(); let devHtml = m.device && m.device !== 'None' && m.device.trim() !== '' ? `<br><span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;font-weight:bold;">${m.device}</span>` : ''; let newBadge = `<span style="background:var(--success); color:white; font-size:10px; padding:2px 5px; border-radius:4px; margin-left:5px; font-weight:bold;">${t('new_badge')}</span>`;
                     if (m.isRemoveRequested) { attHtml += `<div class="team-member-scan-row" data-search="${mSearchStr}" style="display:flex; align-items:center; justify-content:space-between; color:white; background:rgba(239, 68, 68, 0.2); padding:12px; border-radius:8px; border: 1px solid rgba(239, 68, 68, 0.5);"><div style="display:flex; align-items:center; gap:10px;"><img src="${m.iqama}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"><img src="${m.selfie}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"> <div><span style="font-size:13px;font-weight:600; text-decoration: line-through;">${m.name}</span><br><span style="font-size:10px;color:rgba(255,255,255,0.6);">ID: ${m.iqamaText}</span></div></div><div style="color:#ef4444; font-weight:bold; font-size:12px; max-width: 120px; text-align:right;">🚫 REMOVAL PENDING - DO NOT ALLOW</div></div>`; }
-                    else { attHtml += `<label class="team-member-scan-row" data-search="${mSearchStr}" style="display:flex; align-items:center; justify-content:space-between; color:white; background:rgba(255,255,255,0.08); padding:12px; border-radius:8px; cursor:pointer; border: 1px solid rgba(255,255,255,0.05);"><div style="display:flex; align-items:center; gap:10px;"><img src="${m.iqama}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"><img src="${m.selfie}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"> <div><span style="font-size:13px;font-weight:600;">${m.name}${teamBadge}</span><br><span style="font-size:10px;color:rgba(255,255,255,0.6);">ID: ${m.iqamaText}</span>${devHtml}</div></div><input type="checkbox" class="att-chk" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)"></label>`; }
+                    else { attHtml += `<label class="team-member-scan-row" data-search="${mSearchStr}" style="display:flex; align-items:center; justify-content:space-between; color:white; background:rgba(255,255,255,0.08); padding:12px; border-radius:8px; cursor:pointer; border: 1px solid rgba(255,255,255,0.05);"><div style="display:flex; align-items:center; gap:10px;"><img src="${m.iqama}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"><img src="${m.selfie}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"> <div><span style="font-size:13px;font-weight:600;">${m.name}${newBadge}</span><br><span style="font-size:10px;color:rgba(255,255,255,0.6);">ID: ${m.iqamaText}</span>${devHtml}</div></div><input type="checkbox" class="att-chk" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)"></label>`; }
                 });
+            }
+            attHtml += `</div></div>`; teamSec.innerHTML = attHtml;
+        }
 
-                if (addedTeam.length > 0) {
-                    attHtml += `<div style="margin-top:10px; margin-bottom:5px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:5px;"><strong style="color:var(--success); text-transform:uppercase;">${t('new_members_added')}</strong></div>`;
-                    addedTeam.forEach(m => {
-                        let mSearchStr = String(m.name + " " + m.iqamaText + " " + m.device).toLowerCase(); let devHtml = m.device && m.device !== 'None' && m.device.trim() !== '' ? `<br><span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;font-weight:bold;">${m.device}</span>` : ''; let newBadge = `<span style="background:var(--success); color:white; font-size:10px; padding:2px 5px; border-radius:4px; margin-left:5px; font-weight:bold;">${t('new_badge')}</span>`;
-                        if (m.isRemoveRequested) { attHtml += `<div class="team-member-scan-row" data-search="${mSearchStr}" style="display:flex; align-items:center; justify-content:space-between; color:white; background:rgba(239, 68, 68, 0.2); padding:12px; border-radius:8px; border: 1px solid rgba(239, 68, 68, 0.5);"><div style="display:flex; align-items:center; gap:10px;"><img src="${m.iqama}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"><img src="${m.selfie}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"> <div><span style="font-size:13px;font-weight:600; text-decoration: line-through;">${m.name}</span><br><span style="font-size:10px;color:rgba(255,255,255,0.6);">ID: ${m.iqamaText}</span></div></div><div style="color:#ef4444; font-weight:bold; font-size:12px; max-width: 120px; text-align:right;">🚫 REMOVAL PENDING - DO NOT ALLOW</div></div>`; }
-                        else { attHtml += `<label class="team-member-scan-row" data-search="${mSearchStr}" style="display:flex; align-items:center; justify-content:space-between; color:white; background:rgba(255,255,255,0.08); padding:12px; border-radius:8px; cursor:pointer; border: 1px solid rgba(255,255,255,0.05);"><div style="display:flex; align-items:center; gap:10px;"><img src="${m.iqama}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"><img src="${m.selfie}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;cursor:zoom-in;" onclick="openFullscreenImage(this.src); event.preventDefault();"> <div><span style="font-size:13px;font-weight:600;">${m.name}${newBadge}</span><br><span style="font-size:10px;color:rgba(255,255,255,0.6);">ID: ${m.iqamaText}</span>${devHtml}</div></div><input type="checkbox" class="att-chk" checked style="width:20px;height:20px;accent-color:var(--noon-yellow)"></label>`; }
-                    });
-                }
-                attHtml += `</div></div>`; teamSec.innerHTML = attHtml;
+        if (detailsPrev) {
+            let cardsHtml = ''; let safeImei = data.ImeiNumber ? String(data.ImeiNumber).trim() : ''; let hasLeadDevice = safeImei && safeImei !== 'None' && safeImei !== ''; let hasLeadVehicle = data.VehiclePlateNo && (data.VehiclePlateNo.startsWith('http') || data.VehiclePlateNo.startsWith('data:image')); let showLeadPreview = hasLeadDevice || hasLeadVehicle;
+            const makeImg = (lbl, url) => `<div><strong style="font-size:10px; display:block; color:rgba(255,255,255,0.7); margin-bottom:4px;">${lbl}</strong><img src="${url}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; cursor:zoom-in; border:2px solid rgba(255,255,255,0.2);" onclick="openFullscreenImage(this.src)"></div>`;
+
+            if (showLeadPreview) {
+                let leadSearchStr = String(data.VisitorName + " " + safeImei + " lead " + data.UniqueID).toLowerCase(); let leadTitleExt = hasLeadDevice ? `- ${t('device_label')}: <span style="color:var(--noon-yellow)">${safeImei}</span>` : ``;
+                cardsHtml += `<div class="device-photo-card" data-search="${leadSearchStr}" style="margin-bottom:15px; text-align:left; padding:10px; background:rgba(255,255,255,0.05); border-radius:6px; border:1px solid rgba(255,255,255,0.1);"><strong style="display:block; color:white; margin-bottom:8px;">${t('lead')} (${data.VisitorName}) ${leadTitleExt}</strong><div style="display:flex; gap:10px; flex-wrap:wrap;">`;
+                if (data.IqamaURL && data.IqamaURL !== 'No File') cardsHtml += makeImg(t('iqama_id'), data.IqamaURL); if (data.SelfieURL && data.SelfieURL !== 'No File') cardsHtml += makeImg(t('selfie'), data.SelfieURL); if (hasLeadDevice && data.ImeiPhotoURL && data.ImeiPhotoURL !== 'No File') cardsHtml += makeImg(t('device_screen'), data.ImeiPhotoURL); if (hasLeadVehicle) cardsHtml += makeImg(t('vehicle'), data.VehiclePlateNo);
+                cardsHtml += `</div></div>`;
             }
 
-            if (detailsPrev) {
-                let cardsHtml = ''; let safeImei = data.ImeiNumber ? String(data.ImeiNumber).trim() : ''; let hasLeadDevice = safeImei && safeImei !== 'None' && safeImei !== ''; let hasLeadVehicle = data.VehiclePlateNo && (data.VehiclePlateNo.startsWith('http') || data.VehiclePlateNo.startsWith('data:image')); let showLeadPreview = hasLeadDevice || hasLeadVehicle;
-                const makeImg = (lbl, url) => `<div><strong style="font-size:10px; display:block; color:rgba(255,255,255,0.7); margin-bottom:4px;">${lbl}</strong><img src="${url}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; cursor:zoom-in; border:2px solid rgba(255,255,255,0.2);" onclick="openFullscreenImage(this.src)"></div>`;
-
-                if (showLeadPreview) {
-                    let leadSearchStr = String(data.VisitorName + " " + safeImei + " lead " + data.UniqueID).toLowerCase(); let leadTitleExt = hasLeadDevice ? `- ${t('device_label')}: <span style="color:var(--noon-yellow)">${safeImei}</span>` : ``;
-                    cardsHtml += `<div class="device-photo-card" data-search="${leadSearchStr}" style="margin-bottom:15px; text-align:left; padding:10px; background:rgba(255,255,255,0.05); border-radius:6px; border:1px solid rgba(255,255,255,0.1);"><strong style="display:block; color:white; margin-bottom:8px;">${t('lead')} (${data.VisitorName}) ${leadTitleExt}</strong><div style="display:flex; gap:10px; flex-wrap:wrap;">`;
-                    if (data.IqamaURL && data.IqamaURL !== 'No File') cardsHtml += makeImg(t('iqama_id'), data.IqamaURL); if (data.SelfieURL && data.SelfieURL !== 'No File') cardsHtml += makeImg(t('selfie'), data.SelfieURL); if (hasLeadDevice && data.ImeiPhotoURL && data.ImeiPhotoURL !== 'No File') cardsHtml += makeImg(t('device_screen'), data.ImeiPhotoURL); if (hasLeadVehicle) cardsHtml += makeImg(t('vehicle'), data.VehiclePlateNo);
+            teamData.forEach(m => {
+                let mDevStr = m.device && m.device !== 'None' && m.device.trim() !== '' ? m.device : 'None';
+                if (mDevStr !== 'None' && !m.isRemoveRequested) {
+                    let mSearchStr = String(m.name + " " + m.iqamaText + " " + m.device).toLowerCase();
+                    cardsHtml += `<div class="device-photo-card" data-search="${mSearchStr}" style="margin-bottom:15px; text-align:left; padding:10px; background:rgba(255,255,255,0.05); border-radius:6px; border:1px solid rgba(255,255,255,0.1);"><strong style="display:block; color:white; margin-bottom:8px;">${m.name} ${m.isNew ? `<span style="color:var(--success)">[${t('new_badge')}]</span>` : ''} - ${t('device_label')}: <span style="color:var(--noon-yellow)">${mDevStr}</span></strong><div style="display:flex; gap:10px; flex-wrap:wrap;">`;
+                    if (m.iqama && m.iqama !== 'No File') cardsHtml += makeImg(t('iqama_id'), m.iqama); if (m.selfie && m.selfie !== 'No File') cardsHtml += makeImg(t('selfie'), m.selfie); if (m.devicePhoto && m.devicePhoto !== 'No File') cardsHtml += makeImg(t('device_screen'), m.devicePhoto);
                     cardsHtml += `</div></div>`;
                 }
-
-                teamData.forEach(m => {
-                    let mDevStr = m.device && m.device !== 'None' && m.device.trim() !== '' ? m.device : 'None';
-                    if (mDevStr !== 'None' && !m.isRemoveRequested) {
-                        let mSearchStr = String(m.name + " " + m.iqamaText + " " + m.device).toLowerCase();
-                        cardsHtml += `<div class="device-photo-card" data-search="${mSearchStr}" style="margin-bottom:15px; text-align:left; padding:10px; background:rgba(255,255,255,0.05); border-radius:6px; border:1px solid rgba(255,255,255,0.1);"><strong style="display:block; color:white; margin-bottom:8px;">${m.name} ${m.isNew ? `<span style="color:var(--success)">[${t('new_badge')}]</span>` : ''} - ${t('device_label')}: <span style="color:var(--noon-yellow)">${mDevStr}</span></strong><div style="display:flex; gap:10px; flex-wrap:wrap;">`;
-                        if (m.iqama && m.iqama !== 'No File') cardsHtml += makeImg(t('iqama_id'), m.iqama); if (m.selfie && m.selfie !== 'No File') cardsHtml += makeImg(t('selfie'), m.selfie); if (m.devicePhoto && m.devicePhoto !== 'No File') cardsHtml += makeImg(t('device_screen'), m.devicePhoto);
-                        cardsHtml += `</div></div>`;
-                    }
-                });
-
-                if (cardsHtml !== '') {
-                    let previewHtml = `<div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; font-size: 13px; font-weight: normal; margin-bottom: 15px; margin-top:20px;"><div style="margin-bottom:8px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px;"><strong style="color:var(--noon-yellow); text-transform:uppercase;">${t('device_photos_all')}</strong></div>${cardsHtml}</div>`;
-                    detailsPrev.innerHTML = previewHtml; detailsPrev.classList.remove('hidden');
-                } else { detailsPrev.innerHTML = ""; detailsPrev.classList.add('hidden'); }
-            }
-
-            const hcSec = _d('guard-headcount-section'); if (hcSec) hcSec.classList.add('hidden');
-            if (selfieImg) selfieImg.style.display = 'none';
-
-            let addedTeam = teamData.filter(m => m.isNew);
-            if (addedTeam.length > 0 && allowAction) { setTimeout(() => { alert(t('notice_new_people')); }, 300); }
-        }
-
-        const hcSec = _d('guard-headcount-section');
-        if (allowAction) {
-            if (hcSec) hcSec.classList.add('hidden');
-            if (confirmBtn) {
-                confirmBtn.classList.remove('hidden');
-                if (isInside) { confirmBtn.innerText = t("btn_checkout"); confirmBtn.className = "btn-primary btn-warning"; confirmBtn.style.color = "#000"; }
-                else { confirmBtn.innerText = t("confirm_action"); confirmBtn.className = "btn-primary btn-success"; confirmBtn.style.color = "#fff"; }
-            }
-        } else {
-            if (confirmBtn) confirmBtn.classList.add('hidden'); if (hcSec) hcSec.classList.add('hidden');
-        }
-
-        showScanResult(scanState, scanMsg, scanColor, isFullscreen);
-    }
-    async function confirmAction() {
-        const btn = _d('btn-confirm-action'); let hcVal = 1; const teamSec = _d('guard-team-section');
-        if (teamSec && !teamSec.classList.contains('hidden')) {
-            const chks = _q('.att-chk');
-            if (chks.length > 0) { hcVal = _q('.att-chk:checked').length; if (hcVal === 0) return alert("Please select at least one person."); }
-            else { const hcInput = _d('guard-headcount'); if (hcInput && !hcInput.parentElement.classList.contains('hidden')) { hcVal = hcInput.value; if (!hcVal || hcVal < 1) return alert("Please enter the number of workers present."); } }
-        }
-        btn.innerText = "SAVING..."; btn.disabled = true;
-        const gInfo = `${currentUser.name} (${currentUser.location})`;
-        
-        const nowIso = new Date().toISOString();
-        let item = globalAdminData.find(x => String(x.UniqueID).toUpperCase() === String(currentScannedID).toUpperCase());
-        if (item) {
-            if (currentScanAction === 'check_in') {
-                item.CheckInTime = nowIso;
-                item.CheckOutTime = '';
-                item.ScannedByGuard = gInfo;
-            } else {
-                item.CheckOutTime = nowIso;
-            }
-
-            let existingLogs = [];
-            try { existingLogs = JSON.parse(item.GateLogs || "[]"); } catch(e) {}
-            existingLogs.push({ action: currentScanAction === 'check_in' ? 'IN' : 'OUT', time: nowIso, guard: gInfo });
-            item.GateLogs = JSON.stringify(existingLogs);
-
-            localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData));
-            if (currentUser && currentUser.role === 'admin') renderAdminData(globalAdminData);
-        }
-
-        try {
-            await apiCall({ action: currentScanAction, id: currentScannedID, guardInfo: gInfo, headCount: hcVal });
-            localStorage.removeItem('cached_admin_data');
-            
-            btn.innerText = t("confirm_action"); 
-            btn.disabled = false;
-            closeScanResult();
-            loadAdminData(true);
-            
-        } catch (e) {
-            btn.innerText = t("confirm_action"); btn.disabled = false; isProcessingScan = false;
-        }
-    }
-
-    let addMorePassId = null; let addMoreTeamList = [];
-    function openAddMoreModal(passId) { addMorePassId = passId; addMoreTeamList = []; renderAddTeamRoster(); _d('add-more-modal').classList.remove('hidden'); }
-    function closeAddMoreModal() { _d('add-more-modal').classList.add('hidden'); }
-    function toggleAddTeamDeviceInput() {
-        let type = _d('req-add-team-device-type').value; let group = _d('req-add-team-device-id-group'); let input = _d('req-add-team-device-id'); let tDev = _d('req-add-team-imeiphoto');
-        if (type === 'None') { group.classList.add('hidden'); input.value = ''; if (tDev) tDev.value = ''; clearCapturedData('add_team_imeiphoto'); }
-        else { group.classList.remove('hidden'); input.placeholder = type === 'Mobile' ? 'IMEI Number' : 'Serial Number'; }
-    }
-
-    async function saveAddTeamMember() {
-        let iB64 = '', sB64 = '', tDevB64 = '', ii = _d('req-add-team-iqama'), si = _d('req-add-team-selfie'), tName = _d('req-add-team-name'), tIqama = _d('req-add-team-iqamatext');
-        let devType = _d('req-add-team-device-type').value, devId = _d('req-add-team-device-id').value; let tDev = _d('req-add-team-imeiphoto');
-        if (!tName || !tName.value.trim()) return alert("Provide Name."); if (!tIqama || !tIqama.value.trim()) return alert("Provide Iqama/ID.");
-        let iqamaVal = tIqama.value.trim(); let leadIqama = _d('req-iqamatext') ? _d('req-iqamatext').value.trim() : '';
-        if (addMoreTeamList.some(m => m.iqamaText === iqamaVal)) return alert("Duplicate! This ID is already in the current batch.");
-        if (addMoreTeamList.length >= 10) return alert("Batch limit reached: You can only add up to 10 team members per batch. Please submit these members first.");
-        if (devType !== 'None') {
-            if (!devId.trim()) return alert("Provide IMEI/Serial number.");
-            if (capturedImages.add_team_imeiphoto) tDevB64 = capturedImages.add_team_imeiphoto.split(',')[1];
-            else if (tDev && tDev.files.length > 0) { let f = await getBase64(tDev.files[0]); tDevB64 = f.split(',')[1] } else return alert("Provide Device Screen photo.");
-        }
-        if (capturedImages.add_team_iqama) iB64 = capturedImages.add_team_iqama.split(',')[1]; else if (ii && ii.files.length > 0) { let f = await getBase64(ii.files[0]); iB64 = f.split(',')[1] } else return alert("Provide Iqama photo.");
-        if (capturedImages.add_team_selfie) sB64 = capturedImages.add_team_selfie.split(',')[1]; else if (si && si.files.length > 0) { let f = await getBase64(si.files[0]); sB64 = f.split(',')[1] } else return alert("Provide Selfie photo.");
-
-        addMoreTeamList.push({ iqama: "data:image/jpeg;base64," + iB64, selfie: "data:image/jpeg;base64," + sB64, rawIqama: iB64, rawSelfie: sB64, rawDevicePhoto: tDevB64, name: tName.value.trim() + " *NEW_MEMBER*", iqamaText: tIqama.value.trim(), deviceType: devType, deviceId: devId.trim() });
-        renderAddTeamRoster();
-        if (ii) ii.value = ""; if (si) si.value = ""; if (tName) tName.value = ""; if (tIqama) tIqama.value = ""; _d('req-add-team-device-type').value = "None"; _d('req-add-team-device-id').value = ""; toggleAddTeamDeviceInput(); clearCapturedData('add_team_iqama'); clearCapturedData('add_team_selfie'); clearCapturedData('add_team_imeiphoto');
-        if (addMoreTeamList.length === 10) { checkBatchLimit('more'); }
-    }
-
-    function renderAddTeamRoster() {
-        const div = _d('add-team-roster-display');
-        if (addMoreTeamList.length > 0) {
-            div.classList.remove('hidden'); let h = '';
-            addMoreTeamList.forEach((m, idx) => {
-                let cleanName = m.name.replace(/\*NEW_MEMBER\*/gi, '').trim();
-                let devHtml = m.deviceType !== 'None' ? `<span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">${m.deviceType}</span>` : '';
-                let imgsHtml = `<img src="${m.iqama}" class="team-member-img" onclick="openFullscreenImage(this.src)"><img src="${m.selfie}" class="team-member-img" onclick="openFullscreenImage(this.src)">`;
-                h += `<div class="team-member-row"><span style="color:white;font-size:13px;font-weight:bold;">${cleanName} <span style="background:var(--success);color:white;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">${t('new_badge')}</span>${devHtml}</span><div style="display:flex;gap:10px;">${imgsHtml}<button type="button" style="background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:16px;" onclick="addMoreTeamList.splice(${idx},1);renderAddTeamRoster();">❌</button></div></div>`;
             });
-            div.innerHTML = h;
-        } else div.classList.add('hidden');
-    }
 
-    async function submitAddMorePeople(keepAdding = false) {
-        if (addMoreTeamList.length === 0) return alert("Please add at least one person to the list first.");
-        if (!keepAdding && !confirm("WARNING: This will reset the pass status back to PENDING. Do you want to proceed?")) return;
-        let btn = _d('btn-submit-add-more'); btn.innerText = "SUBMITTING..."; btn.disabled = true; let cleanTeam = [];
-        addMoreTeamList.forEach(m => { let devStr = m.deviceType !== 'None' ? `${m.deviceType} (${m.deviceId})` : 'None'; cleanTeam.push({ iqama: m.rawIqama, selfie: m.rawSelfie, devicePhoto: m.rawDevicePhoto, name: m.name, iqamaText: m.iqamaText, deviceString: devStr }); });
-
-        try {
-            const payload = { action: 'add_team_members', id: addMorePassId, team: cleanTeam };
-            if (keepAdding) {
-                apiCall(payload).then(() => loadMyPasses(true, true)).catch(e => console.error(e));
-                addMoreTeamList = []; renderAddTeamRoster(); btn.innerText = "SUBMIT & SEND FOR APPROVAL"; btn.disabled = false;
-            } else {
-                const res = await apiCall(payload);
-                if (res.status === 'success') { closeAddMoreModal(); loadMyPasses(true, true); alert("People added successfully! The pass is now PENDING approval."); }
-                else throw new Error(res.message);
-            }
-        } catch (e) {
-            alert("Upload failed. Try again. Error: " + e.message);
-        } finally {
-            if (!keepAdding) { btn.innerText = "SUBMIT & SEND FOR APPROVAL"; btn.disabled = false; }
+            if (cardsHtml !== '') {
+                let previewHtml = `<div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; font-size: 13px; font-weight: normal; margin-bottom: 15px; margin-top:20px;"><div style="margin-bottom:8px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px;"><strong style="color:var(--noon-yellow); text-transform:uppercase;">${t('device_photos_all')}</strong></div>${cardsHtml}</div>`;
+                detailsPrev.innerHTML = previewHtml; detailsPrev.classList.remove('hidden');
+            } else { detailsPrev.innerHTML = ""; detailsPrev.classList.add('hidden'); }
         }
+
+        const hcSec = _d('guard-headcount-section'); if (hcSec) hcSec.classList.add('hidden');
+        if (selfieImg) selfieImg.style.display = 'none';
+
+        let addedTeam = teamData.filter(m => m.isNew);
+        if (addedTeam.length > 0 && allowAction) { setTimeout(() => { alert(t('notice_new_people')); }, 300); }
     }
 
-    function closeTimeline() { const modal = _d('timeline-modal'); if (modal) modal.classList.add('hidden'); }
+    const hcSec = _d('guard-headcount-section');
+    if (allowAction) {
+        if (hcSec) hcSec.classList.add('hidden');
+        if (confirmBtn) {
+            confirmBtn.classList.remove('hidden');
+            if (isInside) { confirmBtn.innerText = t("btn_checkout"); confirmBtn.className = "btn-primary btn-warning"; confirmBtn.style.color = "#000"; }
+            else { confirmBtn.innerText = t("confirm_action"); confirmBtn.className = "btn-primary btn-success"; confirmBtn.style.color = "#fff"; }
+        }
+    } else {
+        if (confirmBtn) confirmBtn.classList.add('hidden'); if (hcSec) hcSec.classList.add('hidden');
+    }
+
+    showScanResult(scanState, scanMsg, scanColor, isFullscreen);
+}
+
+async function confirmAction() {
+    const btn = _d('btn-confirm-action'); let hcVal = 1; const teamSec = _d('guard-team-section');
+    if (teamSec && !teamSec.classList.contains('hidden')) {
+        const chks = _q('.att-chk');
+        if (chks.length > 0) { hcVal = _q('.att-chk:checked').length; if (hcVal === 0) return alert("Please select at least one person."); }
+        else { const hcInput = _d('guard-headcount'); if (hcInput && !hcInput.parentElement.classList.contains('hidden')) { hcVal = hcInput.value; if (!hcVal || hcVal < 1) return alert("Please enter the number of workers present."); } }
+    }
+    btn.innerText = "SAVING..."; btn.disabled = true;
+    const gInfo = `${currentUser.name} (${currentUser.location})`;
+    
+    const nowIso = new Date().toISOString();
+    let item = globalAdminData.find(x => String(x.UniqueID).toUpperCase() === String(currentScannedID).toUpperCase());
+    if (item) {
+        if (currentScanAction === 'check_in') {
+            item.CheckInTime = nowIso;
+            item.CheckOutTime = '';
+            item.ScannedByGuard = gInfo;
+        } else {
+            item.CheckOutTime = nowIso;
+        }
+
+        let existingLogs = [];
+        try { existingLogs = JSON.parse(item.GateLogs || "[]"); } catch(e) {}
+        existingLogs.push({ action: currentScanAction === 'check_in' ? 'IN' : 'OUT', time: nowIso, guard: gInfo });
+        item.GateLogs = JSON.stringify(existingLogs);
+
+        localStorage.setItem('cached_admin_data', JSON.stringify(globalAdminData));
+        if (currentUser && currentUser.role === 'admin') renderAdminData(globalAdminData);
+    }
+
+    try {
+        await apiCall({ action: currentScanAction, id: currentScannedID, guardInfo: gInfo, headCount: hcVal });
+        localStorage.removeItem('cached_admin_data');
+        btn.innerText = t("confirm_action"); 
+        btn.disabled = false;
+        closeScanResult();
+        loadAdminData(true);
+    } catch (e) {
+        btn.innerText = t("confirm_action"); btn.disabled = false; isProcessingScan = false;
+    }
+}
+
+let addMorePassId = null; let addMoreTeamList = [];
+function openAddMoreModal(passId) { addMorePassId = passId; addMoreTeamList = []; renderAddTeamRoster(); _d('add-more-modal').classList.remove('hidden'); }
+function closeAddMoreModal() { _d('add-more-modal').classList.add('hidden'); }
+function toggleAddTeamDeviceInput() {
+    let type = _d('req-add-team-device-type').value; let group = _d('req-add-team-device-id-group'); let input = _d('req-add-team-device-id'); let tDev = _d('req-add-team-imeiphoto');
+    if (type === 'None') { group.classList.add('hidden'); input.value = ''; if (tDev) tDev.value = ''; clearCapturedData('add_team_imeiphoto'); }
+    else { group.classList.remove('hidden'); input.placeholder = type === 'Mobile' ? 'IMEI Number' : 'Serial Number'; }
+}
+
+async function saveAddTeamMember() {
+    let iB64 = '', sB64 = '', tDevB64 = '', ii = _d('req-add-team-iqama'), si = _d('req-add-team-selfie'), tName = _d('req-add-team-name'), tIqama = _d('req-add-team-iqamatext');
+    let devType = _d('req-add-team-device-type').value, devId = _d('req-add-team-device-id').value; let tDev = _d('req-add-team-imeiphoto');
+    if (!tName || !tName.value.trim()) return alert("Provide Name."); if (!tIqama || !tIqama.value.trim()) return alert("Provide Iqama/ID.");
+    let iqamaVal = tIqama.value.trim(); let leadIqama = _d('req-iqamatext') ? _d('req-iqamatext').value.trim() : '';
+    if (addMoreTeamList.some(m => m.iqamaText === iqamaVal)) return alert("Duplicate! This ID is already in the current batch.");
+    if (addMoreTeamList.length >= 10) return alert("Batch limit reached: You can only add up to 10 team members per batch. Please submit these members first.");
+    
+    if (devType !== 'None') {
+        if (!devId.trim()) return alert("Provide IMEI/Serial number.");
+        if (capturedImages.add_team_imeiphoto) tDevB64 = capturedImages.add_team_imeiphoto.split(',')[1];
+        else if (tDev && tDev.files.length > 0) { let f = await getTinyBase64(tDev.files[0]); tDevB64 = f.split(',')[1] } else return alert("Provide Device Screen photo.");
+    }
+    if (capturedImages.add_team_iqama) iB64 = capturedImages.add_team_iqama.split(',')[1]; else if (ii && ii.files.length > 0) { let f = await getTinyBase64(ii.files[0]); iB64 = f.split(',')[1] } else return alert("Provide Iqama photo.");
+    if (capturedImages.add_team_selfie) sB64 = capturedImages.add_team_selfie.split(',')[1]; else if (si && si.files.length > 0) { let f = await getTinyBase64(si.files[0]); sB64 = f.split(',')[1] } else return alert("Provide Selfie photo.");
+
+    addMoreTeamList.push({ iqama: "data:image/jpeg;base64," + iB64, selfie: "data:image/jpeg;base64," + sB64, rawIqama: iB64, rawSelfie: sB64, rawDevicePhoto: tDevB64, name: tName.value.trim() + " *NEW_MEMBER*", iqamaText: tIqama.value.trim(), deviceType: devType, deviceId: devId.trim() });
+    renderAddTeamRoster();
+    if (ii) ii.value = ""; if (si) si.value = ""; if (tName) tName.value = ""; if (tIqama) tIqama.value = ""; _d('req-add-team-device-type').value = "None"; _d('req-add-team-device-id').value = ""; toggleAddTeamDeviceInput(); clearCapturedData('add_team_iqama'); clearCapturedData('add_team_selfie'); clearCapturedData('add_team_imeiphoto');
+    if (addMoreTeamList.length === 10) { checkBatchLimit('more'); }
+}
+
+function renderAddTeamRoster() {
+    const div = _d('add-team-roster-display');
+    if (addMoreTeamList.length > 0) {
+        div.classList.remove('hidden'); let h = '';
+        addMoreTeamList.forEach((m, idx) => {
+            let cleanName = m.name.replace(/\*NEW_MEMBER\*/gi, '').trim();
+            let devHtml = m.deviceType !== 'None' ? `<span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">${m.deviceType}</span>` : '';
+            let imgsHtml = `<img src="${m.iqama}" class="team-member-img" onclick="openFullscreenImage(this.src)"><img src="${m.selfie}" class="team-member-img" onclick="openFullscreenImage(this.src)">`;
+            h += `<div class="team-member-row"><span style="color:white;font-size:13px;font-weight:bold;">${cleanName} <span style="background:var(--success);color:white;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">${t('new_badge')}</span>${devHtml}</span><div style="display:flex;gap:10px;">${imgsHtml}<button type="button" style="background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:16px;" onclick="addMoreTeamList.splice(${idx},1);renderAddTeamRoster();">❌</button></div></div>`;
+        });
+        div.innerHTML = h;
+    } else div.classList.add('hidden');
+}
+
+async function submitAddMorePeople(keepAdding = false) {
+    if (addMoreTeamList.length === 0) return alert("Please add at least one person to the list first.");
+    if (!keepAdding && !confirm("WARNING: This will reset the pass status back to PENDING. Do you want to proceed?")) return;
+    let btn = _d('btn-submit-add-more'); btn.innerText = "SUBMITTING..."; btn.disabled = true; let cleanTeam = [];
+    addMoreTeamList.forEach(m => { let devStr = m.deviceType !== 'None' ? `${m.deviceType} (${m.deviceId})` : 'None'; cleanTeam.push({ iqama: m.rawIqama, selfie: m.rawSelfie, devicePhoto: m.rawDevicePhoto, name: m.name, iqamaText: m.iqamaText, deviceString: devStr }); });
+
+    try {
+        const payload = { action: 'add_team_members', id: addMorePassId, team: cleanTeam };
+        if (keepAdding) {
+            apiCall(payload).then(() => loadMyPasses(true, true)).catch(e => console.error(e));
+            addMoreTeamList = []; renderAddTeamRoster(); btn.innerText = "SUBMIT & SEND FOR APPROVAL"; btn.disabled = false;
+        } else {
+            const res = await apiCall(payload);
+            if (res.status === 'success') { closeAddMoreModal(); loadMyPasses(true, true); alert("People added successfully! The pass is now PENDING approval."); }
+            else throw new Error(res.message);
+        }
+    } catch (e) {
+        alert("Upload failed. Try again. Error: " + e.message);
+    } finally {
+        if (!keepAdding) { btn.innerText = "SUBMIT & SEND FOR APPROVAL"; btn.disabled = false; }
+    }
+}
+
+function closeTimeline() { const modal = _d('timeline-modal'); if (modal) modal.classList.add('hidden'); }
 </script>
 </body>
 </html>
