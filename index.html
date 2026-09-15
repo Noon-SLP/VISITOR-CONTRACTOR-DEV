@@ -1179,370 +1179,379 @@ async function performManualSearch() {
     } catch (e) { rd.innerHTML = '<p style="color:var(--danger); font-size:12px;">Search failed.</p>'; }
 }
     async function submitRequest(ka = false) {
-    const ti = _d('req-type'); if (!ti) return;
-    const type = ti.value, ii = _d('req-iqama'), si = _d('req-selfie'), imPho = _d('req-imeiphoto'), vi = _d('req-vehicle'), btn = _d('btn-submit-req'); if (!btn) return;
-    let iB64 = '', iMime = 'image/jpeg', sB64 = '', sMime = 'image/jpeg', imB64 = '', imMime = 'image/jpeg', vB64 = '', vMime = 'image/jpeg';
-    let leadDevType = _d('req-lead-device-type').value; let leadDevId = _d('req-lead-device-id').value;
-    if (leadDevType !== 'None' && !leadDevId.trim()) return alert("Please provide the Lead device IMEI/Serial number.");
-    let leadImeiVal = leadDevType !== 'None' ? `${leadDevType} (${leadDevId.trim()})` : '';
+        const ti = _d('req-type'); if (!ti) return;
+        const type = ti.value, ii = _d('req-iqama'), si = _d('req-selfie'), imPho = _d('req-imeiphoto'), vi = _d('req-vehicle'), btn = _d('btn-submit-req'); if (!btn) return;
+        let iB64 = '', iMime = 'image/jpeg', sB64 = '', sMime = 'image/jpeg', imB64 = '', imMime = 'image/jpeg', vB64 = '', vMime = 'image/jpeg';
+        let leadDevType = _d('req-lead-device-type').value; let leadDevId = _d('req-lead-device-id').value;
+        if (leadDevType !== 'None' && !leadDevId.trim()) return alert("Please provide the Lead device IMEI/Serial number.");
+        let leadImeiVal = leadDevType !== 'None' ? `${leadDevType} (${leadDevId.trim()})` : '';
 
-    if (capturedImages.iqama) iB64 = capturedImages.iqama.split(',')[1]; else if (ii && ii.files.length > 0) { let f = await getBase64(ii.files[0]); iB64 = f.split(',')[1]; iMime = ii.files[0].type; } else return alert("Please provide Lead Iqama photo.");
-    if (capturedImages.selfie) sB64 = capturedImages.selfie.split(',')[1]; else if (si && si.files.length > 0) { let f = await getBase64(si.files[0]); sB64 = f.split(',')[1]; sMime = si.files[0].type; } else return alert("Please provide Lead Selfie photo.");
-    if (capturedImages.imeiphoto) imB64 = capturedImages.imeiphoto.split(',')[1]; else if (imPho && imPho.files.length > 0) { let f = await getBase64(imPho.files[0]); imB64 = f.split(',')[1]; imMime = imPho.files[0].type; }
+        if (capturedImages.iqama) iB64 = capturedImages.iqama.split(',')[1]; else if (ii && ii.files.length > 0) { let f = await getTinyBase64(ii.files[0]); iB64 = f.split(',')[1]; iMime = ii.files[0].type; } else return alert("Please provide Lead Iqama photo.");
+        if (capturedImages.selfie) sB64 = capturedImages.selfie.split(',')[1]; else if (si && si.files.length > 0) { let f = await getTinyBase64(si.files[0]); sB64 = f.split(',')[1]; sMime = si.files[0].type; } else return alert("Please provide Lead Selfie photo.");
+        if (capturedImages.imeiphoto) imB64 = capturedImages.imeiphoto.split(',')[1]; else if (imPho && imPho.files.length > 0) { let f = await getTinyBase64(imPho.files[0]); imB64 = f.split(',')[1]; imMime = imPho.files[0].type; }
 
-    let fB64 = '', fMime = 'image/jpeg', cleanTeam = []; let fmPocVal = '';
-    if (type === 'Contractor') { const fi = _d('req-con-fmpoc'); fmPocVal = fi ? fi.value.trim() : ''; } else { if (capturedImages.vehicle) vB64 = capturedImages.vehicle.split(',')[1]; else if (vi && vi.files.length > 0) { let f = await getBase64(vi.files[0]); vB64 = f.split(',')[1]; vMime = vi.files[0].type; } }
-    teamList.forEach(m => { let devStr = m.deviceType !== 'None' ? `${m.deviceType} (${m.deviceId})` : 'None'; cleanTeam.push({ iqama: m.rawIqama, selfie: m.rawSelfie, devicePhoto: m.rawDevicePhoto, name: m.name, iqamaText: m.iqamaText, deviceString: devStr }); });
+        let fB64 = '', fMime = 'image/jpeg', cleanTeam = []; let fmPocVal = '';
+        if (type === 'Contractor') { const fi = _d('req-con-fmpoc'); fmPocVal = fi ? fi.value.trim() : ''; } else { if (capturedImages.vehicle) vB64 = capturedImages.vehicle.split(',')[1]; else if (vi && vi.files.length > 0) { let f = await getTinyBase64(vi.files[0]); vB64 = f.split(',')[1]; vMime = vi.files[0].type; } }
+        teamList.forEach(m => { let devStr = m.deviceType !== 'None' ? `${m.deviceType} (${m.deviceId})` : 'None'; cleanTeam.push({ iqama: m.rawIqama, selfie: m.rawSelfie, devicePhoto: m.rawDevicePhoto, name: m.name, iqamaText: m.iqamaText, deviceString: devStr }); });
 
-    let hName = '', hMail = currentUser.email;
-    if (currentUser.role === 'admin') { hName = currentUser.name; const ei = _d('req-admin-email'); if (ei) hMail = ei.value.toLowerCase().trim(); if (!hMail) return alert("Please enter Email Address."); } else hName = currentUser.name || 'Ops';
-    const vni = _d('req-vname'), vNameRaw = vni ? vni.value.trim() : ''; if (!vNameRaw) return alert("Full Name is required.");
-    const leadIqamaInp = _d('req-iqamatext'); const leadIqamaVal = leadIqamaInp ? leadIqamaInp.value.trim() : ''; if (!leadIqamaVal) return alert("Lead Iqama / ID Number is required.");
-    const vName = vNameRaw + " (ID: " + leadIqamaVal + ")"; const startDateVal = _d('req-date-start').value; const endDateVal = _d('req-date-end').value; if (!startDateVal || !endDateVal) return alert("Visit/Validity dates (From - To) are required.");
+        let hName = '', hMail = currentUser.email;
+        if (currentUser.role === 'admin') { hName = currentUser.name; const ei = _d('req-admin-email'); if (ei) hMail = ei.value.toLowerCase().trim(); if (!hMail) return alert("Please enter Email Address."); } else hName = currentUser.name || 'Ops';
+        const vni = _d('req-vname'), vNameRaw = vni ? vni.value.trim() : ''; if (!vNameRaw) return alert("Full Name is required.");
+        const leadIqamaInp = _d('req-iqamatext'); const leadIqamaVal = leadIqamaInp ? leadIqamaInp.value.trim() : ''; if (!leadIqamaVal) return alert("Lead Iqama / ID Number is required.");
+        const vName = vNameRaw + " (ID: " + leadIqamaVal + ")"; const startDateVal = _d('req-date-start').value; const endDateVal = _d('req-date-end').value; if (!startDateVal || !endDateVal) return alert("Visit/Validity dates (From - To) are required.");
 
-    let cachedKey = 'cached_passes_' + hMail; let existingPasses = []; try { existingPasses = JSON.parse(localStorage.getItem(cachedKey)) || []; } catch (e) {}
-    let localPin = localStorage.getItem('user_pin_' + hMail);
+        let cachedKey = 'cached_passes_' + hMail; let existingPasses = []; try { existingPasses = JSON.parse(localStorage.getItem(cachedKey)) || []; } catch (e) {}
+        let localPin = localStorage.getItem('user_pin_' + hMail);
 
-    if (currentUser && currentUser.role === 'admin') { if (userSecurityPin || localPin) { hName = hName + "||PIN:" + (userSecurityPin || localPin); } } else {
-        if (!localPin && !userSecurityPin) { pinCreateMode = 'submit'; _d('pin-create-modal').classList.remove('hidden'); return; }
-        let activePin = userSecurityPin || localPin; hName = hName + "||PIN:" + activePin;
+        if (currentUser && currentUser.role === 'admin') { if (userSecurityPin || localPin) { hName = hName + "||PIN:" + (userSecurityPin || localPin); } } else {
+            if (!localPin && !userSecurityPin) { pinCreateMode = 'submit'; _d('pin-create-modal').classList.remove('hidden'); return; }
+            let activePin = userSecurityPin || localPin; hName = hName + "||PIN:" + activePin;
+        }
+
+        const tempId = 'NOON-' + Math.floor(100000 + Math.random() * 900000);
+        let tempPass = { UniqueID: tempId, VisitorName: vName, Type: type, Location: _d('req-location').value, StartDate: startDateVal, EndDate: endDateVal, Status: 'Pending', HostEmail: hMail };
+
+        if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+        existingPasses.push(tempPass); 
+        try { localStorage.setItem(cachedKey, JSON.stringify(existingPasses)); } catch(err) { console.warn("Storage full"); localStorage.removeItem(cachedKey); }
+        renderMyPasses(existingPasses);
+        if (currentUser.role === 'admin' && vni) vni.value = ""; const lIqamaClear = _d('req-iqamatext'); if (lIqamaClear) lIqamaClear.value = ""; if (ii) ii.value = ""; if (si) si.value = ""; if (imPho) imPho.value = ""; if (vi) vi.value = ""; const fmPocInput = _d('req-con-fmpoc'); if (fmPocInput) fmPocInput.value = ""; _d('req-lead-device-type').value = "None"; toggleLeadDeviceInput(); clearCapturedData('iqama'); clearCapturedData('selfie'); clearCapturedData('imeiphoto'); clearCapturedData('vehicle'); teamList = []; currentTeamCounter = 1; renderTeamRoster(); hideTeamEntry();
+
+        const payload = { action: 'create', UniqueID: tempId, hostName: hName, hostEmail: hMail, visitorName: vName, type: type, location: _d('req-location').value, startDate: startDateVal, endDate: endDateVal, iqamaBase64: iB64, iqamaMimeType: iMime, selfieBase64: sB64, selfieMimeType: sMime, imeiNumber: leadImeiVal, imeiPhotoBase64: imB64, fmPoc: fmPocVal, vehicleBase64: vB64, vehicleMimeType: vMime, vehiclePlateNo: '', team: cleanTeam, slpTicketNo: type === 'Visitor' ? _d('req-vis-slp').value : _d('req-con-slp').value, contactNo: type === 'Visitor' ? _d('req-vis-contact').value : _d('req-con-contact').value, invitedBy: type === 'Visitor' ? _d('req-vis-invitedby').value : '', projectName: type === 'Contractor' ? _d('req-con-project').value : '', companyName: type === 'Contractor' ? _d('req-con-company').value : '', projectManager: type === 'Contractor' ? _d('req-con-pm').value : '' };
+
+        if (ka) { btn.innerText = t("submit_approval"); btn.disabled = false; apiCall(payload).then(() => loadMyPasses(true, true)).catch(e => console.error(e)); openAddMoreModal(tempId); startAutoRefresh(currentUser.role); } else {
+            btn.innerText = "SUBMITTING..."; btn.disabled = true;
+            try { const res = await apiCall(payload); if (res.status === 'success') { btn.innerText = t("submit_approval"); btn.disabled = false; loadMyPasses(true, true); } else throw new Error(res.message || "Server Error"); } catch (e) { alert("Upload failed. Error: " + e.message); existingPasses.pop(); try { localStorage.setItem(cachedKey, JSON.stringify(existingPasses)); } catch(err) {} renderMyPasses(existingPasses); btn.innerText = t("submit_approval"); btn.disabled = false; } finally { startAutoRefresh(currentUser.role); }
+        }
     }
 
-    const tempId = 'NOON-' + Math.floor(100000 + Math.random() * 900000);
-    let tempPass = { UniqueID: tempId, VisitorName: vName, Type: type, Location: _d('req-location').value, StartDate: startDateVal, EndDate: endDateVal, Status: 'Pending', HostEmail: hMail };
-
-    if (autoRefreshTimer) clearInterval(autoRefreshTimer);
-    existingPasses.push(tempPass); localStorage.setItem(cachedKey, JSON.stringify(existingPasses)); renderMyPasses(existingPasses);
-    if (currentUser.role === 'admin' && vni) vni.value = ""; const lIqamaClear = _d('req-iqamatext'); if (lIqamaClear) lIqamaClear.value = ""; if (ii) ii.value = ""; if (si) si.value = ""; if (imPho) imPho.value = ""; if (vi) vi.value = ""; const fmPocInput = _d('req-con-fmpoc'); if (fmPocInput) fmPocInput.value = ""; _d('req-lead-device-type').value = "None"; toggleLeadDeviceInput(); clearCapturedData('iqama'); clearCapturedData('selfie'); clearCapturedData('imeiphoto'); clearCapturedData('vehicle'); teamList = []; currentTeamCounter = 1; renderTeamRoster(); hideTeamEntry();
-
-    const payload = { action: 'create', UniqueID: tempId, hostName: hName, hostEmail: hMail, visitorName: vName, type: type, location: _d('req-location').value, startDate: startDateVal, endDate: endDateVal, iqamaBase64: iB64, iqamaMimeType: iMime, selfieBase64: sB64, selfieMimeType: sMime, imeiNumber: leadImeiVal, imeiPhotoBase64: imB64, fmPoc: fmPocVal, vehicleBase64: vB64, vehicleMimeType: vMime, vehiclePlateNo: '', team: cleanTeam, slpTicketNo: type === 'Visitor' ? _d('req-vis-slp').value : _d('req-con-slp').value, contactNo: type === 'Visitor' ? _d('req-vis-contact').value : _d('req-con-contact').value, invitedBy: type === 'Visitor' ? _d('req-vis-invitedby').value : '', projectName: type === 'Contractor' ? _d('req-con-project').value : '', companyName: type === 'Contractor' ? _d('req-con-company').value : '', projectManager: type === 'Contractor' ? _d('req-con-pm').value : '' };
-
-    if (ka) { btn.innerText = t("submit_approval"); btn.disabled = false; apiCall(payload).then(() => loadMyPasses(true, true)).catch(e => console.error(e)); openAddMoreModal(tempId); startAutoRefresh(currentUser.role); } else {
-        btn.innerText = "SUBMITTING..."; btn.disabled = true;
-        try { const res = await apiCall(payload); if (res.status === 'success') { btn.innerText = t("submit_approval"); btn.disabled = false; loadMyPasses(true, true); } else throw new Error(res.message || "Server Error"); } catch (e) { alert("Upload failed. Error: " + e.message); existingPasses.pop(); localStorage.setItem(cachedKey, JSON.stringify(existingPasses)); renderMyPasses(existingPasses); btn.innerText = t("submit_approval"); btn.disabled = false; } finally { startAutoRefresh(currentUser.role); }
+    function downloadQR(id) {
+        let safeId = String(id).replace(/[^a-zA-Z0-9_-]/g, ''); const qrBox = _d('qr-' + safeId); if (!qrBox) return; let canvas = qrBox.querySelector('canvas'); let img = qrBox.querySelector('img'); let sourceImage = canvas && canvas.style.display !== 'none' ? canvas : (img && img.src ? img : null); if (!sourceImage) return alert("QR Code not ready yet."); let size = 150; let padding = 20; let newCanvas = document.createElement('canvas'); newCanvas.width = size + (padding * 2); newCanvas.height = size + (padding * 2); let ctx = newCanvas.getContext('2d'); ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, newCanvas.width, newCanvas.height); ctx.drawImage(sourceImage, padding, padding, size, size); const link = document.createElement('a'); link.href = newCanvas.toDataURL('image/png'); link.download = `Noon_Pass_QR_${safeId}.png`; document.body.appendChild(link); link.click(); document.body.removeChild(link);
     }
-}
 
-function downloadQR(id) {
-    let safeId = String(id).replace(/[^a-zA-Z0-9_-]/g, ''); const qrBox = _d('qr-' + safeId); if (!qrBox) return; let canvas = qrBox.querySelector('canvas'); let img = qrBox.querySelector('img'); let sourceImage = canvas && canvas.style.display !== 'none' ? canvas : (img && img.src ? img : null); if (!sourceImage) return alert("QR Code not ready yet."); let size = 150; let padding = 20; let newCanvas = document.createElement('canvas'); newCanvas.width = size + (padding * 2); newCanvas.height = size + (padding * 2); let ctx = newCanvas.getContext('2d'); ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, newCanvas.width, newCanvas.height); ctx.drawImage(sourceImage, padding, padding, size, size); const link = document.createElement('a'); link.href = newCanvas.toDataURL('image/png'); link.download = `Noon_Pass_QR_${safeId}.png`; document.body.appendChild(link); link.click(); document.body.removeChild(link);
-}
+    function renderMyPasses(data) {
+        const listDiv = _d('my-passes-list'); if (!listDiv) return; let h = ''; if (!Array.isArray(data) || data.length === 0) { listDiv.innerHTML = `<p style="color:var(--text-muted);font-size:13px;">${t("msg_no_history")}</p>`; return; }
+        let displayData = [...data].reverse(); myPassesData = displayData;
+        displayData.forEach(pass => {
+            let safeId = String(pass.UniqueID).replace(/[^a-zA-Z0-9_-]/g, ''); let safeType = String(pass.Type || ''); let safeStatus = String(pass.Status || 'Pending'); let safeLoc = String(pass.Location || ''); const todayNum = new Date().setHours(0, 0, 0, 0); let endObj = parseFlexibleDate(pass.EndDate) || parseFlexibleDate(pass.StartDate); let endNum = endObj ? endObj.setHours(0, 0, 0, 0) : todayNum; const isExp = todayNum > endNum, isComp = isExp || safeStatus === 'Completed';
+            let st = t(safeStatus === 'Approved' ? 'status_approved' : safeStatus === 'Rejected' ? 'status_rejected' : safeStatus === 'Completed' ? 'status_completed' : 'status_pending'); let sc = (safeStatus === 'Approved' ? 'var(--success)' : safeStatus === 'Rejected' ? 'var(--danger)' : safeStatus === 'Completed' ? 'var(--text-muted)' : 'var(--noon-yellow)'); if (isExp && safeStatus !== 'Rejected' && safeStatus !== 'Completed') { st = t('status_expired'); sc = 'var(--text-muted)'; }
+            const valText = `(${formatToDDMMYYYY(pass.StartDate)} - ${formatToDDMMYYYY(pass.EndDate || pass.StartDate)})`;
+            h += `<div class="pass-item" id="pass-card-${safeId}"><div class="pass-header"><div><strong style="color:white;font-size:14px;">${pass.VisitorName}</strong><br><span style="font-size:11px;color:var(--text-muted);">${t(safeType.toLowerCase())} • ${safeLoc}</span><br><span style="font-size:10px;color:var(--noon-yellow);">${valText}</span></div><div style="text-align:right;"><span style="font-size:11px;font-weight:bold;color:${sc};text-transform:uppercase;">${st}</span><br><span style="font-size:10px;color:var(--text-muted);">${pass.UniqueID}</span></div></div>`;
+            if (!isComp && safeStatus !== 'Rejected') { h += `<div style="text-align:center;margin-top:10px;"><div class="qr-box" id="qr-${safeId}" style="background:white;padding:10px;border-radius:6px;display:inline-block;min-width:140px;min-height:140px;"></div><div style="margin-top:15px;" id="save-btn-container-${safeId}"><button class="btn-primary btn-outline btn-sm" style="margin-bottom:8px;" onclick="downloadQR('${pass.UniqueID}')" data-i18n="save_qr">${t('save_qr')}</button><br><button class="btn-primary btn-warning btn-sm" style="color:#000; margin-bottom:8px;" onclick="openAddMoreModal('${pass.UniqueID}')">➕ ${t('add_more_people')}</button><br><button class="btn-primary btn-outline btn-sm" style="color:var(--text-main);" onclick="openViewRecord('${pass.UniqueID}')">👁️ SEE MEMBERS</button></div></div>`; }
+            else if (safeStatus === 'Rejected') { h += `<div style="text-align:center;margin-top:15px;font-size:12px;color:var(--danger);font-weight:bold;"><em>${t("status_rejected")} - Access Denied</em></div>`; }
+            else if (safeStatus === 'Completed') { h += `<div style="text-align:center;margin-top:15px;font-size:12px;color:var(--text-muted);font-weight:bold;"><em>PASS REVOKED / COMPLETED</em></div>`; }
+            else { h += `<div style="text-align:center;margin-top:15px;font-size:12px;color:var(--text-muted);"><em>${t("status_expired")}</em></div>`; } h += `</div>`;
+        });
+        listDiv.innerHTML = h;
+        displayData.forEach(pass => {
+            let safeId = String(pass.UniqueID).replace(/[^a-zA-Z0-9_-]/g, ''); let safeStatus = String(pass.Status || 'Pending'); const todayNum = new Date().setHours(0, 0, 0, 0); let endObj = parseFlexibleDate(pass.EndDate) || parseFlexibleDate(pass.StartDate); let endNum = endObj ? endObj.setHours(0, 0, 0, 0) : todayNum; const isExp = todayNum > endNum, isComp = isExp || safeStatus === 'Completed';
+            if (!isComp && safeStatus !== 'Rejected') { setTimeout(() => { const qre = _d(`qr-${safeId}`); if (qre) { qre.innerHTML = ""; try { new QRCode(qre, { text: String(pass.UniqueID), width: 120, height: 120, colorDark: "#000", colorLight: "#fff", correctLevel: QRCode.CorrectLevel.H }); } catch (err) {} } }, 200); }
+        });
+    }
 
-function renderMyPasses(data) {
-    const listDiv = _d('my-passes-list'); if (!listDiv) return; let h = ''; if (!Array.isArray(data) || data.length === 0) { listDiv.innerHTML = `<p style="color:var(--text-muted);font-size:13px;">${t("msg_no_history")}</p>`; return; }
-    let displayData = [...data].reverse(); myPassesData = displayData;
-    displayData.forEach(pass => {
-        let safeId = String(pass.UniqueID).replace(/[^a-zA-Z0-9_-]/g, ''); let safeType = String(pass.Type || ''); let safeStatus = String(pass.Status || 'Pending'); let safeLoc = String(pass.Location || ''); const todayNum = new Date().setHours(0, 0, 0, 0); let endObj = parseFlexibleDate(pass.EndDate) || parseFlexibleDate(pass.StartDate); let endNum = endObj ? endObj.setHours(0, 0, 0, 0) : todayNum; const isExp = todayNum > endNum, isComp = isExp || safeStatus === 'Completed';
-        let st = t(safeStatus === 'Approved' ? 'status_approved' : safeStatus === 'Rejected' ? 'status_rejected' : safeStatus === 'Completed' ? 'status_completed' : 'status_pending'); let sc = (safeStatus === 'Approved' ? 'var(--success)' : safeStatus === 'Rejected' ? 'var(--danger)' : safeStatus === 'Completed' ? 'var(--text-muted)' : 'var(--noon-yellow)'); if (isExp && safeStatus !== 'Rejected' && safeStatus !== 'Completed') { st = t('status_expired'); sc = 'var(--text-muted)'; }
-        const valText = `(${formatToDDMMYYYY(pass.StartDate)} - ${formatToDDMMYYYY(pass.EndDate || pass.StartDate)})`;
-        h += `<div class="pass-item" id="pass-card-${safeId}"><div class="pass-header"><div><strong style="color:white;font-size:14px;">${pass.VisitorName}</strong><br><span style="font-size:11px;color:var(--text-muted);">${t(safeType.toLowerCase())} • ${safeLoc}</span><br><span style="font-size:10px;color:var(--noon-yellow);">${valText}</span></div><div style="text-align:right;"><span style="font-size:11px;font-weight:bold;color:${sc};text-transform:uppercase;">${st}</span><br><span style="font-size:10px;color:var(--text-muted);">${pass.UniqueID}</span></div></div>`;
-        if (!isComp && safeStatus !== 'Rejected') { h += `<div style="text-align:center;margin-top:10px;"><div class="qr-box" id="qr-${safeId}" style="background:white;padding:10px;border-radius:6px;display:inline-block;min-width:140px;min-height:140px;"></div><div style="margin-top:15px;" id="save-btn-container-${safeId}"><button class="btn-primary btn-outline btn-sm" style="margin-bottom:8px;" onclick="downloadQR('${pass.UniqueID}')" data-i18n="save_qr">${t('save_qr')}</button><br><button class="btn-primary btn-warning btn-sm" style="color:#000; margin-bottom:8px;" onclick="openAddMoreModal('${pass.UniqueID}')">➕ ${t('add_more_people')}</button><br><button class="btn-primary btn-outline btn-sm" style="color:var(--text-main);" onclick="openViewRecord('${pass.UniqueID}')">👁️ SEE MEMBERS</button></div></div>`; }
-        else if (safeStatus === 'Rejected') { h += `<div style="text-align:center;margin-top:15px;font-size:12px;color:var(--danger);font-weight:bold;"><em>${t("status_rejected")} - Access Denied</em></div>`; }
-        else if (safeStatus === 'Completed') { h += `<div style="text-align:center;margin-top:15px;font-size:12px;color:var(--text-muted);font-weight:bold;"><em>PASS REVOKED / COMPLETED</em></div>`; }
-        else { h += `<div style="text-align:center;margin-top:15px;font-size:12px;color:var(--text-muted);"><em>${t("status_expired")}</em></div>`; } h += `</div>`;
-    });
-    listDiv.innerHTML = h;
-    displayData.forEach(pass => {
-        let safeId = String(pass.UniqueID).replace(/[^a-zA-Z0-9_-]/g, ''); let safeStatus = String(pass.Status || 'Pending'); const todayNum = new Date().setHours(0, 0, 0, 0); let endObj = parseFlexibleDate(pass.EndDate) || parseFlexibleDate(pass.StartDate); let endNum = endObj ? endObj.setHours(0, 0, 0, 0) : todayNum; const isExp = todayNum > endNum, isComp = isExp || safeStatus === 'Completed';
-        if (!isComp && safeStatus !== 'Rejected') { setTimeout(() => { const qre = _d(`qr-${safeId}`); if (qre) { qre.innerHTML = ""; try { new QRCode(qre, { text: String(pass.UniqueID), width: 120, height: 120, colorDark: "#000", colorLight: "#fff", correctLevel: QRCode.CorrectLevel.H }); } catch (err) {} } }, 200); }
-    });
-}
+    async function loadMyPasses(forceRefresh = false, isSilent = false) {
+        const listDiv = _d('my-passes-list'); if (!listDiv) return; let targetEmail = currentUser.email;
+        if (currentUser.role === 'admin') { const ei = _d('req-admin-email'), inputEmail = ei ? ei.value.toLowerCase().trim() : ''; if (inputEmail) targetEmail = inputEmail; else { if (!isSilent) listDiv.innerHTML = `<p style="color:var(--text-muted);font-size:13px;">${t("msg_enter_email")}</p>`; return; } }
+        const cachedKey = 'cached_passes_' + targetEmail, cached = localStorage.getItem(cachedKey);
+        if (!forceRefresh && cached && !isSilent) { try { let parsed = JSON.parse(cached); if (Array.isArray(parsed)) { processAndRenderPasses(parsed, targetEmail, false); } else localStorage.removeItem(cachedKey); } catch (e) { localStorage.removeItem(cachedKey); } } else if (!isSilent || forceRefresh) listDiv.innerHTML = `<p style="color:var(--text-muted);font-size:13px;">${t("fetching")}</p>`;
+        try { 
+            const res = await apiCall({ action: 'get_by_email', email: targetEmail }); const data = convertDriveUrls(res); 
+            if (Array.isArray(data)) { 
+                const newDataStr = JSON.stringify(data); if (isSilent && cached === newDataStr) return; 
+                try { localStorage.setItem(cachedKey, newDataStr); } catch(err) { localStorage.removeItem(cachedKey); }
+                processAndRenderPasses(data, targetEmail, isSilent); 
+            } 
+        } catch (e) { if (!isSilent && !cached) listDiv.innerHTML = '<p style="color:var(--danger);font-size:13px;">Error loading data.</p>'; }
+    }
 
-async function loadMyPasses(forceRefresh = false, isSilent = false) {
-    const listDiv = _d('my-passes-list'); if (!listDiv) return; let targetEmail = currentUser.email;
-    if (currentUser.role === 'admin') { const ei = _d('req-admin-email'), inputEmail = ei ? ei.value.toLowerCase().trim() : ''; if (inputEmail) targetEmail = inputEmail; else { if (!isSilent) listDiv.innerHTML = `<p style="color:var(--text-muted);font-size:13px;">${t("msg_enter_email")}</p>`; return; } }
-    const cachedKey = 'cached_passes_' + targetEmail, cached = localStorage.getItem(cachedKey);
-    if (!forceRefresh && cached && !isSilent) { try { let parsed = JSON.parse(cached); if (Array.isArray(parsed)) { processAndRenderPasses(parsed, targetEmail, false); } else localStorage.removeItem(cachedKey); } catch (e) { localStorage.removeItem(cachedKey); } } else if (!isSilent || forceRefresh) listDiv.innerHTML = `<p style="color:var(--text-muted);font-size:13px;">${t("fetching")}</p>`;
-    try { const res = await apiCall({ action: 'get_by_email', email: targetEmail }); const data = convertDriveUrls(res); if (Array.isArray(data)) { const newDataStr = JSON.stringify(data); if (isSilent && cached === newDataStr) return; localStorage.setItem(cachedKey, newDataStr); processAndRenderPasses(data, targetEmail, isSilent); } } catch (e) { if (!isSilent && !cached) listDiv.innerHTML = '<p style="color:var(--danger);font-size:13px;">Error.</p>'; }
-}
+    function parseLogs(row) {
+        let visits = [];
+        let gLogs = String(row.GateLogs || "").trim();
 
-function parseLogs(row) {
-    let visits = [];
-    let gLogs = String(row.GateLogs || "").trim();
+        if (gLogs.startsWith("[")) {
+            try {
+                let logs = JSON.parse(gLogs);
+                let openVisit = null;
+                logs.forEach(l => {
+                    let actionUpper = String(l.action || '').toUpperCase();
+                    let eventTime = parseFlexibleDate(l.time);
+                    if (actionUpper === 'IN' || actionUpper === 'CHECK_IN') {
+                        if (openVisit) visits.push(openVisit);
+                        openVisit = { in: eventTime, out: null, guardIn: l.guard || 'Unknown', guardOut: '' };
+                    } else if (actionUpper === 'OUT' || actionUpper === 'CHECK_OUT') {
+                        if (openVisit) {
+                            openVisit.out = eventTime;
+                            openVisit.guardOut = l.guard || 'Unknown';
+                            visits.push(openVisit);
+                            openVisit = null;
+                        } else {
+                            visits.push({ in: null, out: eventTime, guardIn: '', guardOut: l.guard || 'Unknown' });
+                        }
+                    }
+                });
+                if (openVisit) visits.push(openVisit);
+            } catch (e) {}
+        }
 
-    if (gLogs.startsWith("[")) {
-        try {
-            let logs = JSON.parse(gLogs);
+        if (visits.length === 0 && gLogs.length > 0 && gLogs !== "No Logs") {
+            let entries = gLogs.split(/\n|\|\|/);
             let openVisit = null;
-            logs.forEach(l => {
-                let actionUpper = String(l.action || '').toUpperCase();
-                let eventTime = parseFlexibleDate(l.time);
-                if (actionUpper === 'IN' || actionUpper === 'CHECK_IN') {
+            entries.forEach(entry => {
+                let parts = entry.split('|').map(p => p.trim());
+                let actionPart = parts[0] || '';
+                let timePart = parts[1] || '';
+                let guardPart = parts[2] || 'Unknown';
+
+                if (actionPart.includes('IN')) {
                     if (openVisit) visits.push(openVisit);
-                    openVisit = { in: eventTime, out: null, guardIn: l.guard || 'Unknown', guardOut: '' };
-                } else if (actionUpper === 'OUT' || actionUpper === 'CHECK_OUT') {
+                    openVisit = { in: parseFlexibleDate(timePart), out: null, guardIn: guardPart, guardOut: '' };
+                } else if (actionPart.includes('OUT')) {
                     if (openVisit) {
-                        openVisit.out = eventTime;
-                        openVisit.guardOut = l.guard || 'Unknown';
+                        openVisit.out = parseFlexibleDate(timePart);
+                        openVisit.guardOut = guardPart;
                         visits.push(openVisit);
                         openVisit = null;
                     } else {
-                        visits.push({ in: null, out: eventTime, guardIn: '', guardOut: l.guard || 'Unknown' });
+                        visits.push({ in: null, out: parseFlexibleDate(timePart), guardIn: '', guardOut: guardPart });
                     }
                 }
             });
             if (openVisit) visits.push(openVisit);
-        } catch (e) {}
+        }
+
+        if (visits.length === 0 && (row.CheckInTime || row.CheckOutTime)) {
+            visits.push({
+                in: parseFlexibleDate(row.CheckInTime),
+                out: parseFlexibleDate(row.CheckOutTime),
+                guardIn: row.ScannedByGuard || 'Unknown',
+                guardOut: row.ScannedByGuard || 'Unknown'
+            });
+        }
+
+        return visits;
     }
 
-    if (visits.length === 0 && gLogs.length > 0 && gLogs !== "No Logs") {
-        let entries = gLogs.split(/\n|\|\|/);
-        let openVisit = null;
-        entries.forEach(entry => {
-            let parts = entry.split('|').map(p => p.trim());
-            let actionPart = parts[0] || '';
-            let timePart = parts[1] || '';
-            let guardPart = parts[2] || 'Unknown';
+    function switchAdminTab(tName) { _q('.admin-nav-horizontal li').forEach(t => t.classList.remove('active')); const ni = _d(`nav-${tName}`); if (ni) ni.classList.add('active'); _q('.admin-section').forEach(s => s.classList.add('hidden')); const si = _d(`admin-sec-${tName}`); if (si) si.classList.remove('hidden'); }
+    function setAdminFilter(range, btnElement) { _q('.btn-filter').forEach(b => b.classList.remove('active')); if (btnElement) { const text = btnElement.innerText; _q('.btn-filter').forEach(b => { if (b.innerText === text) b.classList.add('active'); }); } currentAdminFilter = range; let p1 = _d('custom-date-picker'); if (range === 'custom') { if (p1) p1.classList.remove('hidden'); } else { if (p1) p1.classList.add('hidden'); } if (range !== 'custom') renderAdminData(globalAdminData); }
 
-            if (actionPart.includes('IN')) {
-                if (openVisit) visits.push(openVisit);
-                openVisit = { in: parseFlexibleDate(timePart), out: null, guardIn: guardPart, guardOut: '' };
-            } else if (actionPart.includes('OUT')) {
-                if (openVisit) {
-                    openVisit.out = parseFlexibleDate(timePart);
-                    openVisit.guardOut = guardPart;
-                    visits.push(openVisit);
-                    openVisit = null;
-                } else {
-                    visits.push({ in: null, out: parseFlexibleDate(timePart), guardIn: '', guardOut: guardPart });
-                }
+    function renderAdminData(data) {
+        if (!Array.isArray(data)) { data = []; } globalAdminData = data;
+        const tPending = _d('admin-table-pending'), tActive = _d('admin-table-active'), tHistory = _d('admin-table-history');
+        let hPending = '', hActive = '', hHistory = ''; 
+        const today = new Date(); today.setHours(0, 0, 0, 0); 
+        const tomorrow = new Date(today.getTime()); tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        let si = _d('filter-start'), ei = _d('filter-end'); 
+        let fStart = (si && si.value) ? si.value : ''; 
+        let fEnd = (ei && ei.value) ? ei.value : '';
+        let pendingCount = 0, activeCount = 0, historyCount = 0; 
+        let aDate = {}, aType = {}, aFacility = {}, aStatus = {};
+
+        data.forEach(row => {
+            if (!row || !row.UniqueID) return;
+            let rType = String(row.Type || ''); 
+            let rLocation = String(row.Location || ''); 
+            let rStatus = String(row.Status || 'Pending'); 
+            let rVisitorName = String(row.VisitorName || ''); 
+            let rHostEmail = String(row.HostEmail || '');
+            
+            let endDateObj = new Date((parseFlexibleDate(row.EndDate) || parseFlexibleDate(row.StartDate) || new Date()).getTime()); 
+            endDateObj.setHours(23, 59, 59, 999); 
+            const isExpired = endDateObj < today; 
+            const isPassExpiredOrFinished = isExpired || rStatus === 'Rejected' || rStatus === 'Completed'; 
+            const inRange = isDateInRange(row.StartDate, currentAdminFilter, fStart, fEnd);
+            
+            let formattedStart = formatToDDMMYYYY(row.StartDate); 
+            let formattedEnd = formatToDDMMYYYY(row.EndDate || row.StartDate); 
+            const dateStr = (formattedStart === formattedEnd) ? formattedStart : `${formattedStart} - ${formattedEnd}`;
+
+            if (inRange) { 
+                aType[rType] = (aType[rType] || 0) + 1; 
+                aFacility[rLocation] = (aFacility[rLocation] || 0) + 1; 
+                aStatus[rStatus] = (aStatus[rStatus] || 0) + 1; 
+                let dClean = formatToDDMMYYYY(row.StartDate); 
+                if (dClean !== '-') aDate[dClean] = (aDate[dClean] || 0) + 1; 
             }
-        });
-        if (openVisit) visits.push(openVisit);
-    }
 
-    if (visits.length === 0 && (row.CheckInTime || row.CheckOutTime)) {
-        visits.push({
-            in: parseFlexibleDate(row.CheckInTime),
-            out: parseFlexibleDate(row.CheckOutTime),
-            guardIn: row.ScannedByGuard || 'Unknown',
-            guardOut: row.ScannedByGuard || 'Unknown'
-        });
-    }
+            let startD = parseFlexibleDate(row.StartDate); if (startD) startD.setHours(0, 0, 0, 0); 
+            let endD = parseFlexibleDate(row.EndDate || row.StartDate); if (endD) endD.setHours(0, 0, 0, 0); 
+            let isMultiDay = (startD && endD && endD.getTime() > startD.getTime());
+            
+            let rowStyle = '', dateBadge = ''; 
+            if (startD && startD.getTime() === today.getTime() && !isPassExpiredOrFinished) { 
+                rowStyle = 'style="background: rgba(16, 185, 129, 0.1);"'; 
+                dateBadge += `<span style="display:inline-block;margin-top:4px;background:var(--success);color:#000;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;margin-right:5px;">TODAY</span>`; 
+            } else if (startD && startD.getTime() === tomorrow.getTime() && !isPassExpiredOrFinished) { 
+                rowStyle = 'style="background: rgba(59, 130, 246, 0.1);"'; 
+                dateBadge += `<span style="display:inline-block;margin-top:4px;background:#3b82f6;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;margin-right:5px;">TOMORROW</span>`; 
+            }
+            if (isMultiDay && !isPassExpiredOrFinished) { 
+                rowStyle = 'style="background: rgba(139, 92, 246, 0.15); border-left: 3px solid #8b5cf6;"'; 
+                dateBadge += `<span style="display:inline-block;margin-top:4px;background:#8b5cf6;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;letter-spacing:0.5px;">MULTI-DAY</span>`; 
+            }
+            if (dateBadge !== '') dateBadge = '<br>' + dateBadge; 
+            const finalDateStr = dateStr + dateBadge;
 
-    return visits;
-}
+            if (inRange) {
+                let visits = parseLogs(row);
+                if (visits.length > 0) {
+                    visits.forEach(v => {
+                        let inStr = v.in ? formatTime(v.in) : '-'; 
+                        let outStr = v.out ? formatTime(v.out) : '-'; 
+                        let durStr = '-';
+                        if (v.in && v.out) { 
+                            let diffMins = Math.floor((v.out.getTime() - v.in.getTime()) / 60000); 
+                            if (diffMins < 0) diffMins = 0; 
+                            let hs = Math.floor(diffMins / 60); 
+                            let ms = diffMins % 60; 
+                            durStr = `${hs}h ${ms}m`; 
+                        }
+                        let gStr = v.guardIn || '-'; 
+                        if (v.guardOut && v.guardOut !== v.guardIn) gStr += ` / ${v.guardOut}`;
 
-function switchAdminTab(tName) { _q('.admin-nav-horizontal li').forEach(t => t.classList.remove('active')); const ni = _d(`nav-${tName}`); if (ni) ni.classList.add('active'); _q('.admin-section').forEach(s => s.classList.add('hidden')); const si = _d(`admin-sec-${tName}`); if (si) si.classList.remove('hidden'); }
-function setAdminFilter(range, btnElement) { _q('.btn-filter').forEach(b => b.classList.remove('active')); if (btnElement) { const text = btnElement.innerText; _q('.btn-filter').forEach(b => { if (b.innerText === text) b.classList.add('active'); }); } currentAdminFilter = range; let p1 = _d('custom-date-picker'); if (range === 'custom') { if (p1) p1.classList.remove('hidden'); } else { if (p1) p1.classList.add('hidden'); } if (range !== 'custom') renderAdminData(globalAdminData); }
-
-function renderAdminData(data) {
-    if (!Array.isArray(data)) { data = []; } globalAdminData = data;
-    const tPending = _d('admin-table-pending'), tActive = _d('admin-table-active'), tHistory = _d('admin-table-history');
-    let hPending = '', hActive = '', hHistory = ''; 
-    const today = new Date(); today.setHours(0, 0, 0, 0); 
-    const tomorrow = new Date(today.getTime()); tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    let si = _d('filter-start'), ei = _d('filter-end'); 
-    let fStart = (si && si.value) ? si.value : ''; 
-    let fEnd = (ei && ei.value) ? ei.value : '';
-    let pendingCount = 0, activeCount = 0, historyCount = 0; 
-    let aDate = {}, aType = {}, aFacility = {}, aStatus = {};
-
-    data.forEach(row => {
-        if (!row || !row.UniqueID) return;
-        let rType = String(row.Type || ''); 
-        let rLocation = String(row.Location || ''); 
-        let rStatus = String(row.Status || 'Pending'); 
-        let rVisitorName = String(row.VisitorName || ''); 
-        let rHostEmail = String(row.HostEmail || '');
-        
-        let endDateObj = new Date((parseFlexibleDate(row.EndDate) || parseFlexibleDate(row.StartDate) || new Date()).getTime()); 
-        endDateObj.setHours(23, 59, 59, 999); 
-        const isExpired = endDateObj < today; 
-        const isPassExpiredOrFinished = isExpired || rStatus === 'Rejected' || rStatus === 'Completed'; 
-        const inRange = isDateInRange(row.StartDate, currentAdminFilter, fStart, fEnd);
-        
-        let formattedStart = formatToDDMMYYYY(row.StartDate); 
-        let formattedEnd = formatToDDMMYYYY(row.EndDate || row.StartDate); 
-        const dateStr = (formattedStart === formattedEnd) ? formattedStart : `${formattedStart} - ${formattedEnd}`;
-
-        if (inRange) { 
-            aType[rType] = (aType[rType] || 0) + 1; 
-            aFacility[rLocation] = (aFacility[rLocation] || 0) + 1; 
-            aStatus[rStatus] = (aStatus[rStatus] || 0) + 1; 
-            let dClean = formatToDDMMYYYY(row.StartDate); 
-            if (dClean !== '-') aDate[dClean] = (aDate[dClean] || 0) + 1; 
-        }
-
-        let startD = parseFlexibleDate(row.StartDate); if (startD) startD.setHours(0, 0, 0, 0); 
-        let endD = parseFlexibleDate(row.EndDate || row.StartDate); if (endD) endD.setHours(0, 0, 0, 0); 
-        let isMultiDay = (startD && endD && endD.getTime() > startD.getTime());
-        
-        let rowStyle = '', dateBadge = ''; 
-        if (startD && startD.getTime() === today.getTime() && !isPassExpiredOrFinished) { 
-            rowStyle = 'style="background: rgba(16, 185, 129, 0.1);"'; 
-            dateBadge += `<span style="display:inline-block;margin-top:4px;background:var(--success);color:#000;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;margin-right:5px;">TODAY</span>`; 
-        } else if (startD && startD.getTime() === tomorrow.getTime() && !isPassExpiredOrFinished) { 
-            rowStyle = 'style="background: rgba(59, 130, 246, 0.1);"'; 
-            dateBadge += `<span style="display:inline-block;margin-top:4px;background:#3b82f6;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;margin-right:5px;">TOMORROW</span>`; 
-        }
-        if (isMultiDay && !isPassExpiredOrFinished) { 
-            rowStyle = 'style="background: rgba(139, 92, 246, 0.15); border-left: 3px solid #8b5cf6;"'; 
-            dateBadge += `<span style="display:inline-block;margin-top:4px;background:#8b5cf6;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;letter-spacing:0.5px;">MULTI-DAY</span>`; 
-        }
-        if (dateBadge !== '') dateBadge = '<br>' + dateBadge; 
-        const finalDateStr = dateStr + dateBadge;
-
-        if (inRange) {
-            let visits = parseLogs(row);
-            if (visits.length > 0) {
-                visits.forEach(v => {
-                    let inStr = v.in ? formatTime(v.in) : '-'; 
-                    let outStr = v.out ? formatTime(v.out) : '-'; 
-                    let durStr = '-';
-                    if (v.in && v.out) { 
-                        let diffMins = Math.floor((v.out.getTime() - v.in.getTime()) / 60000); 
-                        if (diffMins < 0) diffMins = 0; 
-                        let hs = Math.floor(diffMins / 60); 
-                        let ms = diffMins % 60; 
-                        durStr = `${hs}h ${ms}m`; 
-                    }
-                    let gStr = v.guardIn || '-'; 
-                    if (v.guardOut && v.guardOut !== v.guardIn) gStr += ` / ${v.guardOut}`;
-
+                        hHistory += `<tr>
+                            <td style="color:var(--text-muted);">${dateStr}</td>
+                            <td><strong>${rVisitorName}</strong></td>
+                            <td><strong style="color:var(--noon-yellow);">${t(rType.toLowerCase())}</strong></td>
+                            <td>${rLocation}</td>
+                            <td style="color:var(--text-main);font-size:11px;">${inStr}</td>
+                            <td style="color:var(--text-main);font-size:11px;">${outStr}</td>
+                            <td style="font-size:12px;">${durStr}</td>
+                            <td style="color:var(--text-muted);font-size:11px;">${gStr}</td>
+                        </tr>`;
+                        historyCount++;
+                    });
+                } else if (isPassExpiredOrFinished) {
+                    let finalStatus = rStatus, sColor = 'var(--text-muted)';
+                    if (rStatus === 'Rejected') { finalStatus = t('status_rejected'); sColor = 'var(--danger)'; }
+                    else if (isExpired) { finalStatus = t('status_expired'); sColor = 'var(--danger)'; }
+                    else if (rStatus === 'Completed') { finalStatus = t('status_completed'); sColor = 'var(--success)'; }
+                    let badge = `<br><span style="color:${sColor};font-size:10px;font-weight:bold;">${finalStatus}</span>`;
+                    
                     hHistory += `<tr>
                         <td style="color:var(--text-muted);">${dateStr}</td>
-                        <td><strong>${rVisitorName}</strong></td>
+                        <td><strong>${rVisitorName}</strong>${badge}</td>
                         <td><strong style="color:var(--noon-yellow);">${t(rType.toLowerCase())}</strong></td>
                         <td>${rLocation}</td>
-                        <td style="color:var(--text-main);font-size:11px;">${inStr}</td>
-                        <td style="color:var(--text-main);font-size:11px;">${outStr}</td>
-                        <td style="font-size:12px;">${durStr}</td>
-                        <td style="color:var(--text-muted);font-size:11px;">${gStr}</td>
+                        <td style="color:var(--text-muted);font-size:11px;">-</td>
+                        <td style="color:var(--text-muted);font-size:11px;">-</td>
+                        <td style="color:var(--text-muted);font-size:11px;">-</td>
+                        <td style="color:var(--text-muted);font-size:11px;">-</td>
                     </tr>`;
                     historyCount++;
-                });
-            } else if (isPassExpiredOrFinished) {
-                let finalStatus = rStatus, sColor = 'var(--text-muted)';
-                if (rStatus === 'Rejected') { finalStatus = t('status_rejected'); sColor = 'var(--danger)'; }
-                else if (isExpired) { finalStatus = t('status_expired'); sColor = 'var(--danger)'; }
-                else if (rStatus === 'Completed') { finalStatus = t('status_completed'); sColor = 'var(--success)'; }
-                let badge = `<br><span style="color:${sColor};font-size:10px;font-weight:bold;">${finalStatus}</span>`;
-                
-                hHistory += `<tr>
-                    <td style="color:var(--text-muted);">${dateStr}</td>
-                    <td><strong>${rVisitorName}</strong>${badge}</td>
-                    <td><strong style="color:var(--noon-yellow);">${t(rType.toLowerCase())}</strong></td>
-                    <td>${rLocation}</td>
-                    <td style="color:var(--text-muted);font-size:11px;">-</td>
-                    <td style="color:var(--text-muted);font-size:11px;">-</td>
-                    <td style="color:var(--text-muted);font-size:11px;">-</td>
-                    <td style="color:var(--text-muted);font-size:11px;">-</td>
-                </tr>`;
-                historyCount++;
+                }
             }
+
+            if (!isPassExpiredOrFinished && inRange) {
+                let newCount = 0, removeCount = 0, revokeCount = 0;
+                let tMembersStr = String(row.TeamMembers || '');
+                if (tMembersStr.trim() !== '') { 
+                    var parsedMembers = parseTeamMembersString(tMembersStr);
+                    parsedMembers.forEach(function(m) {
+                        if (m.isRemoveRequested) removeCount++;
+                        if (m.isDeviceRevokeReq) revokeCount++;
+                        if (m.isNew) newCount++;
+                    });
+                }
+                let hasActionPending = false; 
+                if (rStatus === 'Approved' && (removeCount > 0 || revokeCount > 0 || newCount > 0)) hasActionPending = true;
+
+                if (rStatus === 'Pending' || hasActionPending) {
+                    let actionBtns = `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;">`;
+                    if (rStatus === 'Pending') { 
+                        actionBtns += `<button class="btn-primary btn-success btn-sm" style="width:auto;white-space:nowrap;" onclick="updateStatus('${row.UniqueID}','Approved')">${t('btn_approve')}</button>
+                        <button class="btn-primary btn-danger btn-sm" style="width:auto;white-space:nowrap;" onclick="updateStatus('${row.UniqueID}','Rejected')">${t('btn_reject')}</button>
+                        <button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button>`; 
+                    }
+                    actionBtns += `<button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button></div>`;
+                    
+                    let actionBadges = '';
+                    if (newCount > 0 || removeCount > 0 || revokeCount > 0) { 
+                        actionBadges = `<div style="display:flex; gap:10px; margin-top:8px; flex-wrap:wrap;">`; 
+                        if (newCount > 0) actionBadges += `<button onclick="openViewRecord('${row.UniqueID}', 'add')" style="background:var(--success);color:#fff;font-size:10px;padding:4px 8px;border-radius:4px;font-weight:bold;border:none;cursor:pointer;">🟢 ${newCount} NEW ADDED</button>`; 
+                        if (removeCount > 0) actionBadges += `<button onclick="openViewRecord('${row.UniqueID}', 'remove')" style="background:var(--danger);color:#fff;font-size:10px;padding:4px 8px;border-radius:4px;font-weight:bold;border:none;cursor:pointer;">🔴 ${removeCount} REMOVAL NEEDED</button>`; 
+                        if (revokeCount > 0) actionBadges += `<button onclick="openViewRecord('${row.UniqueID}', 'revoke')" style="background:#eab308;color:#000;font-size:10px;padding:4px 8px;border-radius:4px;font-weight:bold;border:none;cursor:pointer;">🟠 ${revokeCount} DEVICE REMOVAL NEEDED</button>`; 
+                        actionBadges += `</div>`; 
+                    } else if (rStatus === 'Pending') { 
+                        actionBadges = `<div style="margin-top:8px;"><span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:4px 8px;border-radius:4px;font-weight:bold;">NEW PASS REQUEST</span></div>`; 
+                    }
+                    hPending += `<tr ${rowStyle}><td style="color:var(--text-muted);">${finalDateStr}</td><td><strong>${rVisitorName}</strong><br><span style="font-size:10px;color:var(--text-muted);">Email: ${rHostEmail}</span>${actionBadges}</td><td>${t(rType.toLowerCase())}</td><td>${rLocation}</td><td>${actionBtns}</td></tr>`; 
+                    pendingCount++;
+                }
+
+                if (rStatus === 'Approved' && !hasActionPending) {
+                    const isChecked = checkedPrintIds.has(row.UniqueID) ? 'checked' : '';
+                    let cbHtml = `<input type="checkbox" class="print-checkbox row-checkbox" value="${row.UniqueID}" data-name="${rVisitorName}" data-type="${rType}" data-location="${rLocation}" data-status="${rStatus}" data-date="${dateStr}" ${isChecked} onchange="handlePrintCheckbox(this)">`;
+                    let actionBtns = `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;">
+                        <button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button>
+                        <button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="printQR('${rVisitorName}','${rType}','${rLocation}','${row.UniqueID}','${rStatus}','${dateStr}')">${t('btn_print')}</button>
+                        <button class="btn-primary btn-warning btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;color:#000;" onclick="openAdminGateModal('${row.UniqueID}')">🚪 GATE ACTION</button>
+                        <button class="btn-primary btn-danger btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="adminRevokePass('${row.UniqueID}')">🚫 REVOKE PASS</button>
+                        <button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button>
+                    </div>`;
+                    let ciTime = '-'; let durHtml = '-'; const isInside = !!row.CheckInTime && !row.CheckOutTime;
+                    if (isInside) { 
+                        let ciObj = parseFlexibleDate(row.CheckInTime); 
+                        if (ciObj && !isNaN(ciObj.getTime())) { 
+                            ciTime = formatTime(ciObj); 
+                            let now = new Date().getTime(); 
+                            let diffMins = Math.floor((now - ciObj.getTime()) / 60000); 
+                            if (diffMins < 0) diffMins = 0; 
+                            let h = Math.floor(diffMins / 60); 
+                            let m = diffMins % 60; 
+                            durHtml = `<span style="color:var(--noon-yellow); font-weight:bold;">${h}h ${m}m</span>`; 
+                        } 
+                    }
+                    hActive += `<tr ${rowStyle}><td>${cbHtml}</td><td style="color:var(--text-muted);">${finalDateStr}</td><td><strong>${rVisitorName}</strong><br><span style="font-size:10px;color:var(--text-muted);">Email: ${rHostEmail}</span></td><td>${t(rType.toLowerCase())}</td><td>${rLocation}</td><td style="color:var(--text-muted);font-size:11px;">${ciTime}</td><td>${durHtml}</td><td>${actionBtns}</td></tr>`; 
+                    activeCount++;
+                }
+            }
+        });
+
+        if (tPending) { tPending.innerHTML = pendingCount === 0 ? `<tr><td colspan="5" class="text-center" style="padding:30px;">${t("msg_no_pending")}</td></tr>` : hPending; }
+        if (tActive) { tActive.innerHTML = activeCount === 0 ? `<tr><td colspan="8" class="text-center" style="padding:30px;">${t("msg_no_active")}</td></tr>` : hActive; }
+        if (tHistory) { tHistory.innerHTML = historyCount === 0 ? `<tr><td colspan="8" class="text-center" style="padding:30px;">${t("msg_no_history")}</td></tr>` : hHistory; }
+
+        const st = _d('stat-type'); if (st) st.innerHTML = Object.keys(aType).map(k => `<div class="stat-row"><span>${t(k.toLowerCase())}</span><span class="stat-val">${aType[k]}</span></div>`).join('') || '<div class="stat-row"><span>-</span></div>';
+        const sf = _d('stat-facility'); if (sf) sf.innerHTML = Object.keys(aFacility).map(k => `<div class="stat-row"><span>${k}</span><span class="stat-val">${aFacility[k]}</span></div>`).join('') || '<div class="stat-row"><span>-</span></div>';
+        let sHtml = ''; if (aStatus['Approved']) sHtml += `<div class="stat-row"><span style="color:var(--success)">${t('status_approved')}</span><span class="stat-val">${aStatus['Approved']}</span></div>`; if (aStatus['Pending']) sHtml += `<div class="stat-row"><span style="color:var(--noon-yellow)">${t('status_pending')}</span><span class="stat-val">${aStatus['Pending']}</span></div>`; if (aStatus['Rejected']) sHtml += `<div class="stat-row"><span style="color:var(--danger)">${t('status_rejected')}</span><span class="stat-val">${aStatus['Rejected']}</span></div>`;
+        const ss = _d('stat-status'); if (ss) ss.innerHTML = sHtml || '<div class="stat-row"><span>-</span></div>';
+        let topDates = Object.entries(aDate).sort((a, b) => b[1] - a[1]).slice(0, 5); const sd = _d('stat-date'); if (sd) sd.innerHTML = topDates.map(([k, v]) => `<div class="stat-row"><span>${k}</span><span class="stat-val" style="color:var(--noon-yellow);">${v}</span></div>`).join('') || '<div class="stat-row"><span>-</span></div>';
+    }
+
+    function handlePrintCheckbox(cb) { if (cb.checked) checkedPrintIds.add(cb.value); else checkedPrintIds.delete(cb.value); }
+    function toggleSelectAll(src) { const cbs = _q('.print-checkbox.row-checkbox'); cbs.forEach(cb => { cb.checked = src.checked; handlePrintCheckbox(cb); }); }
+
+    async function loadAdminData(isSilent = false) {
+        const cachedM = localStorage.getItem('cached_admin_data');
+        if (cachedM && !isSilent) { 
+            try { 
+                let parsedM = JSON.parse(cachedM); 
+                if (Array.isArray(parsedM)) renderAdminData(parsedM.reverse()); 
+                else localStorage.removeItem('cached_admin_data'); 
+            } catch (e) { 
+                localStorage.removeItem('cached_admin_data'); 
+            } 
         }
-
-        if (!isPassExpiredOrFinished && inRange) {
-            let newCount = 0, removeCount = 0, revokeCount = 0;
-            let tMembersStr = String(row.TeamMembers || '');
-            if (tMembersStr.trim() !== '') { 
-                var parsedMembers = parseTeamMembersString(tMembersStr);
-                parsedMembers.forEach(function(m) {
-                    if (m.isRemoveRequested) removeCount++;
-                    if (m.isDeviceRevokeReq) revokeCount++;
-                    if (m.isNew) newCount++;
-                });
-            }
-            let hasActionPending = false; 
-            if (rStatus === 'Approved' && (removeCount > 0 || revokeCount > 0 || newCount > 0)) hasActionPending = true;
-
-            if (rStatus === 'Pending' || hasActionPending) {
-                let actionBtns = `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;">`;
-                if (rStatus === 'Pending') { 
-                    actionBtns += `<button class="btn-primary btn-success btn-sm" style="width:auto;white-space:nowrap;" onclick="updateStatus('${row.UniqueID}','Approved')">${t('btn_approve')}</button>
-                    <button class="btn-primary btn-danger btn-sm" style="width:auto;white-space:nowrap;" onclick="updateStatus('${row.UniqueID}','Rejected')">${t('btn_reject')}</button>
-                    <button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button>`; 
-                }
-                actionBtns += `<button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button></div>`;
-                
-                let actionBadges = '';
-                if (newCount > 0 || removeCount > 0 || revokeCount > 0) { 
-                    actionBadges = `<div style="display:flex; gap:10px; margin-top:8px; flex-wrap:wrap;">`; 
-                    if (newCount > 0) actionBadges += `<button onclick="openViewRecord('${row.UniqueID}', 'add')" style="background:var(--success);color:#fff;font-size:10px;padding:4px 8px;border-radius:4px;font-weight:bold;border:none;cursor:pointer;">🟢 ${newCount} NEW ADDED</button>`; 
-                    if (removeCount > 0) actionBadges += `<button onclick="openViewRecord('${row.UniqueID}', 'remove')" style="background:var(--danger);color:#fff;font-size:10px;padding:4px 8px;border-radius:4px;font-weight:bold;border:none;cursor:pointer;">🔴 ${removeCount} REMOVAL NEEDED</button>`; 
-                    if (revokeCount > 0) actionBadges += `<button onclick="openViewRecord('${row.UniqueID}', 'revoke')" style="background:#eab308;color:#000;font-size:10px;padding:4px 8px;border-radius:4px;font-weight:bold;border:none;cursor:pointer;">🟠 ${revokeCount} DEVICE REMOVAL NEEDED</button>`; 
-                    actionBadges += `</div>`; 
-                } else if (rStatus === 'Pending') { 
-                    actionBadges = `<div style="margin-top:8px;"><span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:4px 8px;border-radius:4px;font-weight:bold;">NEW PASS REQUEST</span></div>`; 
-                }
-                hPending += `<tr ${rowStyle}><td style="color:var(--text-muted);">${finalDateStr}</td><td><strong>${rVisitorName}</strong><br><span style="font-size:10px;color:var(--text-muted);">Email: ${rHostEmail}</span>${actionBadges}</td><td>${t(rType.toLowerCase())}</td><td>${rLocation}</td><td>${actionBtns}</td></tr>`; 
-                pendingCount++;
-            }
-
-            if (rStatus === 'Approved' && !hasActionPending) {
-                const isChecked = checkedPrintIds.has(row.UniqueID) ? 'checked' : '';
-                let cbHtml = `<input type="checkbox" class="print-checkbox row-checkbox" value="${row.UniqueID}" data-name="${rVisitorName}" data-type="${rType}" data-location="${rLocation}" data-status="${rStatus}" data-date="${dateStr}" ${isChecked} onchange="handlePrintCheckbox(this)">`;
-                let actionBtns = `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:250px;">
-                    <button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openViewRecord('${row.UniqueID}')">${t('btn_view')}</button>
-                    <button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="printQR('${rVisitorName}','${rType}','${rLocation}','${row.UniqueID}','${rStatus}','${dateStr}')">${t('btn_print')}</button>
-                    <button class="btn-primary btn-warning btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;color:#000;" onclick="openAdminGateModal('${row.UniqueID}')">🚪 GATE ACTION</button>
-                    <button class="btn-primary btn-danger btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="adminRevokePass('${row.UniqueID}')">🚫 REVOKE PASS</button>
-                    <button class="btn-primary btn-outline btn-sm" style="padding:6px 10px;font-size:10px;width:auto;white-space:nowrap;" onclick="openExtendPass('${row.UniqueID}','${rType}')">${t('btn_extend')}</button>
-                </div>`;
-                let ciTime = '-'; let durHtml = '-'; const isInside = !!row.CheckInTime && !row.CheckOutTime;
-                if (isInside) { 
-                    let ciObj = parseFlexibleDate(row.CheckInTime); 
-                    if (ciObj && !isNaN(ciObj.getTime())) { 
-                        ciTime = formatTime(ciObj); 
-                        let now = new Date().getTime(); 
-                        let diffMins = Math.floor((now - ciObj.getTime()) / 60000); 
-                        if (diffMins < 0) diffMins = 0; 
-                        let h = Math.floor(diffMins / 60); 
-                        let m = diffMins % 60; 
-                        durHtml = `<span style="color:var(--noon-yellow); font-weight:bold;">${h}h ${m}m</span>`; 
-                    } 
-                }
-                hActive += `<tr ${rowStyle}><td>${cbHtml}</td><td style="color:var(--text-muted);">${finalDateStr}</td><td><strong>${rVisitorName}</strong><br><span style="font-size:10px;color:var(--text-muted);">Email: ${rHostEmail}</span></td><td>${t(rType.toLowerCase())}</td><td>${rLocation}</td><td style="color:var(--text-muted);font-size:11px;">${ciTime}</td><td>${durHtml}</td><td>${actionBtns}</td></tr>`; 
-                activeCount++;
-            }
-        }
-    });
-
-    if (tPending) { tPending.innerHTML = pendingCount === 0 ? `<tr><td colspan="5" class="text-center" style="padding:30px;">${t("msg_no_pending")}</td></tr>` : hPending; }
-    if (tActive) { tActive.innerHTML = activeCount === 0 ? `<tr><td colspan="8" class="text-center" style="padding:30px;">${t("msg_no_active")}</td></tr>` : hActive; }
-    if (tHistory) { tHistory.innerHTML = historyCount === 0 ? `<tr><td colspan="8" class="text-center" style="padding:30px;">${t("msg_no_history")}</td></tr>` : hHistory; }
-
-    const st = _d('stat-type'); if (st) st.innerHTML = Object.keys(aType).map(k => `<div class="stat-row"><span>${t(k.toLowerCase())}</span><span class="stat-val">${aType[k]}</span></div>`).join('') || '<div class="stat-row"><span>-</span></div>';
-    const sf = _d('stat-facility'); if (sf) sf.innerHTML = Object.keys(aFacility).map(k => `<div class="stat-row"><span>${k}</span><span class="stat-val">${aFacility[k]}</span></div>`).join('') || '<div class="stat-row"><span>-</span></div>';
-    let sHtml = ''; if (aStatus['Approved']) sHtml += `<div class="stat-row"><span style="color:var(--success)">${t('status_approved')}</span><span class="stat-val">${aStatus['Approved']}</span></div>`; if (aStatus['Pending']) sHtml += `<div class="stat-row"><span style="color:var(--noon-yellow)">${t('status_pending')}</span><span class="stat-val">${aStatus['Pending']}</span></div>`; if (aStatus['Rejected']) sHtml += `<div class="stat-row"><span style="color:var(--danger)">${t('status_rejected')}</span><span class="stat-val">${aStatus['Rejected']}</span></div>`;
-    const ss = _d('stat-status'); if (ss) ss.innerHTML = sHtml || '<div class="stat-row"><span>-</span></div>';
-    let topDates = Object.entries(aDate).sort((a, b) => b[1] - a[1]).slice(0, 5); const sd = _d('stat-date'); if (sd) sd.innerHTML = topDates.map(([k, v]) => `<div class="stat-row"><span>${k}</span><span class="stat-val" style="color:var(--noon-yellow);">${v}</span></div>`).join('') || '<div class="stat-row"><span>-</span></div>';
-}
-
-function handlePrintCheckbox(cb) { if (cb.checked) checkedPrintIds.add(cb.value); else checkedPrintIds.delete(cb.value); }
-function toggleSelectAll(src) { const cbs = _q('.print-checkbox.row-checkbox'); cbs.forEach(cb => { cb.checked = src.checked; handlePrintCheckbox(cb); }); }
-
-async function loadAdminData(isSilent = false) {
-    const cachedM = localStorage.getItem('cached_admin_data');
-    if (cachedM && !isSilent) { 
+        
         try { 
-            let parsedM = JSON.parse(cachedM); 
-            if (Array.isArray(parsedM)) renderAdminData(parsedM.reverse()); 
-            else localStorage.removeItem('cached_admin_data'); 
+            const res = await apiCall({ action: 'get_all' }); 
+            const dataMain = convertDriveUrls(res); 
+            if (Array.isArray(dataMain)) { 
+                const newMStr = JSON.stringify(dataMain); 
+                try { localStorage.setItem('cached_admin_data', newMStr); } catch(err) { localStorage.removeItem('cached_admin_data'); }
+                renderAdminData(dataMain.reverse()); 
+            } else if (dataMain && Array.isArray(dataMain.data)) {
+                const newMStr = JSON.stringify(dataMain.data); 
+                try { localStorage.setItem('cached_admin_data', newMStr); } catch(err) { localStorage.removeItem('cached_admin_data'); }
+                renderAdminData(dataMain.data.reverse()); 
+            } else {
+                if (!cachedM) renderAdminData(globalAdminData || []); 
+            }
         } catch (e) { 
-            localStorage.removeItem('cached_admin_data'); 
-        } 
-    }
-    
-    try { 
-        const res = await apiCall({ action: 'get_all' }); 
-        const dataMain = convertDriveUrls(res); 
-        if (Array.isArray(dataMain)) { 
-            const newMStr = JSON.stringify(dataMain); 
-            localStorage.setItem('cached_admin_data', newMStr); 
-            renderAdminData(dataMain.reverse()); 
-        } else if (dataMain && Array.isArray(dataMain.data)) {
-            const newMStr = JSON.stringify(dataMain.data); 
-            localStorage.setItem('cached_admin_data', newMStr); 
-            renderAdminData(dataMain.data.reverse()); 
-        } else {
-            if (!cachedM) renderAdminData(globalAdminData || []); 
+            if (!isSilent && !cachedM) console.error("Fetch admin data error:", e); 
         }
-    } catch (e) { 
-        if (!isSilent && !cachedM) console.error("Fetch admin data error:", e); 
     }
-}
     async function updateStatus(id, newStatus) {
         if (autoRefreshTimer) clearInterval(autoRefreshTimer);
         if (!confirm(`Mark ${id} as ${newStatus}?`)) { startAutoRefresh(currentUser.role); return; }
