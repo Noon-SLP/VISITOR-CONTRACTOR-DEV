@@ -1442,22 +1442,42 @@ function handlePrintCheckbox(cb) { if (cb.checked) checkedPrintIds.add(cb.value)
 function toggleSelectAll(src) { const cbs = document.querySelectorAll('.print-checkbox.row-checkbox'); cbs.forEach(cb => { cb.checked = src.checked; handlePrintCheckbox(cb); }); }
 
 async function loadAdminData(isSilent = false) {
-    const cachedM = localStorage.getItem('cached_admin_data');
-    if (cachedM && !isSilent) {
-        try { let parsedM = JSON.parse(cachedM); if (Array.isArray(parsedM)) renderAdminData(parsedM.reverse()); else localStorage.removeItem('cached_admin_data'); } catch (e) { localStorage.removeItem('cached_admin_data'); }
+        const cachedM = localStorage.getItem('cached_admin_data');
+        if (cachedM && !isSilent) {
+            try { 
+                let parsedM = JSON.parse(cachedM); 
+                if (Array.isArray(parsedM) && parsedM.length > 0) renderAdminData(parsedM.reverse()); 
+            } catch (e) { localStorage.removeItem('cached_admin_data'); }
+        }
+        
+        try {
+            let resMain = await fetchJSONP(SCRIPT_URL + '?action=get_all');
+            let dataMain = convertDriveUrls(resMain);
+            
+            if (!Array.isArray(dataMain) || dataMain.length === 0) {
+                const postRes = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'get_all' })
+                });
+                if (postRes.ok) {
+                    const textData = await postRes.json();
+                    dataMain = convertDriveUrls(textData);
+                }
+            }
+
+            if (Array.isArray(dataMain) && dataMain.length > 0) {
+                const newMStr = JSON.stringify(dataMain);
+                try { localStorage.setItem('cached_admin_data', newMStr); } catch(err) { localStorage.removeItem('cached_admin_data'); }
+                renderAdminData(dataMain.reverse());
+            } else if (!cachedM) {
+                renderAdminData([]);
+            }
+        } catch (e) {
+            console.error("Fetch admin data error:", e);
+            if (!cachedM) renderAdminData(globalAdminData || []);
+        }
     }
-    try {
-        const resMain = await fetchJSONP(SCRIPT_URL + '?action=get_all');
-        const dataMain = convertDriveUrls(resMain);
-        if (Array.isArray(dataMain)) {
-            const newMStr = JSON.stringify(dataMain); if (isSilent && cachedM === newMStr) return;
-            try { localStorage.setItem('cached_admin_data', newMStr); } catch (err) { localStorage.removeItem('cached_admin_data'); }
-            renderAdminData(dataMain.reverse());
-        } else renderAdminData([]);
-    } catch (e) {
-        renderAdminData(globalAdminData || []); if (!isSilent && !cachedM) console.error(e);
-    }
-}
     async function updateStatus(id, newStatus) {
         if (autoRefreshTimer) clearInterval(autoRefreshTimer);
         if (!confirm(`Mark ${id} as ${newStatus}?`)) { startAutoRefresh(currentUser.role); return; }
