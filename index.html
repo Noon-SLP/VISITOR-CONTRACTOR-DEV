@@ -738,6 +738,64 @@ let targetPhotoType = ''; let capturedImages = { iqama: null, selfie: null, imei
 let teamList = []; let currentTeamCounter = 1; let isProcessingScan = false; let userSecurityPin = null;
 let lockedPassesData = null; let pinCreateMode = 'submit'; let currentBatchType = 'new';
 
+// ==========================================
+// CORE HELPER FUNCTIONS (RESTORED)
+// ==========================================
+
+function parseFlexibleDate(s) {
+    if (!s) return null; if (s instanceof Date) return isNaN(s.getTime()) ? null : s; let d = new Date(s); if (!isNaN(d.getTime())) return d;
+    if (typeof s === 'string') { const p = s.trim().split(/[\/\-\s]/); if (p.length >= 3) { let p0 = parseInt(p[0], 10), p1 = parseInt(p[1], 10), p2 = parseInt(p[2], 10); if (p2 < 100) p2 += 2000; if (p0 > 12) d = new Date(p2, p1 - 1, p0); else if (p1 > 12) d = new Date(p2, p0 - 1, p1); else d = new Date(p2, p1 - 1, p0); if (!isNaN(d.getTime())) return d; } }
+    return null;
+}
+
+function isDateInRange(s, ft, stStr, enStr) {
+    if (ft === 'all') return true; const d = parseFlexibleDate(s); if (!d) return true;
+    const now = new Date(), ts = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0), te = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    if (ft === 'today') return d >= ts && d <= te;
+    if (ft === 'weekly') { const w = new Date(ts); w.setDate(w.getDate() - 7); return d >= w && d <= te; }
+    if (ft === 'monthly') { const m = new Date(ts); m.setMonth(m.getMonth() - 1); return d >= m && d <= te; }
+    if (ft === '6months') { const m6 = new Date(ts); m6.setMonth(m6.getMonth() - 6); return d >= m6 && d <= te; }
+    if (ft === 'year') { const y = new Date(ts); y.setFullYear(y.getFullYear() - 1); return d >= y && d <= te; }
+    if (ft === 'custom') { if (!stStr || !enStr) return true; const st = parseFlexibleDate(stStr), en = parseFlexibleDate(enStr); if (st) st.setHours(0, 0, 0, 0); if (en) en.setHours(23, 59, 59, 999); if (st && en) return d >= st && d <= en; }
+    return true;
+}
+
+function getBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader(); reader.readAsDataURL(file);
+        reader.onload = (e) => {
+            const img = new Image(); img.onload = () => {
+                const canvas = document.createElement('canvas'); const MAX_WIDTH = 400; let width = img.width; let height = img.height;
+                if (width > MAX_WIDTH) { height = Math.round((height * MAX_WIDTH) / width); width = MAX_WIDTH; }
+                canvas.width = width; canvas.height = height; canvas.getContext('2d').drawImage(img, 0, 0, width, height); resolve(canvas.toDataURL('image/jpeg', 0.4));
+            }; img.onerror = reject; img.src = e.target.result;
+        }; reader.onerror = reject;
+    });
+}
+
+function getTinyBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader(); reader.readAsDataURL(file);
+        reader.onload = (e) => {
+            const img = new Image(); img.onload = () => {
+                const canvas = document.createElement('canvas'); const MAX_WIDTH = 120; let width = img.width; let height = img.height;
+                if (width > MAX_WIDTH) { height = Math.round((height * MAX_WIDTH) / width); width = MAX_WIDTH; }
+                canvas.width = width; canvas.height = height; canvas.getContext('2d').drawImage(img, 0, 0, width, height); resolve(canvas.toDataURL('image/jpeg', 0.2));
+            }; img.onerror = reject; img.src = e.target.result;
+        }; reader.onerror = reject;
+    });
+}
+
+function getLocalTimeStr() {
+    const d = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+// ==========================================
+// DATA FETCHING & PARSING
+// ==========================================
+
 function fetchJSONP(url) {
     return new Promise((resolve) => {
         const callbackName = 'jsonp_cb_' + Math.round(100000 * Math.random());
@@ -763,21 +821,16 @@ function fetchJSONP(url) {
 async function apiCall(payload) {
     try {
         let isGetAction = payload && payload.action && (payload.action === 'get_all' || payload.action === 'get_single' || payload.action === 'get_by_email');
-        
         if (isGetAction) {
             let fetchUrl = SCRIPT_URL + '?action=' + encodeURIComponent(payload.action);
             if (payload.email) fetchUrl += '&email=' + encodeURIComponent(payload.email);
             if (payload.id) fetchUrl += '&id=' + encodeURIComponent(payload.id);
             return await fetchJSONP(fetchUrl);
         }
-
         let formData = new URLSearchParams();
         for (let key in payload) {
-            if (typeof payload[key] === 'object') {
-                formData.append(key, JSON.stringify(payload[key]));
-            } else {
-                formData.append(key, payload[key]);
-            }
+            if (typeof payload[key] === 'object') formData.append(key, JSON.stringify(payload[key]));
+            else formData.append(key, payload[key]);
         }
         await fetch(SCRIPT_URL, {
             method: 'POST',
@@ -791,14 +844,6 @@ async function apiCall(payload) {
     }
 }
 
-// FIX: New Time Formatter to replace ugly ISO strings in Google Sheets
-function getLocalTimeStr() {
-    const d = new Date();
-    const pad = n => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-}
-
-// FIX: Updated to recognize BOTH http links and new Base64 data strings for images
 function parseTeamMembersString(tMembers) {
     if (!tMembers || !String(tMembers).trim()) return [];
     var str = String(tMembers).replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
@@ -814,8 +859,6 @@ function parseTeamMembersString(tMembers) {
         var nameMatch = block.match(/Name:\s*([^\|\n]+)/i);
         var iqamaMatch = block.match(/Iqama:\s*([^\|\n]+)/i);
         var deviceMatch = block.match(/Device:\s*([^\n]+)/i);
-        
-        // Match http URLs OR Base64 data strings
         var extractedUrls = block.match(/(https?:\/\/[^\s\n\|]+|data:image\/[^;]+;base64,[^\s\n\|]+)/gi) || [];
 
         if (nameMatch || iqamaMatch || extractedUrls.length > 0) {
@@ -855,10 +898,7 @@ window.showPinVerifyModal = function() {
         const errMsg = _d('pin-error-msg');
         if (errMsg) errMsg.classList.add('hidden');
         const pinInput = _d('verify-pin-input');
-        if (pinInput) {
-            pinInput.value = '';
-            pinInput.focus();
-        }
+        if (pinInput) { pinInput.value = ''; pinInput.focus(); }
     }
 }
 
@@ -869,18 +909,13 @@ function convertDriveUrls(o) { if (!o) return o; let s = JSON.stringify(o); s = 
 async function confirmPinCreate() {
     let p = _d('new-pin-input').value.trim();
     if (p.length !== 4) return alert("Please enter a valid 4-digit PIN.");
-    userSecurityPin = p;
-    let e = currentUser.email;
+    userSecurityPin = p; let e = currentUser.email;
     if (currentUser.role === 'admin') { const ei = _d('req-admin-email'); if (ei && ei.value) e = ei.value.toLowerCase().trim(); }
-    localStorage.setItem('user_pin_' + e, p);
-    _d('pin-create-modal').classList.add('hidden');
+    localStorage.setItem('user_pin_' + e, p); _d('pin-create-modal').classList.add('hidden');
     if (pinCreateMode === 'reset') {
         try { await apiCall({ action: 'update_pin', email: e, pin: p }); } catch (er) { console.error(er); }
-        setTimeout(() => loadMyPasses(true, true), 1000);
-        renderMyPasses(lockedPassesData);
-    } else {
-        submitRequest();
-    }
+        setTimeout(() => loadMyPasses(true, true), 1000); renderMyPasses(lockedPassesData);
+    } else submitRequest();
 }
 
 function closePinCreate() { _d('pin-create-modal').classList.add('hidden'); }
@@ -898,8 +933,7 @@ function processAndRenderPasses(d, e, s) {
     if (!bp && lp) { bp = lp; apiCall({ action: 'update_pin', email: e, pin: lp }).catch(er => {}); }
     
     if (bp && bp !== lp) {
-        lockedPassesData = d;
-        const vm = _d('pin-verify-modal');
+        lockedPassesData = d; const vm = _d('pin-verify-modal');
         if (!s && vm) { vm.classList.remove('hidden'); _d('pin-error-msg').classList.add('hidden'); _d('verify-pin-input').value = ''; }
         const ld = _d('my-passes-list');
         if (ld) ld.innerHTML = '<p style="color:var(--text-muted);font-size:13px;margin-top:20px;text-align:center;">Passes locked. <button class="btn-primary btn-sm" style="width:auto;padding:4px 10px;margin-left:10px;" onclick="showPinVerifyModal()">UNLOCK</button></p>';
@@ -907,8 +941,7 @@ function processAndRenderPasses(d, e, s) {
     }
     
     if (!bp && !lp && Array.isArray(d) && d.length > 0) {
-        lockedPassesData = d;
-        const cm = _d('pin-create-modal');
+        lockedPassesData = d; const cm = _d('pin-create-modal');
         if (!s && cm) { pinCreateMode = 'reset'; cm.classList.remove('hidden'); _d('new-pin-input').value = ''; }
         const ld = _d('my-passes-list');
         if (ld) ld.innerHTML = '<p style="color:var(--text-muted);font-size:13px;margin-top:20px;text-align:center;">Passes locked. Awaiting new PIN.</p>';
@@ -927,8 +960,7 @@ function confirmPinVerify() {
 }
 
 function closePinVerify() {
-    _d('pin-verify-modal').classList.add('hidden');
-    const ld = _d('my-passes-list');
+    _d('pin-verify-modal').classList.add('hidden'); const ld = _d('my-passes-list');
     if (ld) ld.innerHTML = '<p style="color:var(--text-muted);font-size:13px; margin-top:20px; text-align:center;">Passes locked. <button class="btn-primary btn-sm" style="width:auto; padding:4px 10px; margin-left:10px;" onclick="showPinVerifyModal()">UNLOCK</button></p>';
 }
 
@@ -1077,12 +1109,6 @@ function clearCapturedData(type) { capturedImages[type] = null; const p = _d(`pr
 async function startStream(vId) {
     if (liveStream) liveStream.getTracks().forEach(t => t.stop());
     try { liveStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacingMode } }); const ve = _d(vId); if (ve) ve.srcObject = liveStream; } catch (e) { alert("Camera access denied."); closeLiveCamera(); }
-}
-
-function parseFlexibleDate(s) {
-    if (!s) return null; if (s instanceof Date) return isNaN(s.getTime()) ? null : s; let d = new Date(s); if (!isNaN(d.getTime())) return d;
-    if (typeof s === 'string') { const p = s.trim().split(/[\/\-\s]/); if (p.length >= 3) { let p0 = parseInt(p[0], 10), p1 = parseInt(p[1], 10), p2 = parseInt(p[2], 10); if (p2 < 100) p2 += 2000; if (p0 > 12) d = new Date(p2, p1 - 1, p0); else if (p1 > 12) d = new Date(p2, p0 - 1, p1); else d = new Date(p2, p1 - 1, p0); if (!isNaN(d.getTime())) return d; } }
-    return null;
 }
 
 function formatToDDMMYYYY(s) { if (!s) return '-'; const d = parseFlexibleDate(s); if (!d) return '-'; return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`; }
@@ -1565,7 +1591,7 @@ async function performManualSearch() {
     async function submitAdminGateAction(actionType) {
         const id = _d('admin-gate-id').value; if (!id) return;
         let item = globalAdminData.find(x => String(x.UniqueID) === String(id));
-        const nowIso = getLocalTimeStr(); // FIX: Uses clean local time
+        const nowIso = getLocalTimeStr(); // Clean YYYY-MM-DD HH:mm:ss
         const adminInfo = currentUser.role === 'admin' ? `Admin: ${currentUser.name}` : `${currentUser.name} (${currentUser.location})`;
 
         if (item) { 
@@ -1866,7 +1892,7 @@ async function performManualSearch() {
         btn.innerText = "SAVING..."; btn.disabled = true;
         const gInfo = `${currentUser.name} (${currentUser.location})`;
         
-        const nowIso = getLocalTimeStr(); // FIX: Uses clean local time
+        const nowIso = getLocalTimeStr(); // Clean YYYY-MM-DD HH:mm:ss
         let item = globalAdminData.find(x => String(x.UniqueID).toUpperCase() === String(currentScannedID).toUpperCase());
         if (item) {
             if (currentScanAction === 'check_in') {
