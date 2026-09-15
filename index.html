@@ -181,14 +181,14 @@ function renderAdminData(data, historyData = []){
   if(Array.isArray(globalHistoryData) && globalHistoryData.length > 0){
     let historyRows = [...globalHistoryData].reverse();
     historyRows.forEach(hRow => {
-      let valPeriod = hRow["Validity Period"] || hRow["ValidityPeriod"] || hRow["validity_period"] || '-';
-      let vName = hRow["Name"] || hRow["VisitorName"] || hRow["name"] || '-';
-      let hType = hRow["Type"] || hRow["type"] || '-';
-      let hFacility = hRow["Facility"] || hRow["Location"] || hRow["facility"] || '-';
-      let checkIn = hRow["Check-In"] || hRow["CheckIn"] || hRow["check_in"] || '-';
-      let checkOut = hRow["Check-Out"] || hRow["CheckOut"] || hRow["check_out"] || '-';
-      let duration = hRow["Duration"] || hRow["duration"] || '-';
-      let scannedBy = hRow["Scanned By"] || hRow["ScannedBy"] || hRow["scanned_by"] || '-';
+      let valPeriod = hRow["VALIDITY"] || hRow["Validity Period"] || hRow["ValidityPeriod"] || hRow["validity_period"] || '-';
+      let vName = hRow["NAME"] || hRow["Name"] || hRow["VisitorName"] || hRow["name"] || '-';
+      let hType = hRow["TYPE"] || hRow["Type"] || hRow["type"] || '-';
+      let hFacility = hRow["FACILITY"] || hRow["Facility"] || hRow["Location"] || hRow["facility"] || '-';
+      let checkIn = hRow["CHECK-IN"] || hRow["Check-In"] || hRow["CheckIn"] || hRow["check_in"] || '-';
+      let checkOut = hRow["CHECK-OUT"] || hRow["Check-Out"] || hRow["CheckOut"] || hRow["check_out"] || '-';
+      let duration = hRow["DURATION"] || hRow["Duration"] || hRow["duration"] || '-';
+      let scannedBy = hRow["SCANNED BY"] || hRow["Scanned By"] || hRow["ScannedBy"] || hRow["scanned_by"] || '-';
 
       let outDisplay = (checkOut && checkOut !== '-') ? checkOut : '<span style="color:var(--success);font-weight:bold;">ACTIVE</span>';
       let durDisplay = (duration === 'ACTIVE' || !checkOut || checkOut === '-') ? '<span style="color:var(--success);font-weight:bold;">INSIDE</span>' : `<span style="color:var(--noon-yellow);font-weight:bold;">${duration}</span>`;
