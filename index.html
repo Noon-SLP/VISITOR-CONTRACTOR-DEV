@@ -53,7 +53,40 @@ async function submitRequest(ka=false){const ti=document.getElementById('req-typ
 function downloadQR(id){let safeId=String(id).replace(/[^a-zA-Z0-9_-]/g,'');const qrBox=document.getElementById('qr-'+safeId);if(!qrBox)return;let canvas=qrBox.querySelector('canvas');let img=qrBox.querySelector('img');let sourceImage=canvas&&canvas.style.display!=='none'?canvas:(img&&img.src?img:null);if(!sourceImage)return alert("QR Code not ready yet.");let size=150;let padding=20;let newCanvas=document.createElement('canvas');newCanvas.width=size+(padding*2);newCanvas.height=size+(padding*2);let ctx=newCanvas.getContext('2d');ctx.fillStyle="#ffffff";ctx.fillRect(0,0,newCanvas.width,newCanvas.height);ctx.drawImage(sourceImage,padding,padding,size,size);const link=document.createElement('a');link.href=newCanvas.toDataURL('image/png');link.download=`Noon_Pass_QR_${safeId}.png`;document.body.appendChild(link);link.click();document.body.removeChild(link);}
 function renderMyPasses(data){const listDiv=document.getElementById('my-passes-list');if(!listDiv)return;let h='';if(!Array.isArray(data)||data.length===0){listDiv.innerHTML=`<p style="color:var(--text-muted);font-size:13px;">${t("msg_no_history")}</p>`;return;}let displayData=[...data].reverse();myPassesData=displayData;displayData.forEach(pass=>{let safeId=String(pass.UniqueID).replace(/[^a-zA-Z0-9_-]/g,'');let safeType=String(pass.Type||'');let safeStatus=String(pass.Status||'Pending');let safeLoc=String(pass.Location||'');const todayNum=new Date().setHours(0,0,0,0);let endObj=parseFlexibleDate(pass.EndDate)||parseFlexibleDate(pass.StartDate);let endNum=endObj?endObj.setHours(0,0,0,0):todayNum;const isExp=todayNum>endNum,isComp=isExp||safeStatus==='Completed';let st=t(safeStatus==='Approved'?'status_approved':safeStatus==='Rejected'?'status_rejected':safeStatus==='Completed'?'status_completed':'status_pending');let sc=(safeStatus==='Approved'?'var(--success)':safeStatus==='Rejected'?'var(--danger)':safeStatus==='Completed'?'var(--text-muted)':'var(--noon-yellow)');if(isExp&&safeStatus!=='Rejected'&&safeStatus!=='Completed'){st=t('status_expired');sc='var(--text-muted)';}const valText=`(${formatToDDMMYYYY(pass.StartDate)} - ${formatToDDMMYYYY(pass.EndDate||pass.StartDate)})`;h+=`<div class="pass-item" id="pass-card-${safeId}"><div class="pass-header"><div><strong style="color:white;font-size:14px;">${pass.VisitorName}</strong><br><span style="font-size:11px;color:var(--text-muted);">${t(safeType.toLowerCase())} • ${safeLoc}</span><br><span style="font-size:10px;color:var(--noon-yellow);">${valText}</span></div><div style="text-align:right;"><span style="font-size:11px;font-weight:bold;color:${sc};text-transform:uppercase;">${st}</span><br><span style="font-size:10px;color:var(--text-muted);">${pass.UniqueID}</span></div></div>`;if(!isComp&&safeStatus!=='Rejected'){h+=`<div style="text-align:center;margin-top:10px;"><div class="qr-box" id="qr-${safeId}" style="background:white;padding:10px;border-radius:6px;display:inline-block;min-width:140px;min-height:140px;"></div><div style="margin-top:15px;" id="save-btn-container-${safeId}"><button class="btn-primary btn-outline btn-sm" style="margin-bottom:8px;" onclick="downloadQR('${pass.UniqueID}')" data-i18n="save_qr">${t('save_qr')}</button><br><button class="btn-primary btn-warning btn-sm" style="color:#000; margin-bottom:8px;" onclick="openAddMoreModal('${pass.UniqueID}')">➕ ${t('add_more_people')}</button><br><button class="btn-primary btn-outline btn-sm" style="color:var(--text-main);" onclick="openViewRecord('${pass.UniqueID}')">👁️ SEE MEMBERS</button></div></div>`;}else if(safeStatus==='Rejected'){h+=`<div style="text-align:center;margin-top:15px;font-size:12px;color:var(--danger);font-weight:bold;"><em>${t("status_rejected")} - Access Denied</em></div>`;}else if(safeStatus==='Completed'){h+=`<div style="text-align:center;margin-top:15px;font-size:12px;color:var(--text-muted);font-weight:bold;"><em>PASS REVOKED / COMPLETED</em></div>`;}else{h+=`<div style="text-align:center;margin-top:15px;font-size:12px;color:var(--text-muted);"><em>${t("status_expired")}</em></div>`;}h+=`</div>`;});listDiv.innerHTML=h;displayData.forEach(pass=>{let safeId=String(pass.UniqueID).replace(/[^a-zA-Z0-9_-]/g,'');let safeStatus=String(pass.Status||'Pending');const todayNum=new Date().setHours(0,0,0,0);let endObj=parseFlexibleDate(pass.EndDate)||parseFlexibleDate(pass.StartDate);let endNum=endObj?endObj.setHours(0,0,0,0):todayNum;const isExp=todayNum>endNum,isComp=isExp||safeStatus==='Completed';if(!isComp&&safeStatus!=='Rejected'){setTimeout(()=>{const qre=document.getElementById(`qr-${safeId}`);if(qre){qre.innerHTML="";try{new QRCode(qre,{text:String(pass.UniqueID),width:120,height:120,colorDark:"#000",colorLight:"#fff",correctLevel:QRCode.CorrectLevel.H});}catch(err){}}},200);}});}
 async function loadMyPasses(forceRefresh=false,isSilent=false){const listDiv=document.getElementById('my-passes-list');if(!listDiv)return;let targetEmail=currentUser.email;if(currentUser.role==='admin'){const ei=document.getElementById('req-admin-email'),inputEmail=ei?ei.value.toLowerCase().trim():'';if(inputEmail)targetEmail=inputEmail;else{if(!isSilent)listDiv.innerHTML=`<p style="color:var(--text-muted);font-size:13px;">${t("msg_enter_email")}</p>`;return;}}const cachedKey='cached_passes_'+targetEmail,cached=localStorage.getItem(cachedKey);if(!forceRefresh&&cached&&!isSilent){try{let parsed=JSON.parse(cached);if(Array.isArray(parsed)){processAndRenderPasses(parsed,targetEmail,false);}else localStorage.removeItem(cachedKey);}catch(e){localStorage.removeItem(cachedKey);}}else if(!isSilent||forceRefresh)listDiv.innerHTML=`<p style="color:var(--text-muted);font-size:13px;">${t("fetching")}</p>`;try{const res=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'get_by_email',email:targetEmail}),redirect:'follow'});if(!res.ok)throw new Error("HTTP error");const data=convertDriveUrls(await res.json());if(Array.isArray(data)){const newDataStr=JSON.stringify(data);if(isSilent&&cached===newDataStr)return;localStorage.setItem(cachedKey,newDataStr);processAndRenderPasses(data,targetEmail,isSilent);}}catch(e){if(!isSilent&&!cached)listDiv.innerHTML='<p style="color:var(--danger);font-size:13px;">Error.</p>';}}
-function parseLogs(row){let visits=[];let gLogs=String(row.GateLogs||"");if(!gLogs.trim()&&row.CheckInTime){visits.push({in:new Date(row.CheckInTime),out:row.CheckOutTime?new Date(row.CheckOutTime):null,guardIn:row.ScannedByGuard||'Unknown',guardOut:row.ScannedByGuard||'Unknown'});return visits;}if(gLogs.startsWith("[")){try{let logs=JSON.parse(gLogs);let currentVisit=null;logs.forEach(l=>{if(l.action==='IN'){currentVisit={in:new Date(l.time),out:null,guardIn:l.guard||'Unknown',guardOut:''};visits.push(currentVisit);}else if(l.action==='OUT'){if(currentVisit&&!currentVisit.out){currentVisit.out=new Date(l.time);currentVisit.guardOut=l.guard||'Unknown';}else{visits.push({in:null,out:new Date(l.time),guardIn:'',guardOut:l.guard||'Unknown'});}}});}catch(e){}}return visits;}
+
+function parseLogs(row){
+  let visits=[];
+  let gLogs=String(row.GateLogs||"");
+  if(gLogs.startsWith("[")){
+    try{
+      let logs=JSON.parse(gLogs);
+      let currentVisit=null;
+      logs.forEach(l=>{
+        if(l.action==='IN'){
+          currentVisit={in:new Date(l.time),out:null,guardIn:l.guard||'Unknown',guardOut:''};
+          visits.push(currentVisit);
+        }else if(l.action==='OUT'){
+          if(currentVisit&&!currentVisit.out){
+            currentVisit.out=new Date(l.time);
+            currentVisit.guardOut=l.guard||'Unknown';
+          }else{
+            visits.push({in:null,out:new Date(l.time),guardIn:'',guardOut:l.guard||'Unknown'});
+          }
+        }
+      });
+    }catch(e){}
+  }
+  if(visits.length===0 && row.CheckInTime){
+    visits.push({
+      in: new Date(row.CheckInTime),
+      out: row.CheckOutTime ? new Date(row.CheckOutTime) : null,
+      guardIn: row.ScannedByGuard || 'Unknown',
+      guardOut: row.CheckOutTime ? (row.ScannedByGuard || 'Unknown') : ''
+    });
+  }
+  return visits;
+}
+
 function switchAdminTab(tName){document.querySelectorAll('.admin-nav-horizontal li').forEach(t=>t.classList.remove('active'));const ni=document.getElementById(`nav-${tName}`);if(ni)ni.classList.add('active');document.querySelectorAll('.admin-section').forEach(s=>s.classList.add('hidden'));const si=document.getElementById(`admin-sec-${tName}`);if(si)si.classList.remove('hidden');}
 function setAdminFilter(range,btnElement){document.querySelectorAll('.btn-filter').forEach(b=>b.classList.remove('active'));if(btnElement){const text=btnElement.innerText;document.querySelectorAll('.btn-filter').forEach(b=>{if(b.innerText===text)b.classList.add('active');});}currentAdminFilter=range;let p1=document.getElementById('custom-date-picker');if(range==='custom'){if(p1)p1.classList.remove('hidden');}else{if(p1)p1.classList.add('hidden');}if(range!=='custom')renderAdminData(globalAdminData);}
 
@@ -126,7 +159,7 @@ function renderAdminData(data){
       }else{
         visits.forEach((v, vIdx)=>{
           let inStr=v.in?formatTime(v.in):'-';
-          let outStr=v.out?formatTime(v.out):'<span style="color:var(--noon-yellow);font-weight:bold;">INSIDE FACILITY</span>';
+          let outStr=v.out?formatTime(v.out):'<span style="color:var(--success);font-weight:bold;">INSIDE FACILITY</span>';
           let durStr='-';
           if(v.in&&v.out){
             let diffMins=Math.floor((v.out.getTime()-v.in.getTime())/60000);
@@ -512,17 +545,35 @@ async function confirmAction(){
   const actionDone = currentScanAction;
   const targetId = currentScannedID;
   const gInfo = `${currentUser.name} (${currentUser.location})`;
+  const nowIso = new Date().toISOString();
 
-  let localRecord=globalAdminData.find(x=>String(x.UniqueID).toUpperCase()===String(targetId).toUpperCase());
+  let localRecord = globalAdminData.find(x => String(x.UniqueID).toUpperCase() === String(targetId).toUpperCase());
   if(localRecord){
-    if(actionDone==='check_in'){
-      localRecord.CheckInTime=new Date().toISOString();
-      localRecord.CheckOutTime='';
-      localRecord.ScannedByGuard=gInfo;
-    }else if(actionDone==='check_out'){
-      localRecord.CheckOutTime=new Date().toISOString();
-      localRecord.ScannedByGuard=gInfo;
+    let existingLogs = [];
+    try {
+      let logStr = String(localRecord.GateLogs || '');
+      if(logStr.startsWith('[')) existingLogs = JSON.parse(logStr);
+    } catch(e){}
+
+    existingLogs.push({
+      action: actionDone === 'check_in' ? 'IN' : 'OUT',
+      time: nowIso,
+      guard: gInfo,
+      headCount: hcVal
+    });
+
+    localRecord.GateLogs = JSON.stringify(existingLogs);
+
+    if(actionDone === 'check_in'){
+      localRecord.CheckInTime = nowIso;
+      localRecord.CheckOutTime = '';
+      localRecord.ScannedByGuard = gInfo;
+    } else if(actionDone === 'check_out'){
+      localRecord.CheckOutTime = nowIso;
+      localRecord.ScannedByGuard = gInfo;
     }
+
+    renderAdminData(globalAdminData);
   }
 
   closeScanResult();
