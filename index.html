@@ -177,25 +177,26 @@ function renderAdminData(data, historyData = []){
     }
   });
 
+  // --- RENDER DEDICATED HISTORY SHEET ROWS ---
   if(Array.isArray(globalHistoryData) && globalHistoryData.length > 0){
     let historyRows = [...globalHistoryData].reverse();
     historyRows.forEach(hRow => {
-      let valPeriod = hRow["Validity Period"] || '-';
-      let vName = hRow["Name"] || '-';
-      let hType = hRow["Type"] || '-';
-      let hFacility = hRow["Facility"] || '-';
-      let checkIn = hRow["Check-In"] || '-';
-      let checkOut = hRow["Check-Out"] || '-';
-      let duration = hRow["Duration"] || '-';
-      let scannedBy = hRow["Scanned By"] || '-';
+      let valPeriod = hRow["Validity Period"] || hRow["ValidityPeriod"] || hRow["validity_period"] || '-';
+      let vName = hRow["Name"] || hRow["VisitorName"] || hRow["name"] || '-';
+      let hType = hRow["Type"] || hRow["type"] || '-';
+      let hFacility = hRow["Facility"] || hRow["Location"] || hRow["facility"] || '-';
+      let checkIn = hRow["Check-In"] || hRow["CheckIn"] || hRow["check_in"] || '-';
+      let checkOut = hRow["Check-Out"] || hRow["CheckOut"] || hRow["check_out"] || '-';
+      let duration = hRow["Duration"] || hRow["duration"] || '-';
+      let scannedBy = hRow["Scanned By"] || hRow["ScannedBy"] || hRow["scanned_by"] || '-';
 
-      let outDisplay = checkOut ? checkOut : '<span style="color:var(--success);font-weight:bold;">ACTIVE</span>';
-      let durDisplay = (duration === 'ACTIVE') ? '<span style="color:var(--success);font-weight:bold;">INSIDE</span>' : `<span style="color:var(--noon-yellow);font-weight:bold;">${duration}</span>`;
+      let outDisplay = (checkOut && checkOut !== '-') ? checkOut : '<span style="color:var(--success);font-weight:bold;">ACTIVE</span>';
+      let durDisplay = (duration === 'ACTIVE' || !checkOut || checkOut === '-') ? '<span style="color:var(--success);font-weight:bold;">INSIDE</span>' : `<span style="color:var(--noon-yellow);font-weight:bold;">${duration}</span>`;
 
       hHistory += `<tr>
         <td style="color:var(--text-muted);">${valPeriod}</td>
         <td><strong>${vName}</strong></td>
-        <td><strong style="color:var(--noon-yellow);">${t(hType.toLowerCase())}</strong></td>
+        <td><strong style="color:var(--noon-yellow);">${t(String(hType).toLowerCase())}</strong></td>
         <td>${hFacility}</td>
         <td style="color:var(--text-main);font-size:11px;">${checkIn}</td>
         <td style="color:var(--text-main);font-size:11px;">${outDisplay}</td>
