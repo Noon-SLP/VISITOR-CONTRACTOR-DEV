@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Noon SLP - Access System</title>
-  <link rel="icon" type="image/jpeg" href="logo.jpeg" />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+  <link rel="icon" type="image/jpeg" href="logo.jpeg">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
 
@@ -23,175 +23,41 @@
       --sidebar-bg:#12161f;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: var(--bg-dark);
-      color: var(--text-main);
-      font-family: 'Inter', sans-serif;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-    .hidden { display: none !important; }
-    .input-field, select, input[type="date"], input[type="text"], input[type="email"], input[type="password"] {
-      width: 100%;
-      padding: 12px 14px;
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      background: var(--input-bg);
-      color: var(--text-main);
-      outline: none;
-    }
-    .input-field:focus, select:focus {
-      border-color: var(--noon-yellow);
-    }
-    .btn-primary, .btn-outline, .btn-danger, .btn-success {
-      border: none;
-      border-radius: 8px;
-      font-weight: 700;
-      padding: 12px 18px;
-      cursor: pointer;
-      transition: 0.2s ease;
-    }
-    .btn-primary {
-      background: var(--noon-yellow);
-      color: #000;
-    }
-    .btn-outline {
-      background: transparent;
-      border: 1px solid var(--noon-yellow);
-      color: var(--noon-yellow);
-    }
-    .btn-danger {
-      background: var(--danger);
-      color: white;
-    }
-    .btn-success {
-      background: var(--success);
-      color: white;
-    }
-    .login-container {
-      max-width: 420px;
-      margin: 40px auto;
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 16px;
-      padding: 28px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.45);
-    }
-    .logo-box {
-      width: 130px;
-      height: 130px;
-      margin: 0 auto 18px;
-      border-radius: 14px;
-      background: #12151c url('logo.jpeg') center/contain no-repeat;
-    }
-    .role-tabs {
-      display: flex;
-      margin-bottom: 20px;
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    .role-tab {
-      flex: 1;
-      padding: 12px;
-      text-align: center;
-      background: #0a0d13;
-      color: var(--text-muted);
-      cursor: pointer;
-      font-weight: 700;
-      text-transform: uppercase;
-      font-size: 11px;
-    }
-    .role-tab.active {
-      background: var(--noon-yellow);
-      color: #000;
-    }
-    .input-group {
-      margin-bottom: 14px;
-    }
-    .input-group label {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-    .dashboard {
-      display: none;
-      padding: 24px;
-    }
-    .dashboard.active {
-      display: block;
-    }
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-bottom: 16px;
-      margin-bottom: 24px;
-      border-bottom: 1px solid var(--border-color);
-    }
-    .header h2 {
-      color: var(--noon-yellow);
-      font-size: 22px;
-    }
-    .ops-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-    .ops-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 18px;
-    }
-    .pass-item {
-      background: var(--input-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 14px;
-      margin-bottom: 12px;
-    }
-    .pass-header {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: flex-start;
-    }
-    .qr-box {
-      background: white;
-      padding: 10px;
-      display: inline-block;
-      border-radius: 8px;
-      margin-top: 12px;
-    }
-    .scan-result-card {
-      padding: 16px;
-      border-radius: 12px;
-      margin-top: 18px;
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-    }
-    .bg-green { background: var(--success); }
-    .bg-red { background: var(--danger); }
-    .bg-blue { background: #3b82f6; }
-    .bg-yellow { background: var(--noon-yellow); color: #000; }
+    *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif}
+    body{background-color:var(--bg-dark);color:var(--text-main);min-height:100vh;overflow-x:hidden}
+    .hidden{display:none!important}
+    .login-container{max-width:440px;margin:60px auto;background:var(--card-bg);border:1px solid var(--border-color);border-radius:14px;padding:30px;box-shadow:0 20px 50px rgba(0,0,0,.4)}
+    .logo-box{width:150px;height:150px;margin:0 auto 18px;border-radius:14px;background:url('logo.jpeg') center/contain no-repeat #111}
+    .role-tabs{display:flex;gap:8px;border:1px solid var(--border-color);border-radius:8px;overflow:hidden;margin-bottom:20px}
+    .role-tab{flex:1;text-align:center;padding:12px 10px;background:#0d1117;color:var(--text-muted);font-weight:700;font-size:11px;cursor:pointer;text-transform:uppercase}
+    .role-tab.active{background:var(--noon-yellow);color:#000}
+    .input-group{margin-bottom:16px}
+    .input-group label{display:block;font-size:12px;color:var(--text-muted);margin-bottom:6px}
+    .input-field{width:100%;padding:13px 12px;border:1px solid var(--border-color);border-radius:8px;background:var(--input-bg);color:var(--text-main);outline:none}
+    .input-field:focus{border-color:var(--noon-yellow)}
+    .btn-primary{width:100%;padding:14px 18px;border:none;border-radius:8px;background:var(--noon-yellow);color:#000;font-weight:700;cursor:pointer}
+    .btn-outline{padding:10px 16px;border:1px solid var(--noon-yellow);border-radius:8px;background:transparent;color:var(--noon-yellow);font-weight:700;cursor:pointer}
+    .btn-danger{padding:10px 16px;border:none;border-radius:8px;background:var(--danger);color:#fff;font-weight:700;cursor:pointer}
+    .btn-success{padding:10px 16px;border:none;border-radius:8px;background:var(--success);color:#fff;font-weight:700;cursor:pointer}
 
-    #reader {
-      width: 100%;
-      max-width: 100%;
-      min-height: 220px;
-      background: #000;
-      border-radius: 10px;
-      border: 1px solid var(--border-color);
-    }
-
-    @media (max-width: 768px) {
-      .ops-grid {
-        grid-template-columns: 1fr;
-      }
-    }
+    #app-layout{display:flex;min-height:100vh}
+    .dashboard{width:100%;padding:22px}
+    .header{display:flex;justify-content:space-between;align-items:center;padding-bottom:16px;margin-bottom:20px;border-bottom:1px solid var(--border-color)}
+    .header h2{color:var(--noon-yellow);font-size:26px}
+    .ops-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    .ops-card{background:var(--card-bg);border:1px solid var(--border-color);padding:20px;border-radius:12px}
+    .pass-item{background:var(--input-bg);border:1px solid var(--border-color);padding:12px;border-radius:8px;margin-bottom:12px}
+    .pass-header{display:flex;justify-content:space-between;gap:12px}
+    .qr-box{display:inline-block;padding:10px;background:#fff;border-radius:8px;margin-top:10px}
+    #reader{width:100%;min-height:280px;background:#000;border:1px solid var(--border-color);border-radius:12px}
+    .scan-result-card{border-radius:12px;padding:18px;margin-top:18px;border:1px solid var(--border-color);background:var(--card-bg)}
+    .bg-green{background:var(--success);color:#fff}
+    .bg-red{background:var(--danger);color:#fff}
+    .bg-blue{background:#2563eb;color:#fff}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:12px 10px;border-bottom:1px solid var(--border-color);text-align:left}
+    th{color:var(--text-muted);font-size:12px;text-transform:uppercase}
+    @media (max-width:800px){.ops-grid{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
@@ -208,10 +74,10 @@
       <div id="login-guard">
         <div class="input-group">
           <label>Full Name</label>
-          <input id="lg-name" class="input-field" type="text" placeholder="Your Full Name" />
+          <input id="lg-name" class="input-field" type="text" placeholder="Your Full Name">
         </div>
         <div class="input-group">
-          <label>Gate / Location</label>
+          <label>Location</label>
           <select id="lg-location" class="input-field">
             <option value="">Select Guard Location</option>
             <option value="RUH01">RUH01</option>
@@ -221,43 +87,43 @@
         </div>
         <div class="input-group">
           <label>Guard ID</label>
-          <input id="lg-id" class="input-field" type="text" placeholder="Guard ID" />
+          <input id="lg-id" class="input-field" type="text" placeholder="Guard ID">
         </div>
-        <button class="btn-primary" style="width:100%;" onclick="login('guard')">Login to Gate</button>
+        <button class="btn-primary" onclick="login('guard')">Login to Gate</button>
       </div>
 
       <div id="login-ops" class="hidden">
         <div class="input-group">
           <label>Full Name</label>
-          <input id="lo-name" class="input-field" type="text" placeholder="Your Name" />
+          <input id="lo-name" class="input-field" type="text" placeholder="Your Name">
         </div>
         <div class="input-group">
           <label>Email</label>
-          <input id="lo-mail" class="input-field" type="email" placeholder="your@email.com" />
+          <input id="lo-mail" class="input-field" type="email" placeholder="your@email.com">
         </div>
-        <button class="btn-primary" style="width:100%;" onclick="login('ops')">Login to Portal</button>
+        <button class="btn-primary" onclick="login('ops')">Login to Portal</button>
       </div>
 
       <div id="login-admin" class="hidden">
         <div class="input-group">
           <label>Admin Name</label>
-          <input id="la-name" class="input-field" type="text" placeholder="Admin Name" />
+          <input id="la-name" class="input-field" type="text" placeholder="Admin Name">
         </div>
         <div class="input-group">
           <label>Admin Email</label>
-          <input id="la-mail" class="input-field" type="email" placeholder="admin@email.com" />
+          <input id="la-mail" class="input-field" type="email" placeholder="admin@email.com">
         </div>
         <div class="input-group">
           <label>Password</label>
-          <input id="la-pass" class="input-field" type="password" placeholder="Admin Password" />
+          <input id="la-pass" class="input-field" type="password" placeholder="Admin Password">
         </div>
-        <button class="btn-primary" style="width:100%;" onclick="login('admin')">Login as Admin</button>
+        <button class="btn-primary" onclick="login('admin')">Login as Admin</button>
       </div>
     </div>
   </div>
 
   <div id="app-layout" class="hidden">
-    <div id="dashboard-guard" class="dashboard active">
+    <div id="dashboard-guard" class="dashboard">
       <div class="header">
         <h2>Gate Scanner</h2>
         <button class="btn-outline" onclick="logout()">Logout</button>
@@ -266,16 +132,15 @@
       <div class="ops-grid">
         <div class="ops-card">
           <div id="reader"></div>
-          <button class="btn-primary" style="width:100%; margin-top:12px;" onclick="startScanner()">Start Scanner</button>
+          <button class="btn-primary" style="margin-top:12px;" onclick="startScanner()">Start Scanner</button>
         </div>
-
         <div class="ops-card">
           <div id="scan-result" class="scan-result-card hidden"></div>
         </div>
       </div>
     </div>
 
-    <div id="dashboard-ops" class="dashboard">
+    <div id="dashboard-ops" class="dashboard hidden">
       <div class="header">
         <h2>Visitor & Contractor Portal</h2>
         <button class="btn-outline" onclick="logout()">Logout</button>
@@ -295,17 +160,17 @@
 
           <div class="input-group">
             <label>Host Name</label>
-            <input id="req-host-name" class="input-field" type="text" />
+            <input id="req-host-name" class="input-field" type="text">
           </div>
 
           <div class="input-group">
             <label>Host Email</label>
-            <input id="req-host-email" class="input-field" type="email" />
+            <input id="req-host-email" class="input-field" type="email">
           </div>
 
           <div class="input-group">
             <label>Visitor Name</label>
-            <input id="req-visitor-name" class="input-field" type="text" />
+            <input id="req-visitor-name" class="input-field" type="text">
           </div>
 
           <div class="input-group">
@@ -319,15 +184,15 @@
 
           <div class="input-group">
             <label>Start Date</label>
-            <input id="req-start-date" class="input-field" type="date" />
+            <input id="req-start-date" class="input-field" type="date">
           </div>
 
           <div class="input-group">
             <label>End Date</label>
-            <input id="req-end-date" class="input-field" type="date" />
+            <input id="req-end-date" class="input-field" type="date">
           </div>
 
-          <button class="btn-primary" style="width:100%;" onclick="submitRequest()">Submit for Approval</button>
+          <button class="btn-primary" onclick="submitRequest()">Submit for Approval</button>
         </div>
 
         <div class="ops-card">
@@ -337,7 +202,7 @@
       </div>
     </div>
 
-    <div id="dashboard-admin" class="dashboard">
+    <div id="dashboard-admin" class="dashboard hidden">
       <div class="header">
         <h2>Admin Dashboard</h2>
         <button class="btn-outline" onclick="logout()">Logout</button>
@@ -356,17 +221,27 @@
     let html5QrCode = null;
     let isProcessingScan = false;
 
+    // Keep URL flow compatible with your original project
+    const params = new URLSearchParams(window.location.search);
+    const roleParam = params.get('role');
+
+    function setRoleTab(role) {
+      document.querySelectorAll('.role-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.role === role);
+      });
+
+      document.getElementById('login-guard').classList.toggle('hidden', role !== 'guard');
+      document.getElementById('login-ops').classList.toggle('hidden', role !== 'ops');
+      document.getElementById('login-admin').classList.toggle('hidden', role !== 'admin');
+    }
+
+    if (roleParam === 'staff') {
+      setRoleTab('guard');
+    }
+
     document.querySelectorAll('.role-tab').forEach(tab => {
       tab.addEventListener('click', function () {
-        document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
-        this.classList.add('active');
-
-        const role = this.dataset.role;
-        document.getElementById('login-guard').classList.add('hidden');
-        document.getElementById('login-ops').classList.add('hidden');
-        document.getElementById('login-admin').classList.add('hidden');
-
-        document.getElementById('login-' + role).classList.remove('hidden');
+        setRoleTab(this.dataset.role);
       });
     });
 
@@ -413,20 +288,18 @@
       document.getElementById('login-view').classList.add('hidden');
       document.getElementById('app-layout').classList.remove('hidden');
 
+      document.getElementById('dashboard-guard').classList.add('hidden');
+      document.getElementById('dashboard-ops').classList.add('hidden');
+      document.getElementById('dashboard-admin').classList.add('hidden');
+
       if (currentUser.role === 'guard') {
-        document.getElementById('dashboard-guard').classList.add('active');
-        document.getElementById('dashboard-ops').classList.remove('active');
-        document.getElementById('dashboard-admin').classList.remove('active');
+        document.getElementById('dashboard-guard').classList.remove('hidden');
         initGuardScreen();
       } else if (currentUser.role === 'ops') {
-        document.getElementById('dashboard-ops').classList.add('active');
-        document.getElementById('dashboard-guard').classList.remove('active');
-        document.getElementById('dashboard-admin').classList.remove('active');
+        document.getElementById('dashboard-ops').classList.remove('hidden');
         loadMyPasses();
       } else if (currentUser.role === 'admin') {
-        document.getElementById('dashboard-admin').classList.add('active');
-        document.getElementById('dashboard-guard').classList.remove('active');
-        document.getElementById('dashboard-ops').classList.remove('active');
+        document.getElementById('dashboard-admin').classList.remove('hidden');
         loadAdminData();
       }
     }
@@ -435,9 +308,7 @@
       currentUser = null;
       document.getElementById('app-layout').classList.add('hidden');
       document.getElementById('login-view').classList.remove('hidden');
-      document.getElementById('login-guard').classList.remove('hidden');
-      document.getElementById('login-ops').classList.add('hidden');
-      document.getElementById('login-admin').classList.add('hidden');
+      setRoleTab('guard');
     }
 
     function initGuardScreen() {
@@ -491,7 +362,6 @@
               const confirmBtn = document.createElement('button');
               confirmBtn.className = 'btn-primary';
               confirmBtn.style.marginTop = '12px';
-              confirmBtn.style.width = '100%';
               confirmBtn.textContent = 'Confirm Check-In';
               confirmBtn.onclick = async function () {
                 await fetch(SCRIPT_URL, {
@@ -506,7 +376,7 @@
                   redirect: 'follow'
                 });
 
-                resultBox.className = 'scan-result-card bg-success';
+                resultBox.className = 'scan-result-card bg-green';
                 resultBox.innerHTML = '<h3>Check-In Recorded</h3>';
               };
 
@@ -648,7 +518,7 @@
         `).join('');
 
         table.innerHTML = `
-          <table style="width:100%; border-collapse:collapse;">
+          <table>
             <thead>
               <tr>
                 <th>ID</th>
