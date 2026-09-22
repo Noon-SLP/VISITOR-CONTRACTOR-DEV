@@ -64,7 +64,7 @@ function isDateInRange(s,ft,stStr,enStr){if(ft==='all')return true;const d=parse
 function saveSession(){try{localStorage.setItem(SESSION_KEY,JSON.stringify({user:currentUser,time:Date.now()}));}catch(e){}}
 function startAutoRefresh(r){if(autoRefreshTimer)clearInterval(autoRefreshTimer);autoRefreshTimer=setInterval(async()=>{if(r==='ops')await loadMyPasses(false,true);else if(r==='admin')await loadAdminData(true);},15000);}
 
-/* ============ FIX: Login shows "Please wait" reliably ============ */
+/* ============ Login: overlay stays until PIN modal (or dashboard) is ready ============ */
 function login(role){
   if(role==='guard'){
     const n=document.getElementById('lg-name'),i=document.getElementById('lg-id'),l=document.getElementById('lg-location');
@@ -82,55 +82,96 @@ function login(role){
   }
   saveSession();
 
-  // Lock the overlay ON so nothing can hide it during init
+  // 1) Lock overlay ON and show "PLEASE WAIT..." immediately
   pleaseWaitLocked=true;
   showPleaseWait('PLEASE WAIT...');
 
-  // Double rAF → browser paints the overlay for sure → then run initApp
+  // 2) Double-rAF so overlay is definitely painted, THEN run initApp.
+  //    initApp will call endPleaseWait() in its own finally block,
+  //    which hides the overlay right when the PIN modal / dashboard is ready.
   requestAnimationFrame(()=>{
     requestAnimationFrame(()=>{
       setTimeout(()=>{
-        const startTime=Date.now();
         try{ initApp(); }
-        catch(e){ console.error(e); }
-        // Keep overlay visible for minimum 600ms so user actually sees it
-        const elapsed=Date.now()-startTime;
-        const remaining=Math.max(0, 600 - elapsed);
-        setTimeout(()=>{ pleaseWaitLocked=false; hidePleaseWait(); }, remaining);
-      }, 50);
+        catch(e){ console.error(e); endPleaseWait(); }
+      }, 30);
     });
   });
 }
 
-function initApp(){try{const lv=document.getElementById('login-view'),al=document.getElementById('app-layout');if(lv)lv.classList.add('hidden');if(al)al.classList.remove('hidden');if(currentUser&&currentUser.role==='admin'){const vn=document.getElementById('req-vname'),ae=document.getElementById('req-admin-email'),ag=document.getElementById('admin-email-group'),sb=document.getElementById('sidebar'),han=document.getElementById('header-admin-name'),sun=document.getElementById('sidebar-user-name'),na=document.getElementById('nav-sidebar-admin');const msb=document.getElementById('admin-manual-search-box');if(vn)vn.value='';if(ae)ae.value='';if(ag)ag.classList.remove('hidden');if(sb)sb.style.display='flex';if(han)han.innerText=currentUser.name;if(sun)sun.innerText=currentUser.name;if(na)na.classList.remove('hidden');if(msb)msb.classList.remove('hidden');document.querySelectorAll('.admin-tab').forEach(el=>el.classList.remove('hidden'));loadAdminData(false);switchMainView('admin');}else if(currentUser){const vn=document.getElementById('req-vname'),ag=document.getElementById('admin-email-group'),sb=document.getElementById('sidebar'),mc=document.getElementById('main-content');if(vn&&currentUser.name)vn.value=currentUser.name;if(ag)ag.classList.add('hidden');if(sb)sb.style.display='none';document.body.classList.add('sidebar-minimized');if(mc)mc.style.margin='0';
+function initApp(){
+  try{
+    const lv=document.getElementById('login-view'),al=document.getElementById('app-layout');
+    if(lv)lv.classList.add('hidden');
+    if(al)al.classList.remove('hidden');
 
-    if(currentUser.role==='ops'){
-      switchMainView('ops');
-      const cachedPin=localStorage.getItem('user_pin_'+currentUser.email);
-      if(cachedPin){
-        const vm=document.getElementById('pin-verify-modal');
-        if(vm){
-          vm.classList.remove('hidden');
-          document.getElementById('pin-error-msg').classList.add('hidden');
-          document.getElementById('verify-pin-input').value='';
-          setTimeout(()=>document.getElementById('verify-pin-input').focus(),0);
-        }
-      }
-      requestAnimationFrame(()=>setTimeout(()=>{
-        try{
-          const c=localStorage.getItem('cached_passes_'+currentUser.email);
-          if(c){
-            const a=JSON.parse(c);
-            if(Array.isArray(a)&&a.length){
-              renderMyPasses(a);
-              myPassesData=[...a].reverse();
-            }
+    if(currentUser&&currentUser.role==='admin'){
+      const vn=document.getElementById('req-vname'),ae=document.getElementById('req-admin-email'),ag=document.getElementById('admin-email-group'),sb=document.getElementById('sidebar'),han=document.getElementById('header-admin-name'),sun=document.getElementById('sidebar-user-name'),na=document.getElementById('nav-sidebar-admin');
+      const msb=document.getElementById('admin-manual-search-box');
+      if(vn)vn.value='';if(ae)ae.value='';
+      if(ag)ag.classList.remove('hidden');
+      if(sb)sb.style.display='flex';
+      if(han)han.innerText=currentUser.name;
+      if(sun)sun.innerText=currentUser.name;
+      if(na)na.classList.remove('hidden');
+      if(msb)msb.classList.remove('hidden');
+      document.querySelectorAll('.admin-tab').forEach(el=>el.classList.remove('hidden'));
+      loadAdminData(false);
+      switchMainView('admin');
+    } else if(currentUser){
+      const vn=document.getElementById('req-vname'),ag=document.getElementById('admin-email-group'),sb=document.getElementById('sidebar'),mc=document.getElementById('main-content');
+      if(vn&&currentUser.name)vn.value=currentUser.name;
+      if(ag)ag.classList.add('hidden');
+      if(sb)sb.style.display='none';
+      document.body.classList.add('sidebar-minimized');
+      if(mc)mc.style.margin='0';
+
+      if(currentUser.role==='ops'){
+        switchMainView('ops');
+
+        // Show PIN modal IMMEDIATELY (synchronously, before deferring work)
+        const cachedPin=localStorage.getItem('user_pin_'+currentUser.email);
+        if(cachedPin){
+          const vm=document.getElementById('pin-verify-modal');
+          if(vm){
+            vm.classList.remove('hidden');
+            document.getElementById('pin-error-msg').classList.add('hidden');
+            document.getElementById('verify-pin-input').value='';
+            setTimeout(()=>document.getElementById('verify-pin-input').focus(),0);
           }
-        }catch(e){}
-        loadMyPasses(true,false);
-      }, 0));
+        }
+
+        // Defer heavy work until after PIN modal paints
+        requestAnimationFrame(()=>setTimeout(()=>{
+          try{
+            const c=localStorage.getItem('cached_passes_'+currentUser.email);
+            if(c){
+              const a=JSON.parse(c);
+              if(Array.isArray(a)&&a.length){
+                renderMyPasses(a);
+                myPassesData=[...a].reverse();
+              }
+            }
+          }catch(e){}
+          loadMyPasses(true,false);
+        }, 0));
+      }
+      else if(currentUser.role==='guard'){
+        const glt=document.getElementById('guard-loc-text'),ld=document.getElementById('guard-loc-display'),dg=document.getElementById('dashboard-guard');
+        if(glt)glt.classList.remove('hidden');
+        if(ld)ld.innerText=currentUser.location||'';
+        document.querySelectorAll('.dashboard').forEach(e=>e.classList.add('hidden'));
+        if(dg)dg.classList.remove('hidden');
+      }
     }
-    else if(currentUser.role==='guard'){const glt=document.getElementById('guard-loc-text'),ld=document.getElementById('guard-loc-display'),dg=document.getElementById('dashboard-guard');if(glt)glt.classList.remove('hidden');if(ld)ld.innerText=currentUser.location||'';document.querySelectorAll('.dashboard').forEach(e=>e.classList.add('hidden'));if(dg)dg.classList.remove('hidden');}}if(currentUser)startAutoRefresh(currentUser.role);}catch(e){console.error(e);}}
+    if(currentUser)startAutoRefresh(currentUser.role);
+  }catch(e){console.error(e);}
+  finally{
+    // Hide "PLEASE WAIT..." once the PIN modal / dashboard is on screen
+    endPleaseWait();
+  }
+}
+
 window.onload=function(){const immediateSplash=document.getElementById("splash");if(immediateSplash)immediateSplash.style.display="none";updateUI();const params=new URLSearchParams(window.location.search);const r=params.get('role');if(r==='staff'||r==='guard'||r==='admin'){const rt=document.getElementById('role-tabs');if(rt)rt.style.display='flex';switchLoginTab(r==='admin'?'admin':'guard');}const session=localStorage.getItem(SESSION_KEY);if(session){const p=JSON.parse(session),h=(Date.now()-p.time)/(1000*60*60);if(h<12){currentUser=p.user;initApp();const s=document.getElementById('splash');if(s)s.style.display='none';}else{localStorage.removeItem(SESSION_KEY);setTimeout(()=>{const s=document.getElementById('splash');if(s){s.classList.add('fade-out');setTimeout(()=>s.style.display='none',600);}},1500);}}else{setTimeout(()=>{const s=document.getElementById('splash');if(s){s.classList.add('fade-out');setTimeout(()=>s.style.display='none',600);}},1500);}};
 async function performManualSearch(){let q=document.getElementById('guard-search-input').value.toLowerCase().trim();let rd=document.getElementById('manual-search-results');if(!q){rd.innerHTML='';return;}rd.innerHTML='<p style="color:var(--text-muted); font-size:12px;">Searching...</p>';try{let d=globalAdminData;if(!d||d.length===0){const res=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'get_all'}),redirect:'follow'});d=convertDriveUrls(await res.json());globalAdminData=d;}let ms=d.filter(r=>{if(!r.UniqueID||r.Status==='Rejected')return false;let fs=String(r.VisitorName+" "+r.UniqueID+" "+r.SlpTicketNo+" "+r.ContactNo+" "+r.HostEmail).toLowerCase();return fs.includes(q);}).slice(0,5);if(ms.length===0){rd.innerHTML='<p style="color:var(--danger); font-size:12px;">No passes found.</p>';}else{let h='';const tn=new Date().setHours(0,0,0,0);ms.forEach(m=>{let dt=String(m.Type||'');let ds=String(m.Status||'Pending');let dl=String(m.Location||'');let so=parseFlexibleDate(m.StartDate);let sn=so?so.setHours(0,0,0,0):tn;let eo=parseFlexibleDate(m.EndDate);let en=eo?eo.setHours(0,0,0,0):sn;let dst=ds;let sc='var(--noon-yellow)';if(ds==='Pending'){dst="PENDING";sc="var(--noon-yellow)";}else if(ds!=='Approved'){dst="DENIED";sc="var(--danger)";}else if(currentUser.role==='guard'&&dl!==currentUser.location){dst="WRONG FACILITY";sc="var(--danger)";}else if(tn<sn||tn>en){dst=tn>en?"EXPIRED":"INVALID DATE";sc="var(--danger)";}else{dst="APPROVED";sc="var(--success)";}h+=`<div style="background:var(--input-bg); border:1px solid var(--border-color); padding:10px; border-radius:6px; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;"><div><strong style="color:white;font-size:13px;">${m.VisitorName}</strong><br><span style="font-size:11px;color:var(--text-muted);">${m.UniqueID} | ${m.Type} | ${m.Location}</span><br><span style="font-size:10px;color:${sc};font-weight:bold;text-transform:uppercase;">${dst}</span></div><button class="btn-primary btn-sm" style="width:auto; padding:6px 15px;" onclick="document.getElementById('manual-search-results').innerHTML=''; onScanSuccess('${m.UniqueID}')">OPEN</button></div>`;});rd.innerHTML=h;}}catch(e){rd.innerHTML='<p style="color:var(--danger); font-size:12px;">Search failed.</p>';}}
 async function submitRequest(ka=false){const ti=document.getElementById('req-type');if(!ti)return;const type=ti.value,ii=document.getElementById('req-iqama'),si=document.getElementById('req-selfie'),imPho=document.getElementById('req-imeiphoto'),vi=document.getElementById('req-vehicle'),btn=document.getElementById('btn-submit-req');if(!btn)return;let iB64='',iMime='image/jpeg',sB64='',sMime='image/jpeg',imB64='',imMime='image/jpeg',vB64='',vMime='image/jpeg';let leadDevType=document.getElementById('req-lead-device-type').value;let leadDevId=document.getElementById('req-lead-device-id').value;if(leadDevType!=='None'&&!leadDevId.trim())return alert("Please provide the Lead device IMEI/Serial number.");let leadImeiVal=leadDevType!=='None'?`${leadDevType} (${leadDevId.trim()})`:'';if(capturedImages.iqama)iB64=capturedImages.iqama.split(',')[1];else if(ii&&ii.files.length>0){let f=await getBase64(ii.files[0]);iB64=f.split(',')[1];iMime=ii.files[0].type;}else return alert("Please provide Lead Iqama photo.");if(capturedImages.selfie)sB64=capturedImages.selfie.split(',')[1];else if(si&&si.files.length>0){let f=await getBase64(si.files[0]);sB64=f.split(',')[1];sMime=si.files[0].type;}else return alert("Please provide Lead Selfie photo.");if(capturedImages.imeiphoto)imB64=capturedImages.imeiphoto.split(',')[1];else if(imPho&&imPho.files.length>0){let f=await getBase64(imPho.files[0]);imB64=f.split(',')[1];imMime=imPho.files[0].type;}let fB64='',fMime='image/jpeg',cleanTeam=[];let fmPocVal='';if(type==='Contractor'){const fi=document.getElementById('req-con-fmpoc');fmPocVal=fi?fi.value.trim():'';}else{if(capturedImages.vehicle)vB64=capturedImages.vehicle.split(',')[1];else if(vi&&vi.files.length>0){let f=await getBase64(vi.files[0]);vB64=f.split(',')[1];vMime=vi.files[0].type;}}teamList.forEach(m=>{let devStr=m.deviceType!=='None'?`${m.deviceType} (${m.deviceId})`:'None';cleanTeam.push({iqama:m.rawIqama,selfie:m.rawSelfie,devicePhoto:m.rawDevicePhoto,name:m.name,iqamaText:m.iqamaText,deviceString:devStr});});let hName='',hMail=currentUser.email;if(currentUser.role==='admin'){hName=currentUser.name;const ei=document.getElementById('req-admin-email');if(ei)hMail=ei.value.toLowerCase().trim();if(!hMail)return alert("Please enter Email Address.");}else hName=currentUser.name||'Ops';const vni=document.getElementById('req-vname'),vNameRaw=vni?vni.value.trim():'';if(!vNameRaw)return alert("Full Name is required.");const leadIqamaInp=document.getElementById('req-iqamatext');const leadIqamaVal=leadIqamaInp?leadIqamaInp.value.trim():'';if(!leadIqamaVal)return alert("Lead Iqama / ID Number is required.");const vName=vNameRaw+" (ID: "+leadIqamaVal+")";const startDateVal=document.getElementById('req-date-start').value;const endDateVal=document.getElementById('req-date-end').value;if(!startDateVal||!endDateVal)return alert("Visit/Validity dates (From - To) are required.");let cachedKey='cached_passes_'+hMail;let existingPasses=[];try{existingPasses=JSON.parse(localStorage.getItem(cachedKey))||[];}catch(e){}let localPin=localStorage.getItem('user_pin_'+hMail);if(currentUser&&currentUser.role==='admin'){if(userSecurityPin||localPin){hName=hName+"||PIN:"+(userSecurityPin||localPin);}}else{if(!localPin&&!userSecurityPin){pinCreateMode='submit';document.getElementById('pin-create-modal').classList.remove('hidden');return;}let activePin=userSecurityPin||localPin;hName=hName+"||PIN:"+activePin;}const tempId='NOON-'+Math.floor(100000+Math.random()*900000);let tempPass={UniqueID:tempId,VisitorName:vName,Type:type,Location:document.getElementById('req-location').value,StartDate:startDateVal,EndDate:endDateVal,Status:'Pending',HostEmail:hMail};if(autoRefreshTimer)clearInterval(autoRefreshTimer);existingPasses.push(tempPass);localStorage.setItem(cachedKey,JSON.stringify(existingPasses));renderMyPasses(existingPasses);if(currentUser.role==='admin'&&vni)vni.value="";const lIqamaClear=document.getElementById('req-iqamatext');if(lIqamaClear)lIqamaClear.value="";if(ii)ii.value="";if(si)si.value="";if(imPho)imPho.value="";if(vi)vi.value="";const fmPocInput=document.getElementById('req-con-fmpoc');if(fmPocInput)fmPocInput.value="";document.getElementById('req-lead-device-type').value="None";toggleLeadDeviceInput();clearCapturedData('iqama');clearCapturedData('selfie');clearCapturedData('imeiphoto');clearCapturedData('vehicle');teamList=[];currentTeamCounter=1;renderTeamRoster();hideTeamEntry();const payload={action:'create',UniqueID:tempId,hostName:hName,hostEmail:hMail,visitorName:vName,type:type,location:document.getElementById('req-location').value,startDate:startDateVal,endDate:endDateVal,iqamaBase64:iB64,iqamaMimeType:iMime,selfieBase64:sB64,selfieMimeType:sMime,imeiNumber:leadImeiVal,imeiPhotoBase64:imB64,fmPoc:fmPocVal,vehicleBase64:vB64,vehicleMimeType:vMime,vehiclePlateNo:'',team:cleanTeam,slpTicketNo:type==='Visitor'?document.getElementById('req-vis-slp').value:document.getElementById('req-con-slp').value,contactNo:type==='Visitor'?document.getElementById('req-vis-contact').value:document.getElementById('req-con-contact').value,invitedBy:type==='Visitor'?document.getElementById('req-vis-invitedby').value:'',projectName:type==='Contractor'?document.getElementById('req-con-project').value:'',companyName:type==='Contractor'?document.getElementById('req-con-company').value:'',projectManager:type==='Contractor'?document.getElementById('req-con-pm').value:''};if(ka){btn.innerText=t("submit_approval");btn.disabled=false;fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),redirect:'follow'}).then(()=>loadMyPasses(true,true)).catch(e=>console.error(e));openAddMoreModal(tempId);startAutoRefresh(currentUser.role);}else{btn.innerText="SUBMITTING...";btn.disabled=true;try{await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),mode:'no-cors'});btn.innerText=t("submit_approval");btn.disabled=false;loadMyPasses(true,true);}catch(e){alert("Upload failed. Error: "+e.message);existingPasses.pop();localStorage.setItem(cachedKey,JSON.stringify(existingPasses));renderMyPasses(existingPasses);btn.innerText=t("submit_approval");btn.disabled=false;}finally{startAutoRefresh(currentUser.role);}}}
