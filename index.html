@@ -292,12 +292,21 @@ function initApp(){
         if(!hasCache){pleaseWaitLocked=true;showPleaseWait('PLEASE WAIT...');}
         try{const c=localStorage.getItem('cached_passes_'+currentUser.email);if(c){const a=JSON.parse(c);if(Array.isArray(a))lockedPassesData=a;}}catch(e){}
 
-        const needPin = !!cachedPin;   // Always require PIN on fresh login
-        if(needPin){
-          // Hide passes completely — do NOT render QR flash
-          const ld=document.getElementById('my-passes-list');
-          if(ld)ld.innerHTML='';
-          myPassesData=[];
+        // Detect if any cached pass already has a PIN inside HostName (||PIN:xxxx)
+        let hasPinInCachedPasses=false;
+        if(Array.isArray(lockedPassesData)){
+          for(let i=0;i<lockedPassesData.length;i++){
+            const p=lockedPassesData[i];
+            if(p && p.HostName && String(p.HostName).includes('||PIN:')){hasPinInCachedPasses=true;break;}
+          }
+        }
+
+        // ALWAYS hide the pass list on login — QR must NEVER flash before PIN entry
+        const ld=document.getElementById('my-passes-list');
+        if(ld)ld.innerHTML='';
+        myPassesData=[];
+
+        if(cachedPin || hasPinInCachedPasses){
           endPleaseWait();
           const vm=document.getElementById('pin-verify-modal');
           if(vm){
@@ -307,7 +316,6 @@ function initApp(){
             setTimeout(function(){if(inp)inp.focus();},0);
           }
         } else {
-          try{renderMyPasses(Array.isArray(lockedPassesData)?lockedPassesData:[]);myPassesData=[].concat(lockedPassesData||[]).reverse();}catch(e){}
           endPleaseWait();
         }
         requestAnimationFrame(function(){setTimeout(function(){loadMyPasses(true,true);},40);});
@@ -586,7 +594,6 @@ async function loadMyPasses(forceRefresh,isSilent){
       if(!isSilent){
         processAndRenderPasses(data,targetEmail,false);
       }else{
-        // ----- SILENT PATH MUST STILL ENFORCE PIN -----
         const vm=document.getElementById('pin-verify-modal');
         const cm=document.getElementById('pin-create-modal');
         const pinOpen=(vm&&!vm.classList.contains('hidden'))||(cm&&!cm.classList.contains('hidden'));
