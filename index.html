@@ -32,7 +32,7 @@ function getQRDataURL(text){
 
 const urlParams=new URLSearchParams(window.location.search);const currentRoleParam=urlParams.get('role')||'default';const SESSION_KEY='noon_session_'+currentRoleParam;let html5QrCode=null;let scannerFacingMode='environment';let currentUser=null;let currentScannedID=null;let currentScanAction='check_in';let currentAdminFilter='all';let autoRefreshTimer=null;let globalAdminData=[];let globalAdminHistory=[];let myPassesData=[];let checkedPrintIds=new Set();let liveStream=null;let currentFacingMode='environment';let targetPhotoType='';let capturedImages={iqama:null,selfie:null,imeiphoto:null,vehicle:null,fmpoc:null};let teamList=[];let currentTeamCounter=1;let isProcessingScan=false;let userSecurityPin=null;let lockedPassesData=null;let pinCreateMode='submit';let currentBatchType='new';
 
-/* ============ GUARD PASS CACHE (INSTANT SCAN) ============ */
+/* ============ GUARD PASS CACHE ============ */
 let guardPassCache=new Map();
 let guardCacheLoaded=false;
 let guardCacheTimer=null;
@@ -53,7 +53,7 @@ function loadGuardCacheFromStorage(){
 async function preloadGuardCache(){
   try{
     const res=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'get_all'}),redirect:'follow'});
-    if(!res.ok)return;
+    if(!res.ok){console.warn('[Guard Cache] HTTP',res.status);return;}
     const data=convertDriveUrls(await res.json());
     const passes=Array.isArray(data)?data:(data&&data.passes?data.passes:[]);
     if(!Array.isArray(passes))return;
@@ -133,7 +133,6 @@ function confirmPinVerify(){
 }
 function closePinVerify(){document.getElementById('pin-verify-modal').classList.add('hidden');const ld=document.getElementById('my-passes-list');if(ld)ld.innerHTML='';}
 
-/* ============ processAndRenderPasses ============ */
 function processAndRenderPasses(d,e,s){
   try{
     if(currentUser&&currentUser.role==='admin'){renderMyPasses(d);return;}
@@ -250,7 +249,6 @@ function initApp(){
         if(ld)ld.innerText=currentUser.location||'';
         document.querySelectorAll('.dashboard').forEach(function(e){e.classList.add('hidden');});
         if(dg)dg.classList.remove('hidden');
-        // ====== GUARD PRELOAD: instant scan ======
         loadGuardCacheFromStorage();
         preloadGuardCache();
         startGuardCacheRefresh();
@@ -262,7 +260,6 @@ function initApp(){
   }catch(e){console.error(e);endPleaseWait();}
 }
 
-/* ============ SESSION RESTORE ============ */
 window.onload=function(){
   const immediateSplash=document.getElementById("splash");
   if(immediateSplash)immediateSplash.style.display="none";
@@ -291,7 +288,6 @@ window.onload=function(){
   }
 };
 
-/* ============ HELPERS ============ */
 function saveSession(){try{localStorage.setItem(SESSION_KEY,JSON.stringify({user:currentUser,time:Date.now()}));}catch(e){}}
 function startAutoRefresh(r){if(autoRefreshTimer)clearInterval(autoRefreshTimer);autoRefreshTimer=setInterval(function(){if(r==='ops')loadMyPasses(false,true);else if(r==='admin')loadAdminData(true);},15000);}
 function toggleFullScreen(){const d=document,de=d.documentElement;const req=de.requestFullscreen||de.mozRequestFullScreen||de.webkitRequestFullScreen||de.msRequestFullscreen;const exit=d.exitFullscreen||d.mozCancelFullScreen||d.webkitExitFullscreen||d.msExitFullscreen;if(!d.fullscreenElement&&!d.mozFullScreenElement&&!d.webkitFullscreenElement&&!d.msFullscreenElement){if(req)req.call(de).catch(function(e){console.log(e);});else alert("Fullscreen not supported");}else{if(exit)exit.call(d).catch(function(e){console.log(e);});}}
@@ -332,34 +328,56 @@ function formatTime(s){if(!s)return '-';const d=parseFlexibleDate(s);if(!d)retur
 function getBase64(file){return new Promise(function(resolve,reject){const reader=new FileReader();reader.readAsDataURL(file);reader.onload=function(e){const img=new Image();img.onload=function(){const canvas=document.createElement('canvas');const MAX_WIDTH=400;let width=img.width;let height=img.height;if(width>MAX_WIDTH){height=Math.round((height*MAX_WIDTH)/width);width=MAX_WIDTH;}canvas.width=width;canvas.height=height;canvas.getContext('2d').drawImage(img,0,0,width,height);resolve(canvas.toDataURL('image/jpeg',0.4));};img.onerror=reject;img.src=e.target.result;};reader.onerror=reject;});}
 function isDateInRange(s,ft,stStr,enStr){if(ft==='all')return true;const d=parseFlexibleDate(s);if(!d)return true;const now=new Date(),ts=new Date(now.getFullYear(),now.getMonth(),now.getDate(),0,0,0,0),te=new Date(now.getFullYear(),now.getMonth(),now.getDate(),23,59,59,999);if(ft==='today')return d>=ts&&d<=te;if(ft==='weekly'){const w=new Date(ts);w.setDate(w.getDate()-7);return d>=w&&d<=te;}if(ft==='monthly'){const m=new Date(ts);m.setMonth(m.getMonth()-1);return d>=m&&d<=te;}if(ft==='6months'){const m6=new Date(ts);m6.setMonth(m6.getMonth()-6);return d>=m6&&d<=te;}if(ft==='year'){const y=new Date(ts);y.setFullYear(y.getFullYear()-1);return d>=y&&d<=te;}if(ft==='custom'){if(!stStr||!enStr)return true;const st=parseFlexibleDate(stStr),en=parseFlexibleDate(enStr);if(st)st.setHours(0,0,0,0);if(en)en.setHours(23,59,59,999);if(st&&en)return d>=st&&d<=en;}return true;}
 
+/* ============ MANUAL SEARCH (FIXED) ============ */
 async function performManualSearch(){
   let q=document.getElementById('guard-search-input').value.toLowerCase().trim();
   let rd=document.getElementById('manual-search-results');
   if(!q){rd.innerHTML='';return;}
   rd.innerHTML='<p style="color:var(--text-muted); font-size:12px;">Searching...</p>';
   try{
-    // Use in-memory cache (instant)
-    let d=[].from(guardPassCache.values());
-    if(!d.length){d=globalAdminData;}
-    let ms=d.filter(function(r){if(!r.UniqueID||r.Status==='Rejected')return false;let fs=String(r.VisitorName+" "+r.UniqueID+" "+r.SlpTicketNo+" "+r.ContactNo+" "+r.HostEmail).toLowerCase();return fs.includes(q);}).slice(0,5);
-    if(ms.length===0){rd.innerHTML='<p style="color:var(--danger); font-size:12px;">No passes found.</p>';}
-    else{
-      let h='';const tn=new Date().setHours(0,0,0,0);
-      ms.forEach(function(m){
-        let ds=String(m.Status||'Pending');let dl=String(m.Location||'');
-        let so=parseFlexibleDate(m.StartDate);let sn=so?so.setHours(0,0,0,0):tn;
-        let eo=parseFlexibleDate(m.EndDate);let en=eo?eo.setHours(0,0,0,0):sn;
-        let dst=ds,sc='var(--noon-yellow)';
-        if(ds==='Pending'){dst="PENDING";sc="var(--noon-yellow)";}
-        else if(ds!=='Approved'){dst="DENIED";sc="var(--danger)";}
-        else if(currentUser.role==='guard'&&dl!==currentUser.location){dst="WRONG FACILITY";sc="var(--danger)";}
-        else if(tn<sn||tn>en){dst=tn>en?"EXPIRED":"INVALID DATE";sc="var(--danger)";}
-        else{dst="APPROVED";sc="var(--success)";}
-        h+='<div style="background:var(--input-bg); border:1px solid var(--border-color); padding:10px; border-radius:6px; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;"><div><strong style="color:white;font-size:13px;">'+m.VisitorName+'</strong><br><span style="font-size:11px;color:var(--text-muted);">'+m.UniqueID+' | '+m.Type+' | '+m.Location+'</span><br><span style="font-size:10px;color:'+sc+';font-weight:bold;text-transform:uppercase;">'+dst+'</span></div><button class="btn-primary btn-sm" style="width:auto; padding:6px 15px;" onclick="document.getElementById(\'manual-search-results\').innerHTML=\'\'; onScanSuccess(\''+m.UniqueID+'\')">OPEN</button></div>';
-      });
-      rd.innerHTML=h;
+    /* ✅ Fixed: Array.from() not [].from() */
+    let d=Array.from(guardPassCache.values());
+    if(!d.length&&Array.isArray(globalAdminData)&&globalAdminData.length){d=globalAdminData;}
+    /* If cache empty, fetch once from server (silent retry) */
+    if(!d.length){
+      try{
+        const res=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'get_all'}),redirect:'follow'});
+        if(res.ok){
+          const raw=convertDriveUrls(await res.json());
+          const arr=Array.isArray(raw)?raw:(raw&&raw.passes?raw.passes:[]);
+          if(Array.isArray(arr)&&arr.length){
+            guardPassCache.clear();
+            arr.forEach(function(p){if(p&&p.UniqueID)guardPassCache.set(String(p.UniqueID).toUpperCase(),p);});
+            try{localStorage.setItem('cached_guard_passes',JSON.stringify(arr));}catch(e){}
+            d=arr;
+          }
+        }
+      }catch(e){}
     }
-  }catch(e){rd.innerHTML='<p style="color:var(--danger); font-size:12px;">Search failed.</p>';}
+    let ms=d.filter(function(r){
+      if(!r||!r.UniqueID||r.Status==='Rejected')return false;
+      let fs=String((r.VisitorName||'')+" "+(r.UniqueID||'')+" "+(r.SlpTicketNo||'')+" "+(r.ContactNo||'')+" "+(r.HostEmail||'')).toLowerCase();
+      return fs.indexOf(q)!==-1;
+    }).slice(0,5);
+    if(ms.length===0){rd.innerHTML='<p style="color:var(--danger); font-size:12px;">No passes found.</p>';return;}
+    let h='';const tn=new Date().setHours(0,0,0,0);
+    ms.forEach(function(m){
+      let ds=String(m.Status||'Pending');let dl=String(m.Location||'');
+      let so=parseFlexibleDate(m.StartDate);let sn=so?so.setHours(0,0,0,0):tn;
+      let eo=parseFlexibleDate(m.EndDate);let en=eo?eo.setHours(0,0,0,0):sn;
+      let dst=ds,sc='var(--noon-yellow)';
+      if(ds==='Pending'){dst="PENDING";sc="var(--noon-yellow)";}
+      else if(ds!=='Approved'){dst="DENIED";sc="var(--danger)";}
+      else if(currentUser.role==='guard'&&dl!==currentUser.location){dst="WRONG FACILITY";sc="var(--danger)";}
+      else if(tn<sn||tn>en){dst=tn>en?"EXPIRED":"INVALID DATE";sc="var(--danger)";}
+      else{dst="APPROVED";sc="var(--success)";}
+      h+='<div style="background:var(--input-bg); border:1px solid var(--border-color); padding:10px; border-radius:6px; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;"><div><strong style="color:white;font-size:13px;">'+m.VisitorName+'</strong><br><span style="font-size:11px;color:var(--text-muted);">'+m.UniqueID+' | '+m.Type+' | '+m.Location+'</span><br><span style="font-size:10px;color:'+sc+';font-weight:bold;text-transform:uppercase;">'+dst+'</span></div><button class="btn-primary btn-sm" style="width:auto; padding:6px 15px;" onclick="document.getElementById(\'manual-search-results\').innerHTML=\'\'; onScanSuccess(\''+m.UniqueID+'\')">OPEN</button></div>';
+    });
+    rd.innerHTML=h;
+  }catch(e){
+    console.error('Manual search error:',e);
+    rd.innerHTML='<p style="color:var(--danger); font-size:12px;">Search failed: '+e.message+'</p>';
+  }
 }
 
 async function submitRequest(ka){
@@ -499,10 +517,7 @@ async function loadMyPasses(forceRefresh,isSilent){
         const vm=document.getElementById('pin-verify-modal');
         const cm=document.getElementById('pin-create-modal');
         const pinOpen=(vm&&!vm.classList.contains('hidden'))||(cm&&!cm.classList.contains('hidden'));
-        if(!pinOpen){
-          renderMyPasses(data);
-          myPassesData=[].concat(data).reverse();
-        }
+        if(!pinOpen){renderMyPasses(data);myPassesData=[].concat(data).reverse();}
       }
     }
   }catch(e){
@@ -693,7 +708,7 @@ async function adminRejectTeamMember(passId,memberIndex,btn){if(!confirm("Reject
 
 function openViewRecord(id,targetCategory){
   targetCategory=targetCategory||null;
-  const r=globalAdminData.find(function(x){return String(x.UniqueID)===String(id);})||myPassesData.find(function(x){return String(x.UniqueID)===String(id);});
+  const r=globalAdminData.find(function(x){return String(x.UniqueID)===String(id);})||myPassesData.find(function(x){return String(x.UniqueID)===String(id);})||(guardPassCache&&guardPassCache.get(String(id).toUpperCase()));
   if(!r)return;
   let rType=String(r.Type||'');
   let displayHostName=(r.HostName||'-').split('||PIN:')[0];
@@ -840,27 +855,27 @@ async function onScanSuccess(decodedText){
   if(searchFilterBox){searchFilterBox.classList.add('hidden');document.getElementById('team-search-filter').value="";}
   currentScannedID=decodedText;
 
-  /* ============ INSTANT LOOKUP ============ */
   let data=null;
   const upperId=String(decodedText).toUpperCase();
-  // 1) In-memory preloaded cache (fastest — no network)
-  if(guardPassCache.has(upperId)){
-    data=guardPassCache.get(upperId);
-  }
-  // 2) Fallback to globalAdminData
-  if(!data&&Array.isArray(globalAdminData)){
-    data=globalAdminData.find(function(x){return String(x.UniqueID).toUpperCase()===upperId;})||null;
-    if(data)guardPassCache.set(upperId,data);
-  }
-  // 3) Last resort: server
+  if(guardPassCache.has(upperId)){data=guardPassCache.get(upperId);}
+  if(!data&&Array.isArray(globalAdminData)){data=globalAdminData.find(function(x){return String(x.UniqueID).toUpperCase()===upperId;})||null;if(data)guardPassCache.set(upperId,data);}
+  let networkFailed=false;
   if(!data){
     try{
       const res=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'get_single',id:decodedText}),redirect:'follow'});
       if(res.ok){let resData=await res.json();if(resData&&!resData.error){data=convertDriveUrls(resData);guardPassCache.set(upperId,data);}}
-    }catch(err){}
+      else{networkFailed=true;}
+    }catch(err){networkFailed=true;}
   }
 
-  if(!data||data.error){showScanResult(t("denied"),t("invalid_date"),"bg-red",false);return;}
+  if(!data||data.error){
+    if(networkFailed){
+      showScanResult("CONNECTION","Could not reach server. Tap SCAN again or refresh cache.","bg-red",false);
+    }else{
+      showScanResult(t("denied"),t("invalid_date"),"bg-red",false);
+    }
+    return;
+  }
   let dType=String(data.Type||'');let dStatus=String(data.Status||'');let dLoc=String(data.Location||'');
   const todayNum=new Date().setHours(0,0,0,0);
   let startObj=parseFlexibleDate(data.StartDate),startNum=startObj?startObj.setHours(0,0,0,0):todayNum;
@@ -997,19 +1012,8 @@ async function confirmAction(){
   try{
     const res=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:payload,redirect:'follow'});
     if(!res.ok)throw new Error("Sync failed");
-    // Optimistic cache update
-    try{
-      const upperId=String(currentScannedID).toUpperCase();
-      const cached=guardPassCache.get(upperId);
-      if(cached){
-        const nowIso=new Date().toISOString();
-        if(currentScanAction==='check_in'){cached.CheckInTime=nowIso;cached.CheckOutTime='';cached.ScannedByGuard=gInfo;}
-        else{cached.CheckOutTime=nowIso;cached.ScannedByGuard=gInfo;}
-        guardPassCache.set(upperId,cached);
-      }
-    }catch(e){}
+    try{const upperId=String(currentScannedID).toUpperCase();const cached=guardPassCache.get(upperId);if(cached){const nowIso=new Date().toISOString();if(currentScanAction==='check_in'){cached.CheckInTime=nowIso;cached.CheckOutTime='';cached.ScannedByGuard=gInfo;}else{cached.CheckOutTime=nowIso;cached.ScannedByGuard=gInfo;}guardPassCache.set(upperId,cached);}}catch(e){}
     btn.innerText=t("confirm_action");btn.disabled=false;const modal=document.getElementById('scan-confirm-modal');if(modal)modal.classList.add('hidden');const decision=document.getElementById('r-decision'),reason=document.getElementById('r-reason');if(decision)decision.innerText="Saved successfully.";if(reason)reason.innerHTML="";setTimeout(function(){if(typeof window.closeScanResult==="function")window.closeScanResult();},1200);if(currentUser&&currentUser.role!=='guard')loadMyPasses(true,true).catch(function(){});
-    // Silent background refresh
     setTimeout(preloadGuardCache,1500);
   }catch(e){alert("Network error. Please try again.");btn.innerText=t("confirm_action");btn.disabled=false;isProcessingScan=false;}
 }
