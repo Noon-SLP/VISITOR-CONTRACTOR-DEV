@@ -34,14 +34,12 @@ let historySortOrder='desc';
 
 // ============================================================
 // GUARD INACTIVITY AUTO-REFRESH (5 min idle → 60s countdown → reload)
-// Reloads the guard app only when it's truly idle — never while
-// the guard is verifying a scan, using the camera, or submitting.
 // ============================================================
 let guardIdleTimer = null;
 let guardReloadTimer = null;
 let guardActivityBound = false;
-const GUARD_IDLE_BEFORE_RELOAD_MS = 5 * 60 * 1000; // 5 minutes of no activity
-const GUARD_RELOAD_COUNTDOWN_MS = 60 * 1000;       // then 60 seconds countdown
+const GUARD_IDLE_BEFORE_RELOAD_MS = 5 * 60 * 1000;
+const GUARD_RELOAD_COUNTDOWN_MS = 60 * 1000;
 
 function guardIsBusy() {
   const scanResult = document.getElementById('scan-result');
@@ -55,12 +53,10 @@ function guardIsBusy() {
   if (pleaseWaitLocked) return true;
   return false;
 }
-
 function clearGuardTimers() {
   if (guardIdleTimer) { clearTimeout(guardIdleTimer); guardIdleTimer = null; }
   if (guardReloadTimer) { clearTimeout(guardReloadTimer); guardReloadTimer = null; }
 }
-
 function startGuardReloadCountdown() {
   if (guardReloadTimer) { clearTimeout(guardReloadTimer); guardReloadTimer = null; }
   guardReloadTimer = setTimeout(function () {
@@ -70,7 +66,6 @@ function startGuardReloadCountdown() {
     window.location.reload();
   }, GUARD_RELOAD_COUNTDOWN_MS);
 }
-
 function resetGuardInactivityTimer() {
   if (!currentUser || currentUser.role !== 'guard') return;
   clearGuardTimers();
@@ -79,7 +74,6 @@ function resetGuardInactivityTimer() {
     startGuardReloadCountdown();
   }, GUARD_IDLE_BEFORE_RELOAD_MS);
 }
-
 function startGuardInactivityMonitor() {
   clearGuardTimers();
   if (!guardActivityBound) {
@@ -91,10 +85,7 @@ function startGuardInactivityMonitor() {
   }
   resetGuardInactivityTimer();
 }
-
-function stopGuardInactivityMonitor() {
-  clearGuardTimers();
-}
+function stopGuardInactivityMonitor() { clearGuardTimers(); }
 
 let guardPassCache=new Map();
 let guardCacheLoaded=false;
@@ -127,7 +118,6 @@ async function preloadGuardCache(){
     console.log('[Guard Cache]',guardPassCache.size,'passes loaded');
   }catch(e){console.warn('[Guard Cache] preload failed',e);}
 }
-
 function startGuardCacheRefresh(){
   if(guardCacheTimer)clearInterval(guardCacheTimer);
   guardCacheTimer=setInterval(preloadGuardCache,60000);
@@ -280,13 +270,8 @@ function initApp(){
         const c=localStorage.getItem('cached_admin_data');
         if(c){
           const parsed=JSON.parse(c);
-          if(Array.isArray(parsed)){
-            globalAdminHistory=[];
-            renderAdminData(parsed.slice().reverse());
-          }else if(parsed&&Array.isArray(parsed.passes)){
-            globalAdminHistory=Array.isArray(parsed.history)?parsed.history:[];
-            renderAdminData(parsed.passes.slice().reverse());
-          }
+          if(Array.isArray(parsed)){globalAdminHistory=[];renderAdminData(parsed.slice().reverse());}
+          else if(parsed&&Array.isArray(parsed.passes)){globalAdminHistory=Array.isArray(parsed.history)?parsed.history:[];renderAdminData(parsed.passes.slice().reverse());}
         }
       }catch(e){}
 
@@ -307,9 +292,8 @@ function initApp(){
         if(!hasCache){pleaseWaitLocked=true;showPleaseWait('PLEASE WAIT...');}
         try{const c=localStorage.getItem('cached_passes_'+currentUser.email);if(c){const a=JSON.parse(c);if(Array.isArray(a))lockedPassesData=a;}}catch(e){}
         try{renderMyPasses(Array.isArray(lockedPassesData)?lockedPassesData:[]);myPassesData=[].concat(lockedPassesData||[]).reverse();}catch(e){}
-        // CHANGE: Do NOT auto-show the "Set Security PIN" (create) modal on login.
-        // Only returning users who already have a cached PIN get the VERIFY modal.
-        // The CREATE modal now appears only after the user presses Submit.
+        // NOTE: "Set Security PIN" (create) modal no longer appears on login.
+        // Only returning users with an existing PIN get the VERIFY modal at login.
         if(cachedPin){
           const vm=document.getElementById('pin-verify-modal');
           if(vm){vm.classList.remove('hidden');document.getElementById('pin-error-msg').classList.add('hidden');document.getElementById('verify-pin-input').value='';setTimeout(function(){document.getElementById('verify-pin-input').focus();},0);}
@@ -494,7 +478,6 @@ async function submitRequest(ka){
   if(currentUser&&currentUser.role==='admin'){
     if(userSecurityPin||localPin){hName=hName+"||PIN:"+(userSecurityPin||localPin);}
   }else{
-    // This is where the "Set Security PIN" modal now first appears for new Ops users.
     if(!localPin&&!userSecurityPin){pinCreateMode='submit';document.getElementById('pin-create-modal').classList.remove('hidden');return;}
     let activePin=userSecurityPin||localPin;hName=hName+"||PIN:"+activePin;
   }
@@ -592,10 +575,33 @@ async function loadMyPasses(forceRefresh,isSilent){
       if(!isSilent){
         processAndRenderPasses(data,targetEmail,false);
       }else{
+        // ----- SILENT PATH MUST STILL ENFORCE PIN -----
         const vm=document.getElementById('pin-verify-modal');
         const cm=document.getElementById('pin-create-modal');
         const pinOpen=(vm&&!vm.classList.contains('hidden'))||(cm&&!cm.classList.contains('hidden'));
-        if(!pinOpen){renderMyPasses(data);myPassesData=[].concat(data).reverse();}
+        if(!pinOpen){
+          let bp=null;
+          for(let i=data.length-1;i>=0;i--){
+            if(data[i]&&data[i].HostName&&String(data[i].HostName).includes('||PIN:')){
+              bp=String(data[i].HostName).split('||PIN:')[1];
+              break;
+            }
+          }
+          const lp=localStorage.getItem('user_pin_'+targetEmail);
+          if(bp && bp!==lp){
+            lockedPassesData=data;
+            if(vm){
+              vm.classList.remove('hidden');
+              const err=document.getElementById('pin-error-msg');if(err)err.classList.add('hidden');
+              const inp=document.getElementById('verify-pin-input');if(inp)inp.value='';
+              setTimeout(function(){if(inp)inp.focus();},0);
+            }
+            listDiv.innerHTML='';
+          }else{
+            if(bp&&bp===lp)userSecurityPin=lp;
+            renderMyPasses(data);myPassesData=[].concat(data).reverse();
+          }
+        }
       }
     }
   }catch(e){
@@ -786,12 +792,7 @@ async function loadAdminData(isSilent){
 }
 
 async function refreshMemberView(passId, targetCategory){
-  if(currentUser&&currentUser.role==='admin'){
-    await loadAdminData(true);
-  }else{
-    localStorage.removeItem('cached_passes_'+currentUser.email);
-    await loadMyPasses(true,true);
-  }
+  if(currentUser&&currentUser.role==='admin'){await loadAdminData(true);}else{localStorage.removeItem('cached_passes_'+currentUser.email);await loadMyPasses(true,true);}
   openViewRecord(passId,targetCategory);
 }
 
@@ -869,9 +870,7 @@ function openViewRecord(id,targetCategory){
       let iqamaMatch=block.match(/Iqama:\s*(.*?)(?:\s*\||\n)/);
       let deviceMatch=block.match(/Device:\s*(.*?)(?:\n|$)/);
       let extractedUrls=block.match(/(?:https?:\/\/|data:image\/)[^\s\|]+/g)||[];
-      if(extractedUrls.length<2){
-        extractedUrls=block.split(/\r?\n/).slice(2).map(function(line){return normalizeImageUrl(line);}).filter(function(url){return !!url;});
-      }
+      if(extractedUrls.length<2){extractedUrls=block.split(/\r?\n/).slice(2).map(function(line){return normalizeImageUrl(line);}).filter(function(url){return !!url;});}
       if(extractedUrls.length>=1 || nameMatch || iqamaMatch){
         let nameRaw=nameMatch?nameMatch[1].trim():'Team Member '+(idx+1);
         let blockUpper=block.toUpperCase();
@@ -1003,11 +1002,8 @@ async function onScanSuccess(decodedText){
   }
 
   if(!data||data.error){
-    if(networkFailed){
-      showScanResult("CONNECTION","Could not reach server. Tap SCAN again or refresh cache.","bg-red",false);
-    }else{
-      showScanResult(t("denied"),t("invalid_date"),"bg-red",false);
-    }
+    if(networkFailed){showScanResult("CONNECTION","Could not reach server. Tap SCAN again or refresh cache.","bg-red",false);}
+    else{showScanResult(t("denied"),t("invalid_date"),"bg-red",false);}
     return;
   }
   let dType=String(data.Type||'');let dStatus=String(data.Status||'');let dLoc=String(data.Location||'');
@@ -1031,9 +1027,7 @@ async function onScanSuccess(decodedText){
       let iqamaMatch=block.match(/Iqama:\s*(.*?)(?:\s*\||\n)/);
       let deviceMatch=block.match(/Device:\s*(.*?)(?:\n|$)/);
       let extractedUrls=block.match(/(?:https?:\/\/|data:image\/)[^\s\|]+/g)||[];
-      if(extractedUrls.length<2){
-        extractedUrls=block.split(/\r?\n/).slice(2).map(function(line){return normalizeImageUrl(line);}).filter(function(url){return !!url;});
-      }
+      if(extractedUrls.length<2){extractedUrls=block.split(/\r?\n/).slice(2).map(function(line){return normalizeImageUrl(line);}).filter(function(url){return !!url;});}
       if(extractedUrls.length>=1 || nameMatch || iqamaMatch){
         let nameRaw=nameMatch?nameMatch[1].trim():'Team Member '+(idx+1);
         let blockUpper=block.toUpperCase();let nameUpper=nameRaw.toUpperCase();
