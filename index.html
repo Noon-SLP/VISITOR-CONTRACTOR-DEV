@@ -32,6 +32,87 @@ function safeImg(u){return u&&u!=='No File'?u:'data:image/svg+xml,%3Csvg xmlns=\
 const urlParams=new URLSearchParams(window.location.search);const currentRoleParam=urlParams.get('role')||'default';const SESSION_KEY='noon_session_'+currentRoleParam;let html5QrCode=null;let scannerFacingMode='environment';let currentUser=null;let currentScannedID=null;let currentScanAction='check_in';let currentAdminFilter='all';let autoRefreshTimer=null;let globalAdminData=[];let globalAdminHistory=[];let myPassesData=[];let checkedPrintIds=new Set();let liveStream=null;let currentFacingMode='environment';let targetPhotoType='';let capturedImages={iqama:null,selfie:null,imeiphoto:null,vehicle:null,fmpoc:null};let teamList=[];let currentTeamCounter=1;let isProcessingScan=false;let userSecurityPin=null;let lockedPassesData=null;let pinCreateMode='submit';let currentBatchType='new';
 let historySortOrder='desc';
 
+// ============================================================
+// GUARD INACTIVITY AUTO-REFRESH (5 min idle → 60s countdown → reload)
+// Reloads the guard app only when it's truly idle — never while
+// the guard is verifying a scan, using the camera, or submitting.
+// ============================================================
+let guardIdleTimer = null;
+let guardReloadTimer = null;
+let guardActivityBound = false;
+const GUARD_IDLE_BEFORE_RELOAD_MS = 5 * 60 * 1000; // 5 minutes of no activity
+const GUARD_RELOAD_COUNTDOWN_MS = 60 * 1000;       // then 60 seconds countdown
+
+function guardIsBusy() {
+  // Never refresh while a scan result is being shown / verified
+  const scanResult = document.getElementById('scan-result');
+  if (scanResult && !scanResult.classList.contains('hidden')) return true;
+
+  // Never refresh while the camera scanner UI is open
+  const readerCont = document.getElementById('reader-container');
+  if (readerCont && !readerCont.classList.contains('hidden')) return true;
+
+  // Never refresh while the custom live camera is open
+  if (liveStream) return true;
+
+  // Never refresh while any modal/popup is open
+  const openModals = document.querySelectorAll('.popup-modal:not(.hidden)');
+  if (openModals.length > 0) return true;
+
+  // Never refresh mid-scan
+  if (isProcessingScan) return true;
+
+  // Never refresh while a submission is in progress
+  if (pleaseWaitLocked) return true;
+
+  return false;
+}
+
+function clearGuardTimers() {
+  if (guardIdleTimer) { clearTimeout(guardIdleTimer); guardIdleTimer = null; }
+  if (guardReloadTimer) { clearTimeout(guardReloadTimer); guardReloadTimer = null; }
+}
+
+function startGuardReloadCountdown() {
+  if (guardReloadTimer) { clearTimeout(guardReloadTimer); guardReloadTimer = null; }
+  guardReloadTimer = setTimeout(function () {
+    guardReloadTimer = null;
+    if (guardIsBusy()) {
+      // Still busy — wait another 60s and re-check
+      startGuardReloadCountdown();
+      return;
+    }
+    console.log('[Guard Idle] 5 min + 60s inactivity — reloading app.');
+    window.location.reload();
+  }, GUARD_RELOAD_COUNTDOWN_MS);
+}
+
+function resetGuardInactivityTimer() {
+  if (!currentUser || currentUser.role !== 'guard') return;
+  clearGuardTimers();
+  guardIdleTimer = setTimeout(function () {
+    guardIdleTimer = null;
+    // 5 minutes reached with no activity → start the 60s reload countdown
+    startGuardReloadCountdown();
+  }, GUARD_IDLE_BEFORE_RELOAD_MS);
+}
+
+function startGuardInactivityMonitor() {
+  clearGuardTimers();
+  if (!guardActivityBound) {
+    ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click', 'wheel']
+      .forEach(function (evt) {
+        document.addEventListener(evt, resetGuardInactivityTimer, { passive: true });
+      });
+    guardActivityBound = true;
+  }
+  resetGuardInactivityTimer();
+}
+
+function stopGuardInactivityMonitor() {
+  clearGuardTimers();
+}
+
 let guardPassCache=new Map();
 let guardCacheLoaded=false;
 let guardCacheTimer=null;
@@ -264,6 +345,7 @@ function initApp(){
         loadGuardCacheFromStorage();
         preloadGuardCache();
         startGuardCacheRefresh();
+        startGuardInactivityMonitor();
       }
     } else {
       endPleaseWait();
@@ -304,7 +386,7 @@ function saveSession(){try{localStorage.setItem(SESSION_KEY,JSON.stringify({user
 function startAutoRefresh(r){if(autoRefreshTimer)clearInterval(autoRefreshTimer);autoRefreshTimer=setInterval(function(){if(r==='ops')loadMyPasses(false,true);else if(r==='admin')loadAdminData(true);},15000);}
 function toggleFullScreen(){const d=document,de=d.documentElement;const req=de.requestFullscreen||de.mozRequestFullScreen||de.webkitRequestFullScreen||de.msRequestFullscreen;const exit=d.exitFullscreen||d.mozCancelFullScreen||d.webkitExitFullscreen||d.msExitFullscreen;if(!d.fullscreenElement&&!d.mozFullScreenElement&&!d.webkitFullscreenElement&&!d.msFullscreenElement){if(req)req.call(de).catch(function(e){console.log(e);});else alert("Fullscreen not supported");}else{if(exit)exit.call(d).catch(function(e){console.log(e);});}}
 function toggleSidebar(){const sb=document.getElementById('sidebar');if(sb)sb.classList.toggle('minimized');document.body.classList.toggle('sidebar-minimized');}
-function logout(){if(autoRefreshTimer)clearInterval(autoRefreshTimer);stopGuardCacheRefresh();localStorage.removeItem(SESSION_KEY);Object.keys(localStorage).forEach(function(key){if(key.startsWith('user_pin_'))localStorage.removeItem(key);});try{if(html5QrCode&&html5QrCode.isScanning)html5QrCode.stop();}catch(e){}location.reload();}
+function logout(){if(autoRefreshTimer)clearInterval(autoRefreshTimer);stopGuardCacheRefresh();stopGuardInactivityMonitor();localStorage.removeItem(SESSION_KEY);Object.keys(localStorage).forEach(function(key){if(key.startsWith('user_pin_'))localStorage.removeItem(key);});try{if(html5QrCode&&html5QrCode.isScanning)html5QrCode.stop();}catch(e){}location.reload();}
 function hardRefreshApp(){if(confirm("Reload the app with the latest data?")){window.location.reload();}}
 function toggleDateFields(){const te=document.getElementById('req-type');if(!te)return;const type=te.value,vf=document.getElementById('req-visitor-fields'),cf=document.getElementById('req-contractor-fields'),tms=document.getElementById('team-members-section');if(vf)vf.classList.toggle('hidden',type==='Contractor');if(cf)cf.classList.toggle('hidden',type==='Visitor');if(tms)tms.classList.toggle('hidden',type==='Visitor');}
 function switchLoginTab(role){document.querySelectorAll('.role-tab').forEach(function(t2){t2.classList.remove('active');});document.querySelectorAll('#login-guard, #login-ops, #login-admin').forEach(function(f){f.classList.add('hidden');});const te=document.getElementById('tab-'+role);if(te)te.classList.add('active');const le=document.getElementById('login-'+role);if(le)le.classList.remove('hidden');}
