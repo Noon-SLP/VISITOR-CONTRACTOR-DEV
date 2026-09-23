@@ -291,14 +291,25 @@ function initApp(){
         const hasCache=hasCachedPasses(currentUser.email);
         if(!hasCache){pleaseWaitLocked=true;showPleaseWait('PLEASE WAIT...');}
         try{const c=localStorage.getItem('cached_passes_'+currentUser.email);if(c){const a=JSON.parse(c);if(Array.isArray(a))lockedPassesData=a;}}catch(e){}
-        try{renderMyPasses(Array.isArray(lockedPassesData)?lockedPassesData:[]);myPassesData=[].concat(lockedPassesData||[]).reverse();}catch(e){}
-        // NOTE: "Set Security PIN" (create) modal no longer appears on login.
-        // Only returning users with an existing PIN get the VERIFY modal at login.
-        if(cachedPin){
+
+        const needPin = !!cachedPin;   // Always require PIN on fresh login
+        if(needPin){
+          // Hide passes completely — do NOT render QR flash
+          const ld=document.getElementById('my-passes-list');
+          if(ld)ld.innerHTML='';
+          myPassesData=[];
+          endPleaseWait();
           const vm=document.getElementById('pin-verify-modal');
-          if(vm){vm.classList.remove('hidden');document.getElementById('pin-error-msg').classList.add('hidden');document.getElementById('verify-pin-input').value='';setTimeout(function(){document.getElementById('verify-pin-input').focus();},0);}
+          if(vm){
+            vm.classList.remove('hidden');
+            const err=document.getElementById('pin-error-msg');if(err)err.classList.add('hidden');
+            const inp=document.getElementById('verify-pin-input');if(inp)inp.value='';
+            setTimeout(function(){if(inp)inp.focus();},0);
+          }
+        } else {
+          try{renderMyPasses(Array.isArray(lockedPassesData)?lockedPassesData:[]);myPassesData=[].concat(lockedPassesData||[]).reverse();}catch(e){}
+          endPleaseWait();
         }
-        endPleaseWait();
         requestAnimationFrame(function(){setTimeout(function(){loadMyPasses(true,true);},40);});
       }
       else if(currentUser.role==='guard'){
