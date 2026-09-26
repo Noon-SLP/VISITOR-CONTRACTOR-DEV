@@ -235,6 +235,35 @@ function ambientDateKey(d){
   return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
 }
 
+// ===== SHIFT PERSISTENCE (per guard, survives page refresh) =====
+function getShiftStorageKey(){
+  if(!currentUser) return null;
+  const id = String(currentUser.id||'unknown').trim();
+  const loc = String(currentUser.location||'unknown').trim();
+  return 'noon_shift_start_' + id + '_' + loc;
+}
+
+function loadOrCreateShiftStart(){
+  const key = getShiftStorageKey();
+  if(!key) return Date.now();
+  try{
+    const stored = localStorage.getItem(key);
+    if(stored){
+      const parsed = parseInt(stored, 10);
+      if(!isNaN(parsed) && parsed > 0) return parsed;
+    }
+  }catch(e){}
+  const fresh = Date.now();
+  try{ localStorage.setItem(key, String(fresh)); }catch(e){}
+  return fresh;
+}
+
+function clearShiftStart(){
+  const key = getShiftStorageKey();
+  if(!key) return;
+  try{ localStorage.removeItem(key); }catch(e){}
+}
+
 function startAmbientPanels(){
   if(!currentUser||currentUser.role!=='guard')return;
   const left=document.getElementById('ambient-left');
@@ -248,7 +277,9 @@ function startAmbientPanels(){
   if(userNm) userNm.innerText = currentUser.name || '-';
   if(userId) userId.innerText = currentUser.id || '-';
 
-  if(!ambientShiftStart)ambientShiftStart=Date.now();
+  // Load persisted shift start (survives page refresh)
+  ambientShiftStart = loadOrCreateShiftStart();
+
   tickAmbientClock();
   if(ambientClockTimer)clearInterval(ambientClockTimer);
   ambientClockTimer=setInterval(tickAmbientClock,1000);
@@ -596,7 +627,17 @@ function saveSession(){try{localStorage.setItem(SESSION_KEY,JSON.stringify({user
 function startAutoRefresh(r){if(autoRefreshTimer)clearInterval(autoRefreshTimer);autoRefreshTimer=setInterval(function(){if(r==='ops')loadMyPasses(false,true);else if(r==='admin')loadAdminData(true);},15000);}
 function toggleFullScreen(){const d=document,de=d.documentElement;const req=de.requestFullscreen||de.mozRequestFullScreen||de.webkitRequestFullScreen||de.msRequestFullscreen;const exit=d.exitFullscreen||d.mozCancelFullScreen||d.webkitExitFullscreen||d.msExitFullscreen;if(!d.fullscreenElement&&!d.mozFullScreenElement&&!d.webkitFullscreenElement&&!d.msFullscreenElement){if(req)req.call(de).catch(function(e){console.log(e);});else alert("Fullscreen not supported");}else{if(exit)exit.call(d).catch(function(e){console.log(e);});}}
 function toggleSidebar(){const sb=document.getElementById('sidebar');if(sb)sb.classList.toggle('minimized');document.body.classList.toggle('sidebar-minimized');}
-function logout(){if(autoRefreshTimer)clearInterval(autoRefreshTimer);stopGuardCacheRefresh();stopGuardInactivityMonitor();stopAmbientPanels();localStorage.removeItem(SESSION_KEY);Object.keys(localStorage).forEach(function(key){if(key.startsWith('user_pin_'))localStorage.removeItem(key);});try{if(html5QrCode&&html5QrCode.isScanning)html5QrCode.stop();}catch(e){}location.reload();}
+function logout(){
+  if(autoRefreshTimer)clearInterval(autoRefreshTimer);
+  stopGuardCacheRefresh();
+  stopGuardInactivityMonitor();
+  stopAmbientPanels();
+  clearShiftStart(); // <-- Reset shift timer on logout
+  localStorage.removeItem(SESSION_KEY);
+  Object.keys(localStorage).forEach(function(key){if(key.startsWith('user_pin_'))localStorage.removeItem(key);});
+  try{if(html5QrCode&&html5QrCode.isScanning)html5QrCode.stop();}catch(e){}
+  location.reload();
+}
 function hardRefreshApp(){if(confirm("Reload the app with the latest data?")){window.location.reload();}}
 function toggleDateFields(){const te=document.getElementById('req-type');if(!te)return;const type=te.value,vf=document.getElementById('req-visitor-fields'),cf=document.getElementById('req-contractor-fields'),tms=document.getElementById('team-members-section');if(vf)vf.classList.toggle('hidden',type==='Contractor');if(cf)cf.classList.toggle('hidden',type==='Visitor');if(tms)tms.classList.toggle('hidden',type==='Visitor');}
 function switchLoginTab(role){document.querySelectorAll('.role-tab').forEach(function(t2){t2.classList.remove('active');});document.querySelectorAll('#login-guard, #login-ops, #login-admin').forEach(function(f){f.classList.add('hidden');});const te=document.getElementById('tab-'+role);if(te)te.classList.add('active');const le=document.getElementById('login-'+role);if(le)le.classList.remove('hidden');}
