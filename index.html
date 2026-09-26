@@ -45,7 +45,7 @@ let currentQRViewDataUrl='';
 // ADD MORE PEOPLE 6-MINUTE TIMER
 // ============================================================
 let addMoreTimerInterval=null;
-let addMoreSecondsLeft=360; // 6 minutes
+let addMoreSecondsLeft=360;
 function formatAddMoreTime(s){const m=Math.floor(s/60);const sec=s%60;return m+':'+String(sec).padStart(2,'0');}
 function updateAddMoreTimerDisplay(){
   const el=document.getElementById('add-more-timer');
@@ -758,10 +758,23 @@ function renderHistorySheetRows(history){
     const cmp=da.getTime()-db.getTime();
     return historySortOrder==='asc'?cmp:-cmp;
   });
+
+  // ============ GROUP BY MONTH ============
+  const groups = {};        // key: "YYYY-MM", value: { label, count, rows }
+  const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
   sorted.forEach(function(row){
     if(!row)return;
     const filterDate=row.CheckInTime||row.CheckOutTime||row["Validity Period"]||row.StartDate;
     if(!isDateInRange(filterDate,currentAdminFilter,fStart,fEnd))return;
+    const d = parseFlexibleDate(filterDate);
+    let key = 'unknown', label = 'UNKNOWN DATE';
+    if(d){
+      key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+      label = monthNames[d.getMonth()].toUpperCase()+' '+d.getFullYear();
+    }
+    if(!groups[key]) groups[key] = { label: label, count: 0, rows: [] };
+
     const validity=formatHistoryValidity(row["Validity Period"]);
     const name=String(row.VisitorName||row.Name||"");
     const type=String(row.Type||"");
@@ -770,9 +783,28 @@ function renderHistorySheetRows(history){
     const checkOut=row.CheckOutTime?formatHistoryDateTime(row.CheckOutTime):"";
     const duration=String(row.Duration||"");
     const scannedBy=String(row.ScannedByGuard||row.ScannedBy||"");
-    rows+='<tr><td style="color:var(--text-muted);">'+(validity||"-")+'</td><td><strong>'+(name||"-")+'</strong></td><td><strong style="color:var(--noon-yellow);">'+(type?t(type.toLowerCase()):"-")+'</strong></td><td>'+(facility||"-")+'</td><td style="color:#10b981;font-size:12px;font-weight:bold;">'+(checkIn||"-")+'</td><td style="color:#3b82f6;font-size:12px;font-weight:bold;">'+(checkOut||"-")+'</td><td style="font-size:12px;">'+(duration||"-")+'</td><td style="color:var(--text-muted);font-size:11px;">'+(scannedBy||"-")+'</td></tr>';
+
+    groups[key].rows.push('<tr><td style="color:var(--text-muted);">'+(validity||"-")+'</td><td><strong>'+(name||"-")+'</strong></td><td><strong style="color:var(--noon-yellow);">'+(type?t(type.toLowerCase()):"-")+'</strong></td><td>'+(facility||"-")+'</td><td style="color:#10b981;font-size:12px;font-weight:bold;">'+(checkIn||"-")+'</td><td style="color:#3b82f6;font-size:12px;font-weight:bold;">'+(checkOut||"-")+'</td><td style="font-size:12px;">'+(duration||"-")+'</td><td style="color:var(--text-muted);font-size:11px;">'+(scannedBy||"-")+'</td></tr>');
+    groups[key].count++;
     count++;
   });
+
+  // Sort month keys according to historySortOrder
+  const keys = Object.keys(groups);
+  keys.sort(function(a,b){
+    if(a==='unknown')return 1;
+    if(b==='unknown')return -1;
+    return historySortOrder==='asc' ? a.localeCompare(b) : b.localeCompare(a);
+  });
+
+  keys.forEach(function(k){
+    const g = groups[k];
+    const plural = g.count===1 ? 'record' : 'records';
+    rows += '<tr><td colspan="8" style="background:linear-gradient(90deg, rgba(255,199,0,.14) 0%, rgba(255,199,0,.02) 100%); color:var(--noon-yellow); font-weight:800; font-size:13px; text-transform:uppercase; letter-spacing:1.8px; padding:14px 20px; border-top:1px solid var(--border-color); border-bottom:2px solid var(--noon-yellow);">📅 '+g.label+' <span style="color:var(--text-muted); font-weight:600; font-size:11px; letter-spacing:0.5px; margin-left:10px;">('+g.count+' '+plural+')</span></td></tr>';
+    rows += g.rows.join('');
+  });
+  // ========================================
+
   if(!count)rows='<tr><td colspan="8" class="text-center" style="padding:30px;">'+t("msg_no_history")+'</td></tr>';
   tHistory.innerHTML=rows;
 }
