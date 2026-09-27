@@ -432,6 +432,13 @@ function hasCachedPasses(email){
     return Array.isArray(a)&&a.length>0;
   }catch(e){return false;}
 }
+function getPinUnlockKey(email){return 'pin_unlock_until_'+String(email||'').toLowerCase().trim();}
+function isPinUnlocked(email){
+  const key=getPinUnlockKey(email),until=Number(localStorage.getItem(key));
+  if(!Number.isFinite(until)||until<=Date.now()){localStorage.removeItem(key);return false;}
+  return true;
+}
+function rememberPinUnlock(email){localStorage.setItem(getPinUnlockKey(email),String(Date.now()+2*60*60*1000));}
 
 async function confirmPinCreate(){
   let p=document.getElementById('new-pin-input').value.trim();
@@ -458,7 +465,7 @@ function confirmPinVerify(){
   if(Array.isArray(lockedPassesData)){for(let i=lockedPassesData.length-1;i>=0;i--){if(lockedPassesData[i].HostName&&lockedPassesData[i].HostName.includes('||PIN:')){bp=lockedPassesData[i].HostName.split('||PIN:')[1];break;}}}
   const cachedPin=localStorage.getItem('user_pin_'+e);
   if(p===bp||(cachedPin&&p===cachedPin)){
-    userSecurityPin=p;localStorage.setItem('user_pin_'+e,p);
+    userSecurityPin=p;localStorage.setItem('user_pin_'+e,p);rememberPinUnlock(e);
     document.getElementById('pin-verify-modal').classList.add('hidden');
     let data=lockedPassesData;
     try{const c=localStorage.getItem('cached_passes_'+e);if(c){const a=JSON.parse(c);if(Array.isArray(a))data=a;}}catch(err){}
@@ -485,13 +492,13 @@ function processAndRenderPasses(d,e,s){
     if(Array.isArray(d)){for(let i=d.length-1;i>=0;i--){if(d[i].HostName&&d[i].HostName.includes('||PIN:')){bp=d[i].HostName.split('||PIN:')[1];break;}}}
     let lp=localStorage.getItem('user_pin_'+e);
     if(!ha&&d.length>0){
-      localStorage.removeItem('user_pin_'+e);userSecurityPin=null;
+      localStorage.removeItem('user_pin_'+e);localStorage.removeItem(getPinUnlockKey(e));userSecurityPin=null;
       if(bp){fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'reset_pin',email:e}),redirect:'follow'}).catch(function(er){});}
       renderMyPasses(d);return;
     }
     if(!ha&&d.length===0){renderMyPasses(d);return;}
     if(!bp&&lp){bp=lp;fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'update_pin',email:e,pin:lp}),redirect:'follow'}).catch(function(er){});}
-    if(bp&&bp!==lp){
+    if(bp&&!isPinUnlocked(e)){
       lockedPassesData=d;
       const vm=document.getElementById('pin-verify-modal');
       if(!s&&vm){vm.classList.remove('hidden');document.getElementById('pin-error-msg').classList.add('hidden');document.getElementById('verify-pin-input').value='';}
@@ -571,7 +578,6 @@ function initApp(){
 
       if(currentUser.role==='ops'){
         switchMainView('ops');
-        const cachedPin=localStorage.getItem('user_pin_'+currentUser.email);
         const hasCache=hasCachedPasses(currentUser.email);
         if(!hasCache){pleaseWaitLocked=true;showPleaseWait('PLEASE WAIT...');}
         try{const c=localStorage.getItem('cached_passes_'+currentUser.email);if(c){const a=JSON.parse(c);if(Array.isArray(a))lockedPassesData=a;}}catch(e){}
@@ -588,7 +594,7 @@ function initApp(){
         if(ld)ld.innerHTML='';
         myPassesData=[];
 
-        if(cachedPin || hasPinInCachedPasses){
+        if(hasPinInCachedPasses&&!isPinUnlocked(currentUser.email)){
           endPleaseWait();
           const vm=document.getElementById('pin-verify-modal');
           if(vm){
@@ -662,7 +668,7 @@ function logout(){
   stopAmbientPanels();
   clearShiftStart(); // <-- Reset shift timer on logout
   localStorage.removeItem(SESSION_KEY);
-  Object.keys(localStorage).forEach(function(key){if(key.startsWith('user_pin_'))localStorage.removeItem(key);});
+  Object.keys(localStorage).forEach(function(key){if(key.startsWith('user_pin_')||key.startsWith('pin_unlock_until_'))localStorage.removeItem(key);});
   try{if(html5QrCode&&html5QrCode.isScanning)html5QrCode.stop();}catch(e){}
   location.reload();
 }
@@ -957,7 +963,7 @@ async function loadMyPasses(forceRefresh,isSilent){
             }
           }
           const lp=localStorage.getItem('user_pin_'+targetEmail);
-          if(bp && bp!==lp){
+          if(bp&&!isPinUnlocked(targetEmail)){
             lockedPassesData=data;
             if(vm){
               vm.classList.remove('hidden');
@@ -967,7 +973,7 @@ async function loadMyPasses(forceRefresh,isSilent){
             }
             listDiv.innerHTML='';
           }else{
-            if(bp&&bp===lp)userSecurityPin=lp;
+            if(bp)userSecurityPin=bp||lp;
             renderMyPasses(data);myPassesData=[].concat(data).reverse();
           }
         }
@@ -1614,3 +1620,4 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 </script>
 </body></html>
+  
