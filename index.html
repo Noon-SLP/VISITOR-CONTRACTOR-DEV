@@ -510,11 +510,7 @@ function processAndRenderPasses(d,e,s){
     let bp=null;
     if(Array.isArray(d)){for(let i=d.length-1;i>=0;i--){if(d[i].HostName&&d[i].HostName.includes('||PIN:')){bp=d[i].HostName.split('||PIN:')[1];break;}}}
     let lp=localStorage.getItem('user_pin_'+e);
-    if(!ha&&d.length>0){
-      localStorage.removeItem('user_pin_'+e);localStorage.removeItem(getPinUnlockKey(e));userSecurityPin=null;
-      if(bp){fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'reset_pin',email:e}),redirect:'follow'}).catch(function(er){});}
-      renderMyPasses(d);return;
-    }
+    if(!ha&&d.length>0){renderMyPasses(d);return;}
     if(!ha&&d.length===0){renderMyPasses(d);return;}
     if(!bp&&lp){bp=lp;fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'update_pin',email:e,pin:lp}),redirect:'follow'}).catch(function(er){});}
     if(bp&&!isPinUnlocked(e)){
