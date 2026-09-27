@@ -78,6 +78,9 @@ body.blur-background #login-view::before,body.blur-background #main-content::bef
   #dashboard-guard>.header+div>div:first-child,#dashboard-guard>.header+div>div:last-child{width:100%!important;flex-basis:auto!important;max-width:none!important}
 }
 .login-container>.logo-box{display:block;margin:0 auto 15px;mix-blend-mode:screen}
+#login-view{justify-content:flex-start;padding-left:clamp(24px,8vw,120px)}
+#login-view::before,html.low-performance #login-view::before{filter:none!important;transform:none!important;will-change:auto!important}
+@media(max-width:700px){#login-view{justify-content:center;padding-left:0}}
 html.low-performance body{transition:none!important}
 html.low-performance #login-view::before,html.low-performance #main-content::before{filter:blur(2px)!important;transform:none!important;will-change:auto!important}
 html.low-performance .login-container,html.low-performance .ops-card,html.low-performance .admin-card,html.low-performance .analytics-box,html.low-performance #reader,html.low-performance .scan-result-card,html.low-performance .ambient-panel{box-shadow:none!important}
