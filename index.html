@@ -93,6 +93,26 @@ html.low-performance .login-container,html.low-performance .ops-card,html.low-pe
 html.low-performance .splash-logo,html.low-performance .ambient-status-dot,html.low-performance .listen-dot{animation:none!important}
 html.low-performance .pw-spinner{animation-duration:1.2s}
 html.low-performance .record-img-box img:hover{filter:none;box-shadow:none}
+#login-view{justify-content:center;padding:76px clamp(24px,5vw,80px) 32px;background-color:#090b11;background-image:none}
+#login-view::before,html.low-performance #login-view::before{background:none!important;filter:none!important;transform:none!important;will-change:auto!important}
+#login-layout{width:min(1120px,100%);display:grid;grid-template-columns:minmax(0,1.15fr) minmax(340px,.85fr);align-items:center;gap:clamp(48px,9vw,132px);margin:auto}
+#login-brand-panel{display:flex;flex-direction:column;align-items:flex-start;text-align:left}
+#login-brand-panel .logo-box{width:clamp(190px,24vw,300px);height:clamp(190px,24vw,300px);margin:0 0 24px;mix-blend-mode:screen;object-fit:contain}
+#login-brand-panel h2{font-size:clamp(36px,5vw,62px)!important;line-height:1.05!important;margin:0 0 12px!important;letter-spacing:.5px!important}
+#login-brand-panel p{font-size:clamp(16px,1.8vw,21px)!important;color:#c0c5cf!important;text-transform:none!important;letter-spacing:.2px!important}
+#login-layout>.login-container{width:100%;max-width:440px;max-height:calc(100vh - 130px);overflow-y:auto;margin:0;padding:30px;background:#12151c;border:1px solid #2a3140;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.35)}
+#login-layout>.login-container>.role-tabs{margin-bottom:22px}
+#login-layout>.login-container .input-group{margin-bottom:16px}
+#login-layout>.login-container .input-field,#login-layout>.login-container .btn-primary{min-height:50px;font-size:15px}
+@media(max-width:760px){
+  #login-view{height:auto;min-height:100vh;padding:78px 20px 30px}
+  #login-layout{max-width:480px;grid-template-columns:minmax(0,1fr);gap:24px}
+  #login-brand-panel{align-items:center;text-align:center}
+  #login-brand-panel .logo-box{width:112px;height:112px;margin:0 0 12px}
+  #login-brand-panel h2{font-size:28px!important}
+  #login-brand-panel p{font-size:14px!important}
+  #login-layout>.login-container{max-width:480px;max-height:none;justify-self:center}
+}
 </style>
 <div id="please-wait-overlay"><div class="pw-spinner"></div><div id="please-wait-text">PLEASE WAIT...</div></div>
 <!-- Changed splash-logo div to img -->
@@ -672,7 +692,24 @@ function initApp(){
   }catch(e){console.error(e);endPleaseWait();}
 }
 
+function buildLoginLayout(){
+  const view=document.getElementById('login-view');
+  const card=view&&view.querySelector('.login-container');
+  if(!view||!card||document.getElementById('login-layout'))return;
+  const logo=card.querySelector('.logo-box');
+  const brandText=logo&&logo.nextElementSibling;
+  if(!logo||!brandText)return;
+  const layout=document.createElement('div');
+  layout.id='login-layout';
+  const brand=document.createElement('section');
+  brand.id='login-brand-panel';
+  brand.append(logo,brandText);
+  layout.append(brand,card);
+  view.append(layout);
+}
+
 document.addEventListener('DOMContentLoaded',function(){
+    buildLoginLayout();
     const splash = document.getElementById('splash');
     const logoImages = Array.from(document.querySelectorAll('.splash-logo,.logo-box'));
     
