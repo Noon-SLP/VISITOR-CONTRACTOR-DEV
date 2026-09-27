@@ -50,6 +50,7 @@
 #dashboard-guard #btn-mode-camera,#dashboard-guard #btn-mode-gun{width:100%!important;flex:none!important}
 #dashboard-guard #guard-session-strip{grid-template-columns:1fr!important;text-align:left}
 #dashboard-guard #guard-session-strip .session-strip-item{align-items:flex-start}
+body.blur-background #login-view::before,body.blur-background #main-content::before{filter:blur(5px);transform:scale(1.025)}
 @media(min-width:1280px){
   #dashboard-guard>.header+div{width:calc(100% - 330px)!important;max-width:none!important;margin:0!important;justify-content:flex-start!important;gap:24px!important}
   #dashboard-guard>.header+div>div:first-child{flex:0 0 340px!important;min-width:0!important;max-width:420px!important}
@@ -532,6 +533,7 @@ function login(role){
 
 function initApp(){
   try{
+    document.body.classList.toggle('blur-background',!currentUser||currentUser.role!=='guard');
     const lv=document.getElementById('login-view'),al=document.getElementById('app-layout');
     if(lv)lv.classList.add('hidden');
     if(al)al.classList.remove('hidden');
@@ -626,6 +628,7 @@ window.onload=function(){
   updateUI();
   const params=new URLSearchParams(window.location.search);
   const r=params.get('role');
+  document.body.classList.toggle('blur-background',r!=='guard'&&r!=='staff');
   if(r==='staff'||r==='guard'||r==='admin'){
     const rt=document.getElementById('role-tabs');
     if(rt)rt.style.display='flex';
@@ -665,8 +668,8 @@ function logout(){
 }
 function hardRefreshApp(){if(confirm("Reload the app with the latest data?")){window.location.reload();}}
 function toggleDateFields(){const te=document.getElementById('req-type');if(!te)return;const type=te.value,vf=document.getElementById('req-visitor-fields'),cf=document.getElementById('req-contractor-fields'),tms=document.getElementById('team-members-section');if(vf)vf.classList.toggle('hidden',type==='Contractor');if(cf)cf.classList.toggle('hidden',type==='Visitor');if(tms)tms.classList.toggle('hidden',type==='Visitor');}
-function switchLoginTab(role){document.querySelectorAll('.role-tab').forEach(function(t2){t2.classList.remove('active');});document.querySelectorAll('#login-guard, #login-ops, #login-admin').forEach(function(f){f.classList.add('hidden');});const te=document.getElementById('tab-'+role);if(te)te.classList.add('active');const le=document.getElementById('login-'+role);if(le)le.classList.remove('hidden');}
-function switchMainView(vId){document.querySelectorAll('.dashboard').forEach(function(e){e.classList.add('hidden');});const tv=document.getElementById('dashboard-'+vId);if(tv)tv.classList.remove('hidden');document.querySelectorAll('.sidebar-nav a').forEach(function(a){a.classList.remove('active');});const an=document.getElementById('nav-sidebar-'+vId);if(an)an.classList.add('active');const sb=document.getElementById('sidebar');if(window.innerWidth<=900&&sb&&!sb.classList.contains('minimized'))toggleSidebar();if(vId==='ops'&&currentUser&&currentUser.role==='admin')loadMyPasses(false,false);}
+function switchLoginTab(role){document.body.classList.toggle('blur-background',role!=='guard');document.querySelectorAll('.role-tab').forEach(function(t2){t2.classList.remove('active');});document.querySelectorAll('#login-guard, #login-ops, #login-admin').forEach(function(f){f.classList.add('hidden');});const te=document.getElementById('tab-'+role);if(te)te.classList.add('active');const le=document.getElementById('login-'+role);if(le)le.classList.remove('hidden');}
+function switchMainView(vId){document.body.classList.toggle('blur-background',vId!=='guard');document.querySelectorAll('.dashboard').forEach(function(e){e.classList.add('hidden');});const tv=document.getElementById('dashboard-'+vId);if(tv)tv.classList.remove('hidden');document.querySelectorAll('.sidebar-nav a').forEach(function(a){a.classList.remove('active');});const an=document.getElementById('nav-sidebar-'+vId);if(an)an.classList.add('active');const sb=document.getElementById('sidebar');if(window.innerWidth<=900&&sb&&!sb.classList.contains('minimized'))toggleSidebar();if(vId==='ops'&&currentUser&&currentUser.role==='admin')loadMyPasses(false,false);}
 
 let imageGallery=[],imageGalleryIndex=0,imageZoom=1;
 function openFullscreenImage(src){if(!src)return;const images=[].slice.call(document.querySelectorAll('#view-record-content img[onclick*="openFullscreenImage"],#scan-result img[onclick*="openFullscreenImage"]'));imageGallery=images.map(function(img){const row=img.closest('.modal-team-row'),record=img.closest('.record-img-box'),rowText=row?row.innerText:'',nameNode=row&&row.querySelector('span[style*="noon-yellow"]');return{src:img.src||img.getAttribute('src'),name:nameNode?nameNode.textContent.trim():(rowText.match(/^[^\n]+/)||[])[0]||(record&&record.querySelector('strong')&&record.querySelector('strong').textContent.trim())||img.alt||'Photo',iqama:(rowText.match(/ID:\s*([^\n]+)/i)||[])[1]?(rowText.match(/ID:\s*([^\n]+)/i)||[])[1].trim():''};}).filter(function(x){return x.src;});imageGalleryIndex=Math.max(0,imageGallery.findIndex(function(x){return x.src===src;}));if(!imageGallery.length)imageGallery=[{src:src,name:'Photo',iqama:''}];renderFullscreenImage();}
