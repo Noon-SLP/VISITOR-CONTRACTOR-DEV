@@ -162,8 +162,9 @@ html.low-performance #login-view{background-image:linear-gradient(135deg,#0a0c12
 html.low-performance #login-view::after{background:none}
 #login-view::after{z-index:-1!important}
 #login-layout{position:static!important;z-index:auto!important}
-#main-content{background-color:#080a10!important;background-image:radial-gradient(ellipse at 20% 50%,rgba(255,199,0,.12),transparent 35%),radial-gradient(ellipse at 78% 56%,rgba(42,75,160,.14),transparent 38%),linear-gradient(90deg,transparent 49.94%,rgba(255,255,255,.035) 50%,transparent 50.06%),radial-gradient(ellipse at 22% 48%,rgba(255,199,0,.11),transparent 38%),radial-gradient(ellipse at 78% 55%,rgba(45,78,164,.17),transparent 40%),linear-gradient(128deg,#090b11 0%,#111723 52%,#090b11 100%)!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important}
-#main-content::before{display:none!important}
+#main-content{background-color:#000!important;background-image:none!important}
+#main-content::before{display:block!important;inset:0;z-index:0;background:url("Background.png") center center/min(92vh,58vw,1100px) auto no-repeat!important;filter:none!important;transform:none!important;will-change:auto!important}
+body.blur-background #main-content::before,html.low-performance #main-content::before{filter:none!important;transform:none!important;will-change:auto!important}
 </style>
 <div id="please-wait-overlay"><div class="pw-spinner"></div><div id="please-wait-text">PLEASE WAIT...</div></div>
 <!-- Changed splash-logo div to img -->
