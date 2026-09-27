@@ -68,6 +68,7 @@ body.blur-background #login-view::before,body.blur-background #main-content::bef
   #dashboard-guard>.header+div{flex-direction:column!important}
   #dashboard-guard>.header+div>div:first-child,#dashboard-guard>.header+div>div:last-child{width:100%!important;flex-basis:auto!important;max-width:none!important}
 }
+.login-container>.logo-box{display:block;margin:0 auto 15px;mix-blend-mode:screen}
 </style>
 <div id="please-wait-overlay"><div class="pw-spinner"></div><div id="please-wait-text">PLEASE WAIT...</div></div>
 <!-- Changed splash-logo div to img -->
@@ -1442,8 +1443,9 @@ function playQrCodeStream(){html5QrCode.start({facingMode:scannerFacingMode},{fp
 function switchScannerCamera(){scannerFacingMode=scannerFacingMode==="environment"?"user":"environment";startQrCodeStream();}
 function stopScanner(){if(html5QrCode&&html5QrCode.isScanning){html5QrCode.stop().then(function(){hideScannerUI();}).catch(function(){hideScannerUI();});}else{hideScannerUI();}}
 function hideScannerUI(){document.getElementById('reader-container').classList.add('hidden');document.getElementById('btn-start-scan').classList.remove('hidden');}
-function showScanResult(d,rHtml,cClass,isContractor){isContractor=!!isContractor;const sr=document.getElementById('scan-result');sr.className='';document.getElementById('r-decision').innerText=d;document.getElementById('r-reason').innerHTML=rHtml;setTimeout(function(){sr.className='scan-result-card '+cClass+' '+(isContractor?'fullscreen-scan':'');},10);if(cClass==="bg-red"){setTimeout(function(){if(document.getElementById('r-decision').innerText===d){sr.className='scan-result-card hidden';isProcessingScan=false;try{if(html5QrCode)html5QrCode.resume();}catch(e){}}},3500);}}
-window.closeScanResult=function(){isProcessingScan=false;const sr=document.getElementById('scan-result');if(sr)sr.className='scan-result-card hidden';try{if(html5QrCode)html5QrCode.resume();}catch(e){}const gunInput=document.getElementById('gun-scan-input');if(gunInput&&!document.getElementById('gun-scanner-container').classList.contains('hidden')){gunInput.focus();gunInput.value="";}};
+function setScannerSidebarHidden(hidden){if(!currentUser||currentUser.role!=='admin')return;const sb=document.getElementById('sidebar');if(sb)sb.style.display=hidden?'none':'flex';}
+function showScanResult(d,rHtml,cClass,isContractor){isContractor=!!isContractor;const sr=document.getElementById('scan-result');sr.className='';document.getElementById('r-decision').innerText=d;document.getElementById('r-reason').innerHTML=rHtml;if(isContractor)setScannerSidebarHidden(true);setTimeout(function(){sr.className='scan-result-card '+cClass+' '+(isContractor?'fullscreen-scan':'');},10);if(cClass==="bg-red"){setTimeout(function(){if(document.getElementById('r-decision').innerText===d){sr.className='scan-result-card hidden';setScannerSidebarHidden(false);isProcessingScan=false;try{if(html5QrCode)html5QrCode.resume();}catch(e){}}},3500);}}
+window.closeScanResult=function(){isProcessingScan=false;const sr=document.getElementById('scan-result');if(sr)sr.className='scan-result-card hidden';setScannerSidebarHidden(false);try{if(html5QrCode)html5QrCode.resume();}catch(e){}const gunInput=document.getElementById('gun-scan-input');if(gunInput&&!document.getElementById('gun-scanner-container').classList.contains('hidden')){gunInput.focus();gunInput.value="";}};
 function filterTeamMembers(query){let q=query.toLowerCase();let rows=document.querySelectorAll('.team-member-scan-row');rows.forEach(function(row){if(row.innerText.toLowerCase().includes(q)){row.style.display='flex';}else{row.style.display='none';}});let deviceCards=document.querySelectorAll('.device-photo-card');deviceCards.forEach(function(card){if(card.getAttribute('data-search').includes(q)){card.style.display='block';}else{card.style.display='none';}});}
 
 async function onScanSuccess(decodedText){
@@ -1455,7 +1457,7 @@ async function onScanSuccess(decodedText){
   if(!decodedText){isProcessingScan=false;return;}
   const resultCard=document.getElementById('scan-result'),selfieImg=document.getElementById('r-selfie'),confirmBtn=document.getElementById('btn-confirm-action'),teamSec=document.getElementById('guard-team-section'),detailsPrev=document.getElementById('guard-details-preview'),topInfoBox=document.getElementById('scan-result-top-info');
   const confirmBtnTop=document.getElementById('btn-confirm-action-top');
-  if(resultCard){resultCard.className='scan-result-card hidden';void resultCard.offsetWidth;resultCard.classList.remove('hidden');resultCard.classList.add('bg-blue');if(decodedText)resultCard.classList.add('fullscreen-scan');}
+  if(resultCard){resultCard.className='scan-result-card hidden';void resultCard.offsetWidth;resultCard.classList.remove('hidden');resultCard.classList.add('bg-blue');if(decodedText){resultCard.classList.add('fullscreen-scan');setScannerSidebarHidden(true);}}
   if(confirmBtn)confirmBtn.classList.add('hidden');if(confirmBtnTop)confirmBtnTop.classList.add('hidden');if(teamSec)teamSec.classList.add('hidden');
   const rDecision=document.getElementById('r-decision'),rReason=document.getElementById('r-reason');
   if(rDecision)rDecision.innerText='...';if(rReason)rReason.innerHTML="";
