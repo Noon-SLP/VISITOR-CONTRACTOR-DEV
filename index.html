@@ -50,7 +50,8 @@
 #dashboard-guard #btn-mode-camera,#dashboard-guard #btn-mode-gun{width:100%!important;flex:none!important}
 #dashboard-guard #guard-session-strip{grid-template-columns:1fr!important;text-align:left}
 #dashboard-guard #guard-session-strip .session-strip-item{align-items:flex-start}
-body.blur-background #login-view::before,body.blur-background #main-content::before{filter:blur(5px);transform:scale(1.025)}
+body.blur-background #login-view::before,body.blur-background #main-content::before{filter:blur(5px);transform:translate3d(0,0,0) scale(1.025)}
+#login-view::before,#main-content::before{will-change:transform,filter;backface-visibility:hidden}
 @media(min-width:1280px){
   #dashboard-guard>.header+div{width:calc(100% - 330px)!important;max-width:none!important;margin:0!important;justify-content:flex-start!important;gap:24px!important}
   #dashboard-guard>.header+div>div:first-child{flex:0 0 340px!important;min-width:0!important;max-width:420px!important}
