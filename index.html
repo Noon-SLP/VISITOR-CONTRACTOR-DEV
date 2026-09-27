@@ -81,6 +81,12 @@ body.blur-background #login-view::before,body.blur-background #main-content::bef
 #login-view{justify-content:flex-start;padding-left:clamp(24px,8vw,120px)}
 #login-view::before,html.low-performance #login-view::before{filter:none!important;transform:none!important;will-change:auto!important}
 @media(max-width:700px){#login-view{justify-content:center;padding-left:0}}
+@media(min-width:701px) and (max-width:1100px){#login-view{padding-left:clamp(16px,4vw,48px)}}
+#dashboard-ops{max-width:none;padding:20px clamp(16px,3vw,44px)}
+#dashboard-ops .ops-grid{grid-template-columns:minmax(0,420px) minmax(0,420px);justify-content:space-between;gap:24px}
+@media(max-width:1000px){#dashboard-ops .ops-grid{grid-template-columns:minmax(0,1fr);gap:18px}}
+#ambient-right.ambient-panel:not(.hidden){top:300px}
+@media(min-width:1280px){#ambient-right.ambient-panel:not(.hidden){top:300px}}
 html.low-performance body{transition:none!important}
 html.low-performance #login-view::before,html.low-performance #main-content::before{filter:blur(2px)!important;transform:none!important;will-change:auto!important}
 html.low-performance .login-container,html.low-performance .ops-card,html.low-performance .admin-card,html.low-performance .analytics-box,html.low-performance #reader,html.low-performance .scan-result-card,html.low-performance .ambient-panel{box-shadow:none!important}
@@ -455,12 +461,31 @@ function hasCachedPasses(email){
   }catch(e){return false;}
 }
 function getPinUnlockKey(email){return 'pin_unlock_until_'+String(email||'').toLowerCase().trim();}
-function isPinUnlocked(email){
-  const key=getPinUnlockKey(email),until=Number(localStorage.getItem(key));
-  if(!Number.isFinite(until)||until<=Date.now()){localStorage.removeItem(key);return false;}
-  return true;
+function clearPinUnlock(email){
+  const key=getPinUnlockKey(email);
+  localStorage.removeItem(key);
+  sessionStorage.removeItem(key);
 }
-function rememberPinUnlock(email){localStorage.setItem(getPinUnlockKey(email),String(Date.now()+2*60*60*1000));}
+function isPinUnlocked(email){
+  const key=getPinUnlockKey(email),now=Date.now();
+  let until=Number(localStorage.getItem(key));
+  if(Number.isFinite(until)&&until>now)return true;
+  until=Number(sessionStorage.getItem(key));
+  if(Number.isFinite(until)&&until>now){localStorage.setItem(key,String(until));return true;}
+  clearPinUnlock(email);
+  return false;
+}
+function clearStoredPin(email){
+  const key=String(email||'').toLowerCase().trim();
+  localStorage.removeItem('user_pin_'+key);
+  sessionStorage.removeItem('user_pin_'+key);
+  clearPinUnlock(key);
+}
+function rememberPinUnlock(email){
+  const key=getPinUnlockKey(email),until=String(Date.now()+2*60*60*1000);
+  localStorage.setItem(key,until);
+  sessionStorage.setItem(key,until);
+}
 
 async function confirmPinCreate(){
   let p=document.getElementById('new-pin-input').value.trim();
@@ -469,6 +494,7 @@ async function confirmPinCreate(){
   let e=currentUser.email;
   if(currentUser.role==='admin'){const ei=document.getElementById('req-admin-email');if(ei&&ei.value)e=ei.value.toLowerCase().trim();}
   localStorage.setItem('user_pin_'+e,p);
+  rememberPinUnlock(e);
   document.getElementById('pin-create-modal').classList.add('hidden');
   if(pinCreateMode==='reset'){
     try{await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'update_pin',email:e,pin:p}),redirect:'follow'});}catch(er){}
@@ -740,6 +766,7 @@ function logout(){
   clearShiftStart(); // <-- Reset shift timer on logout
   localStorage.removeItem(SESSION_KEY);
   Object.keys(localStorage).forEach(function(key){if(key.startsWith('user_pin_')||key.startsWith('pin_unlock_until_'))localStorage.removeItem(key);});
+  Object.keys(sessionStorage).forEach(function(key){if(key.startsWith('user_pin_')||key.startsWith('pin_unlock_until_'))sessionStorage.removeItem(key);});
   try{if(html5QrCode&&html5QrCode.isScanning)html5QrCode.stop();}catch(e){}
   location.reload();
 }
@@ -1311,7 +1338,7 @@ window.fetch=async function(input,init){
 
 async function submitExtendPass(){const id=document.getElementById('extend-id').value,type=document.getElementById('extend-type').value,ns=document.getElementById('extend-start').value,ei=document.getElementById('extend-end');const ne=ei?ei.value:'';const btn=document.getElementById('btn-submit-extend');if(!ns||!ne)return alert('Please select both Start and End dates.');if(!confirm('Extend pass '+id+'?'))return;btn.innerText='SAVING...';btn.disabled=true;try{await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'extend_pass',id:id,newStartDate:ns,newEndDate:ne}),mode:'no-cors'});closeExtendPass();loadAdminData(false);}catch(e){alert('Error.');}finally{btn.innerText=t("save_extension");btn.disabled=false;}}
 
-async function adminResetPin(email){if(!confirm('Reset PIN for '+email+'? They will be prompted to create a new one next time.'))return;try{await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'reset_pin',email:email}),redirect:'follow'});localStorage.removeItem('cached_admin_data');localStorage.removeItem('cached_passes_'+email);alert("PIN Reset Successful.");closeViewRecord();loadAdminData(true);}catch(e){alert("Error resetting PIN");}}
+async function adminResetPin(email){if(!confirm('Reset PIN for '+email+'? They will be prompted to create a new one next time.'))return;try{await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'reset_pin',email:email}),redirect:'follow'});clearStoredPin(email);localStorage.removeItem('cached_admin_data');localStorage.removeItem('cached_passes_'+email);alert("PIN Reset Successful.");closeViewRecord();loadAdminData(true);}catch(e){alert("Error resetting PIN");}}
 
 async function requestRevokeDevice(passId,memberIndex,btn){if(!confirm('Request admin to revoke device access for this member?'))return;let originalText=btn.innerText;btn.innerText="REQUESTING...";btn.disabled=true;try{const res=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'request_revoke_device',id:passId,memberIndex:memberIndex}),redirect:'follow'});const json=await res.json();if(json.status==='success'){alert("Device Revoke requested successfully.");localStorage.removeItem('cached_passes_'+currentUser.email);await refreshMemberView(passId);}else{alert("Failed to request: "+json.message);btn.innerText=originalText;btn.disabled=false;}}catch(e){alert("Network error.");btn.innerText=originalText;btn.disabled=false;}}
 
