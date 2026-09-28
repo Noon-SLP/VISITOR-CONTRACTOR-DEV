@@ -1135,29 +1135,20 @@ function toggleHistorySort(){
   renderHistorySheetRows(globalAdminHistory);
 }
 
+function escapeHistoryText(value){return String(value==null?'':value).replace(/[&<>"']/g,function(character){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character];});}
+function normalizeHistoryGroupKey(value){return String(value||'').trim().toLowerCase().replace(/\s+/g,' ');}
+
 function renderHistorySheetRows(history){
   const tHistory=document.getElementById("admin-table-history");
   if(!tHistory)return;
   let rows="",count=0;
   const si=document.getElementById("filter-start"),ei=document.getElementById("filter-end"),
         fStart=si&&si.value?si.value:"",fEnd=ei&&ei.value?ei.value:"";
-  let sorted=(Array.isArray(history)?history.slice():[]);
-  sorted.sort(function(a,b){
-    const da=parseFlexibleDate(a.CheckInTime||a.CheckOutTime||a["Validity Period"]||a.StartDate);
-    const db=parseFlexibleDate(b.CheckInTime||b.CheckOutTime||b["Validity Period"]||b.StartDate);
-    if(!da&&!db)return 0;
-    if(!da)return 1;
-    if(!db)return -1;
-    const cmp=da.getTime()-db.getTime();
-    return historySortOrder==='asc'?cmp:-cmp;
-  });
-
-  // ============ GROUP BY MONTH ============
-  const groups = {};        // key: "YYYY-MM", value: { label, count, rows }
+  const groups = {};
+  const companyGroups = {};
   const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-
-  sorted.forEach(function(row){
-    if(!row)return;
+  (Array.isArray(history)?history:[]).forEach(function(row,index){
+    if(!row||(!row.CheckInTime&&!row.CheckOutTime))return;
     const filterDate=row.CheckInTime||row.CheckOutTime||row["Validity Period"]||row.StartDate;
     if(!isDateInRange(filterDate,currentAdminFilter,fStart,fEnd))return;
     const d = parseFlexibleDate(filterDate);
@@ -1167,17 +1158,35 @@ function renderHistorySheetRows(history){
       label = monthNames[d.getMonth()].toUpperCase()+' '+d.getFullYear();
     }
     if(!groups[key]) groups[key] = { label: label, count: 0, rows: [] };
-
-    const validity=formatHistoryValidity(row["Validity Period"]);
-    const name=String(row.VisitorName||row.Name||"");
-    const type=String(row.Type||"");
-    const facility=String(row.Location||row.Facility||"");
+    const passId=String(row.PassID||row.TrackingID||row.UniqueID||"").trim();
+    const groupDate=d?d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'):'unknown';
+    const isMemberHistory=!!row.PersonKey;
+    const lookupPassId=String(row.PassID||row.UniqueID||"").trim();
+    const passData=lookupPassId&&Array.isArray(globalAdminData)?globalAdminData.find(function(pass){return String(pass.UniqueID||'')===lookupPassId;}):null;
+    const companyLabel=String(row.CompanyName||row.Company||row.ProjectName||(passData&&(passData.CompanyName||passData.Company||passData.ProjectName))||"").trim();
+    let company=String(companyLabel||(passData&&passData.VisitorName)||row.VisitorName||row.Name||"").trim();
+    if(!company)company='Attendance';
+    const groupIdentity=isMemberHistory
+      ?(passId||('record-'+index))
+      :(companyLabel?normalizeHistoryGroupKey(companyLabel)+'|'+String(row.Location||row.Facility||'')+'|'+String(row.Type||''):(passId||('record-'+index)));
+    const groupKey=groupIdentity+'|'+groupDate;
+    let companyGroup=companyGroups[groupKey];
+    if(!companyGroup){
+      companyGroup={company:company,passId:passId,day:groupDate,label:d?formatToDDMMYYYY(d):formatHistoryValidity(row["Validity Period"]),facility:String(row.Location||row.Facility||""),type:String(row.Type||""),entries:[],latest:d?d.getTime():0,uniqueKey:groupKey};
+      companyGroups[groupKey]=companyGroup;
+      groups[key].rows.push(companyGroup);
+    }else if(!companyGroup.company&&company){
+      companyGroup.company=company;
+    }
     const checkIn=row.CheckInTime?formatHistoryDateTime(row.CheckInTime):"";
     const checkOut=row.CheckOutTime?formatHistoryDateTime(row.CheckOutTime):"";
-    const duration=String(row.Duration||"");
-    const scannedBy=String(row.ScannedByGuard||row.ScannedBy||"");
-
-    groups[key].rows.push('<tr><td style="color:var(--text-muted);">'+(validity||"-")+'</td><td><strong>'+(name||"-")+'</strong></td><td><strong style="color:var(--noon-yellow);">'+(type?t(type.toLowerCase()):"-")+'</strong></td><td>'+(facility||"-")+'</td><td style="color:#10b981;font-size:12px;font-weight:bold;">'+(checkIn||"-")+'</td><td style="color:#3b82f6;font-size:12px;font-weight:bold;">'+(checkOut||"-")+'</td><td style="font-size:12px;">'+(duration||"-")+'</td><td style="color:var(--text-muted);font-size:11px;">'+(scannedBy||"-")+'</td></tr>');
+    const member=String(row.PersonKey?(row.VisitorName||row.Name||""):((passData&&passData.VisitorName)||row.VisitorName||row.Name||"")).trim();
+    if(member&&(checkIn||checkOut)){
+      companyGroup.entries.push({name:member,round:row.RoundNumber||"",checkIn:checkIn,checkOut:checkOut,guard:String(row.ScannedByGuard||row.ScannedBy||"")});
+    }
+    if(d)companyGroup.latest=Math.max(companyGroup.latest,d.getTime());
+    const outDate=parseFlexibleDate(row.CheckOutTime);
+    if(outDate)companyGroup.latest=Math.max(companyGroup.latest,outDate.getTime());
     groups[key].count++;
     count++;
   });
@@ -1192,9 +1201,31 @@ function renderHistorySheetRows(history){
 
   keys.forEach(function(k){
     const g = groups[k];
-    const plural = g.count===1 ? 'record' : 'records';
-    rows += '<tr><td colspan="8" style="background:linear-gradient(90deg, rgba(255,199,0,.14) 0%, rgba(255,199,0,.02) 100%); color:var(--noon-yellow); font-weight:800; font-size:13px; text-transform:uppercase; letter-spacing:1.8px; padding:14px 20px; border-top:1px solid var(--border-color); border-bottom:2px solid var(--noon-yellow);">📅 '+g.label+' <span style="color:var(--text-muted); font-weight:600; font-size:11px; letter-spacing:0.5px; margin-left:10px;">('+g.count+' '+plural+')</span></td></tr>';
-    rows += g.rows.join('');
+    const groupsForMonth=g.rows.slice().sort(function(a,b){
+      const cmp=a.latest-b.latest;
+      return historySortOrder==='asc'?cmp:-cmp;
+    });
+    const plural = groupsForMonth.length===1 ? 'company' : 'companies';
+    rows += '<tr><td colspan="8" style="background:linear-gradient(90deg, rgba(255,199,0,.14) 0%, rgba(255,199,0,.02) 100%); color:var(--noon-yellow); font-weight:800; font-size:13px; text-transform:uppercase; letter-spacing:1.8px; padding:14px 20px; border-top:1px solid var(--border-color); border-bottom:2px solid var(--noon-yellow);">📅 '+escapeHistoryText(g.label)+' <span style="color:var(--text-muted); font-weight:600; font-size:11px; letter-spacing:0.5px; margin-left:10px;">('+groupsForMonth.length+' '+plural+')</span></td></tr>';
+    groupsForMonth.forEach(function(companyGroup){
+      const entries=companyGroup.entries.slice().sort(function(a,b){
+        const da=parseFlexibleDate(a.checkIn)||parseFlexibleDate(a.checkOut);
+        const db=parseFlexibleDate(b.checkIn)||parseFlexibleDate(b.checkOut);
+        if(!da&&!db)return a.name.localeCompare(b.name);
+        if(!da)return 1;
+        if(!db)return -1;
+        return da.getTime()-db.getTime();
+      });
+      const uniquePeople={};
+      entries.forEach(function(entry){uniquePeople[entry.name]=true;});
+      const attendeeCount=Object.keys(uniquePeople).length;
+      const details=entries.map(function(entry,entryIndex){
+        const displayRound=entry.round?('Round '+entry.round):('Round '+(entryIndex+1));
+        return '<div style="display:grid;grid-template-columns:minmax(130px,1.3fr) minmax(85px,.7fr) minmax(145px,1fr) minmax(145px,1fr);gap:8px;align-items:center;padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.08);"><strong>'+escapeHistoryText(entry.name)+'</strong><span style="color:var(--text-muted);">'+escapeHistoryText(displayRound)+'</span><span style="color:#10b981;font-size:11px;font-weight:700;">'+(entry.checkIn?'CHECK IN · '+escapeHistoryText(entry.checkIn):'')+'</span><span style="color:#60a5fa;font-size:11px;font-weight:700;">'+(entry.checkOut?'CHECK OUT · '+escapeHistoryText(entry.checkOut):'')+'</span></div>';
+      }).join('');
+      const seeMore=details?'<details style="margin-top:8px;"><summary style="cursor:pointer;color:var(--noon-yellow);font-size:11px;font-weight:800;">SEE MORE · '+attendeeCount+' PEOPLE · '+entries.length+' ROUNDS</summary><div style="margin-top:8px;border:1px solid var(--border-color);border-radius:6px;overflow:auto;min-width:480px;">'+details+'</div></details>':'<span style="color:var(--text-muted);font-size:11px;">No member gate activity</span>';
+      rows+='<tr><td colspan="8" style="padding:12px 16px;border-bottom:1px solid var(--border-color);"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;"><div><strong style="color:#fff;font-size:13px;">'+escapeHistoryText(companyGroup.company)+'</strong><div style="color:var(--text-muted);font-size:10px;margin-top:4px;">'+escapeHistoryText(companyGroup.label)+' · '+escapeHistoryText(companyGroup.type||"-")+' · '+escapeHistoryText(companyGroup.facility||"-")+'</div></div><span style="color:var(--text-muted);font-size:10px;">'+(attendeeCount?attendeeCount+' PEOPLE · ':'')+entries.length+' ROUNDS</span></div>'+seeMore+'</td></tr>';
+    });
   });
   // ========================================
 
@@ -1833,13 +1864,13 @@ document.addEventListener('DOMContentLoaded',function(){
     });
     if(state)return state;
     if(!hasMemberEvents&&pass.CheckInTime&&!pass.CheckOutTime){
-      var legacyCount=0;
+      var legacyCount=1;
       for(var i=logs.length-1;i>=0;i--){
         if(!logs[i]||logs[i].memberKey||String(logs[i].action||'').toUpperCase()!=='IN')continue;
-        legacyCount=Number(logs[i].headCount)||0;
+        var recordedCount=Number(logs[i].headCount);
+        if(recordedCount>0)legacyCount=Math.floor(recordedCount);
         break;
       }
-      if(!legacyCount)legacyCount=Number.MAX_SAFE_INTEGER;
       if(rank<legacyCount)return {action:'IN',time:String(pass.CheckInTime)};
     }
     return null;
