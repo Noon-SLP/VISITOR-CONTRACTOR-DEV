@@ -1854,12 +1854,16 @@ document.addEventListener('DOMContentLoaded',function(){
     if(status)status.textContent=inside?'INSIDE':(hasHistory?'CHECKED OUT':'NOT ARRIVED');
   }
 
-  function updateCheckoutAllControl(){
-    var button=document.getElementById('scan-checkout-all-button');
-    if(!button)return;
+  function updateBulkGateControls(){
+    var checkInButton=document.getElementById('scan-checkin-all-button');
+    var checkOutButton=document.getElementById('scan-checkout-all-button');
+    if(!checkInButton||!checkOutButton)return;
+    var eligibleInCount=document.querySelectorAll('.scan-member-gate-button[data-gate-status="PENDING"]:not(:disabled),.scan-member-gate-button[data-gate-status="OUT"]:not(:disabled)').length;
     var insideCount=document.querySelectorAll('.scan-member-gate-button[data-gate-status="IN"]:not(:disabled)').length;
-    button.textContent='CHECK OUT ALL ('+insideCount+')';
-    button.classList.toggle('hidden',insideCount<2);
+    checkInButton.textContent='CHECK IN ALL ('+eligibleInCount+')';
+    checkOutButton.textContent='CHECK OUT ALL ('+insideCount+')';
+    checkInButton.disabled=eligibleInCount===0;
+    checkOutButton.disabled=insideCount===0;
   }
 
   function refreshMemberGateRows(pass,states){
@@ -1869,33 +1873,39 @@ document.addEventListener('DOMContentLoaded',function(){
       var state=states&&Object.prototype.hasOwnProperty.call(states,key)?states[key]:getMemberGateState(pass,key,Number(button.getAttribute('data-member-rank')||0));
       updateMemberGateButton(button,state);
     });
-    updateCheckoutAllControl();
+    updateBulkGateControls();
   }
 
-  async function checkoutAllMembers(bulkButton){
-    var insideButtons=Array.prototype.slice.call(document.querySelectorAll('.scan-member-gate-button[data-gate-status="IN"]:not(:disabled)'));
-    if(insideButtons.length<2)return;
-    if(!confirm('Check out all '+insideButtons.length+' people who are currently inside?'))return;
+  async function runBulkGateAction(actionType,bulkButton){
+    var selector=actionType==='IN'
+      ?'.scan-member-gate-button[data-gate-status="PENDING"]:not(:disabled),.scan-member-gate-button[data-gate-status="OUT"]:not(:disabled)'
+      :'.scan-member-gate-button[data-gate-status="IN"]:not(:disabled)';
+    var actionButtons=Array.prototype.slice.call(document.querySelectorAll(selector));
+    var actionLabel=actionType==='IN'?'check in':'check out';
+    if(actionButtons.length===0)return;
+    if(!confirm('Check '+actionLabel+' all '+actionButtons.length+' eligible people?'))return;
 
     var pass=guardPassCache.get(String(currentScannedID||'').toUpperCase());
     if(!pass)return alert('Pass data is unavailable. Please close and scan the QR again.');
     var gateButtons=document.querySelectorAll('.scan-member-gate-button[data-member-key]');
     gateButtons.forEach(function(button){button.disabled=true;});
+    var bulkButtons=[document.getElementById('scan-checkin-all-button'),document.getElementById('scan-checkout-all-button')];
+    bulkButtons.forEach(function(button){if(button)button.disabled=true;});
     bulkButton.disabled=true;
-    beginPleaseWait('CHECKING OUT ALL...');
+    beginPleaseWait(actionType==='IN'?'CHECKING IN ALL...':'CHECKING OUT ALL...');
 
     var completed=0;
     var failed=[];
     try{
-      for(var i=0;i<insideButtons.length;i++){
-        var button=insideButtons[i];
+      for(var i=0;i<actionButtons.length;i++){
+        var button=actionButtons[i];
         var memberKey=button.getAttribute('data-member-key');
         try{
           var result=await submitAppsScriptForm({
             action:'member_gate_action',
             id:currentScannedID,
             memberKey:memberKey,
-            actionType:'OUT',
+            actionType:actionType,
             guardInfo:(currentUser.name||'Guard')+' ('+(currentUser.location||'')+')'
           });
           var currentLogs=readGateLogs(pass);
@@ -1914,15 +1924,14 @@ document.addEventListener('DOMContentLoaded',function(){
       }
       updateControlRoomStats();
       if(failed.length){
-        alert('Checked out '+completed+' of '+insideButtons.length+' people. The remaining actions failed: '+failed.join('; '));
+        alert('Checked '+actionLabel+' '+completed+' of '+actionButtons.length+' people. The remaining actions failed: '+failed.join('; '));
       }else{
-        alert('Successfully checked out all '+completed+' people.');
+        alert('Successfully checked '+actionLabel+' all '+completed+' people.');
       }
     }finally{
       gateButtons.forEach(function(button){button.disabled=false;});
-      bulkButton.disabled=false;
       endPleaseWait();
-      updateCheckoutAllControl();
+      updateBulkGateControls();
     }
   }
 
@@ -1959,7 +1968,7 @@ document.addEventListener('DOMContentLoaded',function(){
       button.textContent=oldLabel;
     }finally{
       gateButtons.forEach(function(gateButton){gateButton.disabled=false;});
-      updateCheckoutAllControl();
+      updateBulkGateControls();
     }
   }
 
@@ -2024,17 +2033,24 @@ document.addEventListener('DOMContentLoaded',function(){
     var list=section.querySelector('#team-members-list-container');
     if(list&&!section.querySelector('#scan-checkout-all-button')){
       var actionRow=document.createElement('div');
-      actionRow.style.cssText='display:flex;justify-content:flex-end;margin:-5px 0 12px;';
+      actionRow.style.cssText='display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin:-5px 0 12px;';
+      var checkInAll=document.createElement('button');
+      checkInAll.id='scan-checkin-all-button';
+      checkInAll.type='button';
+      checkInAll.className='scan-member-gate-button';
+      checkInAll.style.cssText='background:#16a34a;color:#fff;padding:10px 14px;';
+      checkInAll.addEventListener('click',function(){runBulkGateAction('IN',checkInAll);});
       var checkoutAll=document.createElement('button');
       checkoutAll.id='scan-checkout-all-button';
       checkoutAll.type='button';
-      checkoutAll.className='scan-member-gate-button hidden';
+      checkoutAll.className='scan-member-gate-button';
       checkoutAll.style.cssText='background:#fbbf24;color:#111;padding:10px 14px;';
-      checkoutAll.addEventListener('click',function(){checkoutAllMembers(checkoutAll);});
+      checkoutAll.addEventListener('click',function(){runBulkGateAction('OUT',checkoutAll);});
+      actionRow.appendChild(checkInAll);
       actionRow.appendChild(checkoutAll);
       list.parentNode.insertBefore(actionRow,list);
     }
-    updateCheckoutAllControl();
+    updateBulkGateControls();
   }
 
   var originalScanSuccess=window.onScanSuccess;
