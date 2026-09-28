@@ -2051,6 +2051,15 @@ document.addEventListener('DOMContentLoaded',function(){
       updateMemberGateButton(button,state);
     });
     updateBulkGateControls();
+    updateScanResultOccupancy();
+  }
+
+  function updateScanResultOccupancy(){
+    var result=document.getElementById('scan-result');
+    if(!result)return;
+    var inside=document.querySelector('.scan-member-gate-button[data-member-key][data-gate-status="IN"]')!==null;
+    result.classList.remove('bg-green','bg-blue');
+    result.classList.add(inside?'bg-blue':'bg-green');
   }
 
   async function runBulkGateAction(actionType,bulkButton){
@@ -2236,6 +2245,7 @@ document.addEventListener('DOMContentLoaded',function(){
       updateGuardScanPanels();
       try{
         setupIndividualGateControls();
+        updateScanResultOccupancy();
       }catch(error){
         console.error('Unable to prepare individual attendance controls.',error);
         alert('Individual attendance controls could not be loaded. Please close and scan the QR again.');
