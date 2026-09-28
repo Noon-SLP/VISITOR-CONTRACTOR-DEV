@@ -1762,4 +1762,218 @@ document.addEventListener('DOMContentLoaded',function(){
   setTimeout(prefetchAdmin,800);
 });
 </script>
+<script>
+(function(){
+  var scanResult=document.getElementById('scan-result');
+  var readerContainer=document.getElementById('reader-container');
+  var style=document.createElement('style');
+  style.textContent='body.guard-scan-active #ambient-left,body.guard-scan-active #ambient-right{display:none!important}.scan-member-gate-controls{display:flex;align-items:center;gap:8px}.scan-member-gate-status{font-size:10px;font-weight:700;letter-spacing:.4px;white-space:nowrap;color:rgba(255,255,255,.75)}.scan-member-gate-button{border:0;border-radius:7px;padding:9px 11px;font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer;background:var(--noon-yellow);color:#111}.scan-member-gate-button[data-gate-status=IN]{background:#fbbf24}.scan-member-gate-button:disabled{opacity:.6;cursor:wait}';
+  document.head.appendChild(style);
+
+  function updateGuardScanPanels(){
+    var resultOpen=!!(scanResult&&!scanResult.classList.contains('hidden'));
+    var readerOpen=!!(readerContainer&&!readerContainer.classList.contains('hidden'));
+    var active=resultOpen||readerOpen;
+    document.body.classList.toggle('guard-scan-active',active);
+  }
+
+  if(window.MutationObserver){
+    var observer=new MutationObserver(updateGuardScanPanels);
+    if(scanResult)observer.observe(scanResult,{attributes:true,attributeFilter:['class']});
+    if(readerContainer)observer.observe(readerContainer,{attributes:true,attributeFilter:['class']});
+  }
+  updateGuardScanPanels();
+
+  var originalCloseScanResult=window.closeScanResult;
+  if(typeof originalCloseScanResult==='function'){
+    window.closeScanResult=function(){
+      var result=originalCloseScanResult.apply(this,arguments);
+      updateGuardScanPanels();
+      return result;
+    };
+  }
+
+  function normalizeMemberIdentity(value){
+    return String(value||'').toLowerCase().replace(/[\s\u0021-\u002F\u003A-\u0040\u005B-\u0060\u007B-\u007E]/g,'');
+  }
+
+  function getMemberKey(row,rank){
+    if(rank===0)return 'lead';
+    var idMatch=row.innerText.match(/ID:\s*([^\n]+)/i);
+    var identity=idMatch?idMatch[1].trim():'';
+    var normalizedId=normalizeMemberIdentity(identity);
+    if(!normalizedId||normalizedId==='na'||normalizedId==='none'||normalizedId==='unknown'){
+      var nameNode=row.querySelector('div div span');
+      identity=nameNode&&nameNode.firstChild?nameNode.firstChild.nodeValue.trim():row.innerText.split('\n')[0].replace(/\bTEAM\b|\bNEW\b/gi,'').trim();
+    }
+    var normalized=normalizeMemberIdentity(identity);
+    return normalized?'member:'+normalized:'';
+  }
+
+  function readGateLogs(pass){
+    if(Array.isArray(pass.GateLogs))return pass.GateLogs;
+    try{
+      var logs=JSON.parse(String(pass.GateLogs||'[]'));
+      return Array.isArray(logs)?logs:[];
+    }catch(error){
+      console.error('Unable to read saved gate logs.',error);
+      return [];
+    }
+  }
+
+  function getMemberGateState(pass,key,rank){
+    var logs=readGateLogs(pass);
+    var state=null;
+    var hasMemberEvents=false;
+    logs.forEach(function(log){
+      if(log&&log.memberKey)hasMemberEvents=true;
+      if(log&&String(log.memberKey||'')===key){
+        state={action:String(log.action||'').toUpperCase(),time:String(log.time||'')};
+      }
+    });
+    if(state)return state;
+    if(!hasMemberEvents&&pass.CheckInTime&&!pass.CheckOutTime){
+      var legacyCount=0;
+      for(var i=logs.length-1;i>=0;i--){
+        if(!logs[i]||logs[i].memberKey||String(logs[i].action||'').toUpperCase()!=='IN')continue;
+        legacyCount=Number(logs[i].headCount)||0;
+        break;
+      }
+      if(!legacyCount)legacyCount=Number.MAX_SAFE_INTEGER;
+      if(rank<legacyCount)return {action:'IN',time:String(pass.CheckInTime)};
+    }
+    return null;
+  }
+
+  function updateMemberGateButton(button,state){
+    var inside=!!state&&state.action==='IN';
+    var hasHistory=!!state;
+    button.dataset.gateStatus=inside?'IN':(hasHistory?'OUT':'PENDING');
+    button.textContent=inside?'CHECK OUT':'CHECK IN';
+    var status=button.parentElement.querySelector('.scan-member-gate-status');
+    if(status)status.textContent=inside?'INSIDE':(hasHistory?'CHECKED OUT':'NOT ARRIVED');
+  }
+
+  function refreshMemberGateRows(pass,states){
+    var buttons=document.querySelectorAll('.scan-member-gate-button[data-member-key]');
+    buttons.forEach(function(button){
+      var key=button.getAttribute('data-member-key');
+      var state=states&&Object.prototype.hasOwnProperty.call(states,key)?states[key]:getMemberGateState(pass,key,Number(button.getAttribute('data-member-rank')||0));
+      updateMemberGateButton(button,state);
+    });
+  }
+
+  async function saveMemberGateAction(button){
+    if(button.disabled)return;
+    var pass=guardPassCache.get(String(currentScannedID||'').toUpperCase());
+    if(!pass)return alert('Pass data is unavailable. Please close and scan the QR again.');
+    var action=button.dataset.gateStatus==='IN'?'OUT':'IN';
+    var memberKey=button.getAttribute('data-member-key');
+    var oldLabel=button.textContent;
+    var gateButtons=document.querySelectorAll('.scan-member-gate-button[data-member-key]');
+    gateButtons.forEach(function(gateButton){gateButton.disabled=true;});
+    button.textContent='SAVING...';
+    try{
+      var result=await submitAppsScriptForm({
+        action:'member_gate_action',
+        id:currentScannedID,
+        memberKey:memberKey,
+        actionType:action,
+        guardInfo:(currentUser.name||'Guard')+' ('+(currentUser.location||'')+')'
+      });
+      var currentLogs=readGateLogs(pass);
+      if(Array.isArray(result.gateLogs)&&result.gateLogs.length>=currentLogs.length){
+        pass.GateLogs=result.gateLogs;
+        pass.CheckInTime=result.checkInTime||'';
+        pass.CheckOutTime=result.checkOutTime||'';
+      }
+      pass.ScannedByGuard=(currentUser.name||'Guard')+' ('+(currentUser.location||'')+')';
+      guardPassCache.set(String(currentScannedID).toUpperCase(),pass);
+      refreshMemberGateRows(pass,null);
+      updateControlRoomStats();
+    }catch(error){
+      alert(error&&error.message?error.message:'Unable to save this member gate action. Please try again.');
+      button.textContent=oldLabel;
+    }finally{
+      gateButtons.forEach(function(gateButton){gateButton.disabled=false;});
+    }
+  }
+
+  function setupIndividualGateControls(){
+    var section=document.getElementById('guard-team-section');
+    var confirm=document.getElementById('btn-confirm-action');
+    var confirmTop=document.getElementById('btn-confirm-action-top');
+    if(!section||section.classList.contains('hidden')||!confirm||confirm.classList.contains('hidden'))return;
+
+    confirm.classList.add('hidden');
+    if(confirmTop)confirmTop.classList.add('hidden');
+    var selectAll=section.querySelector('input[type="checkbox"]:not(.att-chk)');
+    if(selectAll&&selectAll.parentElement)selectAll.parentElement.classList.add('hidden');
+
+    var pass=guardPassCache.get(String(currentScannedID||'').toUpperCase());
+    if(!pass)return;
+    var decision=document.getElementById('r-decision');
+    var reason=document.getElementById('r-reason');
+    if(decision)decision.innerText=t('allowed');
+    if(reason)reason.innerText=t('pass_validated');
+    var checkboxes=section.querySelectorAll('input.att-chk');
+    var keys={};
+    Array.prototype.forEach.call(checkboxes,function(checkbox,rank){
+      var row=checkbox.parentElement;
+      while(row&&!row.classList.contains('team-member-scan-row'))row=row.parentElement;
+      if(!row)return;
+
+      var memberKey=getMemberKey(row,rank);
+      checkbox.parentNode.removeChild(checkbox);
+      var container=document.createElement('div');
+      Array.prototype.forEach.call(row.attributes,function(attribute){
+        if(attribute.name!=='class'&&attribute.name!=='style')container.setAttribute(attribute.name,attribute.value);
+      });
+      container.className=row.className;
+      container.style.cssText=row.style.cssText;
+      container.style.cursor='default';
+      while(row.firstChild)container.appendChild(row.firstChild);
+      row.parentNode.replaceChild(container,row);
+
+      var controls=document.createElement('div');
+      controls.className='scan-member-gate-controls';
+      var status=document.createElement('span');
+      status.className='scan-member-gate-status';
+      var button=document.createElement('button');
+      button.type='button';
+      button.className='scan-member-gate-button';
+      button.setAttribute('data-member-key',memberKey);
+      button.setAttribute('data-member-rank',String(rank));
+      if(!memberKey||keys[memberKey]){
+        button.disabled=true;
+        button.title='This member needs a unique ID on the pass.';
+        status.textContent='CHECK ID';
+      }else{
+        keys[memberKey]=true;
+        button.addEventListener('click',function(){saveMemberGateAction(button);});
+      }
+      controls.appendChild(status);
+      controls.appendChild(button);
+      container.appendChild(controls);
+      if(!button.disabled)updateMemberGateButton(button,getMemberGateState(pass,memberKey,rank));
+    });
+  }
+
+  var originalScanSuccess=window.onScanSuccess;
+  if(typeof originalScanSuccess==='function'){
+    window.onScanSuccess=async function(){
+      document.body.classList.add('guard-scan-active');
+      var result=await originalScanSuccess.apply(this,arguments);
+      updateGuardScanPanels();
+      try{
+        setupIndividualGateControls();
+      }catch(error){
+        console.error('Unable to prepare individual attendance controls.',error);
+        alert('Individual attendance controls could not be loaded. Please close and scan the QR again.');
+      }
+      return result;
+    };
+  }
+})();
+</script>
 </body></html>
