@@ -1245,11 +1245,11 @@ function renderHistorySheetRows(history){
       const details=attendeeRows.map(function(person){
         person.checkIns.sort(function(a,b){return (parseFlexibleDate(a.time)||0)-(parseFlexibleDate(b.time)||0);});
         person.checkOuts.sort(function(a,b){return (parseFlexibleDate(a.time)||0)-(parseFlexibleDate(b.time)||0);});
-        const checkIns=person.checkIns.map(function(event){return '<span style="display:inline-block;margin-right:18px;">'+event.round+' CHECK IN · '+escapeHistoryText(event.time)+'</span>';}).join('');
-        const checkOuts=person.checkOuts.map(function(event){return '<span style="display:inline-block;margin-right:18px;">'+event.round+' CHECK OUT · '+escapeHistoryText(event.time)+'</span>';}).join('');
-        return '<div style="display:grid;grid-template-columns:minmax(200px,1.2fr) minmax(280px,1fr) minmax(280px,1fr);gap:12px;align-items:center;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.1);font-size:15px;min-width:820px;"><strong style="white-space:nowrap;">'+escapeHistoryText(person.name)+'</strong><span style="color:#10b981;font-size:14px;font-weight:800;white-space:nowrap;overflow-x:auto;">'+checkIns+'</span><span style="color:#60a5fa;font-size:14px;font-weight:800;white-space:nowrap;overflow-x:auto;">'+checkOuts+'</span></div>';
+        const checkIns=person.checkIns.map(function(event){return '<div style="padding:2px 0;">'+event.round+' CHECK IN · '+escapeHistoryText(event.time)+'</div>';}).join('');
+        const checkOuts=person.checkOuts.map(function(event){return '<div style="padding:2px 0;">'+event.round+' CHECK OUT · '+escapeHistoryText(event.time)+'</div>';}).join('');
+        return '<div style="display:grid;grid-template-columns:minmax(170px,1fr) minmax(0,1.15fr) minmax(0,1.15fr);gap:12px;align-items:center;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.1);font-size:15px;line-height:1.5;min-width:760px;"><strong style="font-size:15px;overflow-wrap:anywhere;">'+escapeHistoryText(person.name)+'</strong><span style="color:#10b981;font-size:14px;font-weight:800;overflow-wrap:anywhere;">'+checkIns+'</span><span style="color:#60a5fa;font-size:14px;font-weight:800;overflow-wrap:anywhere;">'+checkOuts+'</span></div>';
       }).join('');
-      const seeMore=details?'<details data-history-key="'+escapeHistoryText(companyGroup.uniqueKey)+'" style="margin-top:10px;"><summary style="cursor:pointer;color:var(--noon-yellow);font-size:15px;font-weight:800;">SEE MORE · '+attendeeCount+' PEOPLE</summary><div style="margin-top:10px;border:1px solid var(--border-color);border-radius:6px;overflow:auto;min-width:520px;">'+details+'</div></details>':'<span style="color:var(--text-muted);font-size:14px;">No member gate activity</span>';
+      const seeMore=details?'<details data-history-key="'+escapeHistoryText(companyGroup.uniqueKey)+'" style="margin-top:10px;"><summary style="cursor:pointer;color:var(--noon-yellow);font-size:15px;font-weight:800;">SEE MORE · '+attendeeCount+' PEOPLE</summary><div style="margin-top:10px;border:1px solid var(--border-color);border-radius:6px;overflow-x:auto;overflow-y:hidden;">'+details+'</div></details>':'<span style="color:var(--text-muted);font-size:14px;">No member gate activity</span>';
       rows+='<tr><td colspan="8" style="padding:16px 18px;border-bottom:1px solid var(--border-color);"><div style="display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:center;"><div><strong style="color:#fff;font-size:17px;">'+escapeHistoryText(companyGroup.company)+'</strong><div style="color:var(--text-muted);font-size:13px;margin-top:6px;">'+escapeHistoryText(companyGroup.label)+' · '+escapeHistoryText(companyGroup.type||"-")+' · '+escapeHistoryText(companyGroup.facility||"-")+'</div></div><span style="color:var(--text-muted);font-size:13px;font-weight:700;">'+(attendeeCount?attendeeCount+' PEOPLE':'')+'</span></div>'+seeMore+'</td></tr>';
     });
   });
@@ -1625,13 +1625,13 @@ function startQrCodeStream(){
     if(readerCont&&readerCont.classList.contains('hidden'))return;
     const config={fps:10,qrbox:{width:250,height:250}};
     try{
-      await html5QrCode.start({facingMode:scannerFacingMode},config,onScanSuccess,function(){});
+      await html5QrCode.start({facingMode:scannerFacingMode},config,handleQrScanSuccess,function(){});
     }catch(primaryError){
       let cameras=[];
       try{cameras=await Html5Qrcode.getCameras();}catch(cameraError){console.warn('[QR scanner] Camera enumeration failed.',cameraError);}
       const camera=cameras.find(function(item){return scannerFacingMode==='user'?/front|user|facetime/i.test(item.label||''):/back|rear|environment/i.test(item.label||'');})||(scannerFacingMode==='user'?cameras[0]:cameras[cameras.length-1]);
       if(!camera)throw primaryError;
-      await html5QrCode.start(camera.id,config,onScanSuccess,function(){});
+      await html5QrCode.start(camera.id,config,handleQrScanSuccess,function(){});
     }
     const error=document.getElementById('scanner-error-message');
     if(error)error.remove();
@@ -1871,7 +1871,9 @@ async function saveAddTeamMember(){let iB64='',sB64='',tDevB64='',ii=document.ge
 function renderAddTeamRoster(){const div=document.getElementById('add-team-roster-display');if(addMoreTeamList.length>0){div.classList.remove('hidden');let h='';addMoreTeamList.forEach(function(m,idx){let cleanName=m.name.replace(/\*NEW_MEMBER\*/gi,'').trim();let devHtml=m.deviceType!=='None'?'<span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">'+m.deviceType+'</span>':'';let imgsHtml='<img src="'+m.iqama+'" class="team-member-img" onclick="openFullscreenImage(this.src)"><img src="'+m.selfie+'" class="team-member-img" onclick="openFullscreenImage(this.src)">';h+='<div class="team-member-row"><span style="color:white;font-size:13px;font-weight:bold;">'+cleanName+' <span style="background:var(--success);color:white;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">'+t('new_badge')+'</span>'+devHtml+'</span><div style="display:flex;gap:10px;">'+imgsHtml+'<button type="button" style="background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:16px;" onclick="addMoreTeamList.splice('+idx+',1);renderAddTeamRoster();">❌</button></div></div>';});div.innerHTML=h;}else div.classList.add('hidden');}
 function submitAppsScriptForm(payload){
   var request= function(){
-    return fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),redirect:'follow',cache:'no-store'}).then(function(res){
+    var controller=typeof AbortController==='function'?new AbortController():null;
+    var timeout=controller?setTimeout(function(){controller.abort();},20000):null;
+    return fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),redirect:'follow',cache:'no-store',signal:controller?controller.signal:undefined}).then(function(res){
       if(!res.ok){
         var error=new Error('HTTP '+res.status);
         error.status=res.status;
@@ -1881,6 +1883,11 @@ function submitAppsScriptForm(payload){
     }).then(function(result){
       if(!result||result.status!=='success')throw new Error(result&&result.message?result.message:'The server did not save the request.');
       return result;
+    }).catch(function(error){
+      if(controller&&controller.signal.aborted)throw new Error('The server did not respond within 20 seconds. Check the connection and try again.');
+      throw error;
+    }).finally(function(){
+      if(timeout)clearTimeout(timeout);
     });
   };
   return request().catch(function(error){
@@ -1889,6 +1896,14 @@ function submitAppsScriptForm(payload){
   });
 }
 function createGateRequestId(){return 'gate-'+Date.now()+'-'+Math.random().toString(36).slice(2);}
+function handleQrScanSuccess(decodedText,decodedResult){
+  Promise.resolve(onScanSuccess(decodedText,decodedResult)).catch(function(error){
+    isProcessingScan=false;
+    endPleaseWait();
+    console.error('[QR scanner] Error while processing a scanned code.',error);
+    showScanResult('SCAN ERROR','Could not process this QR code. Please try scanning again.','bg-red',false);
+  });
+}
 async function submitAddMorePeople(keepAdding){keepAdding=!!keepAdding;if(addMoreTeamList.length===0)return alert("Please add at least one person to the list first.");if(!keepAdding&&!confirm("WARNING: This will reset the pass status back to PENDING. Do you want to proceed?"))return;let btn=document.getElementById("btn-submit-add-more");btn.innerText="SUBMITTING...";btn.disabled=true;let cleanTeam=addMoreTeamList.map(function(m){return {iqama:m.rawIqama,selfie:m.rawSelfie,devicePhoto:m.rawDevicePhoto,name:m.name,iqamaText:m.iqamaText,deviceString:m.deviceType!=="None"?m.deviceType+' ('+m.deviceId+')':"None"};});let payload={action:"add_team_members",id:addMorePassId,team:JSON.stringify(cleanTeam)};beginPleaseWait('PLEASE WAIT...');try{await submitAppsScriptForm(payload);addMoreTeamList=[];renderAddTeamRoster();if(!keepAdding){closeAddMoreModal();}else{startAddMoreTimer();}endPleaseWait();alert("People added successfully. The pass is now pending admin approval.");setTimeout(function(){loadMyPasses(true,true).catch(function(){});},300);}catch(e){endPleaseWait();alert("People were not added: "+e.message);}finally{btn.innerText="SUBMIT & SEND FOR APPROVAL";btn.disabled=false;}}
 
 document.addEventListener('DOMContentLoaded',function(){
@@ -1925,7 +1940,7 @@ document.addEventListener('DOMContentLoaded',function(){
   var scanResult=document.getElementById('scan-result');
   var readerContainer=document.getElementById('reader-container');
   var style=document.createElement('style');
-  style.textContent='body.guard-scan-active #ambient-left,body.guard-scan-active #ambient-right{display:none!important}.scan-member-gate-controls{display:flex;align-items:center;gap:8px}.scan-member-gate-status{font-size:10px;font-weight:700;letter-spacing:.4px;white-space:nowrap;color:rgba(255,255,255,.75)}.scan-member-gate-button{border:0;border-radius:7px;padding:9px 11px;font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer;background:var(--noon-yellow);color:#111}.scan-member-gate-button[data-gate-status=IN]{background:#fbbf24}.scan-member-gate-button:disabled{opacity:.6;cursor:wait}';
+  style.textContent='body.guard-scan-active #ambient-left,body.guard-scan-active #ambient-right{display:none!important}.scan-member-gate-controls{display:flex;align-items:center;gap:8px}.scan-member-gate-status{font-size:10px;font-weight:700;letter-spacing:.4px;white-space:nowrap;color:rgba(255,255,255,.75)}.scan-member-gate-button{border:0;border-radius:7px;padding:9px 11px;font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer;background:var(--noon-yellow);color:#111}.scan-member-gate-button[data-gate-status=IN],#scan-checkout-all-button{background:#dc2626!important;color:#fff!important}.scan-member-gate-button:disabled{opacity:.6;cursor:wait}';
   document.head.appendChild(style);
   var clockStyle=document.createElement('style');
   clockStyle.textContent='.ambient-clock{font-size:42px!important;letter-spacing:1px!important}.ambient-date{font-size:15px!important;letter-spacing:1px!important;line-height:1.4;font-weight:700!important}';
@@ -2207,7 +2222,7 @@ document.addEventListener('DOMContentLoaded',function(){
       checkoutAll.id='scan-checkout-all-button';
       checkoutAll.type='button';
       checkoutAll.className='scan-member-gate-button';
-      checkoutAll.style.cssText='background:#fbbf24;color:#111;padding:10px 14px;';
+      checkoutAll.style.cssText='background:#dc2626;color:#fff;padding:10px 14px;';
       checkoutAll.addEventListener('click',function(){runBulkGateAction('OUT',checkoutAll);});
       actionRow.appendChild(checkInAll);
       actionRow.appendChild(checkoutAll);
