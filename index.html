@@ -1247,7 +1247,7 @@ function renderHistorySheetRows(history){
         person.checkOuts.sort(function(a,b){return (parseFlexibleDate(a.time)||0)-(parseFlexibleDate(b.time)||0);});
         const checkIns=person.checkIns.map(function(event){return '<div style="padding:2px 0;">'+event.round+' CHECK IN · '+escapeHistoryText(event.time)+'</div>';}).join('');
         const checkOuts=person.checkOuts.map(function(event){return '<div style="padding:2px 0;">'+event.round+' CHECK OUT · '+escapeHistoryText(event.time)+'</div>';}).join('');
-        return '<div style="display:grid;grid-template-columns:minmax(170px,1fr) minmax(0,1.15fr) minmax(0,1.15fr);gap:12px;align-items:center;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.1);font-size:15px;line-height:1.5;min-width:760px;"><strong style="font-size:15px;overflow-wrap:anywhere;">'+escapeHistoryText(person.name)+'</strong><span style="color:#10b981;font-size:14px;font-weight:800;overflow-wrap:anywhere;">'+checkIns+'</span><span style="color:#60a5fa;font-size:14px;font-weight:800;overflow-wrap:anywhere;">'+checkOuts+'</span></div>';
+        return '<div style="display:grid;grid-template-columns:minmax(170px,1fr) minmax(0,1.15fr) minmax(0,1.15fr);gap:12px;align-items:start;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.1);font-size:16px;line-height:1.55;min-width:0;"><strong style="font-size:16px;overflow-wrap:anywhere;">'+escapeHistoryText(person.name)+'</strong><span style="color:#10b981;font-size:16px;font-weight:800;overflow-wrap:anywhere;">'+checkIns+'</span><span style="color:#60a5fa;font-size:16px;font-weight:800;overflow-wrap:anywhere;">'+checkOuts+'</span></div>';
       }).join('');
       const seeMore=details?'<details data-history-key="'+escapeHistoryText(companyGroup.uniqueKey)+'" style="margin-top:10px;"><summary style="cursor:pointer;color:var(--noon-yellow);font-size:15px;font-weight:800;">SEE MORE · '+attendeeCount+' PEOPLE</summary><div style="margin-top:10px;border:1px solid var(--border-color);border-radius:6px;overflow-x:auto;overflow-y:hidden;">'+details+'</div></details>':'<span style="color:var(--text-muted);font-size:14px;">No member gate activity</span>';
       rows+='<tr><td colspan="8" style="padding:16px 18px;border-bottom:1px solid var(--border-color);"><div style="display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:center;"><div><strong style="color:#fff;font-size:17px;">'+escapeHistoryText(companyGroup.company)+'</strong><div style="color:var(--text-muted);font-size:13px;margin-top:6px;">'+escapeHistoryText(companyGroup.label)+' · '+escapeHistoryText(companyGroup.type||"-")+' · '+escapeHistoryText(companyGroup.facility||"-")+'</div></div><span style="color:var(--text-muted);font-size:13px;font-weight:700;">'+(attendeeCount?attendeeCount+' PEOPLE':'')+'</span></div>'+seeMore+'</td></tr>';
@@ -1891,7 +1891,8 @@ function submitAppsScriptForm(payload){
     });
   };
   return request().catch(function(error){
-    if(payload.action!=='member_gate_action'||!payload.requestId||error.status!==404)throw error;
+    if(payload.action!=='member_gate_action'&&payload.action!=='member_gate_bulk_action')throw error;
+    if(!payload.requestId||error.status!==404)throw error;
     return new Promise(function(resolve){setTimeout(resolve,700);}).then(request);
   });
 }
@@ -2070,41 +2071,37 @@ document.addEventListener('DOMContentLoaded',function(){
     bulkButton.disabled=true;
     beginPleaseWait(actionType==='IN'?'CHECKING IN ALL...':'CHECKING OUT ALL...');
 
-    var completed=0;
-    var failed=[];
     try{
-      for(var i=0;i<actionButtons.length;i++){
-        var button=actionButtons[i];
-        var memberKey=button.getAttribute('data-member-key');
-        try{
-          var result=await submitAppsScriptForm({
-            action:'member_gate_action',
-            id:currentScannedID,
-            memberKey:memberKey,
-            actionType:actionType,
-            requestId:createGateRequestId(),
-            guardInfo:(currentUser.name||'Guard')+' ('+(currentUser.location||'')+')'
-          });
-          var currentLogs=readGateLogs(pass);
-          if(Array.isArray(result.gateLogs)&&result.gateLogs.length>=currentLogs.length){
-            pass.GateLogs=result.gateLogs;
-            pass.CheckInTime=result.checkInTime||'';
-            pass.CheckOutTime=result.checkOutTime||'';
-          }
-          pass.ScannedByGuard=(currentUser.name||'Guard')+' ('+(currentUser.location||'')+')';
-          guardPassCache.set(String(currentScannedID).toUpperCase(),pass);
-          completed++;
-          refreshMemberGateRows(pass,null);
-        }catch(error){
-          failed.push(error&&error.message?error.message:'Unknown error');
-        }
+      var result=await submitAppsScriptForm({
+        action:'member_gate_bulk_action',
+        id:currentScannedID,
+        memberKeys:actionButtons.map(function(button){return button.getAttribute('data-member-key');}),
+        actionType:actionType,
+        requestId:createGateRequestId(),
+        guardInfo:(currentUser.name||'Guard')+' ('+(currentUser.location||'')+')'
+      });
+      var currentLogs=readGateLogs(pass);
+      if(Array.isArray(result.gateLogs)&&result.gateLogs.length>=currentLogs.length){
+        pass.GateLogs=result.gateLogs;
+        pass.CheckInTime=result.checkInTime||'';
+        pass.CheckOutTime=result.checkOutTime||'';
       }
+      pass.ScannedByGuard=(currentUser.name||'Guard')+' ('+(currentUser.location||'')+')';
+      guardPassCache.set(String(currentScannedID).toUpperCase(),pass);
+      refreshMemberGateRows(pass,null);
       updateControlRoomStats();
+      var completed=Number(result.completed)||0;
+      var failed=Array.isArray(result.results)?result.results.filter(function(item){return !item||item.status!=='success';}):[];
       if(failed.length){
-        alert('Checked '+actionLabel+' '+completed+' of '+actionButtons.length+' people. The remaining actions failed: '+failed.join('; '));
+        var failureReasons=failed.map(function(item){return item&&item.message?item.message:'Unknown error';});
+        alert('Checked '+actionLabel+' '+completed+' of '+actionButtons.length+' people. The remaining actions failed: '+failureReasons.join('; '));
+      }else if(Array.isArray(result.warnings)&&result.warnings.length){
+        alert('Successfully checked '+actionLabel+' all '+completed+' people, but some history rows could not be saved: '+result.warnings.join('; '));
       }else{
         alert('Successfully checked '+actionLabel+' all '+completed+' people.');
       }
+    }catch(error){
+      alert(error&&error.message?error.message:'Unable to complete the group gate action. Please try again.');
     }finally{
       gateButtons.forEach(function(button){button.disabled=false;});
       endPleaseWait();
