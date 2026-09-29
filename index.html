@@ -303,8 +303,9 @@ html.low-performance #main-content::before{background-size:min(52vw,58vh,850px)!
 #dashboard-admin #admin-table-active .copy-email-button{display:inline-grid;place-items:center;width:34px;height:34px;margin:3px 0 0 7px;padding:0;border:1px solid rgba(255,199,0,.42);border-radius:8px;background:rgba(255,199,0,.09);color:#ffe17b;font-size:17px;cursor:pointer;vertical-align:middle;transition:background .16s ease,transform .16s ease,border-color .16s ease}
 #dashboard-admin #admin-table-active .copy-email-button:hover{transform:translateY(-1px);border-color:var(--noon-yellow);background:rgba(255,199,0,.19)}
 #dashboard-admin #admin-table-active .copy-email-button:focus-visible{outline:2px solid var(--noon-yellow);outline-offset:2px}
-#dashboard-admin #admin-table-active .active-actions-grid{grid-template-columns:repeat(2,minmax(112px,1fr));gap:8px}
+#dashboard-admin #admin-table-active .active-actions-grid{width:100%;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 #dashboard-admin #admin-table-active .active-actions-grid .btn-primary{min-height:42px;padding:9px 10px;border-radius:8px;font-size:11px;font-weight:800;letter-spacing:.025em;white-space:normal;line-height:1.25}
+#dashboard-admin #admin-table-active .active-actions-grid .btn-primary{width:100%;min-width:0}
 #dashboard-admin .history-tools{display:grid;grid-template-columns:repeat(5,minmax(135px,1fr));gap:9px;padding:14px 16px;border-bottom:1px solid rgba(148,166,190,.12);background:rgba(8,12,19,.42)}
 #dashboard-admin .history-tools input{width:100%;min-width:0;height:38px;padding:8px 11px;border:1px solid rgba(148,166,190,.19);border-radius:8px;background:rgba(5,9,15,.72);color:#eef2f8;font-size:11px;outline:none}
 #dashboard-admin .history-tools input::placeholder{color:#8491a5}
@@ -323,6 +324,11 @@ html.low-performance #main-content::before{background-size:min(52vw,58vh,850px)!
 #dashboard-admin #admin-sec-history>div[style*="overflow-x"]>table>thead{display:none}
 #dashboard-admin .history-attendee-row{grid-template-columns:minmax(170px,1fr) minmax(0,1.15fr) minmax(0,1.35fr);min-width:760px}
 #dashboard-admin .history-attendee-checkout .history-checkout-duration{display:inline-block;margin-inline-start:7px;padding:3px 8px;border:1px solid rgba(255,199,0,.32);border-radius:999px;background:rgba(255,199,0,.1);color:#ffe17b;font-size:11px;font-weight:900;white-space:nowrap}
+#dashboard-admin .history-detail-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;padding:12px;background:rgba(255,255,255,.025);border-bottom:1px solid rgba(255,255,255,.1)}
+#dashboard-admin .history-detail-meta-item{min-width:0;padding:9px 11px;border:1px solid rgba(148,166,190,.13);border-radius:8px;background:rgba(7,11,18,.55)}
+#dashboard-admin .history-detail-meta-label{display:block;margin-bottom:5px;color:#8b98ab;font-size:9px;font-weight:900;letter-spacing:.1em}
+#dashboard-admin .history-detail-meta-value{color:#edf2f8;font-size:12px;font-weight:700;overflow-wrap:anywhere}
+#dashboard-admin .history-attendee-head{display:grid;grid-template-columns:minmax(170px,1fr) minmax(0,1.15fr) minmax(0,1.35fr);gap:12px;padding:9px 14px;background:rgba(5,9,15,.72);color:#8794a8;font-size:9px;font-weight:900;letter-spacing:.1em;min-width:760px}
 #dashboard-admin .history-group-meta{display:flex;flex-direction:column;align-items:flex-end;gap:7px;max-width:42%;text-align:right}
 #dashboard-admin .history-group-people{color:var(--text-muted);font-size:12px;font-weight:800;white-space:nowrap}
 #dashboard-admin .history-scanned-by{max-width:100%;padding:6px 10px;border:1px solid rgba(70,167,255,.28);border-radius:8px;background:linear-gradient(135deg,rgba(70,167,255,.13),rgba(70,167,255,.045));color:#c4e3ff;font-size:12px;font-weight:800;line-height:1.45;overflow-wrap:anywhere}
@@ -1657,9 +1663,17 @@ function renderHistorySheetRows(history){
         }).join('');
         return '<div class="history-attendee-row"><strong class="history-attendee-name">'+escapeHistoryText(person.name)+'</strong><span class="history-attendee-checkin">'+checkIns+'</span><span class="history-attendee-checkout">'+checkOuts+'</span></div>';
       }).join('');
-      const seeMore=details?'<details data-history-key="'+escapeHistoryText(companyGroup.uniqueKey)+'" style="margin-top:10px;"><summary style="cursor:pointer;color:var(--noon-yellow);font-size:15px;font-weight:800;">SEE MORE · '+attendeeCount+' PEOPLE</summary><div style="margin-top:10px;border:1px solid var(--border-color);border-radius:6px;overflow-x:auto;overflow-y:hidden;">'+details+'</div></details>':'<span style="color:var(--text-muted);font-size:14px;">No member gate activity</span>';
       const scannedByText=companyGroup.guards.length?companyGroup.guards.join(' · '):'Not recorded';
-      rows+='<tr><td colspan="8" style="padding:16px 18px;border-bottom:1px solid var(--border-color);"><div style="display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:center;"><div><strong style="color:#fff;font-size:17px;">'+escapeHistoryText(companyGroup.company)+'</strong><div style="color:var(--text-muted);font-size:13px;margin-top:6px;">'+escapeHistoryText(companyGroup.label)+' · '+escapeHistoryText(companyGroup.type||"-")+' · '+escapeHistoryText(companyGroup.facility||"-")+'</div></div><div class="history-group-meta"><span class="history-scanned-by"><span class="history-scanned-by-label">🛡 SCANNED BY</span>'+escapeHistoryText(scannedByText)+'</span><span class="history-group-people">'+(attendeeCount?attendeeCount+' PEOPLE':'')+'</span></div></div>'+seeMore+'</td></tr>';
+      const attendeeHeaders='<div class="history-attendee-head"><span>NAME</span><span>CHECK-IN</span><span>CHECK OUT · DURATION</span></div>';
+      const detailMeta='<div class="history-detail-meta">'+
+        '<div class="history-detail-meta-item"><span class="history-detail-meta-label">VALIDITY PERIOD</span><span class="history-detail-meta-value">'+escapeHistoryText(companyGroup.label||"-")+'</span></div>'+
+        '<div class="history-detail-meta-item"><span class="history-detail-meta-label">NAME</span><span class="history-detail-meta-value">'+escapeHistoryText(companyGroup.company||"-")+'</span></div>'+
+        '<div class="history-detail-meta-item"><span class="history-detail-meta-label">TYPE</span><span class="history-detail-meta-value">'+escapeHistoryText(companyGroup.type||"-")+'</span></div>'+
+        '<div class="history-detail-meta-item"><span class="history-detail-meta-label">FACILITY</span><span class="history-detail-meta-value">'+escapeHistoryText(companyGroup.facility||"-")+'</span></div>'+
+        '<div class="history-detail-meta-item"><span class="history-detail-meta-label">SCANNED BY</span><span class="history-detail-meta-value">'+escapeHistoryText(scannedByText)+'</span></div>'+
+        '</div>';
+      const seeMore=details?'<details data-history-key="'+escapeHistoryText(companyGroup.uniqueKey)+'" style="margin-top:10px;"><summary style="cursor:pointer;color:var(--noon-yellow);font-size:15px;font-weight:800;">SEE MORE · '+attendeeCount+' PEOPLE</summary><div style="margin-top:10px;border:1px solid var(--border-color);border-radius:6px;overflow-x:auto;overflow-y:hidden;">'+detailMeta+attendeeHeaders+details+'</div></details>':'<span style="color:var(--text-muted);font-size:14px;">No member gate activity</span>';
+      rows+='<tr><td colspan="8" style="padding:16px 18px;border-bottom:1px solid var(--border-color);"><div style="color:#fff;font-size:13px;font-weight:800;letter-spacing:.1em;">ACCESS HISTORY · '+attendeeCount+' PEOPLE</div>'+seeMore+'</td></tr>';
     });
   });
   // ========================================
