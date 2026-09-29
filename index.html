@@ -949,6 +949,7 @@ async function performManualSearch(){
 async function submitRequest(ka){
   ka=!!ka;
   const ti=document.getElementById('req-type');if(!ti)return;
+  if(teamList.length>10)return alert("Submit no more than 10 team members in one batch.");
   const type=ti.value,ii=document.getElementById('req-iqama'),si=document.getElementById('req-selfie'),imPho=document.getElementById('req-imeiphoto'),vi=document.getElementById('req-vehicle'),btn=document.getElementById('btn-submit-req');
   if(!btn)return;
   let iB64='',iMime='image/jpeg',sB64='',sMime='image/jpeg',imB64='',imMime='image/jpeg',vB64='',vMime='image/jpeg';
@@ -1004,10 +1005,19 @@ async function submitRequest(ka){
   teamList=[];currentTeamCounter=1;renderTeamRoster();hideTeamEntry();
   const payload={action:'create',UniqueID:tempId,hostName:hName,hostEmail:hMail,visitorName:vName,type:type,location:document.getElementById('req-location').value,startDate:startDateVal,endDate:endDateVal,iqamaBase64:iB64,iqamaMimeType:iMime,selfieBase64:sB64,selfieMimeType:sMime,imeiNumber:leadImeiVal,imeiPhotoBase64:imB64,fmPoc:fmPocVal,vehicleBase64:vB64,vehicleMimeType:vMime,vehiclePlateNo:'',team:cleanTeam,slpTicketNo:type==='Visitor'?document.getElementById('req-vis-slp').value:document.getElementById('req-con-slp').value,contactNo:type==='Visitor'?document.getElementById('req-vis-contact').value:document.getElementById('req-con-contact').value,invitedBy:type==='Visitor'?document.getElementById('req-vis-invitedby').value:'',projectName:type==='Contractor'?document.getElementById('req-con-project').value:'',companyName:type==='Contractor'?document.getElementById('req-con-company').value:'',projectManager:type==='Contractor'?document.getElementById('req-con-pm').value:''};
   if(ka){
-    btn.innerText=t("submit_approval");btn.disabled=false;
+    btn.innerText="SUBMITTING...";btn.disabled=true;
     beginPleaseWait('PLEASE WAIT...');
-    fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),redirect:'follow'}).then(function(){return loadMyPasses(true,true);}).catch(function(e){console.error(e);endPleaseWait();alert('Request submission failed. Please try again.');}).finally(endPleaseWait);
-    openAddMoreModal(tempId);startAutoRefresh(currentUser.role);
+    try{
+      await fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),mode:'no-cors'});
+      await loadMyPasses(true,true);
+      openAddMoreModal(tempId);
+    }catch(e){
+      console.error(e);
+      existingPasses.pop();localStorage.setItem(cachedKey,JSON.stringify(existingPasses));renderMyPasses(existingPasses);
+      alert('Request submission failed. Please try again.');
+    }finally{
+      endPleaseWait();btn.innerText=t("submit_approval");btn.disabled=false;startAutoRefresh(currentUser.role);
+    }
   }else{
     btn.innerText="SUBMITTING...";btn.disabled=true;
     beginPleaseWait('PLEASE WAIT...');
@@ -1140,6 +1150,14 @@ function toggleHistorySort(){
 
 function escapeHistoryText(value){return String(value==null?'':value).replace(/[&<>"']/g,function(character){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character];});}
 function normalizeHistoryGroupKey(value){return String(value||'').trim().toLowerCase().replace(/\s+/g,' ');}
+function formatHistoryDuration(startValue,endValue,storedValue){
+  let start=parseFlexibleDate(startValue),end=parseFlexibleDate(endValue),stored=String(storedValue||'').trim();
+  if(start){
+    let minutes=Math.max(0,Math.floor(((end||new Date()).getTime()-start.getTime())/60000));
+    return 'DURATION: '+Math.floor(minutes/60)+'h '+(minutes%60)+'m';
+  }
+  return stored?'DURATION: '+stored:'DURATION: —';
+}
 
 function renderHistorySheetRows(history){
   const tHistory=document.getElementById("admin-table-history");
@@ -1197,7 +1215,7 @@ function renderHistorySheetRows(history){
     const checkOut=row.CheckOutTime?formatHistoryDateTime(row.CheckOutTime):"";
     const member=String(row.PersonKey?(row.VisitorName||row.Name||""):((passData&&passData.VisitorName)||row.VisitorName||row.Name||"")).trim();
     if(member&&(checkIn||checkOut)){
-      companyGroup.entries.push({name:member,round:row.RoundNumber||"",checkIn:checkIn,checkOut:checkOut,guard:String(row.ScannedByGuard||row.ScannedBy||"")});
+      companyGroup.entries.push({name:member,round:row.RoundNumber||"",checkIn:checkIn,checkOut:checkOut,checkInRaw:row.CheckInTime||"",checkOutRaw:row.CheckOutTime||"",duration:row.Duration||"",guard:String(row.ScannedByGuard||row.ScannedBy||"")});
     }
     if(d)companyGroup.latest=Math.max(companyGroup.latest,d.getTime());
     const outDate=parseFlexibleDate(row.CheckOutTime);
@@ -1237,16 +1255,16 @@ function renderHistorySheetRows(history){
         if(!attendees[memberKey])attendees[memberKey]={name:entry.name,checkIns:[],checkOuts:[]};
         const person=attendees[memberKey];
         const round=Number(entry.round)||1;
-        if(entry.checkIn&&!person.checkIns.some(function(event){return event.time===entry.checkIn;}))person.checkIns.push({round:round,time:entry.checkIn});
-        if(entry.checkOut&&!person.checkOuts.some(function(event){return event.time===entry.checkOut;}))person.checkOuts.push({round:round,time:entry.checkOut});
+        if(entry.checkIn&&!person.checkIns.some(function(event){return event.time===entry.checkIn;}))person.checkIns.push({round:round,time:entry.checkIn,rawTime:entry.checkInRaw,checkOutRaw:entry.checkOutRaw,duration:entry.duration});
+        if(entry.checkOut&&!person.checkOuts.some(function(event){return event.time===entry.checkOut;}))person.checkOuts.push({round:round,time:entry.checkOut,rawTime:entry.checkInRaw,checkOutRaw:entry.checkOutRaw,duration:entry.duration});
       });
       const attendeeRows=Object.keys(attendees).map(function(key){return attendees[key];});
       const attendeeCount=attendeeRows.length;
       const details=attendeeRows.map(function(person){
         person.checkIns.sort(function(a,b){return (parseFlexibleDate(a.time)||0)-(parseFlexibleDate(b.time)||0);});
         person.checkOuts.sort(function(a,b){return (parseFlexibleDate(a.time)||0)-(parseFlexibleDate(b.time)||0);});
-        const checkIns=person.checkIns.map(function(event){return '<div style="padding:2px 0;">'+event.round+' CHECK IN · '+escapeHistoryText(event.time)+'</div>';}).join('');
-        const checkOuts=person.checkOuts.map(function(event){return '<div style="padding:2px 0;">'+event.round+' CHECK OUT · '+escapeHistoryText(event.time)+'</div>';}).join('');
+        const checkIns=person.checkIns.map(function(event){return '<div style="padding:2px 0;">'+event.round+' CHECK IN · '+escapeHistoryText(event.time)+' · '+escapeHistoryText(formatHistoryDuration(event.rawTime,event.checkOutRaw,event.duration))+'</div>';}).join('');
+        const checkOuts=person.checkOuts.map(function(event){return '<div style="padding:2px 0;">'+event.round+' CHECK OUT · '+escapeHistoryText(event.time)+' · '+escapeHistoryText(formatHistoryDuration(event.rawTime,event.checkOutRaw,event.duration))+'</div>';}).join('');
         return '<div style="display:grid;grid-template-columns:minmax(170px,1fr) minmax(0,1.15fr) minmax(0,1.15fr);gap:12px;align-items:start;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.1);font-size:16px;line-height:1.55;min-width:0;"><strong style="font-size:16px;overflow-wrap:anywhere;">'+escapeHistoryText(person.name)+'</strong><span style="color:#10b981;font-size:16px;font-weight:800;overflow-wrap:anywhere;">'+checkIns+'</span><span style="color:#60a5fa;font-size:16px;font-weight:800;overflow-wrap:anywhere;">'+checkOuts+'</span></div>';
       }).join('');
       const seeMore=details?'<details data-history-key="'+escapeHistoryText(companyGroup.uniqueKey)+'" style="margin-top:10px;"><summary style="cursor:pointer;color:var(--noon-yellow);font-size:15px;font-weight:800;">SEE MORE · '+attendeeCount+' PEOPLE</summary><div style="margin-top:10px;border:1px solid var(--border-color);border-radius:6px;overflow-x:auto;overflow-y:hidden;">'+details+'</div></details>':'<span style="color:var(--text-muted);font-size:14px;">No member gate activity</span>';
@@ -1905,7 +1923,7 @@ function handleQrScanSuccess(decodedText,decodedResult){
     showScanResult('SCAN ERROR','Could not process this QR code. Please try scanning again.','bg-red',false);
   });
 }
-async function submitAddMorePeople(keepAdding){keepAdding=!!keepAdding;if(addMoreTeamList.length===0)return alert("Please add at least one person to the list first.");if(!keepAdding&&!confirm("WARNING: This will reset the pass status back to PENDING. Do you want to proceed?"))return;let btn=document.getElementById("btn-submit-add-more");btn.innerText="SUBMITTING...";btn.disabled=true;let cleanTeam=addMoreTeamList.map(function(m){return {iqama:m.rawIqama,selfie:m.rawSelfie,devicePhoto:m.rawDevicePhoto,name:m.name,iqamaText:m.iqamaText,deviceString:m.deviceType!=="None"?m.deviceType+' ('+m.deviceId+')':"None"};});let payload={action:"add_team_members",id:addMorePassId,team:JSON.stringify(cleanTeam)};beginPleaseWait('PLEASE WAIT...');try{await submitAppsScriptForm(payload);addMoreTeamList=[];renderAddTeamRoster();if(!keepAdding){closeAddMoreModal();}else{startAddMoreTimer();}endPleaseWait();alert("People added successfully. The pass is now pending admin approval.");setTimeout(function(){loadMyPasses(true,true).catch(function(){});},300);}catch(e){endPleaseWait();alert("People were not added: "+e.message);}finally{btn.innerText="SUBMIT & SEND FOR APPROVAL";btn.disabled=false;}}
+async function submitAddMorePeople(keepAdding){keepAdding=!!keepAdding;if(addMoreTeamList.length===0)return alert("Please add at least one person to the list first.");if(addMoreTeamList.length>10)return alert("Submit no more than 10 team members in one batch.");if(!keepAdding&&!confirm("WARNING: This will reset the pass status back to PENDING. Do you want to proceed?"))return;let btn=document.getElementById("btn-submit-add-more");btn.innerText="SUBMITTING...";btn.disabled=true;let cleanTeam=addMoreTeamList.map(function(m){return {iqama:m.rawIqama,selfie:m.rawSelfie,devicePhoto:m.rawDevicePhoto,name:m.name,iqamaText:m.iqamaText,deviceString:m.deviceType!=="None"?m.deviceType+' ('+m.deviceId+')':"None"};});let payload={action:"add_team_members",id:addMorePassId,team:JSON.stringify(cleanTeam)};beginPleaseWait('PLEASE WAIT...');try{await submitAppsScriptForm(payload);addMoreTeamList=[];renderAddTeamRoster();if(!keepAdding){closeAddMoreModal();}else{startAddMoreTimer();}endPleaseWait();alert("People added successfully. The pass is now pending admin approval.");setTimeout(function(){loadMyPasses(true,true).catch(function(){});},300);}catch(e){endPleaseWait();alert("People were not added: "+e.message);}finally{btn.innerText="SUBMIT & SEND FOR APPROVAL";btn.disabled=false;}}
 
 document.addEventListener('DOMContentLoaded',function(){
   const em=document.getElementById('lo-mail');
