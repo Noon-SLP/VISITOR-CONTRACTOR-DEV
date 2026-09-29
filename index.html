@@ -426,6 +426,40 @@ html.low-performance #main-content::before{background-size:min(52vw,58vh,850px)!
 <script>
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbxyQ4kGKgsNS076UvKCk0ezCVSzp2DlqYobiprd8Qrvt5oJBWrVlszD7-jm2mOYtsTUvg/exec';
 function freshScriptUrl(){return SCRIPT_URL+'?cacheBust='+Date.now()+'-'+Math.random().toString(36).slice(2);}
+function appsScriptJsonp(params,signal){
+  return new Promise(function(resolve,reject){
+    var callback='noonApiCallback_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+    var query=Object.keys(params).map(function(key){
+      var value=params[key];
+      return encodeURIComponent(key)+'='+encodeURIComponent(typeof value==='string'?value:JSON.stringify(value));
+    }).join('&');
+    if(query.length>1800)return reject(new Error('This request is too large for the cross-origin API. Please retry with fewer items.'));
+    var script=document.createElement('script');
+    var settled=false;
+    var timeout=setTimeout(function(){finish(new Error('The Apps Script API did not respond. Check the connection and try again.'));},20000);
+    function finish(error,result){
+      if(settled)return;
+      settled=true;
+      clearTimeout(timeout);
+      script.remove();
+      if(error){
+        window[callback]=function(){};
+        setTimeout(function(){delete window[callback];},60000);
+      }else delete window[callback];
+      if(signal)signal.removeEventListener('abort',onAbort);
+      if(error)reject(error);else resolve(result);
+    }
+    function onAbort(){finish(new Error('The Apps Script request was cancelled.'));}
+    window[callback]=function(result){finish(null,result);};
+    script.onerror=function(){finish(new Error('The Apps Script API could not be reached. Check the connection and try again.'));};
+    if(signal){
+      if(signal.aborted)return onAbort();
+      signal.addEventListener('abort',onAbort,{once:true});
+    }
+    script.src=freshScriptUrl()+'&'+query+'&callback='+encodeURIComponent(callback);
+    document.head.appendChild(script);
+  });
+}
 
 const dict={en:{"guard":"🛡️ Guard","visitor_ops":"📋 Visitor/Ops","admin":"⚙️ Admin","name":"Name","noon_id":"Noon ID","select_guard_loc":"Select Guard Location...","login_gate":"LOGIN TO GATE","your_full_name":"Your Full Name","your_email":"Your Gmail / Email","login_portal":"LOGIN TO PORTAL","admin_name":"Admin Name","admin_email":"Admin Gmail","admin_password":"Admin Password","login_admin":"LOGIN AS ADMIN","system_admin":"System Admin","visitor_portal":"Visitor Portal","gate_scanner":"Gate Scanner","admin_dashboard":"Admin Dashboard","logout":"LOGOUT","visitor_contractor_portal":"Visitor & Contractor Portal","submit_new_request":"Submit New Request","type":"Type","visitor":"Visitor","contractor":"Contractor","req_email_ph":"Email Address","req_vname_ph":"Visitor / Contractor Full Name","iqama_id_ph":"Lead Iqama / ID Number","visit_date":"Visit Date / Validity (From - To)","slp_ticket":"SLP Ticket No.","contact_no":"Contact No.","invited_by":"Invited by Whom","vehicle_plate":"Vehicle Plate / Picture","live_camera":"📷 Live Camera","contract_exp":"Contract Expiration (From - To)","project_name":"Project Name","company_name":"Company / Contractor Name","project_manager":"Project Manager","fm_poc":"FM POC Name / Details","upload_iqama":"Upload Iqama/ID Copy","upload_selfie":"Upload Selfie Photo","submit_approval":"Submit for Approval","my_passes":"My Passes","refresh":"Refresh","fetching":"Fetching your passes...","start_camera":"START CAMERA SCANNER","name_label":"Name:","type_label":"Type:","location_label":"Location:","confirm_action":"CONFIRM ACTION","access_approvals":"📋 Access Approvals","history":"🕰️ History","guard_approvals":"🛡️ Guard Approvals","analytics":"📊 Analytics","all_time":"All Time","today":"Today","weekly":"Weekly","monthly":"Monthly","6months":"6 Months","1year":"1 Year","custom":"Custom","to":"TO","apply":"APPLY","pending_req":"Pending Requests","active_req":"Active Requests","print_selected":"🖨️ PRINT SELECTED","val_period":"Validity Period","name_header":"Name","type_header":"Type","facility_header":"Facility","action":"Action","access_history":"Access & Gate History","final_status":"Final Status","check_in":"Check-In","check_out":"Check-Out","scanned_by":"Scanned By","live_gate":"Live Gate Operations","check_in_time":"Check-In Time","check_out_time":"Check-Out Time","visitor_name":"Visitor Name","date_analytics":"📅 Date Analytics","type_analytics":"👤 Type Analytics","facility_analytics":"🏢 Facility Analytics","status_analytics":"✅ Status Analytics","detailed_record":"Detailed Record View","extend_pass":"Extend Pass Validity","new_start_date":"New Visit / Start Date","new_end_date":"New End Date","save_extension":"SAVE EXTENSION","capture":"📸 CAPTURE","flip_cam":"🔄 FLIP CAM","cancel":"CANCEL","click_to_close":"Click anywhere to close","btn_approve":"Approve","btn_reject":"Reject","btn_extend":"📅 EXTEND","btn_view":"🔍 VIEW DATA","btn_print":"🖨️ PRINT PASS","btn_checkout":"🚪 CHECK OUT","lbl_host_name":"Host Name","lbl_host_email":"Host Email","lbl_validity":"Validity Period","lbl_iqama":"IQAMA/ID COPY","lbl_selfie":"SELFIE PHOTO","lbl_vehicle":"VEHICLE PLATE","status_approved":"Approved","status_pending":"Pending","status_rejected":"Rejected","status_expired":"EXPIRED","status_completed":"COMPLETED","msg_no_pending":"No pending requests found in this timeframe.","msg_no_active":"No active requests found in this timeframe.","msg_no_history":"No history found in this timeframe.","msg_no_gate":"No gate operations found in this timeframe.","msg_enter_email":"Enter an Email Address on the left to view passes.","msg_loading":"Loading requests...","msg_inside":"Inside Facility","msg_admin_select_loc":"Admin: Please select a facility first.","btn_add_team":"➕ ADD TEAM MEMBER","camera_scanner_btn":"📷 CAMERA SCANNER","hardware_gun_btn":"🔌 HARDWARE GUN","hw_scanner_ready":"HARDWARE SCANNER READY","hw_scanner_inst":"Point your handheld gun scanner at the QR code and trigger.","awaiting_scan":"Awaiting hardware scan...","save_qr":"⬇️ SAVE QR CODE","allowed":"ALLOWED","pass_validated":"Pass Validated","denied":"DENIED","admin_select_fac":"Admin: Please select a facility first.","pending":"PENDING","awaiting_admin":"Pass is awaiting Admin approval","not_approved":"Pass not approved by Admin","wrong_facility":"WRONG FACILITY","wrong_fac_msg":"Wrong Facility","invalid_date":"INVALID DATE","not_valid_today":"Pass is not valid for today","expired":"EXPIRED","contractor_expired":"Contractor Pass Expired","check_out":"CHECK OUT","scanning_out":"Scanning Out.<br><span style='color:#000; font-size:14px; font-weight:bold;'>⚠️ TAKE ID CARD FROM LEAD.</span>","select_all_members":"SELECT ALL MEMBERS","lead":"Lead","device_photos_all":"DEVICE & PHOTOS FOR ALL","device_label":"Device","iqama_id":"IQAMA / ID","selfie":"SELFIE","device_screen":"DEVICE SCREEN","vehicle":"VEHICLE","add_more_people":"➕ Add More People","add_more_warning":"⚠️ WARNING: Submitting this will change the pass status back to PENDING. It cannot be used until the Admin approves it again.","device_type_label":"Device Type","no_device":"No Device","upload_device_photo":"Upload Device Photo/Screen","full_name_ph":"Full Name","save_person_list":"✅ SAVE PERSON TO LIST","submit_send_approval":"SUBMIT & SEND FOR APPROVAL","save_add_next":"✅ SAVE & ADD NEXT","lead_device_details":"Lead Device Details & Photo Screen","max_devices_note":"* Note: A maximum of 10 members are allowed to bring devices.","total_people":"Total People","new_members_added":"➕ NEW MEMBERS ADDED","new_badge":"NEW","notice_new_people":"NOTICE: New people have been added to this pass!","btn_show_qr":"📱 SHOW QR","cam_hint_title":"CAMERA SCANNER","cam_hint_1":"Hold the QR code steady inside the frame","cam_hint_2":"Bright lighting works best — avoid glare","cam_hint_3":"Allow camera access when your browser asks","session_guard":"GUARD","session_facility":"FACILITY"},ar:{"guard":"🛡️ الحارس","visitor_ops":"📋 الزوار/العمليات","admin":"⚙️ الإدارة","name":"الاسم","noon_id":"الرقم الوظيفي (Noon ID)","select_guard_loc":"اختر موقع الحارس...","login_gate":"الدخول للبوابة","your_full_name":"الاسم الكامل","your_email":"البريد الإلكتروني","login_portal":"تسجيل الدخول للبوابة","admin_name":"اسم المشرف","admin_email":"بريد المشرف","admin_password":"كلمة المرور","login_admin":"دخول كمسؤول","system_admin":"إدارة النظام","visitor_portal":"بوابة الزوار","gate_scanner":"ماسح البوابة","admin_dashboard":"لوحة التحكم","logout":"تسجيل خروج","visitor_contractor_portal":"بوابة الزوار والمقاولين","submit_new_request":"تقديم طلب جديد","type":"النوع","visitor":"زائر","contractor":"مقاول","req_email_ph":"البريد الإلكتروني (لتتبع التصريح)","req_vname_ph":"الاسم الكامل للزائر/المقاول","iqama_id_ph":"رقم الهوية / الإقامة للقائد","visit_date":"تاريخ الزيارة / الصلاحية (من - إلى)","slp_ticket":"رقم تذكرة SLP","contact_no":"رقم الاتصال","invited_by":"بدعوة من","vehicle_plate":"صورة / لوحة السيارة","live_camera":"📷 كاميرا مباشرة","contract_exp":"صلاحية العقد (من - إلى)","project_name":"اسم المشروع","company_name":"اسم الشركة / المقاول","project_manager":"مدير المشروع","fm_poc":"اسم/تفاصيل مسؤول المرافق (FM POC)","upload_iqama":"رفع صورة الهوية/الإقامة","upload_selfie":"رفع صورة شخصية","submit_approval":"إرسال للموافقة","my_passes":"تصاريحي","refresh":"تحديث","fetching":"جاري جلب التصاريح...","start_camera":"تشغيل ماسح الكاميرا","name_label":"الاسم:","type_label":"النوع:","location_label":"الموقع:","confirm_action":"تأكيد الإجراء","access_approvals":"📋 موافقات الدخول","history":"🕰️ السجل","guard_approvals":"🛡️ عمليات البوابة","analytics":"📊 الإحصائيات","all_time":"الكل","today":"اليوم","weekly":"أسبوعي","monthly":"شهري","6months":"٦ أشهر","1year":"سنة","custom":"مخصص","to":"إلى","apply":"تطبيق","pending_req":"الطلبات المعلقة","active_req":"الطلبات النشطة","print_selected":"🖨️ طباعة المحدد","val_period":"فترة الصلاحية","name_header":"الاسم","type_header":"النوع","facility_header":"المنشأة","action":"الإجراء","access_history":"سجل الدخول والبوابة","final_status":"الحالة النهائية","check_in":"دخول","check_out":"خروج","scanned_by":"تم المسح بواسطة","live_gate":"عمليات البوابة المباشرة","check_in_time":"وقت الدخول","check_out_time":"وقت الخروج","visitor_name":"اسم الزائر","date_analytics":"📅 إحصائيات التواريخ","type_analytics":"👤 إحصائيات الأنواع","facility_analytics":"🏢 إحصائيات المنشآت","status_analytics":"✅ إحصائيات الحالات","detailed_record":"عرض السجل التفصيلي","extend_pass":"تمديد صلاحية التصريح","new_start_date":"تاريخ الزيارة/البداية الجديد","new_end_date":"تاريخ النهاية الجديد","save_extension":"حفظ التمديد","capture":"📸 التقاط","flip_cam":"🔄 قلب الكاميرا","cancel":"❌ إلغاء","click_to_close":"انقر في أي مكان للإغلاق","btn_approve":"موافقة","btn_reject":"رفض","btn_extend":"📅 تمديد","btn_view":"🔍 عرض البيانات","btn_print":"🖨️ طباعة","btn_checkout":"🚪 خروج","lbl_host_name":"اسم المضيف","lbl_host_email":"بريد المضيف","lbl_validity":"فترة الصلاحية","lbl_iqama":"صورة الهوية/الإقامة","lbl_selfie":"الصورة الشخصية","lbl_vehicle":"لوحة السيارة","status_approved":"مقبول","status_pending":"قيد الانتظار","status_rejected":"مرفوض","status_expired":"منتهي","status_completed":"مكتمل","msg_no_pending":"لا توجد طلبات معلقة في هذه الفترة.","msg_no_active":"لا توجد طلبات نشطة في هذه الفترة.","msg_no_history":"لا يوجد سجل في هذه الفترة.","msg_no_gate":"لا توجد عمليات بوابة في هذه الفترة.","msg_enter_email":"أدخل بريداً إلكترونياً لعرض التصاريح.","msg_loading":"جاري التحميل...","msg_inside":"داخل المنشأة","msg_admin_select_loc":"المشرف: يرجى تحديد المنشأة أولاً من القائمة العلوية.","btn_add_team":"➕ إضافة عضو للفريق","camera_scanner_btn":"📷 ماسح الكاميرا","hardware_gun_btn":"🔌 ماسح الباركود اليدوي","hw_scanner_ready":"ماسح الباركود جاهز","hw_scanner_inst":"قم بتوجيه الماسح الضوئي نحو رمز الاستجابة السريعة (QR).","awaiting_scan":"بانتظار المسح...","save_qr":"⬇️ حفظ الرمز","allowed":"مسموح","pass_validated":"تم التحقق من التصريح","denied":"مرفوض","admin_select_fac":"المشرف: يرجى تحديد المنشأة أولاً.","pending":"قيد الانتظار","awaiting_admin":"التصريح بانتظار موافقة المشرف","not_approved":"لم تتم الموافقة على التصريح","wrong_facility":"منشأة خاطئة","wrong_fac_msg":"منشأة خاطئة","invalid_date":"تاريخ غير صالح","not_valid_today":"التصريح غير صالح لهذا اليوم","expired":"منتهي","contractor_expired":"تصريح المقاول منتهي","check_out":"تسجيل خروج","scanning_out":"تسجيل الخروج.<br><span style='color:#000; font-size:14px; font-weight:bold;'>⚠️ خذ بطاقة الهوية من القائد.</span>","select_all_members":"تحديد جميع الأعضاء","lead":"القائد","device_photos_all":"الأجهزة والصور للجميع","device_label":"الجهاز","iqama_id":"الإقامة / الهوية","selfie":"الصورة الشخصية","device_screen":"شاشة الجهاز","vehicle":"المركبة","add_more_people":"➕ إضافة المزيد من الأشخاص","add_more_warning":"⚠️ تحذير: سيؤدي هذا إلى إعادة حالة التصريح إلى قيد الانتظار. لا يمكن استخدامه حتى يوافق عليه المشرف مرة أخرى.","device_type_label":"نوع الجهاز","no_device":"لا يوجد جهاز","upload_device_photo":"رفع صورة الجهاز/الشاشة","full_name_ph":"الاسم الكامل","save_person_list":"✅ حفظ الشخص في القائمة","submit_send_approval":"إرسال وطلب الموافقة","save_add_next":"✅ حفظ وإضافة التالي","lead_device_details":"تفاصيل جهاز القائد وصورة الشاشة","max_devices_note":"* ملاحظة: يُسمح لـ 10 أعضاء كحد أقصى بإحضار أجهزة.","total_people":"إجمالي الأشخاص","new_members_added":"➕ أعضاء جدد مضافون","new_badge":"جديد","notice_new_people":"تنبيه: تم إضافة أشخاص جدد إلى هذا التصريح!","btn_show_qr":"📱 عرض الرمز","cam_hint_title":"ماسح الكاميرا","cam_hint_1":"ثبّت رمز الاستجابة السريعة داخل الإطار","cam_hint_2":"الإضاءة الساطعة أفضل — تجنّب الوهج","cam_hint_3":"اسمح بالوصول للكاميرا عند طلب المتصفح","session_guard":"الحارس","session_facility":"المنشأة"}};
 let currentLang='en';
@@ -794,7 +828,7 @@ async function confirmPinCreate(){
   rememberPinUnlock(e);
   document.getElementById('pin-create-modal').classList.add('hidden');
   if(pinCreateMode==='reset'){
-    try{await fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'update_pin',email:e,pin:p}),redirect:'follow'});}catch(er){}
+    try{await fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'update_pin',email:e,pin:p}),mode:'no-cors'});}catch(er){}
     let data=lockedPassesData;
     try{const c=localStorage.getItem('cached_passes_'+e);if(c){const a=JSON.parse(c);if(Array.isArray(a))data=a;}}catch(err){}
     renderMyPasses(Array.isArray(data)?data:[]);
@@ -838,7 +872,7 @@ function processAndRenderPasses(d,e,s){
     let lp=localStorage.getItem('user_pin_'+e);
     if(!ha&&d.length>0){renderMyPasses(d);return;}
     if(!ha&&d.length===0){renderMyPasses(d);return;}
-    if(!bp&&lp){bp=lp;fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'update_pin',email:e,pin:lp}),redirect:'follow'}).catch(function(er){});}
+    if(!bp&&lp){bp=lp;fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'update_pin',email:e,pin:lp}),mode:'no-cors'}).catch(function(er){});}
     if(bp&&!isPinUnlocked(e)){
       lockedPassesData=d;
       const vm=document.getElementById('pin-verify-modal');
@@ -1801,16 +1835,28 @@ function closeExtendPass(){const em=document.getElementById('extend-pass-modal')
 const nativeFetch=window.fetch.bind(window);
 window.fetch=async function(input,init){
   let action='',method=String((init&&init.method)||'GET').toUpperCase();
-  try{const body=init&&init.body;if(typeof body==='string')action=JSON.parse(body).action||'';}catch(e){}
+  let payload=null;
+  try{const body=init&&init.body;if(typeof body==='string'){payload=JSON.parse(body);action=payload.action||'';}}catch(e){}
   const isSubmission=method==='POST'&&action&&action!=='get_all'&&action!=='get_single'&&action!=='get_by_email';
   if(isSubmission){pleaseWaitRequestCount++;showPleaseWait('PLEASE WAIT...');}
-  try{return await nativeFetch(input,init);}
+  try{
+    if(method==='POST'&&payload&&String(input).indexOf(SCRIPT_URL)===0){
+      const isRead=action==='get_all'||action==='get_single'||action==='get_by_email';
+      const isSensitive=action==='update_pin';
+      const queryLength=Object.keys(payload).map(function(key){return encodeURIComponent(key)+'='+encodeURIComponent(typeof payload[key]==='string'?payload[key]:JSON.stringify(payload[key]));}).join('&').length;
+      if(isRead||(!isSensitive&&action!=='create'&&action!=='add_team_members'&&queryLength<=1800)){
+        const result=await appsScriptJsonp(payload,init&&init.signal);
+        return new Response(JSON.stringify(result),{status:200,headers:{'Content-Type':'application/json'}});
+      }
+    }
+    return await nativeFetch(input,init);
+  }
   finally{if(isSubmission){pleaseWaitRequestCount--;hidePleaseWait();}}
 };
 
 async function submitExtendPass(){const id=document.getElementById('extend-id').value,type=document.getElementById('extend-type').value,ns=document.getElementById('extend-start').value,ei=document.getElementById('extend-end');const ne=ei?ei.value:'';const btn=document.getElementById('btn-submit-extend');if(!ns||!ne)return alert('Please select both Start and End dates.');if(!confirm('Extend pass '+id+'?'))return;btn.innerText='SAVING...';btn.disabled=true;try{await fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'extend_pass',id:id,newStartDate:ns,newEndDate:ne}),mode:'no-cors'});closeExtendPass();loadAdminData(false);}catch(e){alert('Error.');}finally{btn.innerText=t("save_extension");btn.disabled=false;}}
 
-async function adminResetPin(email){if(!confirm('Reset PIN for '+email+'? They will be prompted to create a new one next time.'))return;try{await fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'reset_pin',email:email}),redirect:'follow'});clearStoredPin(email);localStorage.removeItem('cached_admin_data');localStorage.removeItem('cached_passes_'+email);alert("PIN Reset Successful.");closeViewRecord();loadAdminData(true);}catch(e){alert("Error resetting PIN");}}
+async function adminResetPin(email){if(!confirm('Reset PIN for '+email+'? They will be prompted to create a new one next time.'))return;try{const response=await fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'reset_pin',email:email}),redirect:'follow'});const result=await response.json();if(!result||result.status!=='success')throw new Error(result&&result.message?result.message:'The reset was not confirmed.');clearStoredPin(email);localStorage.removeItem('cached_admin_data');localStorage.removeItem('cached_passes_'+email);alert("PIN Reset Successful.");closeViewRecord();loadAdminData(true);}catch(e){alert('Error resetting PIN: '+(e&&e.message?e.message:'Unknown error'));}}
 
 async function requestRevokeDevice(passId,memberIndex,btn){if(!confirm('Request admin to revoke device access for this member?'))return;let originalText=btn.innerText;btn.innerText="REQUESTING...";btn.disabled=true;try{const res=await fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'request_revoke_device',id:passId,memberIndex:memberIndex}),redirect:'follow'});const json=await res.json();if(json.status==='success'){alert("Device Revoke requested successfully.");localStorage.removeItem('cached_passes_'+currentUser.email);await refreshMemberView(passId);}else{alert("Failed to request: "+json.message);btn.innerText=originalText;btn.disabled=false;}}catch(e){alert("Network error.");btn.innerText=originalText;btn.disabled=false;}}
 
@@ -2249,30 +2295,76 @@ function toggleAddTeamDeviceInput(){let type=document.getElementById('req-add-te
 async function saveAddTeamMember(){let iB64='',sB64='',tDevB64='',ii=document.getElementById('req-add-team-iqama'),si=document.getElementById('req-add-team-selfie'),tName=document.getElementById('req-add-team-name'),tIqama=document.getElementById('req-add-team-iqamatext');let devType=document.getElementById('req-add-team-device-type').value,devId=document.getElementById('req-add-team-device-id').value;let tDev=document.getElementById('req-add-team-imeiphoto');if(!tName||!tName.value.trim())return alert("Provide Name.");if(!tIqama||!tIqama.value.trim())return alert("Provide Iqama/ID.");let iqamaVal=tIqama.value.trim();if(addMoreTeamList.some(function(m){return m.iqamaText===iqamaVal;}))return alert("Duplicate! This ID is already in the current batch.");if(addMoreTeamList.length>=10)return alert("Batch limit reached.");if(devType!=='None'){if(!devId.trim())return alert("Provide IMEI/Serial number.");if(capturedImages.add_team_imeiphoto)tDevB64=capturedImages.add_team_imeiphoto.split(',')[1];else if(tDev&&tDev.files.length>0){let f=await getBase64(tDev.files[0]);tDevB64=f.split(',')[1];}else return alert("Provide Device Screen photo.");}if(capturedImages.add_team_iqama)iB64=capturedImages.add_team_iqama.split(',')[1];else if(ii&&ii.files.length>0){let f=await getBase64(ii.files[0]);iB64=f.split(',')[1];}else return alert("Provide Iqama photo.");if(capturedImages.add_team_selfie)sB64=capturedImages.add_team_selfie.split(',')[1];else if(si&&si.files.length>0){let f=await getBase64(si.files[0]);sB64=f.split(',')[1];}else return alert("Provide Selfie photo.");addMoreTeamList.push({iqama:"data:image/jpeg;base64,"+iB64,selfie:"data:image/jpeg;base64,"+sB64,rawIqama:iB64,rawSelfie:sB64,rawDevicePhoto:tDevB64,name:tName.value.trim()+" *NEW_MEMBER*",iqamaText:tIqama.value.trim(),deviceType:devType,deviceId:devId.trim()});renderAddTeamRoster();if(ii)ii.value="";if(si)si.value="";if(tName)tName.value="";if(tIqama)tIqama.value="";document.getElementById('req-add-team-device-type').value="None";document.getElementById('req-add-team-device-id').value="";toggleAddTeamDeviceInput();clearCapturedData('add_team_iqama');clearCapturedData('add_team_selfie');clearCapturedData('add_team_imeiphoto');if(addMoreTeamList.length===10){checkBatchLimit('more');}}
 function renderAddTeamRoster(){const div=document.getElementById('add-team-roster-display');if(addMoreTeamList.length>0){div.classList.remove('hidden');let h='';addMoreTeamList.forEach(function(m,idx){let cleanName=m.name.replace(/\*NEW_MEMBER\*/gi,'').trim();let devHtml=m.deviceType!=='None'?'<span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">'+m.deviceType+'</span>':'';let imgsHtml='<img src="'+m.iqama+'" class="team-member-img" onclick="openFullscreenImage(this.src)"><img src="'+m.selfie+'" class="team-member-img" onclick="openFullscreenImage(this.src)">';h+='<div class="team-member-row"><span style="color:white;font-size:13px;font-weight:bold;">'+cleanName+' <span style="background:var(--success);color:white;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">'+t('new_badge')+'</span>'+devHtml+'</span><div style="display:flex;gap:10px;">'+imgsHtml+'<button type="button" style="background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:16px;" onclick="addMoreTeamList.splice('+idx+',1);renderAddTeamRoster();">❌</button></div></div>';});div.innerHTML=h;}else div.classList.add('hidden');}
 function submitAppsScriptForm(payload){
-  var request= function(){
-    var controller=typeof AbortController==='function'?new AbortController():null;
-    var timeout=controller?setTimeout(function(){controller.abort();},20000):null;
-    return fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),redirect:'follow',cache:'no-store',signal:controller?controller.signal:undefined}).then(function(res){
-      if(!res.ok){
-        var error=new Error('HTTP '+res.status);
-        error.status=res.status;
-        throw error;
-      }
-      return res.json();
-    }).then(function(result){
-      if(!result||result.status!=='success')throw new Error(result&&result.message?result.message:'The server did not save the request.');
-      return result;
-    }).catch(function(error){
-      if(controller&&controller.signal.aborted)throw new Error('The server did not respond within 20 seconds. Check the connection and try again.');
-      throw error;
-    }).finally(function(){
-      if(timeout)clearTimeout(timeout);
+  var body=JSON.stringify(payload);
+  var xhr=nativeFetch(freshScriptUrl(),{
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:body,
+    mode:'no-cors',
+    cache:'no-store'
+  });
+  function wait(ms){return new Promise(function(resolve){setTimeout(resolve,ms);});}
+  function readPass(){
+    return appsScriptJsonp({action:'get_single',id:payload.id}).then(function(pass){
+      if(!pass||pass.error||!pass.UniqueID)return null;
+      return pass;
     });
-  };
-  return request().catch(function(error){
-    if(payload.action!=='member_gate_action'&&payload.action!=='member_gate_bulk_action')throw error;
-    if(!payload.requestId||error.status!==404)throw error;
-    return new Promise(function(resolve){setTimeout(resolve,700);}).then(request);
+  }
+  function confirmResult(pass){
+    if(payload.action==='approve_pass'){
+      return String(pass.Status||'').toLowerCase()==='approved'?{status:'success'}:null;
+    }
+    if(payload.action==='add_team_members'){
+      var members=typeof payload.team==='string'?JSON.parse(payload.team):payload.team;
+      var teamText=String(pass.TeamMembers||'');
+      var allPresent=members.every(function(member){
+        var id=String(member.iqamaText||'').trim();
+        var name=String(member.name||'').replace(/\*NEW_MEMBER\*/gi,'').trim();
+        return id&&new RegExp('Iqama:\\s*'+id.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?:\\s*\\||\\s*$)','i').test(teamText)&&teamText.indexOf(name)!==-1;
+      });
+      return allPresent?{status:'success'}:null;
+    }
+    var logs=[];
+    try{logs=Array.isArray(pass.GateLogs)?pass.GateLogs:JSON.parse(String(pass.GateLogs||'[]'));}catch(error){return null;}
+    var expectedAction=String(payload.actionType||'').toUpperCase();
+    var memberKeys=payload.action==='member_gate_bulk_action'?payload.memberKeys:[payload.memberKey];
+    var requestId=String(payload.requestId||'');
+    var results=memberKeys.map(function(memberKey){
+      var expectedRequest=payload.action==='member_gate_bulk_action'
+        ?requestId+':'+encodeURIComponent(memberKey)
+        :requestId;
+      var saved=logs.some(function(log){
+        return log&&String(log.requestId||'')===expectedRequest&&String(log.memberKey||'')===String(memberKey)&&String(log.action||'').toUpperCase()===expectedAction;
+      });
+      return {status:saved?'success':'error',memberKey:memberKey,message:saved?'':'The gate action was not confirmed by the server.'};
+    });
+    var completed=results.filter(function(result){return result.status==='success';}).length;
+    if(!completed)return null;
+    return {
+      status:'success',
+      gateLogs:logs,
+      checkInTime:pass.CheckInTime||'',
+      checkOutTime:pass.CheckOutTime||'',
+      completed:completed,
+      failed:results.length-completed,
+      results:results,
+      warnings:[]
+    };
+  }
+  return xhr.then(function(){
+    var deadline=Date.now()+25000;
+    function poll(){
+      return readPass().then(function(pass){
+        var result=pass&&confirmResult(pass);
+        if(result)return result;
+        if(Date.now()>=deadline)throw new Error('The request was sent, but the server did not confirm the change. Refresh the pass before retrying to avoid a duplicate.');
+        return wait(1000).then(poll);
+      });
+    }
+    return poll();
+  }).catch(function(error){
+    if(error&&error.message)return Promise.reject(error);
+    return Promise.reject(new Error('The request could not be sent. Check your connection and try again.'));
   });
 }
 function createGateRequestId(){return 'gate-'+Date.now()+'-'+Math.random().toString(36).slice(2);}
