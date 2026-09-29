@@ -2352,13 +2352,14 @@ function submitAppsScriptForm(payload){
     };
   }
   return xhr.then(function(){
-    var deadline=Date.now()+25000;
+    var deadline=Date.now()+120000;
+    var pollDelay=1000;
     function poll(){
       return readPass().then(function(pass){
         var result=pass&&confirmResult(pass);
         if(result)return result;
         if(Date.now()>=deadline)throw new Error('The request was sent, but the server did not confirm the change. Refresh the pass before retrying to avoid a duplicate.');
-        return wait(1000).then(poll);
+        return wait(pollDelay).then(function(){pollDelay=Math.min(pollDelay*2,8000);return poll();});
       });
     }
     return poll();
