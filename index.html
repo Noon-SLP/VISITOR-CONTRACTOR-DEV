@@ -292,13 +292,13 @@ html.low-performance #main-content::before{background-size:min(52vw,58vh,850px)!
 #dashboard-admin #admin-table-active td:nth-child(8),#dashboard-admin #admin-table-active th:nth-child(8){width:21%}
 #dashboard-admin #admin-table-active .active-actions-grid{display:grid;grid-template-columns:repeat(2,minmax(86px,1fr));gap:5px;align-items:stretch}
 #dashboard-admin #admin-table-active .active-actions-grid .btn-primary{width:100%;min-height:32px;padding:7px 8px;font-size:10px;white-space:nowrap}
-#dashboard-admin #admin-table-active td:nth-child(2),#dashboard-admin #admin-table-active th:nth-child(2){width:14%}
-#dashboard-admin #admin-table-active td:nth-child(3),#dashboard-admin #admin-table-active th:nth-child(3){width:20%}
+#dashboard-admin #admin-table-active td:nth-child(2),#dashboard-admin #admin-table-active th:nth-child(2){width:13%}
+#dashboard-admin #admin-table-active td:nth-child(3),#dashboard-admin #admin-table-active th:nth-child(3){width:19%}
 #dashboard-admin #admin-table-active td:nth-child(4),#dashboard-admin #admin-table-active th:nth-child(4){width:8%}
 #dashboard-admin #admin-table-active td:nth-child(5),#dashboard-admin #admin-table-active th:nth-child(5){width:8%}
 #dashboard-admin #admin-table-active td:nth-child(6),#dashboard-admin #admin-table-active th:nth-child(6){width:9%}
 #dashboard-admin #admin-table-active td:nth-child(7),#dashboard-admin #admin-table-active th:nth-child(7){width:7%}
-#dashboard-admin #admin-table-active td:nth-child(8),#dashboard-admin #admin-table-active th:nth-child(8){width:30%}
+#dashboard-admin #admin-table-active td:nth-child(8),#dashboard-admin #admin-table-active th:nth-child(8){width:32%}
 #dashboard-admin #admin-table-active .active-request-email{display:inline-block;margin-top:5px;color:#c4ccda;font-size:13px;font-weight:600;line-height:1.4;overflow-wrap:anywhere;vertical-align:middle}
 #dashboard-admin #admin-table-active .copy-email-button{display:inline-grid;place-items:center;width:34px;height:34px;margin:3px 0 0 7px;padding:0;border:1px solid rgba(255,199,0,.42);border-radius:8px;background:rgba(255,199,0,.09);color:#ffe17b;font-size:17px;cursor:pointer;vertical-align:middle;transition:background .16s ease,transform .16s ease,border-color .16s ease}
 #dashboard-admin #admin-table-active .copy-email-button:hover{transform:translateY(-1px);border-color:var(--noon-yellow);background:rgba(255,199,0,.19)}
@@ -457,7 +457,7 @@ function getQRDataURLSized(text,size){
     return cv?cv.toDataURL('image/png'):(im?im.src:'');
   }catch(e){return '';}
 }
-function safeImg(u){return u&&u!=='No File'?u:'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'40\' height=\'40\'%3E%3Crect width=\'40\' height=\'40\' fill=\'%23333\'/%3E%3Ctext x=\'20\' y=\'24\' font-size=\'14\' text-anchor=\'middle\' fill=\'%23888\'%3E%3F%3C/text%3E%3C/svg%3E';}
+function safeImg(u){return normalizeImageUrl(u)||'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'40\' height=\'40\'%3E%3Crect width=\'40\' height=\'40\' fill=\'%23333\'/%3E%3Ctext x=\'20\' y=\'24\' font-size=\'14\' text-anchor=\'middle\' fill=\'%23888\'%3E%3F%3C/text%3E%3C/svg%3E';}
 
 const urlParams=new URLSearchParams(window.location.search);const currentRoleParam=urlParams.get('role')||'default';const SESSION_KEY='noon_session_'+currentRoleParam;let html5QrCode=null;let scannerFacingMode='environment';let scannerLibraryPromise=null;let scannerOperation=Promise.resolve();let currentUser=null;let currentScannedID=null;let currentScanAction='check_in';let currentAdminFilter='all';let autoRefreshTimer=null;let globalAdminData=[];let globalAdminHistory=[];let myPassesData=[];let checkedPrintIds=new Set();let liveStream=null;let currentFacingMode='environment';let targetPhotoType='';let capturedImages={iqama:null,selfie:null,imeiphoto:null,vehicle:null,fmpoc:null};let teamList=[];let currentTeamCounter=1;let isProcessingScan=false;let userSecurityPin=null;let lockedPassesData=null;let pinCreateMode='submit';let currentBatchType='new';
 let historySortOrder='desc';
@@ -733,7 +733,7 @@ function stopGuardCacheRefresh(){if(guardCacheTimer){clearInterval(guardCacheTim
 
 function checkBatchLimit(t2){currentBatchType=t2;document.getElementById('batch-limit-modal').classList.remove('hidden');}
 function handleBatchChoice(c){document.getElementById('batch-limit-modal').classList.add('hidden');let k=(c==='more');if(currentBatchType==='new')submitRequest(k);else submitAddMorePeople(k);}
-function normalizeImageUrl(value){let u=String(value||'').trim();if(!u||u==='No File')return '';if(u.indexOf('data:image/')===0)return u;if(/^\/9j\//.test(u)||/^iVBOR/.test(u)||/^UklGR/.test(u))return 'data:image/jpeg;base64,'+u;let m=u.match(/drive\.google\.com\/(?:file\/d\/|uc\?[^#]*?id=|thumbnail\?[^#]*?id=)([a-zA-Z0-9_-]+)/i);if(m)return 'https://lh3.googleusercontent.com/d/'+m[1]+'=w1000';if(/^https:\/\/lh3\.googleusercontent\.com\/d\/[^=]+$/.test(u))return u+'=w1000';return u.replace(/[&<>"'\s]+$/g,'');}
+function normalizeImageUrl(value){let u=String(value||'').trim();if(!u||u==='No File')return '';if(/^data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/]+=*$/i.test(u))return u;if(/^\/9j\//.test(u)||/^iVBOR/.test(u)||/^UklGR/.test(u))return 'data:image/jpeg;base64,'+u;let m=u.match(/drive\.google\.com\/(?:file\/d\/|uc\?[^#]*?id=|thumbnail\?[^#]*?id=)([a-zA-Z0-9_-]+)/i);if(m)return 'https://lh3.googleusercontent.com/d/'+m[1]+'=w1000';if(/^https:\/\/lh3\.googleusercontent\.com\/d\/[^=]+$/.test(u))return u+'=w1000';return /^https?:\/\/[^\s"'<>]+$/i.test(u)?u:'';}
 function convertDriveUrls(o){if(!o)return o;let s=JSON.stringify(o);s=s.replace(/https:\/\/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)[^\s"'\\]*/g,"https://lh3.googleusercontent.com/d/$1=w1000");s=s.replace(/https:\/\/drive\.google\.com\/(?:uc|thumbnail)\?[^\s"'\\]*?id=([a-zA-Z0-9_-]+)[^\s"'\\]*/g,"https://lh3.googleusercontent.com/d/$1=w1000");return JSON.parse(s);}
 function memberImageLink(url,label){let u=normalizeImageUrl(url);if(!u)return '<span style="color:var(--text-muted);font-size:11px;">No '+label+'</span>';return '<a href="'+u+'" target="_blank" rel="noopener" style="color:var(--noon-yellow);font-size:10px;font-weight:700;text-decoration:underline;white-space:nowrap;">OPEN '+label+'</a>';}
 
@@ -860,11 +860,13 @@ function processAndRenderPasses(d,e,s){
   }
 }
 
+function isGateReadOnly(){return !!(currentUser&&currentUser.role==='guard'&&currentUser.guardMode==='gate');}
+
 function login(role){
   if(role==='guard'){
-    const n=document.getElementById('lg-name'),i=document.getElementById('lg-id'),l=document.getElementById('lg-location');
-    if(!n||!i||!l||!n.value||!i.value||!l.value)return alert("Fill all Guard details");
-    currentUser={role:'guard',name:n.value,id:i.value,location:l.value};
+    const n=document.getElementById('lg-name'),i=document.getElementById('lg-id'),l=document.getElementById('lg-location'),m=document.getElementById('lg-mode');
+    if(!n||!i||!l||!m||!n.value||!i.value||!l.value||!m.value)return alert("Fill all Guard details");
+    currentUser={role:'guard',name:n.value,id:i.value,location:l.value,guardMode:m.value};
   }else if(role==='ops'){
     const n=document.getElementById('lo-name'),m=document.getElementById('lo-mail');
     if(!n||!m||!n.value||!m.value)return alert("Enter Name and Gmail");
@@ -2073,6 +2075,7 @@ async function onScanSuccess(decodedText){
     else{showScanResult(t("denied"),t("invalid_date"),"bg-red",false);}
     return;
   }
+  ['IqamaURL','SelfieURL','SelfieBase64','ImeiPhotoURL'].forEach(function(key){data[key]=safeImg(data[key]);});
   let dType=String(data.Type||'');let dStatus=String(data.Status||'');let dLoc=String(data.Location||'');
   const todayNum=new Date().setHours(0,0,0,0);
   let startObj=parseFlexibleDate(data.StartDate),startNum=startObj?startObj.setHours(0,0,0,0):todayNum;
@@ -2188,7 +2191,7 @@ async function onScanSuccess(decodedText){
     if(addedTeam.length>0&&allowAction){setTimeout(function(){alert(t('notice_new_people'));},300);}
   }
   const hcSec=document.getElementById('guard-headcount-section');
-  if(allowAction){
+  if(allowAction&&!isGateReadOnly()){
     if(hcSec)hcSec.classList.add('hidden');
     if(confirmBtn){confirmBtn.classList.remove('hidden');if(isInside){confirmBtn.innerText=t("btn_checkout");confirmBtn.className="btn-primary btn-warning";confirmBtn.style.color="#000";}else{confirmBtn.innerText=t("confirm_action");confirmBtn.className="btn-primary btn-success";confirmBtn.style.color="#fff";}}
     if(confirmBtnTop){confirmBtnTop.classList.remove('hidden');if(isInside){confirmBtnTop.innerText=t("btn_checkout");confirmBtnTop.className="btn-primary btn-warning";confirmBtnTop.style.color="#000";}else{confirmBtnTop.innerText=t("confirm_action");confirmBtnTop.className="btn-primary btn-success";confirmBtnTop.style.color="#fff";}}
@@ -2201,6 +2204,7 @@ async function onScanSuccess(decodedText){
 }
 
 async function confirmAction(){
+  if(isGateReadOnly())return alert('Gate mode is view-only.');
   const btn=document.getElementById('btn-confirm-action');
   const btnTop=document.getElementById('btn-confirm-action-top');
   let hcVal=1;
@@ -2438,6 +2442,7 @@ document.addEventListener('DOMContentLoaded',function(){
   }
 
   async function runBulkGateAction(actionType,bulkButton){
+    if(isGateReadOnly())return alert('Gate mode is view-only.');
     var selector=actionType==='IN'
       ?'.scan-member-gate-button[data-gate-status="PENDING"]:not(:disabled),.scan-member-gate-button[data-gate-status="OUT"]:not(:disabled)'
       :'.scan-member-gate-button[data-gate-status="IN"]:not(:disabled)';
@@ -2494,6 +2499,7 @@ document.addEventListener('DOMContentLoaded',function(){
   }
 
   async function saveMemberGateAction(button){
+    if(isGateReadOnly())return alert('Gate mode is view-only.');
     if(button.disabled)return;
     var pass=guardPassCache.get(String(currentScannedID||'').toUpperCase());
     if(!pass)return alert('Pass data is unavailable. Please close and scan the QR again.');
@@ -2535,6 +2541,15 @@ document.addEventListener('DOMContentLoaded',function(){
     var section=document.getElementById('guard-team-section');
     var confirm=document.getElementById('btn-confirm-action');
     var confirmTop=document.getElementById('btn-confirm-action-top');
+    if(isGateReadOnly()){
+      if(confirm)confirm.classList.add('hidden');
+      if(confirmTop)confirmTop.classList.add('hidden');
+      if(section)section.querySelectorAll('input[type="checkbox"]').forEach(function(input){
+        input.style.display='none';
+        if(input.parentElement&&input.parentElement.tagName==='LABEL')input.parentElement.style.cursor='default';
+      });
+      return;
+    }
     if(!section||section.classList.contains('hidden')||!confirm||confirm.classList.contains('hidden'))return;
 
     confirm.classList.add('hidden');
@@ -2628,6 +2643,30 @@ document.addEventListener('DOMContentLoaded',function(){
       return result;
     };
   }
+})();
+</script>
+<script>
+(function addGuardModeSelector(){
+  var guardLogin=document.getElementById('login-guard');
+  if(!guardLogin||document.getElementById('lg-mode'))return;
+  var group=document.createElement('div');
+  group.className='input-group';
+  var label=document.createElement('label');
+  label.htmlFor='lg-mode';
+  label.textContent='Guard Mode';
+  var select=document.createElement('select');
+  select.id='lg-mode';
+  select.className='input-field';
+  select.setAttribute('aria-label','Guard Mode');
+  [['reception','Reception'],['gate','Gate']].forEach(function(optionData){
+    var option=document.createElement('option');
+    option.value=optionData[0];
+    option.textContent=optionData[1];
+    select.appendChild(option);
+  });
+  group.appendChild(label);
+  group.appendChild(select);
+  guardLogin.insertBefore(group,guardLogin.querySelector('button'));
 })();
 </script>
 </body></html>
