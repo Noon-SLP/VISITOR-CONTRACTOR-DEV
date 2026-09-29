@@ -274,6 +274,31 @@ html.low-performance #main-content::before{background-size:min(52vw,58vh,850px)!
 #dashboard-admin .analytics-box-title{position:relative;z-index:1;margin-bottom:16px;color:#c4cedd;font-size:9px;letter-spacing:.15em}
 #dashboard-admin .analytics-box>div:not(.analytics-box-title){position:relative;z-index:1}
 #dashboard-admin .custom-date-picker .input-field,#dashboard-admin .custom-date-picker .btn-primary{border-radius:7px}
+#dashboard-admin .admin-header-top #header-admin-name{display:none!important}
+#dashboard-admin #admin-sec-approvals>.admin-card-title:nth-of-type(3){min-height:62px;padding:14px 20px!important}
+#dashboard-admin #admin-sec-approvals>.admin-card-title:nth-of-type(3) span{font-size:15px;letter-spacing:.12em}
+#dashboard-admin #admin-table-active{table-layout:fixed}
+#dashboard-admin #admin-table-active th,#dashboard-admin #admin-table-active td{height:58px;padding:13px 14px;text-align:left;vertical-align:middle}
+#dashboard-admin #admin-table-active th{height:42px;font-size:10px;letter-spacing:.1em}
+#dashboard-admin #admin-table-active td{font-size:14px;line-height:1.45}
+#dashboard-admin #admin-table-active td strong{font-size:14px}
+#dashboard-admin #admin-table-active td:nth-child(1),#dashboard-admin #admin-table-active th:nth-child(1){width:4%;text-align:center}
+#dashboard-admin #admin-table-active td:nth-child(2),#dashboard-admin #admin-table-active th:nth-child(2){width:16%}
+#dashboard-admin #admin-table-active td:nth-child(3),#dashboard-admin #admin-table-active th:nth-child(3){width:21%}
+#dashboard-admin #admin-table-active td:nth-child(4),#dashboard-admin #admin-table-active th:nth-child(4){width:9%}
+#dashboard-admin #admin-table-active td:nth-child(5),#dashboard-admin #admin-table-active th:nth-child(5){width:9%}
+#dashboard-admin #admin-table-active td:nth-child(6),#dashboard-admin #admin-table-active th:nth-child(6){width:11%}
+#dashboard-admin #admin-table-active td:nth-child(7),#dashboard-admin #admin-table-active th:nth-child(7){width:9%}
+#dashboard-admin #admin-table-active td:nth-child(8),#dashboard-admin #admin-table-active th:nth-child(8){width:21%}
+#dashboard-admin #admin-table-active .active-actions-grid{display:grid;grid-template-columns:repeat(2,minmax(86px,1fr));gap:5px;align-items:stretch}
+#dashboard-admin #admin-table-active .active-actions-grid .btn-primary{width:100%;min-height:32px;padding:7px 8px;font-size:10px;white-space:nowrap}
+#dashboard-admin .history-tools{display:grid;grid-template-columns:repeat(5,minmax(135px,1fr));gap:9px;padding:14px 16px;border-bottom:1px solid rgba(148,166,190,.12);background:rgba(8,12,19,.42)}
+#dashboard-admin .history-tools input{width:100%;min-width:0;height:38px;padding:8px 11px;border:1px solid rgba(148,166,190,.19);border-radius:8px;background:rgba(5,9,15,.72);color:#eef2f8;font-size:11px;outline:none}
+#dashboard-admin .history-tools input::placeholder{color:#8491a5}
+#dashboard-admin .history-tools input:focus{border-color:rgba(255,199,0,.72);box-shadow:0 0 0 3px rgba(255,199,0,.09)}
+#dashboard-admin .history-tools-footer{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:2px}
+#dashboard-admin .history-tools-footer span{color:#9ba8bb;font-size:11px}
+#dashboard-admin .history-tools-footer button{width:auto;min-height:36px;padding:8px 13px;border-radius:8px;font-size:10px}
 @media(max-width:760px){
   #dashboard-admin{padding-inline:13px!important}
   #dashboard-admin .admin-header-top{height:auto;min-height:78px;padding:13px 14px;margin-inline:-13px!important;margin-bottom:15px!important}
@@ -293,6 +318,11 @@ html.low-performance #main-content::before{background-size:min(52vw,58vh,850px)!
   #dashboard-admin table{min-width:720px}
   #dashboard-admin .analytics-grid{grid-template-columns:1fr}
   #dashboard-admin .analytics-box{min-height:126px;padding:18px}
+  #dashboard-admin .admin-card-title:nth-of-type(3) span{font-size:13px!important}
+  #dashboard-admin #admin-table-active{min-width:950px}
+  #dashboard-admin #admin-table-active td{font-size:13px}
+  #dashboard-admin .history-tools{grid-template-columns:repeat(2,minmax(0,1fr));padding:12px;gap:8px}
+  #dashboard-admin .history-tools-footer{grid-column:1/-1;align-items:flex-start;flex-direction:column}
 }
 @media(prefers-reduced-motion:reduce){
   #dashboard-admin *,#dashboard-admin *::before,#dashboard-admin *::after{animation:none!important}
@@ -1288,9 +1318,108 @@ function formatHistoryDuration(startValue,endValue,storedValue){
   return stored?'DURATION: '+stored:'DURATION: —';
 }
 
+function getHistoryPassData(row){
+  const id=String(row.PassID||row.TrackingID||row.UniqueID||'').trim();
+  return id&&Array.isArray(globalAdminData)?globalAdminData.find(function(pass){return String(pass.UniqueID||'')===id;}):null;
+}
+function getHistoryFieldValues(row,passData){
+  return {
+    name:row.PersonKey?String(row.VisitorName||row.Name||''):String((passData&&passData.VisitorName)||row.VisitorName||row.Name||''),
+    type:String(row.Type||''),
+    facility:String(row.Location||row.Facility||''),
+    company:String(row.CompanyName||row.Company||row.ProjectName||(passData&&(passData.CompanyName||passData.Company||passData.ProjectName))||''),
+    scannedBy:String(row.ScannedByGuard||row.ScannedBy||row.Guard||'')
+  };
+}
+function ensureHistoryTools(){
+  const table=document.getElementById('admin-table-history');
+  const card=document.getElementById('admin-sec-history');
+  if(!table||!card||document.getElementById('history-tools'))return;
+  const tools=document.createElement('div');
+  tools.id='history-tools';
+  tools.className='history-tools';
+  [
+    ['name','Name'],
+    ['type','Type'],
+    ['facility','Facility'],
+    ['company','Company'],
+    ['scannedBy','Scanned By']
+  ].forEach(function(field){
+    const input=document.createElement('input');
+    input.type='search';
+    input.autocomplete='off';
+    input.placeholder='Search '+field[1];
+    input.setAttribute('aria-label','Search history by '+field[1]);
+    input.dataset.historyFilter=field[0];
+    input.addEventListener('input',function(){renderHistorySheetRows(globalAdminHistory);});
+    tools.appendChild(input);
+  });
+  const footer=document.createElement('div');
+  footer.className='history-tools-footer';
+  const count=document.createElement('span');
+  count.id='history-result-count';
+  count.setAttribute('aria-live','polite');
+  const exportButton=document.createElement('button');
+  exportButton.type='button';
+  exportButton.className='btn-primary btn-warning';
+  exportButton.textContent='⬇ EXPORT EXCEL (CSV)';
+  exportButton.addEventListener('click',exportFilteredHistory);
+  footer.appendChild(count);
+  footer.appendChild(exportButton);
+  tools.appendChild(footer);
+  const title=card.querySelector(':scope > .admin-card-title');
+  if(title)title.insertAdjacentElement('afterend',tools);
+  else table.parentElement.insertBefore(tools,table);
+}
+function getFilteredHistoryRows(history){
+  const si=document.getElementById('filter-start'),ei=document.getElementById('filter-end');
+  const fStart=si&&si.value?si.value:'',fEnd=ei&&ei.value?ei.value:'';
+  const filters={};
+  document.querySelectorAll('#history-tools [data-history-filter]').forEach(function(input){
+    filters[input.dataset.historyFilter]=String(input.value||'').trim().toLocaleLowerCase();
+  });
+  return (Array.isArray(history)?history:[]).filter(function(row){
+    if(!row||(!row.CheckInTime&&!row.CheckOutTime))return false;
+    const filterDate=row.CheckInTime||row.CheckOutTime||row['Validity Period']||row.StartDate;
+    if(!isDateInRange(filterDate,currentAdminFilter,fStart,fEnd))return false;
+    const fields=getHistoryFieldValues(row,getHistoryPassData(row));
+    return Object.keys(filters).every(function(key){
+      return !filters[key]||String(fields[key]||'').toLocaleLowerCase().includes(filters[key]);
+    });
+  });
+}
+function historyCsvCell(value){
+  let text=String(value==null?'':value);
+  if(/^[\s]*[=+\-@]/.test(text))text="'"+text;
+  return '"'+text.replace(/"/g,'""')+'"';
+}
+function exportFilteredHistory(){
+  const filtered=getFilteredHistoryRows(globalAdminHistory);
+  if(!filtered.length){alert('No history matches the selected filters.');return;}
+  const headers=['Date','Name','Type','Facility','Company','Check In','Check Out','Duration','Scanned By','Pass ID','Round'];
+  const lines=[headers].concat(filtered.map(function(row){
+    const passData=getHistoryPassData(row),fields=getHistoryFieldValues(row,passData);
+    const duration=formatHistoryDuration(row.CheckInTime,row.CheckOutTime,row.Duration).replace(/^DURATION:\s*/,'');
+    const eventDate=parseFlexibleDate(row.CheckInTime||row.CheckOutTime);
+    return [
+      eventDate?formatToDDMMYYYY(eventDate):'',fields.name,fields.type,fields.facility,fields.company,
+      row.CheckInTime?formatHistoryDateTime(row.CheckInTime):'',
+      row.CheckOutTime?formatHistoryDateTime(row.CheckOutTime):'',
+      duration,fields.scannedBy,row.PassID||row.UniqueID||'',row.RoundNumber||''
+    ];
+  })).map(function(line){return line.map(historyCsvCell).join(',');}).join('\r\n');
+  const blob=new Blob(['\uFEFF'+lines],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob),link=document.createElement('a');
+  const stamp=new Date(),date=stamp.getFullYear()+'-'+String(stamp.getMonth()+1).padStart(2,'0')+'-'+String(stamp.getDate()).padStart(2,'0');
+  link.href=url;link.download='Noon_SLP_History_'+date+'.csv';
+  document.body.appendChild(link);link.click();link.remove();
+  setTimeout(function(){URL.revokeObjectURL(url);},1000);
+}
+
 function renderHistorySheetRows(history){
   const tHistory=document.getElementById("admin-table-history");
   if(!tHistory)return;
+  ensureHistoryTools();
   if(tHistory.dataset.historyToggleBound!=='true'){
     tHistory.addEventListener('toggle',function(event){
       const detail=event.target;
@@ -1305,15 +1434,14 @@ function renderHistorySheetRows(history){
     expandedHistoryGroups.add(detail.getAttribute('data-history-key'));
   });
   let rows="",count=0;
-  const si=document.getElementById("filter-start"),ei=document.getElementById("filter-end"),
-        fStart=si&&si.value?si.value:"",fEnd=ei&&ei.value?ei.value:"";
+  const filteredHistory=getFilteredHistoryRows(history);
+  const resultCount=document.getElementById('history-result-count');
+  if(resultCount)resultCount.textContent=filteredHistory.length+' matching history record'+(filteredHistory.length===1?'':'s');
   const groups = {};
   const companyGroups = {};
   const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-  (Array.isArray(history)?history:[]).forEach(function(row,index){
-    if(!row||(!row.CheckInTime&&!row.CheckOutTime))return;
+  filteredHistory.forEach(function(row,index){
     const filterDate=row.CheckInTime||row.CheckOutTime||row["Validity Period"]||row.StartDate;
-    if(!isDateInRange(filterDate,currentAdminFilter,fStart,fEnd))return;
     const d = parseFlexibleDate(filterDate);
     let key = 'unknown', label = 'UNKNOWN DATE';
     if(d){
@@ -1323,8 +1451,7 @@ function renderHistorySheetRows(history){
     if(!groups[key]) groups[key] = { label: label, count: 0, rows: [] };
     const passId=String(row.PassID||row.TrackingID||row.UniqueID||"").trim();
     const groupDate=d?d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'):'unknown';
-    const lookupPassId=String(row.PassID||row.UniqueID||"").trim();
-    const passData=lookupPassId&&Array.isArray(globalAdminData)?globalAdminData.find(function(pass){return String(pass.UniqueID||'')===lookupPassId;}):null;
+    const passData=getHistoryPassData(row);
     const companyLabel=String(row.CompanyName||row.Company||row.ProjectName||(passData&&(passData.CompanyName||passData.Company||passData.ProjectName))||"").trim();
     let company=String(companyLabel||(passData&&passData.VisitorName)||row.VisitorName||row.Name||"").trim();
     if(!company)company='Attendance';
