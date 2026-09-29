@@ -1993,7 +1993,7 @@ function openViewRecord(id,targetCategory){
       let arrRemoval=[],arrDeviceRevoke=[],arrNew=[],arrActive=[];
       td.forEach(function(m){if(m.isRemoveRequested)arrRemoval.push(m);else if(m.isDeviceRevokeReq)arrDeviceRevoke.push(m);else if(m.isNew)arrNew.push(m);else arrActive.push(m);});
       const renderMemberRow=function(m){
-        let memberIqamaArg=JSON.stringify(String(m.iqamaText||''));
+        let memberIqamaArg=escapeHistoryText(JSON.stringify(String(m.iqamaText||'')));
         let hasDevice=m.device!=='None'&&m.device!=='';
         let devHtml=hasDevice?'<span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">'+m.device+'</span>':'';
         let newBadge=m.isNew?'<span style="background:var(--success);color:white;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">'+t('new_badge')+'</span>':'<span style="background:rgba(255,255,255,0.2);color:white;font-size:9px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;letter-spacing:0.5px;">TEAM</span>';
@@ -2868,4 +2868,4 @@ document.addEventListener('DOMContentLoaded',function(){
 })();
 </script>
 </body></html>
-    
+  
