@@ -307,6 +307,13 @@ html.low-performance #main-content::before{background-size:min(52vw,58vh,850px)!
 #dashboard-admin .history-round-duration{display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 9px;border:1px solid rgba(255,199,0,.29);border-radius:9px;background:linear-gradient(145deg,rgba(255,199,0,.13),rgba(255,199,0,.055));text-align:center}
 #dashboard-admin .history-round-duration span{color:#d1b960;font-size:8px;font-weight:900;letter-spacing:.1em}
 #dashboard-admin .history-round-duration strong{color:#ffe17b;font-size:13px;font-weight:900;white-space:nowrap}
+#dashboard-admin #admin-sec-history>div[style*="overflow-x"]>table>thead{display:none}
+#dashboard-admin .history-attendee-row{grid-template-columns:minmax(170px,1fr) minmax(0,1.15fr) minmax(0,1.35fr);min-width:760px}
+#dashboard-admin .history-attendee-checkout .history-checkout-duration{display:inline-block;margin-inline-start:7px;padding:3px 8px;border:1px solid rgba(255,199,0,.32);border-radius:999px;background:rgba(255,199,0,.1);color:#ffe17b;font-size:11px;font-weight:900;white-space:nowrap}
+#dashboard-admin .history-group-meta{display:flex;flex-direction:column;align-items:flex-end;gap:7px;max-width:42%;text-align:right}
+#dashboard-admin .history-group-people{color:var(--text-muted);font-size:12px;font-weight:800;white-space:nowrap}
+#dashboard-admin .history-scanned-by{max-width:100%;padding:6px 10px;border:1px solid rgba(70,167,255,.28);border-radius:8px;background:linear-gradient(135deg,rgba(70,167,255,.13),rgba(70,167,255,.045));color:#c4e3ff;font-size:12px;font-weight:800;line-height:1.45;overflow-wrap:anywhere}
+#dashboard-admin .history-scanned-by-label{display:block;margin-bottom:2px;color:#79bfff;font-size:8px;font-weight:900;letter-spacing:.12em}
 #sidebar{position:relative;isolation:isolate;overflow:hidden;background:linear-gradient(180deg,#141b28 0%,#101620 48%,#0c111a 100%);border-inline-end:1px solid rgba(148,166,190,.18);box-shadow:12px 0 34px rgba(0,0,0,.2)}
 #sidebar::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 5% 0,rgba(255,199,0,.13),transparent 35%),radial-gradient(ellipse at 90% 42%,rgba(47,91,174,.17),transparent 40%),linear-gradient(180deg,transparent 70%,rgba(255,199,0,.035))}
 #sidebar::after{content:"";position:absolute;top:0;right:0;width:1px;height:100%;pointer-events:none;background:linear-gradient(180deg,rgba(255,199,0,.55),rgba(255,255,255,.08) 35%,rgba(255,199,0,.18))}
@@ -357,7 +364,9 @@ html.low-performance #main-content::before{background-size:min(52vw,58vh,850px)!
   #dashboard-admin #admin-table-active td{font-size:13px}
   #dashboard-admin .history-tools{grid-template-columns:repeat(2,minmax(0,1fr));padding:12px;gap:8px}
   #dashboard-admin .history-tools-footer{grid-column:1/-1;align-items:flex-start;flex-direction:column}
-  #dashboard-admin .history-attendee-row{grid-template-columns:minmax(155px,.9fr) minmax(230px,1.2fr) minmax(95px,.6fr) minmax(230px,1.2fr);gap:8px;padding-inline:10px}
+  #dashboard-admin .history-attendee-row{grid-template-columns:minmax(155px,.9fr) minmax(230px,1.2fr) minmax(260px,1.35fr);gap:8px;padding-inline:10px}
+  #dashboard-admin .history-group-meta{max-width:52%}
+  #dashboard-admin .history-scanned-by{font-size:11px}
 }
 @media(prefers-reduced-motion:reduce){
   #dashboard-admin *,#dashboard-admin *::before,#dashboard-admin *::after{animation:none!important}
@@ -1499,7 +1508,7 @@ function renderHistorySheetRows(history){
     const groupKey=groupIdentity+'|'+groupDate;
     let companyGroup=companyGroups[groupKey];
     if(!companyGroup){
-      companyGroup={company:company,passId:passId,day:groupDate,label:d?formatToDDMMYYYY(d):formatHistoryValidity(row["Validity Period"]),facility:String(row.Location||row.Facility||""),type:String(row.Type||""),entries:[],latest:d?d.getTime():0,uniqueKey:groupKey};
+      companyGroup={company:company,passId:passId,day:groupDate,label:d?formatToDDMMYYYY(d):formatHistoryValidity(row["Validity Period"]),facility:String(row.Location||row.Facility||""),type:String(row.Type||""),entries:[],guards:[],latest:d?d.getTime():0,uniqueKey:groupKey};
       companyGroups[groupKey]=companyGroup;
       groups[key].rows.push(companyGroup);
     }else if(!companyGroup.company&&company){
@@ -1508,8 +1517,10 @@ function renderHistorySheetRows(history){
     const checkIn=row.CheckInTime?formatHistoryDateTime(row.CheckInTime):"";
     const checkOut=row.CheckOutTime?formatHistoryDateTime(row.CheckOutTime):"";
     const member=String(row.PersonKey?(row.VisitorName||row.Name||""):((passData&&passData.VisitorName)||row.VisitorName||row.Name||"")).trim();
+    const scannedBy=String(row.ScannedByGuard||row.ScannedBy||row.Guard||"").trim();
+    if(scannedBy&&!companyGroup.guards.some(function(name){return normalizeHistoryGroupKey(name)===normalizeHistoryGroupKey(scannedBy);}))companyGroup.guards.push(scannedBy);
     if(member&&(checkIn||checkOut)){
-      companyGroup.entries.push({name:member,round:row.RoundNumber||"",checkIn:checkIn,checkOut:checkOut,checkInRaw:row.CheckInTime||"",checkOutRaw:row.CheckOutTime||"",duration:row.Duration||"",guard:String(row.ScannedByGuard||row.ScannedBy||"")});
+      companyGroup.entries.push({name:member,round:row.RoundNumber||"",checkIn:checkIn,checkOut:checkOut,checkInRaw:row.CheckInTime||"",checkOutRaw:row.CheckOutTime||"",duration:row.Duration||"",guard:scannedBy});
     }
     if(d)companyGroup.latest=Math.max(companyGroup.latest,d.getTime());
     const outDate=parseFlexibleDate(row.CheckOutTime);
@@ -1565,12 +1576,16 @@ function renderHistorySheetRows(history){
         person.checkIns.sort(function(a,b){return (parseFlexibleDate(a.time)||0)-(parseFlexibleDate(b.time)||0);});
         person.checkOuts.sort(function(a,b){return (parseFlexibleDate(a.time)||0)-(parseFlexibleDate(b.time)||0);});
         const checkIns=person.checkIns.map(function(event){return '<div style="padding:2px 0;">'+event.round+' CHECK IN · '+escapeHistoryText(event.time)+'</div>';}).join('');
-        const checkOuts=person.checkOuts.map(function(event){return '<div style="padding:2px 0;">'+event.round+' CHECK OUT · '+escapeHistoryText(event.time)+'</div>';}).join('');
-        const durations=Object.keys(person.rounds).sort(function(a,b){return Number(a)-Number(b);}).map(function(round){const data=person.rounds[round];return '<div class="history-round-duration"><span>ROUND '+escapeHistoryText(round)+'</span><strong>'+escapeHistoryText(formatHistoryDurationValue(data.start,data.end,data.stored))+'</strong></div>';}).join('');
-        return '<div class="history-attendee-row"><strong class="history-attendee-name">'+escapeHistoryText(person.name)+'</strong><span class="history-attendee-checkin">'+checkIns+'</span><span class="history-attendee-duration">'+durations+'</span><span class="history-attendee-checkout">'+checkOuts+'</span></div>';
+        const checkOuts=person.checkOuts.map(function(event){
+          const roundData=person.rounds[event.round];
+          const duration=roundData?'<strong class="history-checkout-duration">DURATION: '+escapeHistoryText(formatHistoryDurationValue(roundData.start,roundData.end,roundData.stored))+'</strong>':'';
+          return '<div style="padding:2px 0;">'+event.round+' CHECK OUT · '+escapeHistoryText(event.time)+duration+'</div>';
+        }).join('');
+        return '<div class="history-attendee-row"><strong class="history-attendee-name">'+escapeHistoryText(person.name)+'</strong><span class="history-attendee-checkin">'+checkIns+'</span><span class="history-attendee-checkout">'+checkOuts+'</span></div>';
       }).join('');
       const seeMore=details?'<details data-history-key="'+escapeHistoryText(companyGroup.uniqueKey)+'" style="margin-top:10px;"><summary style="cursor:pointer;color:var(--noon-yellow);font-size:15px;font-weight:800;">SEE MORE · '+attendeeCount+' PEOPLE</summary><div style="margin-top:10px;border:1px solid var(--border-color);border-radius:6px;overflow-x:auto;overflow-y:hidden;">'+details+'</div></details>':'<span style="color:var(--text-muted);font-size:14px;">No member gate activity</span>';
-      rows+='<tr><td colspan="8" style="padding:16px 18px;border-bottom:1px solid var(--border-color);"><div style="display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:center;"><div><strong style="color:#fff;font-size:17px;">'+escapeHistoryText(companyGroup.company)+'</strong><div style="color:var(--text-muted);font-size:13px;margin-top:6px;">'+escapeHistoryText(companyGroup.label)+' · '+escapeHistoryText(companyGroup.type||"-")+' · '+escapeHistoryText(companyGroup.facility||"-")+'</div></div><span style="color:var(--text-muted);font-size:13px;font-weight:700;">'+(attendeeCount?attendeeCount+' PEOPLE':'')+'</span></div>'+seeMore+'</td></tr>';
+      const scannedByText=companyGroup.guards.length?companyGroup.guards.join(' · '):'Not recorded';
+      rows+='<tr><td colspan="8" style="padding:16px 18px;border-bottom:1px solid var(--border-color);"><div style="display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:center;"><div><strong style="color:#fff;font-size:17px;">'+escapeHistoryText(companyGroup.company)+'</strong><div style="color:var(--text-muted);font-size:13px;margin-top:6px;">'+escapeHistoryText(companyGroup.label)+' · '+escapeHistoryText(companyGroup.type||"-")+' · '+escapeHistoryText(companyGroup.facility||"-")+'</div></div><div class="history-group-meta"><span class="history-scanned-by"><span class="history-scanned-by-label">🛡 SCANNED BY</span>'+escapeHistoryText(scannedByText)+'</span><span class="history-group-people">'+(attendeeCount?attendeeCount+' PEOPLE':'')+'</span></div></div>'+seeMore+'</td></tr>';
     });
   });
   // ========================================
