@@ -2317,10 +2317,17 @@ function submitAppsScriptForm(payload){
     if(payload.action==='add_team_members'){
       var members=typeof payload.team==='string'?JSON.parse(payload.team):payload.team;
       var teamText=String(pass.TeamMembers||'');
+      var teamBlocks=teamText.split(/\n\s*\n/);
       var allPresent=members.every(function(member){
         var id=String(member.iqamaText||'').trim();
         var name=String(member.name||'').replace(/\*NEW_MEMBER\*/gi,'').trim();
-        return id&&new RegExp('Iqama:\\s*'+id.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?:\\s*\\||\\s*$)','i').test(teamText)&&teamText.indexOf(name)!==-1;
+        return id&&teamBlocks.some(function(block){
+          var firstLine=block.split(/\r?\n/,1)[0];
+          var savedMember=firstLine.match(/^Name:\s*(.*?)\s*\|\s*Iqama:\s*(.*?)\s*$/i);
+          return savedMember&&
+            savedMember[1].replace(/\*NEW_MEMBER\*/gi,'').trim()===name&&
+            savedMember[2].trim()===id;
+        });
       });
       return allPresent?{status:'success'}:null;
     }
@@ -2354,12 +2361,23 @@ function submitAppsScriptForm(payload){
   return xhr.then(function(){
     var deadline=Date.now()+120000;
     var pollDelay=1000;
+    function scheduleNext(){
+      if(Date.now()>=deadline){
+        throw new Error('The update may have been saved, but the server did not confirm it. Refresh the pass before retrying to avoid a duplicate.');
+      }
+      return wait(Math.min(pollDelay,deadline-Date.now())).then(function(){
+        pollDelay=Math.min(pollDelay*2,8000);
+        return poll();
+      });
+    }
     function poll(){
+      if(Date.now()>=deadline)return Promise.reject(new Error('The update may have been saved, but the server did not confirm it. Refresh the pass before retrying to avoid a duplicate.'));
       return readPass().then(function(pass){
         var result=pass&&confirmResult(pass);
         if(result)return result;
-        if(Date.now()>=deadline)throw new Error('The request was sent, but the server did not confirm the change. Refresh the pass before retrying to avoid a duplicate.');
-        return wait(pollDelay).then(function(){pollDelay=Math.min(pollDelay*2,8000);return poll();});
+        return scheduleNext();
+      },function(){
+        return scheduleNext();
       });
     }
     return poll();
