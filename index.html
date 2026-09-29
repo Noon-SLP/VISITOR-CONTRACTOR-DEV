@@ -292,6 +292,19 @@ html.low-performance #main-content::before{background-size:min(52vw,58vh,850px)!
 #dashboard-admin #admin-table-active td:nth-child(8),#dashboard-admin #admin-table-active th:nth-child(8){width:21%}
 #dashboard-admin #admin-table-active .active-actions-grid{display:grid;grid-template-columns:repeat(2,minmax(86px,1fr));gap:5px;align-items:stretch}
 #dashboard-admin #admin-table-active .active-actions-grid .btn-primary{width:100%;min-height:32px;padding:7px 8px;font-size:10px;white-space:nowrap}
+#dashboard-admin #admin-table-active td:nth-child(2),#dashboard-admin #admin-table-active th:nth-child(2){width:14%}
+#dashboard-admin #admin-table-active td:nth-child(3),#dashboard-admin #admin-table-active th:nth-child(3){width:20%}
+#dashboard-admin #admin-table-active td:nth-child(4),#dashboard-admin #admin-table-active th:nth-child(4){width:8%}
+#dashboard-admin #admin-table-active td:nth-child(5),#dashboard-admin #admin-table-active th:nth-child(5){width:8%}
+#dashboard-admin #admin-table-active td:nth-child(6),#dashboard-admin #admin-table-active th:nth-child(6){width:9%}
+#dashboard-admin #admin-table-active td:nth-child(7),#dashboard-admin #admin-table-active th:nth-child(7){width:7%}
+#dashboard-admin #admin-table-active td:nth-child(8),#dashboard-admin #admin-table-active th:nth-child(8){width:30%}
+#dashboard-admin #admin-table-active .active-request-email{display:inline-block;margin-top:5px;color:#c4ccda;font-size:13px;font-weight:600;line-height:1.4;overflow-wrap:anywhere;vertical-align:middle}
+#dashboard-admin #admin-table-active .copy-email-button{display:inline-grid;place-items:center;width:34px;height:34px;margin:3px 0 0 7px;padding:0;border:1px solid rgba(255,199,0,.42);border-radius:8px;background:rgba(255,199,0,.09);color:#ffe17b;font-size:17px;cursor:pointer;vertical-align:middle;transition:background .16s ease,transform .16s ease,border-color .16s ease}
+#dashboard-admin #admin-table-active .copy-email-button:hover{transform:translateY(-1px);border-color:var(--noon-yellow);background:rgba(255,199,0,.19)}
+#dashboard-admin #admin-table-active .copy-email-button:focus-visible{outline:2px solid var(--noon-yellow);outline-offset:2px}
+#dashboard-admin #admin-table-active .active-actions-grid{grid-template-columns:repeat(2,minmax(112px,1fr));gap:8px}
+#dashboard-admin #admin-table-active .active-actions-grid .btn-primary{min-height:42px;padding:9px 10px;border-radius:8px;font-size:11px;font-weight:800;letter-spacing:.025em;white-space:normal;line-height:1.25}
 #dashboard-admin .history-tools{display:grid;grid-template-columns:repeat(5,minmax(135px,1fr));gap:9px;padding:14px 16px;border-bottom:1px solid rgba(148,166,190,.12);background:rgba(8,12,19,.42)}
 #dashboard-admin .history-tools input{width:100%;min-width:0;height:38px;padding:8px 11px;border:1px solid rgba(148,166,190,.19);border-radius:8px;background:rgba(5,9,15,.72);color:#eef2f8;font-size:11px;outline:none}
 #dashboard-admin .history-tools input::placeholder{color:#8491a5}
@@ -360,8 +373,11 @@ html.low-performance #main-content::before{background-size:min(52vw,58vh,850px)!
   #dashboard-admin .analytics-grid{grid-template-columns:1fr}
   #dashboard-admin .analytics-box{min-height:126px;padding:18px}
   #dashboard-admin .admin-card-title:nth-of-type(3) span{font-size:13px!important}
-  #dashboard-admin #admin-table-active{min-width:950px}
+  #dashboard-admin #admin-table-active{min-width:1120px}
   #dashboard-admin #admin-table-active td{font-size:13px}
+  #dashboard-admin #admin-table-active .active-request-email{font-size:13px}
+  #dashboard-admin #admin-table-active .active-actions-grid{grid-template-columns:repeat(2,minmax(112px,1fr));gap:8px}
+  #dashboard-admin #admin-table-active .active-actions-grid .btn-primary{min-height:44px;font-size:11px}
   #dashboard-admin .history-tools{grid-template-columns:repeat(2,minmax(0,1fr));padding:12px;gap:8px}
   #dashboard-admin .history-tools-footer{grid-column:1/-1;align-items:flex-start;flex-direction:column}
   #dashboard-admin .history-attendee-row{grid-template-columns:minmax(155px,.9fr) minmax(230px,1.2fr) minmax(260px,1.35fr);gap:8px;padding-inline:10px}
@@ -1365,6 +1381,28 @@ function formatHistoryDurationValue(startValue,endValue,storedValue){
   return formatHistoryDuration(startValue,endValue,storedValue).replace(/^DURATION:\s*/,'');
 }
 
+async function copyRequestEmail(button){
+  const email=String(button&&button.dataset.copyEmail||'').trim();
+  if(!email){alert('No email address is available to copy.');return;}
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      await navigator.clipboard.writeText(email);
+    }else{
+      const input=document.createElement('textarea');
+      input.value=email;input.setAttribute('readonly','');input.style.position='fixed';input.style.opacity='0';
+      document.body.appendChild(input);input.select();
+      const copied=document.execCommand('copy');input.remove();
+      if(!copied)throw new Error('Clipboard copy was not permitted by this browser.');
+    }
+    const original=button.textContent,originalTitle=button.title;
+    button.textContent='✓';button.title='Email copied';
+    setTimeout(function(){if(button.isConnected){button.textContent=original;button.title=originalTitle;}},1400);
+  }catch(error){
+    console.error('Could not copy request email address.',error);
+    alert('Could not copy the email address. Please select and copy it manually.');
+  }
+}
+
 function getHistoryPassData(row){
   const id=String(row.PassID||row.TrackingID||row.UniqueID||'').trim();
   return id&&Array.isArray(globalAdminData)?globalAdminData.find(function(pass){return String(pass.UniqueID||'')===id;}):null;
@@ -1704,7 +1742,9 @@ function renderAdminData(data){
           let ciTime='-';let durHtml='-';
           const isInside=!!row.CheckInTime&&!row.CheckOutTime;
           if(isInside){let ciObj=new Date(row.CheckInTime);if(!isNaN(ciObj.getTime())){ciTime=formatTime(ciObj);let now=new Date().getTime();let diffMins=Math.floor((now-ciObj.getTime())/60000);if(diffMins<0)diffMins=0;let h=Math.floor(diffMins/60);let m=diffMins%60;durHtml='<span style="color:var(--noon-yellow); font-weight:bold;">'+h+'h '+m+'m</span>';}}
-          hActive+='<tr '+rowStyle+'><td>'+cbHtml+'</td><td style="color:var(--text-muted);">'+finalDateStr+'</td><td><strong>'+rVisitorName+'</strong><br><span style="font-size:10px;color:var(--text-muted);">Email: '+rHostEmail+'</span></td><td>'+t(rType.toLowerCase())+'</td><td>'+rLocation+'</td><td style="color:var(--text-muted);font-size:11px;">'+ciTime+'</td><td>'+durHtml+'</td><td>'+actionBtns+'</td></tr>';
+          const emailText=escapeHistoryText(rHostEmail);
+          const emailCell=rHostEmail?'<br><span class="active-request-email">Email: '+emailText+'</span> <button type="button" class="copy-email-button" data-copy-email="'+emailText+'" onclick="copyRequestEmail(this)" title="Copy email" aria-label="Copy email address">⧉</button>':'';
+          hActive+='<tr '+rowStyle+'><td>'+cbHtml+'</td><td style="color:var(--text-muted);">'+finalDateStr+'</td><td><strong>'+escapeHistoryText(rVisitorName)+'</strong>'+emailCell+'</td><td>'+t(rType.toLowerCase())+'</td><td>'+rLocation+'</td><td style="color:var(--text-muted);font-size:11px;">'+ciTime+'</td><td>'+durHtml+'</td><td>'+actionBtns+'</td></tr>';
           activeCount++;
         }
       }
