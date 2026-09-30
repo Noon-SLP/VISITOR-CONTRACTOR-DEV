@@ -2064,6 +2064,21 @@
       if(button)button.disabled=false;
     }
   }
+  async function adminProcessLeadRemoval(passId,approve,button){
+    var message=approve
+      ?'Approve lead removal? This will complete the pass and deactivate access for everyone on it.'
+      :'Reject the lead removal request? The pass will remain active.';
+    if(!confirm(message))return;
+    if(button)button.disabled=true;
+    try{
+      await appsScriptAction({action:'process_lead_removal',id:passId,approve:approve});
+      localStorage.removeItem('cached_admin_data');
+      await refreshMemberView(passId,'remove');
+    }catch(error){
+      alert('Lead removal action failed: '+error.message);
+      if(button)button.disabled=false;
+    }
+  }
 
   function openViewRecord(id,targetCategory){
     targetCategory=targetCategory||null;
@@ -2096,13 +2111,14 @@
     let leadPendingDeviceForActions=String(r.LeadPendingDevice||'').trim();
     let leadActionButtons='';
     if(currentUser&&currentUser.role==='admin'){
-      if(leadPendingDeviceForActions)leadActionButtons='<button onclick="adminApproveMemberDeviceAdd(\''+r.UniqueID+'\', \'__LEAD__\', this)" class="btn-primary btn-success btn-sm" style="width:auto;">APPROVE DEVICE</button><button onclick="adminRejectMemberDeviceAdd(\''+r.UniqueID+'\', \'__LEAD__\', this)" class="btn-primary btn-danger btn-sm" style="width:auto;">REJECT DEVICE</button>';
+      if(leadRemoveRequestedForActions)leadActionButtons='<button onclick="adminProcessLeadRemoval(\''+r.UniqueID+'\', true, this)" class="btn-primary btn-danger btn-sm" style="width:auto;">APPROVE REMOVAL</button><button onclick="adminProcessLeadRemoval(\''+r.UniqueID+'\', false, this)" class="btn-primary btn-outline btn-sm" style="width:auto;">REJECT REMOVAL</button>';
+      if(leadPendingDeviceForActions)leadActionButtons+='<button onclick="adminApproveMemberDeviceAdd(\''+r.UniqueID+'\', \'__LEAD__\', this)" class="btn-primary btn-success btn-sm" style="width:auto;">APPROVE DEVICE</button><button onclick="adminRejectMemberDeviceAdd(\''+r.UniqueID+'\', \'__LEAD__\', this)" class="btn-primary btn-danger btn-sm" style="width:auto;">REJECT DEVICE</button>';
     }else if(!leadRemoveRequestedForActions){
       leadActionButtons='<button onclick="requestRemoveLead(\''+r.UniqueID+'\', this)" class="btn-primary btn-danger btn-sm" style="width:auto;">REQUEST REMOVAL</button>';
       if(leadHasDeviceForActions&&!leadRevokeRequestedForActions)leadActionButtons+='<button onclick="requestRevokeLeadDevice(\''+r.UniqueID+'\', this)" class="btn-primary btn-warning btn-sm" style="width:auto;">REQUEST DEVICE REVOKE</button>';
       if(currentUser&&currentUser.role==='ops'&&!leadHasDeviceForActions&&!leadPendingDeviceForActions&&String(r.Status)==='Approved')leadActionButtons+='<button onclick="openExistingDeviceRequest(\''+r.UniqueID+'\', \'__LEAD__\', '+escapeHistoryText(JSON.stringify(String(r.VisitorName||'Lead')))+', true)" class="btn-primary btn-sm" style="width:auto;background:#2563eb;color:#fff;">REQUEST ADD DEVICE</button>';
     }
-    if(leadActionButtons)h+='<div style="grid-column:span 2;margin-top:12px;padding:12px;border:1px solid rgba(255,199,0,.35);border-radius:8px;background:rgba(255,199,0,.06);"><strong style="display:block;color:var(--noon-yellow);font-size:13px;margin-bottom:9px;">LEAD ACTIONS</strong><div style="display:flex;gap:8px;flex-wrap:wrap;">'+leadActionButtons+'</div></div>';
+    if(leadActionButtons)h+='<div id="lead-actions" style="grid-column:span 2;margin-top:12px;padding:12px;border:1px solid rgba(255,199,0,.35);border-radius:8px;background:rgba(255,199,0,.06);"><strong style="display:block;color:var(--noon-yellow);font-size:13px;margin-bottom:9px;">LEAD ACTIONS</strong><div style="display:flex;gap:8px;flex-wrap:wrap;">'+leadActionButtons+'</div></div>';
     let tMembers=String(r.TeamMembers||'');
     if(tMembers.trim()!=="" || r.VisitorName){
       let td=[];
@@ -2182,7 +2198,7 @@
     if(mc)mc.innerHTML=h;
     if(modal)modal.classList.remove('hidden');
     if(currentUser&&currentUser.role!=='admin')setTimeout(function(){setupBulkRemovalSelection(r.UniqueID);},0);
-    if(targetCategory){setTimeout(function(){let targetElem=document.getElementById('section-'+targetCategory);let memberElem=targetCategory==='remove'?document.querySelector('[id^=removal-member-]'):targetCategory==='revoke'?document.querySelector('[id^=revoke-member-]'):targetCategory==='device-add'?document.querySelector('[id^=device-add-member-]'):null;if(targetElem){let scrollTarget=memberElem||targetElem;scrollTarget.scrollIntoView({behavior:'smooth',block:'center'});let origBg=targetElem.style.backgroundColor;targetElem.style.transition='background-color 0.5s ease';targetElem.style.backgroundColor='rgba(255, 199, 0, 0.2)';targetElem.style.borderRadius='8px';targetElem.style.padding='10px';setTimeout(function(){targetElem.style.backgroundColor=origBg;},2000);}},300);}
+    if(targetCategory){setTimeout(function(){let targetElem=targetCategory==='remove'&&leadRemoveRequestedForActions?document.getElementById('lead-actions'):document.getElementById('section-'+targetCategory);let memberElem=targetCategory==='remove'&&!leadRemoveRequestedForActions?document.querySelector('[id^=removal-member-]'):targetCategory==='revoke'?document.querySelector('[id^=revoke-member-]'):targetCategory==='device-add'?document.querySelector('[id^=device-add-member-]'):null;if(targetElem){let scrollTarget=memberElem||targetElem;scrollTarget.scrollIntoView({behavior:'smooth',block:'center'});let origBg=targetElem.style.backgroundColor;targetElem.style.transition='background-color 0.5s ease';targetElem.style.backgroundColor='rgba(255, 199, 0, 0.2)';targetElem.style.borderRadius='8px';targetElem.style.padding='10px';setTimeout(function(){targetElem.style.backgroundColor=origBg;},2000);}},300);}
   }
 
   function closeViewRecord(){const modal=document.getElementById('view-record-modal');if(modal)modal.classList.add('hidden');}
@@ -3026,4 +3042,4 @@
   </script>
   </body></html>
 
-  
+    
