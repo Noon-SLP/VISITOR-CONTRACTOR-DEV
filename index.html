@@ -467,6 +467,8 @@
     </div>
   </div>
   <script>
+    async function adminApproveLeadDeviceAdd(passId,button){if(!confirm('Approve the lead additional device?'))return;if(button)button.disabled=true;try{await appsScriptAction({action:'approve_lead_device_add',id:passId});localStorage.removeItem('cached_admin_data');await refreshMemberView(passId,'device-add');}catch(error){alert('Lead device approval failed: '+error.message);if(button)button.disabled=false;}}
+    async function adminRejectLeadDeviceAdd(passId,button){if(!confirm('Reject the lead additional device request?'))return;if(button)button.disabled=true;try{await appsScriptAction({action:'reject_lead_device_add',id:passId});localStorage.removeItem('cached_admin_data');await refreshMemberView(passId,'device-add');}catch(error){alert('Lead device rejection failed: '+error.message);if(button)button.disabled=false;}}
   const SCRIPT_URL='https://script.google.com/macros/s/AKfycbxyQ4kGKgsNS076UvKCk0ezCVSzp2DlqYobiprd8Qrvt5oJBWrVlszD7-jm2mOYtsTUvg/exec';
   function freshScriptUrl(){return SCRIPT_URL+'?cacheBust='+Date.now()+'-'+Math.random().toString(36).slice(2);}
   function appsScriptAction(params){
@@ -1802,6 +1804,9 @@
             let lines=tMembersStr.split(/\n\s*\n/).filter(function(b){return b.trim()!=='';});
             lines.forEach(function(block){let blockUpper=block.toUpperCase();if(blockUpper.includes('[REMOVE_REQUESTED]'))removeCount++;if(blockUpper.includes('[DEVICE_REVOKE_REQUESTED]'))revokeCount++;if(blockUpper.includes('[DEVICE_ADD_REQUESTED]'))deviceAddCount++;if(blockUpper.includes('*NEW_MEMBER*')||blockUpper.includes('[NEW]'))newCount++;});
           }
+          if(String(row.VisitorName||'').toUpperCase().includes('[LEAD_REMOVE_REQUESTED]'))removeCount++;
+          if(String(row.ImeiNumber||'').toUpperCase().includes('[DEVICE_REVOKE_REQUESTED]'))revokeCount++;
+          if(String(row.LeadPendingDevice||'').trim())deviceAddCount++;
           let hasActionPending=rStatus==='Approved'&&(removeCount>0||revokeCount>0||deviceAddCount>0||newCount>0);
           let isRemovalRequest=removeCount>0||revokeCount>0;
           let isDeviceAddRequest=deviceAddCount>0;
@@ -1943,6 +1948,8 @@
   async function requestRevokeDevice(passId,memberIndex,memberIqama,btn){if(!confirm('Request admin to revoke device access for this member?'))return;btn.innerText="REQUESTING...";btn.disabled=true;try{await runTeamMemberAction('request_revoke_device',passId,memberIndex,memberIqama);localStorage.removeItem('cached_passes_'+currentUser.email);refreshMemberView(passId);}catch(e){alert("Failed to request: "+e.message);btn.disabled=false;}}
 
   async function requestRemoveTeamMember(passId,memberIndex,memberIqama,btn){if(!confirm('Request admin to permanently remove this team member?'))return;btn.innerText="REQUESTING...";btn.disabled=true;try{await runTeamMemberAction('request_remove_member',passId,memberIndex,memberIqama);localStorage.removeItem('cached_passes_'+currentUser.email);refreshMemberView(passId);}catch(e){alert("Failed to request removal: "+e.message);btn.disabled=false;}}
+  async function requestRemoveLead(passId,btn){if(!confirm('Request admin to permanently remove the lead?'))return;btn.innerText="REQUESTING...";btn.disabled=true;try{await appsScriptAction({action:'request_lead_remove_member',id:passId});localStorage.removeItem('cached_passes_'+currentUser.email);refreshMemberView(passId);}catch(e){alert("Failed to request lead removal: "+e.message);btn.disabled=false;}}
+  async function requestRevokeLeadDevice(passId,btn){if(!confirm('Request admin to revoke device access for the lead?'))return;btn.innerText="REQUESTING...";btn.disabled=true;try{await appsScriptAction({action:'request_lead_revoke_device',id:passId});localStorage.removeItem('cached_passes_'+currentUser.email);refreshMemberView(passId);}catch(e){alert("Failed to request lead device revoke: "+e.message);btn.disabled=false;}}
 
   async function cancelRemoveRequest(passId,memberIndex,memberIqama,btn){if(!confirm('Cancel this removal request?'))return;btn.innerText="CANCELLING...";btn.disabled=true;try{await runTeamMemberAction('cancel_remove_request',passId,memberIndex,memberIqama);localStorage.removeItem('cached_admin_data');refreshMemberView(passId);}catch(e){alert("Failed to cancel: "+e.message);btn.disabled=false;}}
 
@@ -1965,9 +1972,9 @@
     modal.innerHTML='<div class="record-modal-box" style="max-width:460px;"><div class="record-modal-header"><h3 style="color:var(--noon-yellow);margin:0;font-size:16px;text-transform:uppercase;">Request Another Device</h3><button type="button" onclick="closeExistingDeviceRequest()" style="background:transparent;border:0;color:white;font-size:24px;cursor:pointer;">&times;</button></div><div style="padding:22px;display:flex;flex-direction:column;gap:14px;"><p id="existing-device-member-label" style="color:var(--text-muted);margin:0;"></p><p style="color:var(--danger);font-size:12px;font-weight:bold;margin:0;">This pass will be marked PENDING until an Admin reviews the device.</p><div class="input-group"><label for="existing-device-type">Device Type</label><select id="existing-device-type" class="input-field"><option value="">Select Mobile or Laptop</option><option value="Mobile">Mobile</option><option value="Laptop">Laptop</option></select></div><div class="input-group"><label for="existing-device-id">IMEI / Serial Number</label><input id="existing-device-id" class="input-field" type="text" maxlength="100" placeholder="Enter device IMEI or serial number"></div><div class="input-group"><label for="existing-device-photo">Device Photo</label><input id="existing-device-photo" class="input-field" type="file" accept="image/*"></div><button id="existing-device-submit" type="button" class="btn-primary btn-warning" style="color:#111;" onclick="submitExistingMemberDeviceRequest()">SUBMIT DEVICE REQUEST</button></div></div>';
     document.body.appendChild(modal);
   }
-  function openExistingDeviceRequest(passId,memberIqama,memberName){
+  function openExistingDeviceRequest(passId,memberIqama,memberName,isLead){
     ensureExistingDeviceRequestModal();
-    existingDeviceRequestContext={passId:passId,memberIqama:memberIqama,memberName:memberName};
+    existingDeviceRequestContext={passId:passId,memberIqama:memberIqama,memberName:memberName,isLead:!!isLead};
     document.getElementById('existing-device-member-label').textContent='Member: '+memberName+' (ID: '+memberIqama+')';
     document.getElementById('existing-device-type').value='';
     document.getElementById('existing-device-id').value='';
@@ -1999,9 +2006,9 @@
     beginPleaseWait('SUBMITTING DEVICE REQUEST...');
     try{
       var imageData=await getBase64(file);
-      var payload={action:'request_member_device_add',id:context.passId,memberIqama:context.memberIqama,deviceType:type,deviceId:deviceId,devicePhotoBase64:imageData};
+      var payload={action:context.isLead?'request_lead_device_add':'request_member_device_add',id:context.passId,memberIqama:context.memberIqama,deviceType:type,deviceId:deviceId,devicePhotoBase64:imageData};
       await nativeFetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),mode:'no-cors',cache:'no-store'});
-      var expected='Pending Device: '+type+' ('+deviceId+') [DEVICE_ADD_REQUESTED]';
+      var expected=context.isLead?type+' ('+deviceId+')':('Pending Device: '+type+' ('+deviceId+') [DEVICE_ADD_REQUESTED]');
       var deadline=Date.now()+25000;
       var savedPass=null;
       var requestConfirmed=false;
@@ -2009,10 +2016,11 @@
         await new Promise(function(resolve){setTimeout(resolve,1000);});
         savedPass=await appsScriptJsonp({action:'get_single',id:context.passId});
         var blocks=String(savedPass&&savedPass.TeamMembers||'').split(/\n\s*\n/);
+        if(context.isLead&&String(savedPass&&savedPass.LeadPendingDevice||'')===expected){requestConfirmed=true;break;}
         var saved=blocks.some(function(block){
           var firstLine=block.split(/\r?\n/,1)[0];
           var memberMatch=firstLine.match(/^Name:\s*.*?\|\s*Iqama:\s*(.*?)\s*$/i);
-          return memberMatch&&memberMatch[1].trim()===String(context.memberIqama).trim()&&block.indexOf(expected)!==-1;
+          return !context.isLead&&memberMatch&&memberMatch[1].trim()===String(context.memberIqama).trim()&&block.indexOf(expected)!==-1;
         });
         if(saved){requestConfirmed=true;break;}
       }
@@ -2034,7 +2042,7 @@
     if(!confirm('Approve this additional device?'))return;
     if(button)button.disabled=true;
     try{
-      await appsScriptAction({action:'approve_member_device_add',id:passId,memberIqama:memberIqama});
+      await appsScriptAction({action:memberIqama==='__LEAD__'?'approve_lead_device_add':'approve_member_device_add',id:passId,memberIqama:memberIqama});
       localStorage.removeItem('cached_admin_data');
       await refreshMemberView(passId,'device-add');
     }catch(error){
@@ -2046,7 +2054,7 @@
     if(!confirm('Reject this additional device request?'))return;
     if(button)button.disabled=true;
     try{
-      await appsScriptAction({action:'reject_member_device_add',id:passId,memberIqama:memberIqama});
+      await appsScriptAction({action:memberIqama==='__LEAD__'?'reject_lead_device_add':'reject_member_device_add',id:passId,memberIqama:memberIqama});
       localStorage.removeItem('cached_admin_data');
       await refreshMemberView(passId,'device-add');
     }catch(error){
@@ -2079,7 +2087,7 @@
     if(vehStr){if(vehStr.startsWith('http')||vehStr.startsWith('data:image'))h+='<div style="flex:1;background:transparent;border:none;padding:0;"><strong>'+t('lbl_vehicle')+'</strong><img src="'+vehStr+'" onclick="openFullscreenImage(this.src)"></div>';else h+='<div style="flex:1;background:transparent;border:none;padding:0;"><strong>'+t('lbl_vehicle')+'</strong><div style="margin-top:5px;color:var(--text-muted);">'+vehStr+'</div></div>';}
     h+='</div>';
     let tMembers=String(r.TeamMembers||'');
-    if(tMembers.trim()!==""){
+    if(tMembers.trim()!=="" || r.VisitorName){
       let td=[];
       let lines=tMembers.split(/\n\s*\n/).filter(function(b){return b.trim()!=='';});
       lines.forEach(function(block,idx){
@@ -2102,14 +2110,23 @@
           td.push({originalIndex:idx,person:idx+1,name:cleanName,isNew:isNew,isRemoveRequested:isRemoveRequested,isDeviceRevokeReq:isDeviceRevokeReq,isDeviceAddReq:isDeviceAddReq,pendingDevice:pendingDeviceMatch?pendingDeviceMatch[1].trim():'',iqamaText:iqamaMatch?iqamaMatch[1].trim():'N/A',device:cleanDevice,iqama:normalizeImageUrl(extractedUrls[0]||''),selfie:normalizeImageUrl(extractedUrls[1]||extractedUrls[0]||''),devicePhotos:extractedUrls.slice(2).map(function(url){return normalizeImageUrl(url);}).filter(Boolean)});
         }
       });
+      let leadNameRaw=String(r.VisitorName||'').trim();
+      let leadIqamaMatch=leadNameRaw.match(/\(ID:\s*(.*?)\)\s*$/i);
+      let leadDeviceRaw=String(r.ImeiNumber||'').trim();
+      let leadPendingDevice=String(r.LeadPendingDevice||'').trim();
+      let leadDevice=leadDeviceRaw.replace(/\s*\[DEVICE_REVOKE_REQUESTED\]/ig,'').trim();
+      let leadIsRemoveRequested=/\[LEAD_REMOVE_REQUESTED\]/i.test(leadNameRaw);
+      let leadIsRevokeRequested=/\[DEVICE_REVOKE_REQUESTED\]/i.test(leadDeviceRaw);
+      let leadCleanName=leadNameRaw.replace(/\s*\[LEAD_REMOVE_REQUESTED\]/ig,'').trim();
+      td.unshift({originalIndex:-1,person:0,isLead:true,name:leadCleanName,isNew:false,isRemoveRequested:leadIsRemoveRequested,isDeviceRevokeReq:leadIsRevokeRequested,isDeviceAddReq:!!leadPendingDevice,pendingDevice:leadPendingDevice,iqamaText:leadIqamaMatch?leadIqamaMatch[1].trim():'LEAD',device:leadDevice||'None',iqama:normalizeImageUrl(r.IqamaURL||''),selfie:normalizeImageUrl(r.SelfieURL||''),devicePhotos:normalizeImageUrl(r.ImeiPhotoURL||'')?[normalizeImageUrl(r.ImeiPhotoURL)]:[]});
       if(td.length>0){
         let arrRemoval=[],arrDeviceRevoke=[],arrDeviceAdd=[],arrNew=[],arrActive=[];
         td.forEach(function(m){if(m.isDeviceAddReq)arrDeviceAdd.push(m);else if(m.isRemoveRequested)arrRemoval.push(m);else if(m.isDeviceRevokeReq)arrDeviceRevoke.push(m);else if(m.isNew)arrNew.push(m);else arrActive.push(m);});
         const renderMemberRow=function(m){
-          let memberIqamaArg=escapeHistoryText(JSON.stringify(String(m.iqamaText||'')));
+          let memberIqamaArg=m.isLead?'__LEAD__':escapeHistoryText(JSON.stringify(String(m.iqamaText||'')));
           let hasDevice=m.device!=='None'&&m.device!=='';
           let devHtml=hasDevice?'<span style="background:var(--noon-yellow);color:#000;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">'+escapeHistoryText(m.device)+'</span>':'';
-          let newBadge=m.isNew?'<span style="background:var(--success);color:white;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">'+t('new_badge')+'</span>':'<span style="background:rgba(255,255,255,0.2);color:white;font-size:9px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;letter-spacing:0.5px;">TEAM</span>';
+          let newBadge=m.isLead?'<span style="background:var(--noon-yellow);color:#000;font-size:9px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;letter-spacing:0.5px;">LEAD</span>':m.isNew?'<span style="background:var(--success);color:white;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">'+t('new_badge')+'</span>':'<span style="background:rgba(255,255,255,0.2);color:white;font-size:9px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;letter-spacing:0.5px;">TEAM</span>';
           let removalBadge=m.isRemoveRequested?'<span style="background:var(--danger);color:white;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">REMOVAL REQUESTED</span>':'';
           let devRevokeBadge=m.isDeviceRevokeReq?'<span style="background:#eab308;color:#000;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">DEVICE REVOKE REQUESTED</span>':'';
           let devAddBadge=m.isDeviceAddReq?'<span style="background:#3b82f6;color:#fff;font-size:10px;padding:2px 5px;border-radius:4px;margin-left:5px;font-weight:bold;">DEVICE ADD REQUESTED</span>':'';
@@ -2117,15 +2134,15 @@
           let imgsHtml='<div style="display:flex;gap:6px;align-items:flex-start;min-width:170px;">'+(m.iqama?'<img src="'+m.iqama+'" style="'+thumbStyle+'" onclick="openFullscreenImage(this.src)" title="Iqama Photo" alt="Iqama Photo">':'')+(m.selfie?'<img src="'+m.selfie+'" style="'+thumbStyle+'" onclick="openFullscreenImage(this.src)" title="Selfie Photo" alt="Selfie Photo">':'')+m.devicePhotos.map(function(photo){return '<img src="'+photo+'" style="'+thumbStyle+'" onclick="openFullscreenImage(this.src)" title="Device Photo" alt="Device Photo">';}).join('')+'</div>';
           let removeReqHtml='',removeBtnHtml='',revokeDevHtml='',cancelReqHtml='',newMemberActionsHtml='';
           if(currentUser&&currentUser.role==='admin'){
-            if(m.isDeviceAddReq){newMemberActionsHtml='<button onclick="adminApproveMemberDeviceAdd(\''+r.UniqueID+'\', '+memberIqamaArg+', this)" style="background:var(--success);border:none;color:white;padding:6px 10px;border-radius:4px;font-size:11px;font-weight:bold;cursor:pointer;margin-left:5px;">APPROVE DEVICE</button><button onclick="adminRejectMemberDeviceAdd(\''+r.UniqueID+'\', '+memberIqamaArg+', this)" style="background:var(--danger);border:none;color:white;padding:6px 10px;border-radius:4px;font-size:11px;font-weight:bold;cursor:pointer;margin-left:5px;">REJECT</button>';}
+            if(m.isDeviceAddReq){newMemberActionsHtml='<button onclick="adminApproveMemberDeviceAdd(\''+r.UniqueID+'\', '+(m.isLead?'\'__LEAD__\'':memberIqamaArg)+', this)" style="background:var(--success);border:none;color:white;padding:6px 10px;border-radius:4px;font-size:11px;font-weight:bold;cursor:pointer;margin-left:5px;">APPROVE DEVICE</button><button onclick="adminRejectMemberDeviceAdd(\''+r.UniqueID+'\', '+(m.isLead?'\'__LEAD__\'':memberIqamaArg)+', this)" style="background:var(--danger);border:none;color:white;padding:6px 10px;border-radius:4px;font-size:11px;font-weight:bold;cursor:pointer;margin-left:5px;">REJECT</button>';}
             else if(m.isNew){newMemberActionsHtml='<button onclick="adminApproveTeamMember(\''+r.UniqueID+'\', '+m.originalIndex+', '+memberIqamaArg+', this)" style="background:var(--success);border:none;color:white;padding:6px 10px;border-radius:4px;font-size:11px;font-weight:bold;cursor:pointer;margin-left:5px;">ACCEPT</button><button onclick="adminRejectTeamMember(\''+r.UniqueID+'\', '+m.originalIndex+', '+memberIqamaArg+', this)" style="background:var(--danger);border:none;color:white;padding:6px 10px;border-radius:4px;font-size:11px;font-weight:bold;cursor:pointer;margin-left:5px;">REJECT</button>';removeBtnHtml='';}
-            else{removeBtnHtml='<button onclick="adminRemoveTeamMember(\''+r.UniqueID+'\', '+m.originalIndex+', '+memberIqamaArg+', this)" style="background:var(--danger);border:none;color:white;padding:6px 10px;border-radius:4px;font-size:11px;font-weight:bold;cursor:pointer;margin-left:5px;">REMOVE</button>';}
+            else if(!m.isLead){removeBtnHtml='<button onclick="adminRemoveTeamMember(\''+r.UniqueID+'\', '+m.originalIndex+', '+memberIqamaArg+', this)" style="background:var(--danger);border:none;color:white;padding:6px 10px;border-radius:4px;font-size:11px;font-weight:bold;cursor:pointer;margin-left:5px;">REMOVE</button>';}
             if(m.isRemoveRequested){cancelReqHtml='<button onclick="cancelRemoveRequest(\''+r.UniqueID+'\', '+m.originalIndex+', '+memberIqamaArg+', this)" style="background:gray; border:none; color:white; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; margin-left:5px;">CANCEL</button>';}
-            if(hasDevice&&!m.isDeviceAddReq){revokeDevHtml='<button onclick="adminRevokeDevice(\''+r.UniqueID+'\', '+m.originalIndex+', '+memberIqamaArg+', this)" style="background:#eab308; border:none; color:#000; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; margin-left:5px;">REVOKE DEVICE</button>';if(m.isDeviceRevokeReq){cancelReqHtml+='<button onclick="cancelRevokeDeviceRequest(\''+r.UniqueID+'\', '+m.originalIndex+', '+memberIqamaArg+', this)" style="background:gray; border:none; color:white; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; margin-left:5px;">CANCEL</button>';}}
+            if(hasDevice&&!m.isDeviceAddReq&&!m.isLead){revokeDevHtml='<button onclick="adminRevokeDevice(\''+r.UniqueID+'\', '+m.originalIndex+', '+memberIqamaArg+', this)" style="background:#eab308; border:none; color:#000; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; margin-left:5px;">REVOKE DEVICE</button>';if(m.isDeviceRevokeReq){cancelReqHtml+='<button onclick="cancelRevokeDeviceRequest(\''+r.UniqueID+'\', '+m.originalIndex+', '+memberIqamaArg+', this)" style="background:gray; border:none; color:white; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; margin-left:5px;">CANCEL</button>';}}
           }else{
-            if(!m.isRemoveRequested){removeReqHtml='<button onclick="requestRemoveTeamMember(\''+r.UniqueID+'\', '+m.originalIndex+', '+memberIqamaArg+', this)" style="background:#ef4444; border:none; color:white; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; margin-left:5px;">REQUEST REMOVAL</button>';}
-            if(hasDevice&&!m.isDeviceRevokeReq){revokeDevHtml='<button onclick="requestRevokeDevice(\''+r.UniqueID+'\', '+m.originalIndex+', '+memberIqamaArg+', this)" style="background:#eab308; border:none; color:#000; padding:6px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; margin-left:5px;">REQUEST DEVICE REVOKE</button>';}
-            if(currentUser&&currentUser.role==='ops'&&!m.isNew&&!m.isDeviceAddReq&&!m.isRemoveRequested&&String(r.Status)==='Approved'){newMemberActionsHtml='<button onclick="openExistingDeviceRequest(\''+r.UniqueID+'\', '+memberIqamaArg+', '+escapeHistoryText(JSON.stringify(m.name)) +')" style="background:#2563eb;border:none;color:white;padding:6px 10px;border-radius:4px;font-size:11px;font-weight:bold;cursor:pointer;margin-left:5px;">REQUEST ADD DEVICE</button>';}
+            if(!m.isRemoveRequested)removeReqHtml=m.isLead?'<button onclick="requestRemoveLead(\''+r.UniqueID+'\', this)" style="background:#ef4444;border:none;color:white;padding:6px 10px;border-radius:4px;font-size:11px;font-weight:bold;cursor:pointer;margin-left:5px;">REQUEST REMOVAL</button>':'<button onclick="requestRemoveTeamMember(\''+r.UniqueID+'\', '+m.originalIndex+', '+memberIqamaArg+', this)" style="background:#ef4444;border:none;color:white;padding:6px 10px;border-radius:4px;font-size:11px;font-weight:bold;cursor:pointer;margin-left:5px;">REQUEST REMOVAL</button>';
+            if(hasDevice&&!m.isDeviceRevokeReq)revokeDevHtml=m.isLead?'<button onclick="requestRevokeLeadDevice(\''+r.UniqueID+'\', this)" style="background:#eab308;border:none;color:#000;padding:6px 10px;border-radius:4px;font-size:11px;font-weight:bold;cursor:pointer;margin-left:5px;">REQUEST DEVICE REVOKE</button>':'<button onclick="requestRevokeDevice(\''+r.UniqueID+'\', '+m.originalIndex+', '+memberIqamaArg+', this)" style="background:#eab308;border:none;color:#000;padding:6px 10px;border-radius:4px;font-size:11px;font-weight:bold;cursor:pointer;margin-left:5px;">REQUEST DEVICE REVOKE</button>';
+            if(currentUser&&currentUser.role==='ops'&&!m.isNew&&!m.isDeviceAddReq&&!m.isRemoveRequested&&!hasDevice&&String(r.Status)==='Approved'){newMemberActionsHtml='<button onclick="openExistingDeviceRequest(\''+r.UniqueID+'\', '+(m.isLead?'\'__LEAD__\'':memberIqamaArg)+', '+escapeHistoryText(JSON.stringify(m.name))+', '+(m.isLead?'true':'false')+')" style="background:#2563eb;border:none;color:white;padding:6px 10px;border-radius:4px;font-size:11px;font-weight:bold;cursor:pointer;margin-left:5px;">REQUEST ADD DEVICE</button>';}
           }
           let rowStyle="display:grid;grid-template-columns:minmax(180px,1fr) minmax(170px,auto) minmax(180px,auto);align-items:center;gap:12px;background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);";
           if(m.isRemoveRequested)rowStyle="display:grid;grid-template-columns:minmax(180px,1fr) minmax(170px,auto) minmax(180px,auto);align-items:center;gap:12px;background:rgba(239, 68, 68, 0.1);padding:10px;border-radius:8px; border:1px solid rgba(239, 68, 68, 0.4);";
@@ -2987,3 +3004,5 @@
   })();
   </script>
   </body></html>
+
+  
