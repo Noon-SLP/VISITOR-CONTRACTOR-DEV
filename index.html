@@ -1503,6 +1503,15 @@
     ).trim();
     return company||String((passData&&passData.VisitorName)||row.VisitorName||row.Name||'').trim()||'Attendance';
   }
+  function getHistoryValidityLabel(row,passData){
+    const start=(passData&&passData.StartDate)||row.StartDate||'';
+    const end=(passData&&passData.EndDate)||row.EndDate||start;
+    if(start){
+      const formattedStart=formatToDDMMYYYY(start),formattedEnd=formatToDDMMYYYY(end||start);
+      if(formattedStart!=='-'&&formattedEnd!=='-')return formattedStart+' - '+formattedEnd;
+    }
+    return formatHistoryValidity(row['Validity Period']);
+  }
   function ensureHistoryTools(){
     const table=document.getElementById('admin-table-history');
     const card=document.getElementById('admin-sec-history');
@@ -1635,7 +1644,7 @@
       const groupKey=groupIdentity+'|'+groupDate;
       let companyGroup=companyGroups[groupKey];
       if(!companyGroup){
-        companyGroup={company:company,passId:passId,day:groupDate,label:d?formatToDDMMYYYY(d):formatHistoryValidity(row["Validity Period"]),facility:String(row.Location||row.Facility||""),type:String(row.Type||""),entries:[],guards:[],latest:d?d.getTime():0,uniqueKey:groupKey};
+        companyGroup={company:company,passId:passId,day:groupDate,label:getHistoryValidityLabel(row,passData),facility:String(row.Location||row.Facility||""),type:String(row.Type||""),entries:[],guards:[],latest:d?d.getTime():0,uniqueKey:groupKey};
         companyGroups[groupKey]=companyGroup;
         groups[key].rows.push(companyGroup);
       }else if(!companyGroup.company&&company){
@@ -1714,6 +1723,7 @@
         const attendeeHeaders='<div class="history-attendee-head"><span>NAME</span><span>CHECK-IN</span><span>CHECK OUT · DURATION</span></div>';
         const detailMeta='<div class="history-detail-meta">'+
           '<div class="history-detail-meta-item"><span class="history-detail-meta-label">VALIDITY PERIOD</span><span class="history-detail-meta-value">'+escapeHistoryText(companyGroup.label||"-")+'</span></div>'+
+          '<div class="history-detail-meta-item"><span class="history-detail-meta-label">TODAY\'S DATE</span><span class="history-detail-meta-value">'+escapeHistoryText(formatToDDMMYYYY(new Date()))+'</span></div>'+
           '<div class="history-detail-meta-item"><span class="history-detail-meta-label">NAME</span><span class="history-detail-meta-value">'+escapeHistoryText(companyGroup.company||"-")+'</span></div>'+
           '<div class="history-detail-meta-item"><span class="history-detail-meta-label">TYPE</span><span class="history-detail-meta-value">'+escapeHistoryText(companyGroup.type||"-")+'</span></div>'+
           '<div class="history-detail-meta-item"><span class="history-detail-meta-label">FACILITY</span><span class="history-detail-meta-value">'+escapeHistoryText(companyGroup.facility||"-")+'</span></div>'+
@@ -2004,39 +2014,32 @@
     button.disabled=true;
     button.textContent='SUBMITTING...';
     beginPleaseWait('SUBMITTING DEVICE REQUEST...');
+    var pleaseWaitEnded=false;
     try{
       var imageData=await getBase64(file);
-      var payload={action:context.isLead?'request_lead_device_add':'request_member_device_add',id:context.passId,memberIqama:context.memberIqama,deviceType:type,deviceId:deviceId,devicePhotoBase64:imageData};
+      var requestId='device-request-'+Date.now()+'-'+Math.random().toString(36).slice(2);
+      var payload={action:context.isLead?'request_lead_device_add':'request_member_device_add',id:context.passId,memberIqama:context.memberIqama,deviceType:type,deviceId:deviceId,devicePhotoBase64:imageData,requestId:requestId};
       await nativeFetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),mode:'no-cors',cache:'no-store'});
-      var expected=context.isLead?type+' ('+deviceId+')':('Pending Device: '+type+' ('+deviceId+') [DEVICE_ADD_REQUESTED]');
-      var deadline=Date.now()+60000;
-      var savedPass=null;
-      var requestConfirmed=false;
-      var pollDelay=1000;
+      var deadline=Date.now()+60000,operationResult=null,pollDelay=500;
       while(Date.now()<deadline){
+        operationResult=await appsScriptJsonp({action:'get_operation_result',requestId:requestId});
+        if(operationResult)break;
         await new Promise(function(resolve){setTimeout(resolve,pollDelay);});
-        pollDelay=Math.min(pollDelay*2,5000);
-        savedPass=await appsScriptJsonp({action:'get_single',id:context.passId});
-        var blocks=String(savedPass&&savedPass.TeamMembers||'').split(/\n\s*\n/);
-        if(context.isLead&&String(savedPass&&savedPass.LeadPendingDevice||'')===expected){requestConfirmed=true;break;}
-        var saved=blocks.some(function(block){
-          var firstLine=block.split(/\r?\n/,1)[0];
-          var memberMatch=firstLine.match(/^Name:\s*.*?\|\s*Iqama:\s*(.*?)\s*$/i);
-          return !context.isLead&&memberMatch&&memberMatch[1].trim()===String(context.memberIqama).trim()&&block.indexOf(expected)!==-1;
-        });
-        if(saved){requestConfirmed=true;break;}
+        pollDelay=Math.min(pollDelay*2,3000);
       }
-      if(!requestConfirmed){
+      if(!operationResult){
         throw new Error('The request was sent, but the server did not confirm it. Refresh the pass before trying again.');
       }
+      if(operationResult.status!=='success')throw new Error(operationResult.message||'The server could not save the device request.');
       closeExistingDeviceRequest();
       localStorage.removeItem('cached_passes_'+currentUser.email);
+      endPleaseWait();pleaseWaitEnded=true;
       await refreshMemberView(context.passId);
       alert('Device request submitted. The pass is now pending Admin approval.');
     }catch(error){
       alert('Device request failed: '+(error&&error.message?error.message:'Unknown error'));
     }finally{
-      endPleaseWait();
+      if(!pleaseWaitEnded)endPleaseWait();
       if(button){button.disabled=false;button.textContent='SUBMIT DEVICE REQUEST';}
     }
   }
