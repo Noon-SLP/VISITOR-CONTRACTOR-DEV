@@ -469,6 +469,92 @@
   @media(max-width:900px){
     #login-brand-panel .logo-box{width:128px;height:128px;margin-bottom:12px}
   }
+  #login-view{
+    justify-content:center!important;
+    align-items:center!important;
+    padding-left:clamp(24px,5vw,80px)!important;
+    padding-right:clamp(24px,5vw,80px)!important;
+  }
+  #login-view::before,html.low-performance #login-view::before{
+    content:""!important;
+    display:block!important;
+    position:absolute!important;
+    inset:0!important;
+    z-index:0!important;
+    pointer-events:none!important;
+    background:url("https://noon-slp.github.io/VISITOR-CONTRACTOR-DEV/logo.jpeg") center center/min(52vw,68vh) no-repeat!important;
+    opacity:.045!important;
+    mix-blend-mode:screen;
+    filter:none!important;
+    transform:none!important;
+    will-change:auto!important;
+  }
+  #login-view::after{z-index:0!important}
+  #login-layout{
+    position:relative!important;
+    z-index:auto!important;
+    width:min(1120px,100%)!important;
+    grid-template-columns:minmax(0,1fr) minmax(340px,420px)!important;
+    align-items:center!important;
+    justify-items:stretch;
+    gap:clamp(40px,8vw,132px)!important;
+    margin:auto!important;
+  }
+  #login-brand-panel{align-self:center;justify-content:center}
+  #login-brand-panel .logo-box{
+    width:clamp(260px,31vw,420px)!important;
+    height:clamp(260px,31vw,420px)!important;
+    margin:0 0 28px!important;
+  }
+  #login-layout>.login-container{
+    align-self:center;
+    justify-self:center;
+    width:100%;
+    margin:0!important;
+  }
+  #main-content::before,html.low-performance #main-content::before{
+    content:""!important;
+    display:block!important;
+    position:absolute!important;
+    inset:0!important;
+    z-index:0!important;
+    pointer-events:none!important;
+    background:url("https://noon-slp.github.io/VISITOR-CONTRACTOR-DEV/logo.jpeg") center center/min(48vw,68vh) no-repeat!important;
+    opacity:.04!important;
+    mix-blend-mode:screen;
+    filter:none!important;
+    transform:none!important;
+    will-change:auto!important;
+  }
+  @media(min-width:901px) and (max-width:1100px){
+    #login-layout{
+      width:100%!important;
+      grid-template-columns:minmax(0,1fr) minmax(300px,380px)!important;
+      gap:clamp(24px,4vw,48px)!important;
+    }
+    #login-brand-panel .logo-box{width:clamp(250px,30vw,340px)!important;height:clamp(250px,30vw,340px)!important}
+  }
+  @media(max-width:900px){
+    #login-view{
+      height:auto!important;
+      min-height:100vh!important;
+      min-height:100dvh!important;
+      padding:78px 20px 30px!important;
+    }
+    #login-layout{
+      width:min(480px,100%)!important;
+      grid-template-columns:minmax(0,1fr)!important;
+      gap:24px!important;
+    }
+    #login-brand-panel .logo-box{width:128px!important;height:128px!important;margin-bottom:12px!important}
+    #login-layout>.login-container{max-width:480px;max-height:none;justify-self:center}
+  }
+  @media(max-width:700px){
+    #login-view{padding-right:12px!important;padding-left:12px!important}
+  }
+  @media(max-height:620px) and (min-width:901px){
+    #login-view{height:auto!important;min-height:100vh!important;min-height:100dvh!important;padding-top:78px!important;padding-bottom:24px!important}
+  }
   </style>
   <div id="please-wait-overlay"><div class="pw-spinner"></div><div id="please-wait-text">PLEASE WAIT...</div></div>
   <!-- Changed splash-logo div to img -->
@@ -2592,7 +2678,8 @@
     if(btnTop){btnTop.innerText="SAVING...";btnTop.disabled=true;}
     const gInfo=currentUser.name+' ('+currentUser.location+')';
     const actionLabel=currentScanAction==='check_out'?t("btn_checkout"):t("confirm_action");
-    const payload=JSON.stringify({action:currentScanAction,id:currentScannedID,guardInfo:gInfo,headCount:hcVal});
+    const pass=guardPassCache.get(String(currentScannedID||'').toUpperCase());
+    const payload=JSON.stringify({action:currentScanAction,id:currentScannedID,passType:pass&&pass.Type||'',guardInfo:gInfo,headCount:hcVal});
     try{
       const response=await fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:payload,mode:'no-cors'});
       const result=await response.json();
@@ -2846,6 +2933,41 @@
       }
     }
 
+    function updateCachedGatePass(pass,result){
+      var currentLogs=readGateLogs(pass);
+      if(Array.isArray(result.gateLogs)){
+        pass.GateLogs=result.gateLogs;
+      }else{
+        var additions=Array.isArray(result.gateEvents)?result.gateEvents:(result.gateEvent?[result.gateEvent]:[]);
+        additions.forEach(function(event){
+          if(!event)return;
+          var existingIndex=currentLogs.findIndex(function(log){
+            return log&&event.requestId&&String(log.requestId||'')===String(event.requestId);
+          });
+          if(existingIndex!==-1)currentLogs[existingIndex]=event;
+          else currentLogs.push(event);
+        });
+        var latestByMember=Object.create(null);
+        var retained=Object.create(null);
+        currentLogs.forEach(function(log,index){
+          if(log&&log.memberKey)latestByMember[String(log.memberKey)]=index;
+        });
+        Object.keys(latestByMember).forEach(function(key){retained[latestByMember[key]]=true;});
+        for(var recent=Math.max(0,currentLogs.length-20);recent<currentLogs.length;recent++)retained[recent]=true;
+        currentLogs=currentLogs.filter(function(log,index){return !!retained[index];});
+        while(JSON.stringify(currentLogs).length>=48000){
+          var removable=currentLogs.findIndex(function(log,index){
+            return !log||!log.memberKey||currentLogs.slice(index+1).some(function(later){return later&&String(later.memberKey)===String(log.memberKey);});
+          });
+          if(removable===-1)break;
+          currentLogs.splice(removable,1);
+        }
+        pass.GateLogs=currentLogs;
+      }
+      pass.CheckInTime=result.checkInTime||'';
+      pass.CheckOutTime=result.checkOutTime||'';
+    }
+
     function getMemberGateState(pass,key,rank){
       var logs=readGateLogs(pass);
       var state=null;
@@ -2934,20 +3056,16 @@
         var result=await submitAppsScriptForm({
           action:'member_gate_bulk_action',
           id:currentScannedID,
+          passType:pass.Type,
           memberKeys:actionButtons.map(function(button){return button.getAttribute('data-member-key');}),
           actionType:actionType,
           requestId:createGateRequestId(),
           guardInfo:(currentUser.name||'Guard')+' ('+(currentUser.location||'')+')'
         });
-        var currentLogs=readGateLogs(pass);
-        if(Array.isArray(result.gateLogs)&&result.gateLogs.length>=currentLogs.length){
-          pass.GateLogs=result.gateLogs;
-          pass.CheckInTime=result.checkInTime||'';
-          pass.CheckOutTime=result.checkOutTime||'';
-        }
+        updateCachedGatePass(pass,result);
         pass.ScannedByGuard=(currentUser.name||'Guard')+' ('+(currentUser.location||'')+')';
         guardPassCache.set(String(currentScannedID).toUpperCase(),pass);
-        refreshMemberGateRows(pass,null);
+        refreshMemberGateRows(pass,result.memberStates||null);
         updateControlRoomStats();
         var completed=Number(result.completed)||0;
         var failed=Array.isArray(result.results)?result.results.filter(function(item){return !item||item.status!=='success';}):[];
@@ -2983,21 +3101,20 @@
         var result=await submitAppsScriptForm({
           action:'member_gate_action',
           id:currentScannedID,
+          passType:pass.Type,
           memberKey:memberKey,
           actionType:action,
           requestId:createGateRequestId(),
           guardInfo:(currentUser.name||'Guard')+' ('+(currentUser.location||'')+')'
         });
-        var currentLogs=readGateLogs(pass);
-        if(Array.isArray(result.gateLogs)&&result.gateLogs.length>=currentLogs.length){
-          pass.GateLogs=result.gateLogs;
-          pass.CheckInTime=result.checkInTime||'';
-          pass.CheckOutTime=result.checkOutTime||'';
-        }
+        updateCachedGatePass(pass,result);
         pass.ScannedByGuard=(currentUser.name||'Guard')+' ('+(currentUser.location||'')+')';
         guardPassCache.set(String(currentScannedID).toUpperCase(),pass);
-        refreshMemberGateRows(pass,null);
+        refreshMemberGateRows(pass,result.memberStates||null);
         updateControlRoomStats();
+        if(Array.isArray(result.warnings)&&result.warnings.length){
+          alert('Gate action saved, but the history row could not be saved. Please notify an administrator.');
+        }
       }catch(error){
         alert(error&&error.message?error.message:'Unable to save this member gate action. Please try again.');
         button.textContent=oldLabel;
@@ -3140,4 +3257,4 @@
   })();
   </script>
   </body></html>
-    
+  
