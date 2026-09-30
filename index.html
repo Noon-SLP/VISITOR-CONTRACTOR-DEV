@@ -94,7 +94,7 @@
   html.low-performance .pw-spinner{animation-duration:1.2s}
   html.low-performance .record-img-box img:hover{filter:none;box-shadow:none}
   #login-view{justify-content:center;padding:76px clamp(24px,5vw,80px) 32px;background-color:#090b11;background-image:none}
-  #login-view::before,html.low-performance #login-view::before{background:url("Background.png") center center/min(72vw,82vh,1500px) no-repeat!important;opacity:.14;filter:none!important;transform:none!important;will-change:auto!important}
+  #login-view::before,html.low-performance #login-view::before{display:none!important}
   #login-view::after{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse at 23% 48%,rgba(255,199,0,.075),transparent 37%),radial-gradient(ellipse at 83% 55%,rgba(35,70,150,.1),transparent 35%)}
   #login-view>.login-top-controls,#login-layout{z-index:1}
   #login-layout{width:min(1120px,100%);display:grid;grid-template-columns:minmax(0,1.15fr) minmax(340px,.85fr);align-items:center;gap:clamp(48px,9vw,132px);margin:auto}
@@ -107,7 +107,7 @@
   #login-layout>.login-container>.role-tabs{margin-bottom:22px}
   #login-layout>.login-container .input-group{margin-bottom:16px}
   #login-layout>.login-container .input-field,#login-layout>.login-container .btn-primary{min-height:50px;font-size:15px}
-  @media(max-width:760px){
+  @media(max-width:900px){
     #login-view{height:auto;min-height:100vh;padding:78px 20px 30px}
     #login-layout{max-width:480px;grid-template-columns:minmax(0,1fr);gap:24px}
     #login-brand-panel{align-items:center;text-align:center}
@@ -155,7 +155,7 @@
     #login-layout>.login-container{max-width:600px;padding:52px}
     #login-layout>.login-container::before{margin:-52px -52px 34px}
   }
-  @media(max-width:760px){
+  @media(max-width:900px){
     #login-brand-panel .logo-box{width:128px;height:128px;margin-bottom:12px}
     #login-layout>.login-container{max-width:440px}
   }
@@ -165,7 +165,7 @@
   #login-layout{position:static!important;z-index:auto!important}
   #main-content{background-color:#080a10!important;background-image:radial-gradient(ellipse at 22% 48%,rgba(255,199,0,.11),transparent 38%),radial-gradient(ellipse at 78% 55%,rgba(45,78,164,.17),transparent 40%),linear-gradient(128deg,#090b11 0%,#111723 52%,#090b11 100%)!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important}
   html.low-performance #main-content{background-image:linear-gradient(135deg,#0a0c12,#111723 52%,#0a0c12)!important}
-  #main-content::before{display:block!important;inset:0;z-index:0;background-image:url("Background.png")!important;background-position:center center!important;background-size:min(72vw,82vh,1500px)!important;background-repeat:no-repeat!important;opacity:.14!important;filter:none!important;transform:none!important;will-change:auto!important}
+  #main-content::before{display:none!important}
   body.blur-background #main-content::before,html.low-performance #main-content::before{filter:none!important;transform:none!important;will-change:auto!important}
   #login-view::before,html.low-performance #login-view::before{background:none!important;opacity:0!important}
   html.low-performance #main-content::before{background-size:min(52vw,58vh,850px)!important;opacity:.08!important}
@@ -467,8 +467,8 @@
     </div>
   </div>
   <script>
-    async function adminApproveLeadDeviceAdd(passId,button){if(!confirm('Approve the lead additional device?'))return;if(button)button.disabled=true;try{await appsScriptAction({action:'approve_lead_device_add',id:passId});localStorage.removeItem('cached_admin_data');await refreshMemberView(passId,'device-add');}catch(error){alert('Lead device approval failed: '+error.message);if(button)button.disabled=false;}}
-    async function adminRejectLeadDeviceAdd(passId,button){if(!confirm('Reject the lead additional device request?'))return;if(button)button.disabled=true;try{await appsScriptAction({action:'reject_lead_device_add',id:passId});localStorage.removeItem('cached_admin_data');await refreshMemberView(passId,'device-add');}catch(error){alert('Lead device rejection failed: '+error.message);if(button)button.disabled=false;}}
+    async function adminApproveLeadDeviceAdd(passId,button){if(!confirm('Approve the lead additional device?'))return;if(button)button.disabled=true;try{await appsScriptAction({action:'approve_lead_device_add',id:passId});localStorage.removeItem('cached_admin_data');refreshMemberView(passId,'device-add');}catch(error){alert('Lead device approval failed: '+error.message);if(button)button.disabled=false;}}
+    async function adminRejectLeadDeviceAdd(passId,button){if(!confirm('Reject the lead additional device request?'))return;if(button)button.disabled=true;try{await appsScriptAction({action:'reject_lead_device_add',id:passId});localStorage.removeItem('cached_admin_data');refreshMemberView(passId,'device-add');}catch(error){alert('Lead device rejection failed: '+error.message);if(button)button.disabled=false;}}
   const SCRIPT_URL='https://script.google.com/macros/s/AKfycbxyQ4kGKgsNS076UvKCk0ezCVSzp2DlqYobiprd8Qrvt5oJBWrVlszD7-jm2mOYtsTUvg/exec';
   function freshScriptUrl(){return SCRIPT_URL+'?cacheBust='+Date.now()+'-'+Math.random().toString(36).slice(2);}
   function appsScriptAction(params){
@@ -1965,9 +1965,9 @@
 
   async function cancelRevokeDeviceRequest(passId,memberIndex,memberIqama,btn){if(!confirm('Cancel this device revoke request?'))return;btn.innerText="CANCELLING...";btn.disabled=true;try{await runTeamMemberAction('cancel_revoke_device_request',passId,memberIndex,memberIqama);localStorage.removeItem('cached_admin_data');refreshMemberView(passId);}catch(e){alert("Failed to cancel: "+e.message);btn.disabled=false;}}
 
-  async function adminRevokeDevice(passId,memberIndex,memberIqama,btn){if(!confirm('Are you sure you want to completely revoke device access for this team member?'))return;btn.innerText="REVOKING...";btn.disabled=true;try{await runTeamMemberAction('revoke_device',passId,memberIndex,memberIqama);alert("Device access revoked successfully.");refreshMemberView(passId);}catch(e){alert("Failed to revoke: "+e.message);btn.disabled=false;}}
+  async function adminRevokeDevice(passId,memberIndex,memberIqama,btn){if(!confirm('Are you sure you want to completely revoke device access for this team member?'))return;btn.innerText="REVOKING...";btn.disabled=true;try{await runTeamMemberAction('revoke_device',passId,memberIndex,memberIqama);refreshMemberView(passId);alert("Device access revoked successfully.");}catch(e){alert("Failed to revoke: "+e.message);btn.disabled=false;}}
 
-  async function adminRemoveTeamMember(passId,memberIndex,memberIqama,btn){if(!confirm('Are you sure you want to completely remove this team member from pass '+passId+'?'))return;btn.innerText="REMOVING...";btn.disabled=true;try{await runTeamMemberAction('remove_team_member',passId,memberIndex,memberIqama);alert("Team member removed successfully.");refreshMemberView(passId);}catch(e){alert("Failed to remove: "+e.message);btn.disabled=false;}}
+  async function adminRemoveTeamMember(passId,memberIndex,memberIqama,btn){if(!confirm('Are you sure you want to completely remove this team member from pass '+passId+'?'))return;btn.innerText="REMOVING...";btn.disabled=true;try{await runTeamMemberAction('remove_team_member',passId,memberIndex,memberIqama);refreshMemberView(passId);alert("Team member removed successfully.");}catch(e){alert("Failed to remove: "+e.message);btn.disabled=false;}}
 
   async function adminApproveTeamMember(passId,memberIndex,memberIqama,btn){if(!confirm("Approve this added team member?"))return;btn.disabled=true;try{await runTeamMemberAction('approve_team_member',passId,memberIndex,memberIqama);localStorage.removeItem("cached_admin_data");refreshMemberView(passId,"add");}catch(e){alert("Approval failed: "+e.message);btn.disabled=false;}}
 
@@ -2012,13 +2012,12 @@
     var pass=(myPassesData||[]).find(function(item){return String(item.UniqueID)===String(context.passId);});
     if(!pass||String(pass.Status)!=='Approved')return alert('This pass must be approved before requesting another device.');
     button.disabled=true;
-    button.textContent='SUBMITTING...';
-    beginPleaseWait('SUBMITTING DEVICE REQUEST...');
-    var pleaseWaitEnded=false;
+    button.textContent='PREPARING PHOTO...';
     try{
       var imageData=await getBase64(file);
       var requestId='device-request-'+Date.now()+'-'+Math.random().toString(36).slice(2);
       var payload={action:context.isLead?'request_lead_device_add':'request_member_device_add',id:context.passId,memberIqama:context.memberIqama,deviceType:type,deviceId:deviceId,devicePhotoBase64:imageData,requestId:requestId};
+      button.textContent='SAVING REQUEST...';
       await nativeFetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),mode:'no-cors',cache:'no-store'});
       var deadline=Date.now()+60000,operationResult=null,pollDelay=500;
       while(Date.now()<deadline){
@@ -2033,13 +2032,11 @@
       if(operationResult.status!=='success')throw new Error(operationResult.message||'The server could not save the device request.');
       closeExistingDeviceRequest();
       localStorage.removeItem('cached_passes_'+currentUser.email);
-      endPleaseWait();pleaseWaitEnded=true;
-      await refreshMemberView(context.passId);
+      refreshMemberView(context.passId);
       alert('Device request submitted. The pass is now pending Admin approval.');
     }catch(error){
       alert('Device request failed: '+(error&&error.message?error.message:'Unknown error'));
     }finally{
-      if(!pleaseWaitEnded)endPleaseWait();
       if(button){button.disabled=false;button.textContent='SUBMIT DEVICE REQUEST';}
     }
   }
@@ -2049,7 +2046,7 @@
     try{
       await appsScriptAction({action:memberIqama==='__LEAD__'?'approve_lead_device_add':'approve_member_device_add',id:passId,memberIqama:memberIqama});
       localStorage.removeItem('cached_admin_data');
-      await refreshMemberView(passId,'device-add');
+      refreshMemberView(passId,'device-add');
     }catch(error){
       alert('Device approval failed: '+error.message);
       if(button)button.disabled=false;
@@ -2061,7 +2058,7 @@
     try{
       await appsScriptAction({action:memberIqama==='__LEAD__'?'reject_lead_device_add':'reject_member_device_add',id:passId,memberIqama:memberIqama});
       localStorage.removeItem('cached_admin_data');
-      await refreshMemberView(passId,'device-add');
+      refreshMemberView(passId,'device-add');
     }catch(error){
       alert('Device rejection failed: '+error.message);
       if(button)button.disabled=false;
@@ -2076,7 +2073,7 @@
     try{
       await appsScriptAction({action:'process_lead_removal',id:passId,approve:approve});
       localStorage.removeItem('cached_admin_data');
-      await refreshMemberView(passId,'remove');
+      refreshMemberView(passId,'remove');
     }catch(error){
       alert('Lead removal action failed: '+error.message);
       if(button)button.disabled=false;
@@ -2088,7 +2085,7 @@
     try{
       await appsScriptAction({action:'process_lead_device_revoke',id:passId});
       localStorage.removeItem('cached_admin_data');
-      await refreshMemberView(passId,'revoke');
+      refreshMemberView(passId,'revoke');
     }catch(error){
       alert('Lead device revocation failed: '+error.message);
       if(button)button.disabled=false;
@@ -2100,7 +2097,7 @@
     try{
       await appsScriptAction({action:requestType==='remove'?'cancel_lead_remove_request':'cancel_lead_revoke_device_request',id:passId});
       localStorage.removeItem('cached_admin_data');
-      await refreshMemberView(passId,requestType);
+      refreshMemberView(passId,requestType);
     }catch(error){
       alert('Failed to cancel lead request: '+error.message);
       if(button)button.disabled=false;
@@ -2232,11 +2229,11 @@
 
   function setupBulkRemovalSelection(passId){const section=document.getElementById('section-active');if(!section||section.dataset.bulkRemovalReady==='1')return;const rows=[].slice.call(section.querySelectorAll('.modal-team-row'));if(!rows.length)return;section.dataset.bulkRemovalReady='1';const heading=section.querySelector('strong');if(!heading)return;const bar=document.createElement('div');bar.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 10px;padding:8px;border:1px solid rgba(239,68,68,.35);border-radius:6px;background:rgba(239,68,68,.08);';bar.innerHTML='<label style="display:flex;align-items:center;gap:7px;color:#fff;font-weight:700;font-size:12px;"><input type="checkbox" id="select-all-removal-members"> SELECT ALL</label><button type="button" style="background:#ef4444;color:#fff;border:0;border-radius:4px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;">SUBMIT SELECTED REMOVALS</button>';heading.insertAdjacentElement('afterend',bar);const selectAll=bar.querySelector('#select-all-removal-members'),submit=bar.querySelector('button');rows.forEach(function(row){const action=row.querySelector('button[onclick*="requestRemoveTeamMember"]');const match=action?((action.getAttribute('onclick')||'').match(/requestRemoveTeamMember\('([^']+)'\s*,\s*(\d+)/)||[]):[];if(!match[2])return;const label=document.createElement('label');label.style.cssText='display:flex;align-items:center;gap:5px;color:#fff;font-size:11px;grid-column:1 / -1;';label.innerHTML='<input type="checkbox" class="bulk-removal-member" data-pass-id="'+match[1]+'" data-member-index="'+match[2]+'"> Select for removal';row.insertBefore(label,row.firstChild);});const checks=function(){return [].slice.call(section.querySelectorAll('.bulk-removal-member'));};selectAll.addEventListener('change',function(){checks().forEach(function(c){c.checked=selectAll.checked;});});checks().forEach(function(c){c.addEventListener('change',function(){selectAll.checked=checks().length>0&&checks().every(function(x){return x.checked;});});});submit.addEventListener('click',function(){requestSelectedRemovals(passId);});}
 
-  async function requestSelectedRemovals(passId){const section=document.getElementById('section-active');const selected=[].slice.call(section?section.querySelectorAll('.bulk-removal-member:checked'):[]).map(function(c){return Number(c.dataset.memberIndex);}).filter(Number.isInteger);if(!selected.length)return alert('Please select at least one member.');if(!confirm('Request removal for '+selected.length+' member(s)?'))return;const pass=myPassesData.find(function(item){return String(item.UniqueID)===String(passId);});const blocks=String(pass&&pass.TeamMembers||'').split(/\n\s*\n/).filter(function(block){return block.trim();});const iqamas=selected.map(function(index){const firstLine=String(blocks[index]||'').split(/\r?\n/,1)[0];const match=firstLine.match(/^Name:\s*.*?\|\s*Iqama:\s*(.*?)\s*$/i);return match?match[1].trim():'';}).filter(Boolean);if(iqamas.length!==selected.length)return alert('The member list has changed. Refresh the pass and try again.');beginPleaseWait('PLEASE WAIT...');try{await appsScriptAction({action:'bulk_team_member_action',id:passId,memberAction:'request_remove',memberIqamas:JSON.stringify(iqamas)});localStorage.removeItem('cached_passes_'+currentUser.email);await refreshMemberView(passId);alert('Removal requests submitted successfully.');}catch(e){alert('Removal request failed: '+e.message);}finally{endPleaseWait();}}
+  async function requestSelectedRemovals(passId){const section=document.getElementById('section-active');const selected=[].slice.call(section?section.querySelectorAll('.bulk-removal-member:checked'):[]).map(function(c){return Number(c.dataset.memberIndex);}).filter(Number.isInteger);if(!selected.length)return alert('Please select at least one member.');if(!confirm('Request removal for '+selected.length+' member(s)?'))return;const pass=myPassesData.find(function(item){return String(item.UniqueID)===String(passId);});const blocks=String(pass&&pass.TeamMembers||'').split(/\n\s*\n/).filter(function(block){return block.trim();});const iqamas=selected.map(function(index){const firstLine=String(blocks[index]||'').split(/\r?\n/,1)[0];const match=firstLine.match(/^Name:\s*.*?\|\s*Iqama:\s*(.*?)\s*$/i);return match?match[1].trim():'';}).filter(Boolean);if(iqamas.length!==selected.length)return alert('The member list has changed. Refresh the pass and try again.');try{await appsScriptAction({action:'bulk_team_member_action',id:passId,memberAction:'request_remove',memberIqamas:JSON.stringify(iqamas)});localStorage.removeItem('cached_passes_'+currentUser.email);refreshMemberView(passId);alert('Removal requests submitted successfully.');}catch(e){alert('Removal request failed: '+e.message);}}
 
-  async function bulkAdminTeamAction(passId,action){const pass=globalAdminData.find(function(x){return String(x.UniqueID)===String(passId);});if(!pass)return;const blocks=String(pass.TeamMembers||'').split(/\n\s*\n/).filter(function(block){return block.trim();});const iqamas=blocks.filter(function(block){const marker=action==='remove'?'[REMOVE_REQUESTED]':'[DEVICE_REVOKE_REQUESTED]';return block.toUpperCase().includes(marker);}).map(function(block){const match=block.split(/\r?\n/,1)[0].match(/^Name:\s*.*?\|\s*Iqama:\s*(.*?)\s*$/i);return match?match[1].trim():'';}).filter(Boolean);if(!iqamas.length){alert(action==='remove'?'No removal requests found.':'No device revoke requests found.');return;}if(!confirm(action==='remove'?'Remove all requested members?':'Revoke all requested devices?'))return;beginPleaseWait('PLEASE WAIT...');try{await appsScriptAction({action:'bulk_team_member_action',id:passId,memberAction:action,memberIqamas:JSON.stringify(iqamas)});localStorage.removeItem('cached_admin_data');await refreshMemberView(passId,action==='remove'?'remove':'revoke');}catch(error){alert('Bulk action failed: '+error.message);}finally{endPleaseWait();}}
+  async function bulkAdminTeamAction(passId,action){const pass=globalAdminData.find(function(x){return String(x.UniqueID)===String(passId);});if(!pass)return;const blocks=String(pass.TeamMembers||'').split(/\n\s*\n/).filter(function(block){return block.trim();});const iqamas=blocks.filter(function(block){const marker=action==='remove'?'[REMOVE_REQUESTED]':'[DEVICE_REVOKE_REQUESTED]';return block.toUpperCase().includes(marker);}).map(function(block){const match=block.split(/\r?\n/,1)[0].match(/^Name:\s*.*?\|\s*Iqama:\s*(.*?)\s*$/i);return match?match[1].trim():'';}).filter(Boolean);if(!iqamas.length){alert(action==='remove'?'No removal requests found.':'No device revoke requests found.');return;}if(!confirm(action==='remove'?'Remove all requested members?':'Revoke all requested devices?'))return;try{await appsScriptAction({action:'bulk_team_member_action',id:passId,memberAction:action,memberIqamas:JSON.stringify(iqamas)});localStorage.removeItem('cached_admin_data');refreshMemberView(passId,action==='remove'?'remove':'revoke');}catch(error){alert('Bulk action failed: '+error.message);}}
 
-  async function bulkApproveNewMembers(passId){if(!confirm('Accept all new member requests?'))return;beginPleaseWait('PLEASE WAIT...');try{await appsScriptAction({action:'approve_pass',id:passId});localStorage.removeItem('cached_admin_data');await loadAdminData(true);openViewRecord(passId,'add');}catch(error){alert('Approval failed: '+error.message);}finally{endPleaseWait();}}
+  async function bulkApproveNewMembers(passId){if(!confirm('Accept all new member requests?'))return;beginPleaseWait('PLEASE WAIT...');try{await appsScriptAction({action:'approve_pass',id:passId});localStorage.removeItem('cached_admin_data');refreshMemberView(passId,'add');}catch(error){alert('Approval failed: '+error.message);}finally{endPleaseWait();}}
 
   function printSelected(){const cbs=document.querySelectorAll('.print-checkbox.row-checkbox:checked');if(cbs.length===0)return alert("Please select at least one approved pass.");const pm=confirm("Print Layout Selection:\n\n[OK] = MULTIPLE passes per page\n[Cancel] = SINGLE pass per page");let copiesInput=prompt("How many copies of EACH selected pass do you want to print?","1");let copies=parseInt(copiesInput,10);if(isNaN(copies)||copies<1)copies=1;const pw=window.open('','','width=800,height=600');let cardsHtml='';cbs.forEach(function(cb){const id=cb.value,name=cb.getAttribute('data-name'),type=cb.getAttribute('data-type'),loc=cb.getAttribute('data-location'),st=cb.getAttribute('data-status'),date=cb.getAttribute('data-date');let qrDataUrl=getQRDataURL(id);for(let i=0;i<copies;i++){cardsHtml+='<div class="card"><div class="top-row"><div><p class="name">'+name+'</p><p class="sub">'+type+' &bull; '+loc+'</p><p class="date">Valid: '+date+'</p></div><div><p class="status">'+st+'</p><p class="id">'+id+'</p></div></div><div class="qr-box"><img src="'+qrDataUrl+'"></div></div>';}});let ps=pm?'@media print{@page{margin:10mm}body{display:flex;flex-wrap:wrap;gap:5mm;align-content:flex-start;justify-content:flex-start}.card{page-break-inside:avoid;border:1px solid #ccc !important}}':'@media print{@page{size:85.6mm 54mm;margin:0}body{display:block;margin:0;padding:0;background:#fff}.card{border:none !important;border-radius:0;margin:0;padding:4mm;width:85.6mm;height:54mm;page-break-after:always;box-sizing:border-box}.card:last-child{page-break-after:auto}}';pw.document.write('<html><head><title>Batch Print Passes</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"><style>*{box-sizing:border-box;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}body{margin:0;padding:20px;background:#fff;font-family:\'Inter\',sans-serif;display:flex;flex-wrap:wrap;gap:15px}.card{width:85.6mm;height:54mm;background:white;border-radius:2mm;padding:4mm;border:1px solid #ccc;position:relative;overflow:hidden}.top-row{display:flex;justify-content:space-between;align-items:flex-start}.name{font-size:10pt;font-weight:700;margin:0;color:black;line-height:1.1;max-width:48mm;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.sub{font-size:7pt;color:#555;margin:2px 0 0 0}.date{font-size:6pt;font-weight:600;color:#444;margin:2px 0 0 0}.status{font-size:8pt;font-weight:700;color:#10b981;margin:0;text-align:right;text-transform:uppercase}.id{font-size:6pt;color:#555;margin:2px 0 0 0;text-align:right}.qr-box{display:flex;justify-content:center;align-items:center;margin-top:2mm}'+ps+'</style></head><body>'+cardsHtml+'</body></html>');pw.document.close();pw.focus();setTimeout(function(){pw.print();pw.close();},250);}
 
@@ -2350,6 +2347,52 @@
   window.closeScanResult=function(){isProcessingScan=false;const sr=document.getElementById('scan-result');if(sr)sr.className='scan-result-card hidden';setScannerSidebarHidden(false);try{if(html5QrCode)html5QrCode.resume();}catch(e){}const gunInput=document.getElementById('gun-scan-input');if(gunInput&&!document.getElementById('gun-scanner-container').classList.contains('hidden')){gunInput.focus();gunInput.value="";}};
   function filterTeamMembers(query){let q=query.toLowerCase();let rows=document.querySelectorAll('.team-member-scan-row');rows.forEach(function(row){if(row.innerText.toLowerCase().includes(q)){row.style.display='flex';}else{row.style.display='none';}});let deviceCards=document.querySelectorAll('.device-photo-card');deviceCards.forEach(function(card){if(card.getAttribute('data-search').includes(q)){card.style.display='block';}else{card.style.display='none';}});}
 
+  function escapeScanPreviewText(value){
+    return String(value==null?'':value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+  function showCachedScanPreview(data){
+    const today=new Date();today.setHours(0,0,0,0);
+    const start=parseFlexibleDate(data.StartDate),end=parseFlexibleDate(data.EndDate);
+    if(start)start.setHours(0,0,0,0);
+    if(end)end.setHours(0,0,0,0);
+    const status=String(data.Status||'').trim().toLowerCase();
+    let decision=t('allowed'),color='bg-green';
+    if(status==='pending'){decision=t('pending');color='bg-yellow';}
+    else if(status!=='approved'){decision=t('denied');color='bg-red';}
+    else if(currentUser.role==='guard'&&String(data.Location||'')!==currentUser.location){decision=t('wrong_facility');color='bg-red';}
+    else if((start&&today<start)||(end&&today>end)){decision=end&&today>end?t('expired'):t('invalid_date');color='bg-red';}
+    else if(data.CheckInTime&&!data.CheckOutTime){decision=t('check_out');}
+    const rows=[
+      [t('name_label').replace(':',''),data.VisitorName||data.ProjectName],
+      [t('type_label').replace(':',''),data.Type],
+      [t('location_label').replace(':',''),data.Location],
+      ['Pass ID',data.UniqueID],
+      ['Validity',data.StartDate&&data.EndDate?data.StartDate+' - '+data.EndDate:(data.StartDate||data.EndDate)],
+      ['Device',data.ImeiNumber]
+    ];
+    if(data.Type==='Contractor'){
+      rows.push([t('project_manager').replace(':',''),data.ProjectManager]);
+      rows.push([t('fm_poc').replace(':',''),data.FmPoc]);
+    }else if(data.InvitedBy){
+      rows.push([t('invited_by').replace(':',''),data.InvitedBy]);
+    }
+    const details=rows.filter(function(row){return row[1];}).map(function(row){
+      return '<p><strong>'+escapeScanPreviewText(row[0])+':</strong> '+escapeScanPreviewText(row[1])+'</p>';
+    }).join('');
+    const teamBlocks=String(data.TeamMembers||'').split(/\n\s*\n/).filter(function(block){return block.trim();});
+    const teamHtml=teamBlocks.map(function(block){
+      const nameMatch=block.match(/^Name:\s*([^|\r\n]+)/mi);
+      const iqamaMatch=block.match(/Iqama:\s*([^|\r\n]*)/i);
+      const deviceMatch=block.match(/^Device:\s*([^\r\n]*)/mi);
+      const memberName=String(nameMatch&&nameMatch[1]||'Team member').replace(/\*NEW_MEMBER\*|\[NEW\]/gi,'').trim();
+      return '<li>'+escapeScanPreviewText(memberName)+' · ID: '+escapeScanPreviewText(iqamaMatch&&iqamaMatch[1]||'N/A')+' · Device: '+escapeScanPreviewText(deviceMatch&&deviceMatch[1]||'None')+'</li>';
+    }).join('');
+    const reason='<div style="line-height:1.8;text-align:start;">'+details+
+      (teamHtml?'<p><strong>Team members ('+teamBlocks.length+'):</strong></p><ul style="margin:0;padding-inline-start:22px;">'+teamHtml+'</ul>':'')+
+      '<p style="margin-top:12px;font-size:12px;opacity:.85;">VERIFYING CURRENT STATUS...</p></div>';
+    showScanResult(decision+' · VERIFYING',reason,color,false,false);
+  }
+
   async function onScanSuccess(decodedText){
     if(isProcessingScan)return;isProcessingScan=true;
     try{if(html5QrCode&&html5QrCode.isScanning)html5QrCode.pause();}catch(e){}
@@ -2357,21 +2400,27 @@
     let exactMatch=rawText.match(/NOON-\d+/);
     decodedText=exactMatch?exactMatch[0]:rawText.replace(/\s+/g,'').trim();
     if(!decodedText){isProcessingScan=false;return;}
+    const upperId=String(decodedText).toUpperCase();
+    const cachedData=guardPassCache.get(upperId)||(Array.isArray(globalAdminData)?globalAdminData.find(function(x){return String(x.UniqueID).toUpperCase()===upperId;})||null:null);
     const resultCard=document.getElementById('scan-result'),selfieImg=document.getElementById('r-selfie'),confirmBtn=document.getElementById('btn-confirm-action'),teamSec=document.getElementById('guard-team-section'),detailsPrev=document.getElementById('guard-details-preview'),topInfoBox=document.getElementById('scan-result-top-info');
     const confirmBtnTop=document.getElementById('btn-confirm-action-top');
-    if(resultCard){resultCard.className='scan-result-card hidden';void resultCard.offsetWidth;resultCard.classList.remove('hidden');resultCard.classList.add('bg-blue');if(decodedText){resultCard.classList.add('fullscreen-scan');setScannerSidebarHidden(true);}}
+    if(resultCard)resultCard.className='scan-result-card hidden';
     if(confirmBtn)confirmBtn.classList.add('hidden');if(confirmBtnTop)confirmBtnTop.classList.add('hidden');if(teamSec)teamSec.classList.add('hidden');
     const rDecision=document.getElementById('r-decision'),rReason=document.getElementById('r-reason');
-    if(rDecision)rDecision.innerText='...';if(rReason)rReason.innerHTML="";
+    if(rDecision)rDecision.innerText='CHECKING PASS...';if(rReason)rReason.innerHTML="";
     if(selfieImg){selfieImg.style.display='none';selfieImg.src="";}
     if(teamSec)teamSec.innerHTML="";if(detailsPrev)detailsPrev.innerHTML="";if(topInfoBox)topInfoBox.innerHTML="";
     const searchFilterBox=document.getElementById('guard-search-filter-container');
     if(searchFilterBox){searchFilterBox.classList.add('hidden');document.getElementById('team-search-filter').value="";}
     currentScannedID=decodedText;
+    if(cachedData)showCachedScanPreview(cachedData);
+    else if(resultCard){
+      resultCard.className='scan-result-card bg-yellow';
+      rDecision.innerText='CHECKING PASS...';
+      rReason.innerText='Loading the latest pass information.';
+    }
 
     let data=null;
-    const upperId=String(decodedText).toUpperCase();
-    const cachedData=guardPassCache.get(upperId)||(Array.isArray(globalAdminData)?globalAdminData.find(function(x){return String(x.UniqueID).toUpperCase()===upperId;})||null:null);
     let networkFailed=false;
     try{
       const resData=await appsScriptJsonp({action:'get_single',id:decodedText});
@@ -2399,6 +2448,7 @@
     else if(dStatus!=='approved'){scanState=t("denied");scanMsg=t("not_approved");scanColor="bg-red";allowAction=false;}
     else if(currentUser.role==='guard'&&dLoc!==currentUser.location){scanState=t("wrong_facility");scanMsg=t("wrong_fac_msg")+" ("+dLoc+")";scanColor="bg-red";allowAction=false;}
     else if(todayNum<startNum||todayNum>endNum){scanState=todayNum>endNum?t("expired"):t("invalid_date");scanMsg=todayNum>endNum?t("expired"):t("not_valid_today");scanColor="bg-red";allowAction=false;}
+    if(networkFailed){scanState="CONNECTION";scanMsg="The latest pass status could not be verified. Entry actions are disabled.";scanColor="bg-red";allowAction=false;}
     let isFullscreen=(dType==='Contractor'||dType==='Visitor');
     if(allowAction){if(isInside){currentScanAction='check_out';scanState=t("check_out");scanMsg=t("scanning_out");scanColor="bg-blue";}else{currentScanAction='check_in';}}
     let teamData=[],maxWorkers=1;
@@ -3070,3 +3120,4 @@
   })();
   </script>
   </body></html>
+  
