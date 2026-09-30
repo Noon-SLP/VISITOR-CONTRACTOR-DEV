@@ -278,7 +278,7 @@
   #dashboard-admin .admin-header-top #header-admin-name{display:none!important}
   #dashboard-admin #admin-sec-approvals>.admin-card-title:nth-of-type(3){min-height:62px;padding:14px 20px!important}
   #dashboard-admin #admin-sec-approvals>.admin-card-title:nth-of-type(3) span{font-size:15px;letter-spacing:.12em}
-  #dashboard-admin #admin-table-active{table-layout:fixed}
+  #dashboard-admin #admin-table-active{width:100%;table-layout:fixed}
   #dashboard-admin #admin-table-active th,#dashboard-admin #admin-table-active td{height:58px;padding:13px 14px;text-align:left;vertical-align:middle}
   #dashboard-admin #admin-table-active th{height:42px;font-size:10px;letter-spacing:.1em}
   #dashboard-admin #admin-table-active td{font-size:14px;line-height:1.45}
@@ -1723,7 +1723,7 @@
         const attendeeHeaders='<div class="history-attendee-head"><span>NAME</span><span>CHECK-IN</span><span>CHECK OUT · DURATION</span></div>';
         const detailMeta='<div class="history-detail-meta">'+
           '<div class="history-detail-meta-item"><span class="history-detail-meta-label">VALIDITY PERIOD</span><span class="history-detail-meta-value">'+escapeHistoryText(companyGroup.label||"-")+'</span></div>'+
-          '<div class="history-detail-meta-item"><span class="history-detail-meta-label">TODAY\'S DATE</span><span class="history-detail-meta-value">'+escapeHistoryText(formatToDDMMYYYY(new Date()))+'</span></div>'+
+          '<div class="history-detail-meta-item"><span class="history-detail-meta-label">DATE</span><span class="history-detail-meta-value">'+escapeHistoryText(formatToDDMMYYYY(companyGroup.day))+'</span></div>'+
           '<div class="history-detail-meta-item"><span class="history-detail-meta-label">NAME</span><span class="history-detail-meta-value">'+escapeHistoryText(companyGroup.company||"-")+'</span></div>'+
           '<div class="history-detail-meta-item"><span class="history-detail-meta-label">TYPE</span><span class="history-detail-meta-value">'+escapeHistoryText(companyGroup.type||"-")+'</span></div>'+
           '<div class="history-detail-meta-item"><span class="history-detail-meta-label">FACILITY</span><span class="history-detail-meta-value">'+escapeHistoryText(companyGroup.facility||"-")+'</span></div>'+
@@ -3068,4 +3068,3 @@
   })();
   </script>
   </body></html>
-  
