@@ -487,7 +487,7 @@
       if(query.length>1800)return reject(new Error('This request is too large for the cross-origin API. Please retry with fewer items.'));
       var script=document.createElement('script');
       var settled=false;
-      var timeout=setTimeout(function(){finish(new Error('The Apps Script API did not respond. Check the connection and try again.'));},20000);
+      var timeout=setTimeout(function(){finish(new Error('The Apps Script API did not respond after 60 seconds. Check the connection and try again.'));},60000);
       function finish(error,result){
         if(settled)return;
         settled=true;
@@ -1094,7 +1094,7 @@
   });
 
   function saveSession(){try{localStorage.setItem(SESSION_KEY,JSON.stringify({user:currentUser,time:Date.now()}));}catch(e){}}
-  function startAutoRefresh(r){if(autoRefreshTimer)clearInterval(autoRefreshTimer);autoRefreshTimer=setInterval(function(){if(r==='ops')loadMyPasses(false,true);else if(r==='admin')loadAdminData(true);},15000);}
+  function startAutoRefresh(r){if(autoRefreshTimer)clearInterval(autoRefreshTimer);autoRefreshTimer=setInterval(function(){if(r==='ops')loadMyPasses(false,true);else if(r==='admin')loadAdminData(true);},r==='admin'?8000:15000);}
   function toggleFullScreen(){const d=document,de=d.documentElement;const req=de.requestFullscreen||de.mozRequestFullScreen||de.webkitRequestFullScreen||de.msRequestFullscreen;const exit=d.exitFullscreen||d.mozCancelFullScreen||d.webkitExitFullscreen||d.msExitFullscreen;try{if(!d.fullscreenElement&&!d.mozFullScreenElement&&!d.webkitFullscreenElement&&!d.msFullscreenElement){if(req)Promise.resolve(req.call(de)).catch(function(e){console.warn('Fullscreen request failed:',e);});else alert("Fullscreen not supported");}else if(exit)Promise.resolve(exit.call(d)).catch(function(e){console.warn('Exiting fullscreen failed:',e);});}catch(e){console.warn('Fullscreen operation failed:',e);alert("Fullscreen is unavailable in this browser.");}}
   function toggleSidebar(){const sb=document.getElementById('sidebar');if(sb)sb.classList.toggle('minimized');document.body.classList.toggle('sidebar-minimized');}
   function logout(){
@@ -2009,11 +2009,13 @@
       var payload={action:context.isLead?'request_lead_device_add':'request_member_device_add',id:context.passId,memberIqama:context.memberIqama,deviceType:type,deviceId:deviceId,devicePhotoBase64:imageData};
       await nativeFetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),mode:'no-cors',cache:'no-store'});
       var expected=context.isLead?type+' ('+deviceId+')':('Pending Device: '+type+' ('+deviceId+') [DEVICE_ADD_REQUESTED]');
-      var deadline=Date.now()+25000;
+      var deadline=Date.now()+60000;
       var savedPass=null;
       var requestConfirmed=false;
+      var pollDelay=1000;
       while(Date.now()<deadline){
-        await new Promise(function(resolve){setTimeout(resolve,1000);});
+        await new Promise(function(resolve){setTimeout(resolve,pollDelay);});
+        pollDelay=Math.min(pollDelay*2,5000);
         savedPass=await appsScriptJsonp({action:'get_single',id:context.passId});
         var blocks=String(savedPass&&savedPass.TeamMembers||'').split(/\n\s*\n/);
         if(context.isLead&&String(savedPass&&savedPass.LeadPendingDevice||'')===expected){requestConfirmed=true;break;}
@@ -2086,6 +2088,21 @@
     let vehStr=String(r.VehiclePlateNo||'');
     if(vehStr){if(vehStr.startsWith('http')||vehStr.startsWith('data:image'))h+='<div style="flex:1;background:transparent;border:none;padding:0;"><strong>'+t('lbl_vehicle')+'</strong><img src="'+vehStr+'" onclick="openFullscreenImage(this.src)"></div>';else h+='<div style="flex:1;background:transparent;border:none;padding:0;"><strong>'+t('lbl_vehicle')+'</strong><div style="margin-top:5px;color:var(--text-muted);">'+vehStr+'</div></div>';}
     h+='</div>';
+    let leadDeviceRawForActions=String(r.ImeiNumber||'').trim();
+    let leadDeviceForActions=leadDeviceRawForActions.replace(/\s*\[DEVICE_REVOKE_REQUESTED\]/ig,'').trim();
+    let leadHasDeviceForActions=leadDeviceForActions!==''&&!/^none$/i.test(leadDeviceForActions);
+    let leadRemoveRequestedForActions=/\[LEAD_REMOVE_REQUESTED\]/i.test(String(r.VisitorName||''));
+    let leadRevokeRequestedForActions=/\[DEVICE_REVOKE_REQUESTED\]/i.test(leadDeviceRawForActions);
+    let leadPendingDeviceForActions=String(r.LeadPendingDevice||'').trim();
+    let leadActionButtons='';
+    if(currentUser&&currentUser.role==='admin'){
+      if(leadPendingDeviceForActions)leadActionButtons='<button onclick="adminApproveMemberDeviceAdd(\''+r.UniqueID+'\', \'__LEAD__\', this)" class="btn-primary btn-success btn-sm" style="width:auto;">APPROVE DEVICE</button><button onclick="adminRejectMemberDeviceAdd(\''+r.UniqueID+'\', \'__LEAD__\', this)" class="btn-primary btn-danger btn-sm" style="width:auto;">REJECT DEVICE</button>';
+    }else if(!leadRemoveRequestedForActions){
+      leadActionButtons='<button onclick="requestRemoveLead(\''+r.UniqueID+'\', this)" class="btn-primary btn-danger btn-sm" style="width:auto;">REQUEST REMOVAL</button>';
+      if(leadHasDeviceForActions&&!leadRevokeRequestedForActions)leadActionButtons+='<button onclick="requestRevokeLeadDevice(\''+r.UniqueID+'\', this)" class="btn-primary btn-warning btn-sm" style="width:auto;">REQUEST DEVICE REVOKE</button>';
+      if(currentUser&&currentUser.role==='ops'&&!leadHasDeviceForActions&&!leadPendingDeviceForActions&&String(r.Status)==='Approved')leadActionButtons+='<button onclick="openExistingDeviceRequest(\''+r.UniqueID+'\', \'__LEAD__\', '+escapeHistoryText(JSON.stringify(String(r.VisitorName||'Lead')))+', true)" class="btn-primary btn-sm" style="width:auto;background:#2563eb;color:#fff;">REQUEST ADD DEVICE</button>';
+    }
+    if(leadActionButtons)h+='<div style="grid-column:span 2;margin-top:12px;padding:12px;border:1px solid rgba(255,199,0,.35);border-radius:8px;background:rgba(255,199,0,.06);"><strong style="display:block;color:var(--noon-yellow);font-size:13px;margin-bottom:9px;">LEAD ACTIONS</strong><div style="display:flex;gap:8px;flex-wrap:wrap;">'+leadActionButtons+'</div></div>';
     let tMembers=String(r.TeamMembers||'');
     if(tMembers.trim()!=="" || r.VisitorName){
       let td=[];
@@ -2118,7 +2135,6 @@
       let leadIsRemoveRequested=/\[LEAD_REMOVE_REQUESTED\]/i.test(leadNameRaw);
       let leadIsRevokeRequested=/\[DEVICE_REVOKE_REQUESTED\]/i.test(leadDeviceRaw);
       let leadCleanName=leadNameRaw.replace(/\s*\[LEAD_REMOVE_REQUESTED\]/ig,'').trim();
-      td.unshift({originalIndex:-1,person:0,isLead:true,name:leadCleanName,isNew:false,isRemoveRequested:leadIsRemoveRequested,isDeviceRevokeReq:leadIsRevokeRequested,isDeviceAddReq:!!leadPendingDevice,pendingDevice:leadPendingDevice,iqamaText:leadIqamaMatch?leadIqamaMatch[1].trim():'LEAD',device:leadDevice||'None',iqama:normalizeImageUrl(r.IqamaURL||''),selfie:normalizeImageUrl(r.SelfieURL||''),devicePhotos:normalizeImageUrl(r.ImeiPhotoURL||'')?[normalizeImageUrl(r.ImeiPhotoURL)]:[]});
       if(td.length>0){
         let arrRemoval=[],arrDeviceRevoke=[],arrDeviceAdd=[],arrNew=[],arrActive=[];
         td.forEach(function(m){if(m.isDeviceAddReq)arrDeviceAdd.push(m);else if(m.isRemoveRequested)arrRemoval.push(m);else if(m.isDeviceRevokeReq)arrDeviceRevoke.push(m);else if(m.isNew)arrNew.push(m);else arrActive.push(m);});
@@ -2568,16 +2584,21 @@
     }
     return xhr.then(function(){
       if(payload.action==='add_team_members'){
-        var deadline=Date.now()+30000;
+        var deadline=Date.now()+120000;
+        var pollDelay=500;
         function pollOperation(){
           return appsScriptJsonp({action:'get_operation_result',requestId:payload.requestId}).then(function(result){
             if(result&&result.status==='success')return result;
             if(result&&result.status==='error')throw new Error(result.message||'The server could not save the new team members.');
             if(Date.now()>=deadline)throw new Error('The request was sent, but its result could not be confirmed. Refresh the pass before retrying.');
-            return wait(250).then(pollOperation);
+            var delay=pollDelay;
+            pollDelay=Math.min(pollDelay*2,4000);
+            return wait(delay).then(pollOperation);
           },function(){
             if(Date.now()>=deadline)throw new Error('The request was sent, but its result could not be confirmed. Refresh the pass before retrying.');
-            return wait(250).then(pollOperation);
+            var delay=pollDelay;
+            pollDelay=Math.min(pollDelay*2,4000);
+            return wait(delay).then(pollOperation);
           });
         }
         return pollOperation();
