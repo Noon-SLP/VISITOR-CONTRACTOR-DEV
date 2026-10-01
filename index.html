@@ -476,18 +476,7 @@
     padding-right:clamp(24px,5vw,80px)!important;
   }
   #login-view::before,html.low-performance #login-view::before{
-    content:""!important;
-    display:block!important;
-    position:absolute!important;
-    inset:0!important;
-    z-index:0!important;
-    pointer-events:none!important;
-    background:url("https://noon-slp.github.io/VISITOR-CONTRACTOR-DEV/logo.jpeg") center center/min(56vw,72vh) no-repeat!important;
-    opacity:.085!important;
-    mix-blend-mode:screen;
-    filter:none!important;
-    transform:none!important;
-    will-change:auto!important;
+    display:none!important;
   }
   #login-view::after{z-index:0!important}
   #login-layout{
@@ -502,9 +491,10 @@
   }
   #login-brand-panel{align-self:center;justify-content:center}
   #login-brand-panel .logo-box{
-    width:clamp(260px,31vw,420px)!important;
-    height:clamp(260px,31vw,420px)!important;
+    width:clamp(280px,34vw,460px)!important;
+    height:clamp(280px,34vw,460px)!important;
     margin:0 0 28px!important;
+    mix-blend-mode:normal!important;
   }
   #login-layout>.login-container{
     align-self:center;
@@ -532,7 +522,7 @@
       grid-template-columns:minmax(0,1fr) minmax(300px,380px)!important;
       gap:clamp(24px,4vw,48px)!important;
     }
-    #login-brand-panel .logo-box{width:clamp(250px,30vw,340px)!important;height:clamp(250px,30vw,340px)!important}
+    #login-brand-panel .logo-box{width:clamp(270px,33vw,370px)!important;height:clamp(270px,33vw,370px)!important}
   }
   @media(max-width:900px){
     #login-view{
@@ -546,7 +536,7 @@
       grid-template-columns:minmax(0,1fr)!important;
       gap:24px!important;
     }
-    #login-brand-panel .logo-box{width:128px!important;height:128px!important;margin-bottom:12px!important}
+    #login-brand-panel .logo-box{width:144px!important;height:144px!important;margin-bottom:12px!important}
     #login-layout>.login-container{max-width:480px;max-height:none;justify-self:center}
   }
   @media(max-width:700px){
@@ -1185,6 +1175,7 @@
     const logo=card.querySelector('.logo-box');
     const brandText=logo&&logo.nextElementSibling;
     if(!logo||!brandText)return;
+    logo.src='https://noon-slp.github.io/VISITOR-CONTRACTOR-DEV/Logo.png';
     const layout=document.createElement('div');
     layout.id='login-layout';
     const brand=document.createElement('section');
@@ -3257,4 +3248,4 @@
   })();
   </script>
   </body></html>
-  
+    
