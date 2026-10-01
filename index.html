@@ -592,10 +592,10 @@
       return result;
     });
   }
-  function appsScriptJsonp(params,signal){
-    return appsScriptJsonpAttempt(params,signal,0);
+  function appsScriptJsonp(params,signal,timeoutMs){
+    return appsScriptJsonpAttempt(params,signal,0,timeoutMs);
   }
-  function appsScriptJsonpAttempt(params,signal,attempt){
+  function appsScriptJsonpAttempt(params,signal,attempt,timeoutMs){
     return new Promise(function(resolve,reject){
       var callback='noonApiCallback_'+Date.now()+'_'+Math.random().toString(36).slice(2);
       var query=Object.keys(params).map(function(key){
@@ -605,7 +605,8 @@
       if(query.length>1800)return reject(new Error('This request is too large for the cross-origin API. Please retry with fewer items.'));
       var script=document.createElement('script');
       var settled=false;
-      var timeout=setTimeout(function(){finish(new Error('The Apps Script API did not respond after 60 seconds. Check the connection and try again.'));},60000);
+      var requestTimeout=Number(timeoutMs)||60000;
+      var timeout=setTimeout(function(){finish(new Error('The Apps Script API did not respond after '+Math.round(requestTimeout/1000)+' seconds. Check the connection and try again.'));},requestTimeout);
       function finish(error,result){
         if(settled)return;
         settled=true;
@@ -632,7 +633,7 @@
         return Promise.reject(error);
       }
       return new Promise(function(resolve){setTimeout(resolve,500);})
-        .then(function(){return appsScriptJsonpAttempt(params,signal,attempt+1);});
+        .then(function(){return appsScriptJsonpAttempt(params,signal,attempt+1,timeoutMs);});
     });
   }
 
@@ -2502,8 +2503,14 @@
     let data=null;
     let networkFailed=false;
     try{
-      const resData=await appsScriptJsonp({action:'get_single',id:decodedText});
-      if(resData&&!resData.error){data=convertDriveUrls(resData);guardPassCache.set(upperId,data);}
+      const verifyRequest=cachedData
+        ?{action:'get_gate_verification',id:decodedText,passType:cachedData.Type}
+        :{action:'get_single',id:decodedText};
+      const resData=await appsScriptJsonp(verifyRequest,null,15000);
+      if(resData&&!resData.error){
+        data=cachedData?Object.assign({},cachedData,resData):convertDriveUrls(resData);
+        guardPassCache.set(upperId,data);
+      }
       else{guardPassCache.delete(upperId);}
     }catch(err){
       networkFailed=true;
@@ -2543,7 +2550,7 @@
     else if(dStatus!=='approved'){scanState=t("denied");scanMsg=t("not_approved");scanColor="bg-red";allowAction=false;}
     else if(currentUser.role==='guard'&&dLoc!==currentUser.location){scanState=t("wrong_facility");scanMsg=t("wrong_fac_msg")+" ("+dLoc+")";scanColor="bg-red";allowAction=false;}
     else if(todayNum<startNum||todayNum>endNum){scanState=todayNum>endNum?t("expired"):t("invalid_date");scanMsg=todayNum>endNum?t("expired"):t("not_valid_today");scanColor="bg-red";allowAction=false;}
-    else if(!liveVerified&&!connectionFailed){scanMsg="Checking current pass status...";}
+    else if(!liveVerified&&!connectionFailed){scanMsg="Verifying live pass status...";}
     if(connectionFailed){scanState="CONNECTION";scanMsg="The latest pass status could not be verified. Entry actions are disabled.";scanColor="bg-red";allowAction=false;}
     let isFullscreen=(dType==='Contractor'||dType==='Visitor');
     if(allowAction){if(isInside){currentScanAction='check_out';scanState=t("check_out");scanMsg=t("scanning_out");scanColor="bg-blue";}else{currentScanAction='check_in';}}
@@ -2715,7 +2722,7 @@
       return encodeURIComponent(key)+'='+encodeURIComponent(typeof payload[key]==='string'?payload[key]:JSON.stringify(payload[key]));
     }).join('&').length;
     if((payload.action==='member_gate_action'||payload.action==='member_gate_bulk_action')&&gateQueryLength<=1800){
-      return appsScriptJsonp(payload).then(function(result){
+      return appsScriptJsonp(payload,null,20000).then(function(result){
         if(!result||result.status!=='success')throw new Error(result&&result.message?result.message:'The gate action was not confirmed by the server.');
         return result;
       });
