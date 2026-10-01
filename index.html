@@ -2039,6 +2039,40 @@
     });
   }
 
+  function updateCachedTeamMemberAction(passId, memberIqamas, action, targetCategory){
+    var ids=Object.create(null);
+    memberIqamas.forEach(function(iqama){ids[String(iqama).trim()]=true;});
+    var updated=[];
+    [globalAdminData,myPassesData].forEach(function(list){
+      if(!Array.isArray(list))return;
+      list.forEach(function(pass){
+        if(String(pass.UniqueID)!==String(passId)||updated.indexOf(pass)!==-1)return;
+        var blocks=String(pass.TeamMembers||'').split(/\n\s*\n/).filter(function(block){return block.trim();});
+        if(action==='remove'){
+          blocks=blocks.filter(function(block){
+            var identity=block.split(/\r?\n/,1)[0].match(/^Name:\s*.*?\|\s*Iqama:\s*(.*?)\s*$/i);
+            return !identity||!ids[identity[1].trim()];
+          });
+        }else if(action==='request_remove'){
+          blocks=blocks.map(function(block){
+            return block.replace(/^(Name:.*)$/m,function(line){
+              var identity=line.match(/^Name:\s*.*?\|\s*Iqama:\s*(.*?)\s*$/i);
+              return identity&&ids[identity[1].trim()]&&!/\[REMOVE_REQUESTED\]/i.test(line)?line+' [REMOVE_REQUESTED]':line;
+            });
+          });
+        }
+        pass.TeamMembers=blocks.join('\n\n');
+        if(action==='remove'&&pass.Status==='Pending'&&!blocks.some(function(block){return /\*NEW_MEMBER\*|\[NEW\]|\[DEVICE_ADD_REQUESTED\]/i.test(block);}))pass.Status='Approved';
+        updated.push(pass);
+      });
+    });
+    if(updated.length){
+      if(Array.isArray(globalAdminData)&&globalAdminData.some(function(pass){return String(pass.UniqueID)===String(passId);}))localStorage.setItem('cached_admin_data',JSON.stringify(globalAdminData));
+      if(Array.isArray(myPassesData)&&myPassesData.some(function(pass){return String(pass.UniqueID)===String(passId);})&&currentUser)localStorage.setItem('cached_passes_'+currentUser.email,JSON.stringify(myPassesData));
+    }
+    openViewRecord(passId,targetCategory);
+  }
+
   async function updateStatus(id,newStatus){if(autoRefreshTimer)clearInterval(autoRefreshTimer);if(!confirm('Mark '+id+' as '+newStatus+'?')){startAutoRefresh(currentUser.role);return;}beginPleaseWait('PLEASE WAIT...');if(Array.isArray(globalAdminData)){let item=globalAdminData.find(function(x){return String(x.UniqueID)===String(id);});if(item){item.Status=newStatus;if(newStatus==='Approved'&&item.TeamMembers){item.TeamMembers=String(item.TeamMembers).replace(/\*NEW_MEMBER\*/gi,'').replace(/\[NEW\]/gi,'').replace(/\*\[REMOVE_REQUESTED\]\*/gi,'').replace(/\[REMOVE_REQUESTED\]/gi,'').replace(/\*\[DEVICE_REVOKE_REQUESTED\]\*/gi,'').replace(/\[DEVICE_REVOKE_REQUESTED\]/gi,'');}localStorage.setItem('cached_admin_data',JSON.stringify(globalAdminData));renderAdminData(globalAdminData);if(item.HostEmail)localStorage.removeItem('cached_passes_'+String(item.HostEmail).toLowerCase().trim());}}try{const payload={action:newStatus==='Approved'?'approve_pass':'update_status',id:id,newStatus:newStatus};await appsScriptAction(payload);localStorage.removeItem("cached_admin_data");await loadAdminData(true);}catch(e){alert("Update failed: "+e.message);await loadAdminData(true);}finally{endPleaseWait();startAutoRefresh(currentUser.role);}}
 
   function openAdminGateModal(id){const gi=document.getElementById('admin-gate-id'),gd=document.getElementById('admin-gate-id-display'),gm=document.getElementById('admin-gate-modal');if(gi)gi.value=id;if(gd)gd.innerText=id;if(gm)gm.classList.remove('hidden');}
@@ -2084,7 +2118,7 @@
 
   async function requestRevokeDevice(passId,memberIndex,memberIqama,btn){if(!confirm('Request admin to revoke device access for this member?'))return;btn.innerText="REQUESTING...";btn.disabled=true;try{await runTeamMemberAction('request_revoke_device',passId,memberIndex,memberIqama);localStorage.removeItem('cached_passes_'+currentUser.email);refreshMemberView(passId);}catch(e){alert("Failed to request: "+e.message);btn.disabled=false;}}
 
-  async function requestRemoveTeamMember(passId,memberIndex,memberIqama,btn){if(!confirm('Request admin to permanently remove this team member?'))return;btn.innerText="REQUESTING...";btn.disabled=true;try{await runTeamMemberAction('request_remove_member',passId,memberIndex,memberIqama);localStorage.removeItem('cached_passes_'+currentUser.email);refreshMemberView(passId);}catch(e){alert("Failed to request removal: "+e.message);btn.disabled=false;}}
+  async function requestRemoveTeamMember(passId,memberIndex,memberIqama,btn){if(!confirm('Request admin to permanently remove this team member?'))return;btn.innerText="REQUESTING...";btn.disabled=true;try{await runTeamMemberAction('request_remove_member',passId,memberIndex,memberIqama);updateCachedTeamMemberAction(passId,[memberIqama],'request_remove','remove');}catch(e){alert("Failed to request removal: "+e.message);btn.disabled=false;}}
   async function requestRemoveLead(passId,btn){if(!confirm('Request admin to permanently remove the lead?'))return;btn.innerText="REQUESTING...";btn.disabled=true;try{await appsScriptAction({action:'request_lead_remove_member',id:passId});localStorage.removeItem('cached_passes_'+currentUser.email);refreshMemberView(passId);}catch(e){alert("Failed to request lead removal: "+e.message);btn.disabled=false;}}
   async function requestRevokeLeadDevice(passId,btn){if(!confirm('Request admin to revoke device access for the lead?'))return;btn.innerText="REQUESTING...";btn.disabled=true;try{await appsScriptAction({action:'request_lead_revoke_device',id:passId});localStorage.removeItem('cached_passes_'+currentUser.email);refreshMemberView(passId);}catch(e){alert("Failed to request lead device revoke: "+e.message);btn.disabled=false;}}
 
@@ -2094,11 +2128,11 @@
 
   async function adminRevokeDevice(passId,memberIndex,memberIqama,btn){if(!confirm('Are you sure you want to completely revoke device access for this team member?'))return;btn.innerText="REVOKING...";btn.disabled=true;try{await runTeamMemberAction('revoke_device',passId,memberIndex,memberIqama);refreshMemberView(passId);alert("Device access revoked successfully.");}catch(e){alert("Failed to revoke: "+e.message);btn.disabled=false;}}
 
-  async function adminRemoveTeamMember(passId,memberIndex,memberIqama,btn){if(!confirm('Are you sure you want to completely remove this team member from pass '+passId+'?'))return;btn.innerText="REMOVING...";btn.disabled=true;try{await runTeamMemberAction('remove_team_member',passId,memberIndex,memberIqama);refreshMemberView(passId);alert("Team member removed successfully.");}catch(e){alert("Failed to remove: "+e.message);btn.disabled=false;}}
+  async function adminRemoveTeamMember(passId,memberIndex,memberIqama,btn){if(!confirm('Are you sure you want to completely remove this team member from pass '+passId+'?'))return;btn.innerText="REMOVING...";btn.disabled=true;try{await runTeamMemberAction('remove_team_member',passId,memberIndex,memberIqama);updateCachedTeamMemberAction(passId,[memberIqama],'remove');alert("Team member removed successfully.");}catch(e){alert("Failed to remove: "+e.message);btn.disabled=false;}}
 
   async function adminApproveTeamMember(passId,memberIndex,memberIqama,btn){if(!confirm("Approve this added team member?"))return;btn.disabled=true;try{await runTeamMemberAction('approve_team_member',passId,memberIndex,memberIqama);localStorage.removeItem("cached_admin_data");refreshMemberView(passId,"add");}catch(e){alert("Approval failed: "+e.message);btn.disabled=false;}}
 
-  async function adminRejectTeamMember(passId,memberIndex,memberIqama,btn){if(!confirm("Reject and remove this added team member?"))return;btn.disabled=true;try{await runTeamMemberAction('reject_team_member',passId,memberIndex,memberIqama);localStorage.removeItem("cached_admin_data");refreshMemberView(passId,"add");}catch(e){alert("Rejection failed: "+e.message);btn.disabled=false;}}
+  async function adminRejectTeamMember(passId,memberIndex,memberIqama,btn){if(!confirm("Reject and remove this added team member?"))return;btn.disabled=true;try{await runTeamMemberAction('reject_team_member',passId,memberIndex,memberIqama);updateCachedTeamMemberAction(passId,[memberIqama],'remove','add');}catch(e){alert("Rejection failed: "+e.message);btn.disabled=false;}}
 
   var existingDeviceRequestContext=null;
   function ensureExistingDeviceRequestModal(){
@@ -2356,9 +2390,9 @@
 
   function setupBulkRemovalSelection(passId){const section=document.getElementById('section-active');if(!section||section.dataset.bulkRemovalReady==='1')return;const rows=[].slice.call(section.querySelectorAll('.modal-team-row'));if(!rows.length)return;section.dataset.bulkRemovalReady='1';const heading=section.querySelector('strong');if(!heading)return;const bar=document.createElement('div');bar.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 10px;padding:8px;border:1px solid rgba(239,68,68,.35);border-radius:6px;background:rgba(239,68,68,.08);';bar.innerHTML='<label style="display:flex;align-items:center;gap:7px;color:#fff;font-weight:700;font-size:12px;"><input type="checkbox" id="select-all-removal-members"> SELECT ALL</label><button type="button" style="background:#ef4444;color:#fff;border:0;border-radius:4px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;">SUBMIT SELECTED REMOVALS</button>';heading.insertAdjacentElement('afterend',bar);const selectAll=bar.querySelector('#select-all-removal-members'),submit=bar.querySelector('button');rows.forEach(function(row){const action=row.querySelector('button[onclick*="requestRemoveTeamMember"]');const match=action?((action.getAttribute('onclick')||'').match(/requestRemoveTeamMember\('([^']+)'\s*,\s*(\d+)/)||[]):[];if(!match[2])return;const label=document.createElement('label');label.style.cssText='display:flex;align-items:center;gap:5px;color:#fff;font-size:11px;grid-column:1 / -1;';label.innerHTML='<input type="checkbox" class="bulk-removal-member" data-pass-id="'+match[1]+'" data-member-index="'+match[2]+'"> Select for removal';row.insertBefore(label,row.firstChild);});const checks=function(){return [].slice.call(section.querySelectorAll('.bulk-removal-member'));};selectAll.addEventListener('change',function(){checks().forEach(function(c){c.checked=selectAll.checked;});});checks().forEach(function(c){c.addEventListener('change',function(){selectAll.checked=checks().length>0&&checks().every(function(x){return x.checked;});});});submit.addEventListener('click',function(){requestSelectedRemovals(passId);});}
 
-  async function requestSelectedRemovals(passId){const section=document.getElementById('section-active');const selected=[].slice.call(section?section.querySelectorAll('.bulk-removal-member:checked'):[]).map(function(c){return Number(c.dataset.memberIndex);}).filter(Number.isInteger);if(!selected.length)return alert('Please select at least one member.');if(!confirm('Request removal for '+selected.length+' member(s)?'))return;const pass=myPassesData.find(function(item){return String(item.UniqueID)===String(passId);});const blocks=String(pass&&pass.TeamMembers||'').split(/\n\s*\n/).filter(function(block){return block.trim();});const iqamas=selected.map(function(index){const firstLine=String(blocks[index]||'').split(/\r?\n/,1)[0];const match=firstLine.match(/^Name:\s*.*?\|\s*Iqama:\s*(.*?)\s*$/i);return match?match[1].trim():'';}).filter(Boolean);if(iqamas.length!==selected.length)return alert('The member list has changed. Refresh the pass and try again.');try{await appsScriptAction({action:'bulk_team_member_action',id:passId,memberAction:'request_remove',memberIqamas:JSON.stringify(iqamas)});localStorage.removeItem('cached_passes_'+currentUser.email);refreshMemberView(passId);alert('Removal requests submitted successfully.');}catch(e){alert('Removal request failed: '+e.message);}}
+  async function requestSelectedRemovals(passId){const section=document.getElementById('section-active');const selected=[].slice.call(section?section.querySelectorAll('.bulk-removal-member:checked'):[]).map(function(c){return Number(c.dataset.memberIndex);}).filter(Number.isInteger);if(!selected.length)return alert('Please select at least one member.');if(!confirm('Request removal for '+selected.length+' member(s)?'))return;const pass=myPassesData.find(function(item){return String(item.UniqueID)===String(passId);});const blocks=String(pass&&pass.TeamMembers||'').split(/\n\s*\n/).filter(function(block){return block.trim();});const iqamas=selected.map(function(index){const firstLine=String(blocks[index]||'').split(/\r?\n/,1)[0];const match=firstLine.match(/^Name:\s*.*?\|\s*Iqama:\s*(.*?)\s*$/i);return match?match[1].trim():'';}).filter(Boolean);if(iqamas.length!==selected.length)return alert('The member list has changed. Refresh the pass and try again.');try{await appsScriptAction({action:'bulk_team_member_action',id:passId,memberAction:'request_remove',memberIqamas:JSON.stringify(iqamas)});updateCachedTeamMemberAction(passId,iqamas,'request_remove','remove');alert('Removal requests submitted successfully.');}catch(e){alert('Removal request failed: '+e.message);}}
 
-  async function bulkAdminTeamAction(passId,action){const pass=globalAdminData.find(function(x){return String(x.UniqueID)===String(passId);});if(!pass)return;const blocks=String(pass.TeamMembers||'').split(/\n\s*\n/).filter(function(block){return block.trim();});const iqamas=blocks.filter(function(block){const marker=action==='remove'?'[REMOVE_REQUESTED]':'[DEVICE_REVOKE_REQUESTED]';return block.toUpperCase().includes(marker);}).map(function(block){const match=block.split(/\r?\n/,1)[0].match(/^Name:\s*.*?\|\s*Iqama:\s*(.*?)\s*$/i);return match?match[1].trim():'';}).filter(Boolean);if(!iqamas.length){alert(action==='remove'?'No removal requests found.':'No device revoke requests found.');return;}if(!confirm(action==='remove'?'Remove all requested members?':'Revoke all requested devices?'))return;try{await appsScriptAction({action:'bulk_team_member_action',id:passId,memberAction:action,memberIqamas:JSON.stringify(iqamas)});localStorage.removeItem('cached_admin_data');refreshMemberView(passId,action==='remove'?'remove':'revoke');}catch(error){alert('Bulk action failed: '+error.message);}}
+  async function bulkAdminTeamAction(passId,action){const pass=globalAdminData.find(function(x){return String(x.UniqueID)===String(passId);});if(!pass)return;const blocks=String(pass.TeamMembers||'').split(/\n\s*\n/).filter(function(block){return block.trim();});const iqamas=blocks.filter(function(block){const marker=action==='remove'?'[REMOVE_REQUESTED]':'[DEVICE_REVOKE_REQUESTED]';return block.toUpperCase().includes(marker);}).map(function(block){const match=block.split(/\r?\n/,1)[0].match(/^Name:\s*.*?\|\s*Iqama:\s*(.*?)\s*$/i);return match?match[1].trim():'';}).filter(Boolean);if(!iqamas.length){alert(action==='remove'?'No removal requests found.':'No device revoke requests found.');return;}if(!confirm(action==='remove'?'Remove all requested members?':'Revoke all requested devices?'))return;try{await appsScriptAction({action:'bulk_team_member_action',id:passId,memberAction:action,memberIqamas:JSON.stringify(iqamas)});if(action==='remove')updateCachedTeamMemberAction(passId,iqamas,'remove','remove');else{localStorage.removeItem('cached_admin_data');refreshMemberView(passId,'revoke');}}catch(error){alert('Bulk action failed: '+error.message);}}
 
   async function bulkApproveNewMembers(passId){if(!confirm('Accept all new member requests?'))return;beginPleaseWait('PLEASE WAIT...');try{await appsScriptAction({action:'approve_pass',id:passId});localStorage.removeItem('cached_admin_data');refreshMemberView(passId,'add');}catch(error){alert('Approval failed: '+error.message);}finally{endPleaseWait();}}
 
@@ -3248,5 +3282,5 @@
     guardLogin.insertBefore(group,guardLogin.querySelector('button'));
   })();
   </script>
-  </body></html>
+  </body></html>+
   
