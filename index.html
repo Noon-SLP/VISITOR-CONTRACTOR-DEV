@@ -593,6 +593,9 @@
     });
   }
   function appsScriptJsonp(params,signal){
+    return appsScriptJsonpAttempt(params,signal,0);
+  }
+  function appsScriptJsonpAttempt(params,signal,attempt){
     return new Promise(function(resolve,reject){
       var callback='noonApiCallback_'+Date.now()+'_'+Math.random().toString(36).slice(2);
       var query=Object.keys(params).map(function(key){
@@ -624,6 +627,12 @@
       }
       script.src=freshScriptUrl()+'&'+query+'&callback='+encodeURIComponent(callback);
       document.head.appendChild(script);
+    }).catch(function(error){
+      if(attempt!==0||(signal&&signal.aborted)||!error||error.message!=='The Apps Script API could not be reached. Check the connection and try again.'){
+        return Promise.reject(error);
+      }
+      return new Promise(function(resolve){setTimeout(resolve,500);})
+        .then(function(){return appsScriptJsonpAttempt(params,signal,attempt+1);});
     });
   }
 
@@ -3233,4 +3242,4 @@
   })();
   </script>
   </body></html>
-    
+  
