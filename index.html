@@ -317,6 +317,9 @@
   #dashboard-admin #admin-table-active td:nth-child(8),#dashboard-admin #admin-table-active th:nth-child(8){width:40%}
   #dashboard-admin #admin-table-active .active-actions-grid{width:100%;max-width:none;min-width:0;margin-inline-start:0;justify-self:stretch;grid-template-columns:repeat(3,minmax(0,1fr));justify-items:stretch}
   #dashboard-admin #admin-table-active .active-actions-grid .btn-primary{width:100%;min-width:0;padding-inline:18px}
+  #dashboard-admin #admin-table-active td:nth-child(n+2),#dashboard-admin #admin-table-active th:nth-child(n+2){width:13.71%}
+  #dashboard-admin #admin-table-active .active-actions-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+  #dashboard-admin #admin-table-active .active-actions-grid .btn-primary{min-height:36px;padding:6px 5px;font-size:9px;line-height:1.2}
   #dashboard-admin .history-tools{display:grid;grid-template-columns:repeat(5,minmax(135px,1fr));gap:9px;padding:14px 16px;border-bottom:1px solid rgba(148,166,190,.12);background:rgba(8,12,19,.42)}
   #dashboard-admin .history-tools input{width:100%;min-width:0;height:38px;padding:8px 11px;border:1px solid rgba(148,166,190,.19);border-radius:8px;background:rgba(5,9,15,.72);color:#eef2f8;font-size:11px;outline:none}
   #dashboard-admin .history-tools input::placeholder{color:#8491a5}
@@ -398,8 +401,9 @@
     #dashboard-admin #admin-table-active{min-width:1120px}
     #dashboard-admin #admin-table-active td{font-size:13px}
     #dashboard-admin #admin-table-active .active-request-email{font-size:13px}
-    #dashboard-admin #admin-table-active .active-actions-grid{grid-template-columns:repeat(2,minmax(112px,1fr));gap:8px}
-    #dashboard-admin #admin-table-active .active-actions-grid .btn-primary{min-height:44px;font-size:11px}
+    #dashboard-admin #admin-table-active td:nth-child(n+2),#dashboard-admin #admin-table-active th:nth-child(n+2){width:13.71%}
+    #dashboard-admin #admin-table-active .active-actions-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+    #dashboard-admin #admin-table-active .active-actions-grid .btn-primary{min-height:40px;padding:6px 4px;font-size:9px}
     #dashboard-admin .history-tools{grid-template-columns:repeat(2,minmax(0,1fr));padding:12px;gap:8px}
     #dashboard-admin .history-tools-footer{grid-column:1/-1;align-items:flex-start;flex-direction:column}
     #dashboard-admin .history-attendee-row{grid-template-columns:minmax(155px,.9fr) minmax(230px,1.2fr) minmax(260px,1.35fr);gap:8px;padding-inline:10px}
@@ -3366,4 +3370,4 @@
   })();
   </script>
   </body></html>
-  
+    
