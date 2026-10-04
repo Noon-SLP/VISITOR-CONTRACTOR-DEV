@@ -1397,35 +1397,39 @@
   function getBase64(file){return new Promise(function(resolve,reject){const reader=new FileReader();reader.readAsDataURL(file);reader.onload=function(e){const img=new Image();img.onload=function(){const canvas=document.createElement('canvas');const MAX_WIDTH=400;let width=img.width;let height=img.height;if(width>MAX_WIDTH){height=Math.round((height*MAX_WIDTH)/width);width=MAX_WIDTH;}canvas.width=width;canvas.height=height;canvas.getContext('2d').drawImage(img,0,0,width,height);resolve(canvas.toDataURL('image/jpeg',0.4));};img.onerror=reject;img.src=e.target.result;};reader.onerror=reject;});}
   function isDateInRange(s,ft,stStr,enStr){if(ft==='all')return true;const d=parseFlexibleDate(s);if(!d)return true;const now=new Date(),ts=new Date(now.getFullYear(),now.getMonth(),now.getDate(),0,0,0,0),te=new Date(now.getFullYear(),now.getMonth(),now.getDate(),23,59,59,999);if(ft==='today')return d>=ts&&d<=te;if(ft==='weekly'){const w=new Date(ts);w.setDate(w.getDate()-7);return d>=w&&d<=te;}if(ft==='monthly'){const m=new Date(ts);m.setMonth(m.getMonth()-1);return d>=m&&d<=te;}if(ft==='6months'){const m6=new Date(ts);m6.setMonth(m6.getMonth()-6);return d>=m6&&d<=te;}if(ft==='year'){const y=new Date(ts);y.setFullYear(y.getFullYear()-1);return d>=y&&d<=te;}if(ft==='custom'){if(!stStr||!enStr)return true;const st=parseFlexibleDate(stStr),en=parseFlexibleDate(enStr);if(st)st.setHours(0,0,0,0);if(en)en.setHours(23,59,59,999);if(st&&en)return d>=st&&d<=en;}return true;}
 
+  let manualPassSearchSequence=0;
+  function findManualPassMatches(passes,query){
+    return passes.filter(function(pass){
+      if(!pass||!pass.UniqueID||String(pass.Status||'')==='Rejected')return false;
+      let fields=String((pass.VisitorName||'')+" "+(pass.UniqueID||'')+" "+(pass.SlpTicketNo||'')+" "+(pass.ContactNo||'')+" "+(pass.HostEmail||'')).toLowerCase();
+      return fields.indexOf(query)!==-1;
+    }).slice(0,5);
+  }
   async function performManualSearch(){
     let q=document.getElementById('guard-search-input').value.toLowerCase().trim();
     let rd=document.getElementById('manual-search-results');
+    let searchSequence=++manualPassSearchSequence;
     if(!q){rd.innerHTML='';return;}
     rd.innerHTML='<p style="color:var(--text-muted); font-size:12px;">Searching...</p>';
     try{
       let d=Array.from(guardPassCache.values());
-      if(!d.length&&Array.isArray(globalAdminData)&&globalAdminData.length){d=globalAdminData;}
-      if(!d.length){
-        try{
-          const res=await fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'get_all'}),redirect:'follow',cache:'no-store'});
-          if(res.ok){
-            const raw=convertDriveUrls(await res.json());
-            const arr=Array.isArray(raw)?raw:(raw&&raw.passes?raw.passes:[]);
-            if(Array.isArray(arr)&&arr.length){
-              guardPassCache.clear();
-              arr.forEach(function(p){if(p&&p.UniqueID)guardPassCache.set(String(p.UniqueID).toUpperCase(),p);});
-              try{localStorage.setItem('cached_guard_passes',JSON.stringify(arr));}catch(e){}
-              if(currentUser&&currentUser.role==='guard')updateControlRoomStats();
-              d=arr;
-            }
-          }
-        }catch(e){}
+      let ms=findManualPassMatches(d,q);
+      if(ms.length===0){
+        const res=await fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'get_all'}),redirect:'follow',cache:'no-store'});
+        if(!res.ok)throw new Error('Pass search failed (HTTP '+res.status+').');
+        const raw=convertDriveUrls(await res.json());
+        const arr=Array.isArray(raw)?raw:(raw&&Array.isArray(raw.passes)?raw.passes:null);
+        if(!arr)throw new Error('The server returned an invalid pass-search response.');
+        if(searchSequence!==manualPassSearchSequence)return;
+        guardPassCache.clear();
+        arr.forEach(function(pass){if(pass&&pass.UniqueID)guardPassCache.set(String(pass.UniqueID).toUpperCase(),pass);});
+        guardCacheLoaded=true;
+        try{localStorage.setItem('cached_guard_passes',JSON.stringify(arr));}catch(storageError){console.warn('[Manual pass search] Could not save refreshed pass cache.',storageError);}
+        if(currentUser&&currentUser.role==='guard')updateControlRoomStats();
+        d=arr;
+        ms=findManualPassMatches(d,q);
       }
-      let ms=d.filter(function(r){
-        if(!r||!r.UniqueID||r.Status==='Rejected')return false;
-        let fs=String((r.VisitorName||'')+" "+(r.UniqueID||'')+" "+(r.SlpTicketNo||'')+" "+(r.ContactNo||'')+" "+(r.HostEmail||'')).toLowerCase();
-        return fs.indexOf(q)!==-1;
-      }).slice(0,5);
+      if(searchSequence!==manualPassSearchSequence)return;
       if(ms.length===0){rd.innerHTML='<p style="color:var(--danger); font-size:12px;">No passes found.</p>';return;}
       let h='';const tn=new Date().setHours(0,0,0,0);
       ms.forEach(function(m){
@@ -1442,6 +1446,7 @@
       });
       rd.innerHTML=h;
     }catch(e){
+      if(searchSequence!==manualPassSearchSequence)return;
       console.error('Manual search error:',e);
       rd.innerHTML='<p style="color:var(--danger); font-size:12px;">Search failed: '+e.message+'</p>';
     }
@@ -3361,3 +3366,4 @@
   })();
   </script>
   </body></html>
+  
