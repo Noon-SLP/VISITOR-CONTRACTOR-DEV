@@ -404,7 +404,7 @@
     #dashboard-admin .analytics-grid{grid-template-columns:1fr}
     #dashboard-admin .analytics-box{min-height:126px;padding:18px}
     #dashboard-admin .admin-card-title:nth-of-type(3) span{font-size:13px!important}
-    #dashboard-admin #admin-table-active{min-width:1120px}
+    #dashboard-admin table:has(>tbody#admin-table-active){min-width:1120px}
     #dashboard-admin #admin-table-active td{font-size:13px}
     #dashboard-admin #admin-table-active .active-request-email{font-size:13px}
     #dashboard-admin #admin-table-active td:nth-child(2),#dashboard-admin #admin-table-active th:nth-child(2){width:13%}
@@ -444,6 +444,33 @@
     #login-view{height:auto;min-height:100vh;min-height:100dvh;align-items:flex-start;overflow-y:auto;padding-top:max(80px,calc(env(safe-area-inset-top) + 64px));padding-bottom:max(20px,env(safe-area-inset-bottom))}
     #login-view .login-container{margin:12px}
     .login-top-controls{top:max(12px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right))}
+    #app-layout{width:100%;min-width:0}
+    #app-layout>.sidebar,#app-layout>.sidebar.minimized{position:fixed;inset-block:0;inset-inline-start:0;inset-inline-end:auto;height:100vh;height:100dvh;transform:none!important;flex:0 0 56px;width:56px;min-width:56px}
+    #sidebar .sidebar-header{justify-content:center;padding:8px}
+    #sidebar .sidebar-brand,#sidebar .sidebar-nav .nav-text,#sidebar .sidebar-footer{display:none}
+    #sidebar .sidebar-nav{padding:8px 4px}
+    #sidebar .sidebar-nav a{justify-content:center;padding:8px}
+    #sidebar .sidebar-nav a .icon{margin-inline-end:0}
+    body:not(.sidebar-minimized) #app-layout::before{content:"";position:fixed;inset:0;z-index:100;background:rgba(3,7,13,.62);backdrop-filter:blur(2px)}
+    body:not(.sidebar-minimized) #app-layout>.sidebar{z-index:101;flex-basis:min(260px,calc(100vw - 56px));width:min(260px,calc(100vw - 56px));min-width:min(260px,calc(100vw - 56px));box-shadow:14px 0 38px rgba(0,0,0,.5)}
+    body:not(.sidebar-minimized) #sidebar .sidebar-header{justify-content:space-between;padding:17px 15px}
+    body:not(.sidebar-minimized) #sidebar .sidebar-brand{display:block}
+    body:not(.sidebar-minimized) #sidebar .sidebar-nav{padding:14px 8px}
+    body:not(.sidebar-minimized) #sidebar .sidebar-nav a{justify-content:flex-start;padding:10px 12px}
+    body:not(.sidebar-minimized) #sidebar .sidebar-nav a .icon{margin-inline-end:8px}
+    body:not(.sidebar-minimized) #sidebar .sidebar-nav .nav-text{display:inline}
+    body:not(.sidebar-minimized) #sidebar .sidebar-footer{display:block}
+    #main-content{flex:1 1 0;width:calc(100% - 56px);min-width:0;margin-inline-start:56px!important;margin-inline-end:0!important}
+    #dashboard-admin{width:100%;min-width:0;padding-inline:10px!important}
+    #dashboard-admin .admin-header-top{width:100%;min-width:0}
+    #dashboard-admin .admin-nav-horizontal{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;width:100%;max-width:100%;overflow:visible}
+    #dashboard-admin .admin-nav-horizontal::before{grid-column:1/-1;min-height:14px;padding:0 4px 4px;border-right:0;border-bottom:1px solid rgba(147,166,191,.14)}
+    #dashboard-admin .admin-nav-horizontal li{min-width:0;min-height:42px;padding:5px 3px;justify-content:center;gap:3px;font-size:8px;letter-spacing:0;line-height:1.2;text-align:center;white-space:normal;overflow-wrap:anywhere}
+    #dashboard-admin .admin-filter-bar{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;align-items:stretch}
+    #dashboard-admin .admin-filter-bar::before{min-height:12px;margin:0}
+    #dashboard-admin .admin-filter-bar>div:first-child{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px!important;width:100%;max-width:none;overflow:visible}
+    #dashboard-admin .btn-filter{width:100%;min-width:0;min-height:30px;padding:6px 2px;font-size:8px;letter-spacing:0;line-height:1.15;text-align:center;white-space:normal}
+    #dashboard-admin .custom-date-picker{grid-column:1/-1;width:100%;min-width:0}
   }
   body[dir="rtl"] .login-top-controls{left:max(12px,env(safe-area-inset-left))}
   </style>
@@ -1310,7 +1337,9 @@
   function saveSession(){try{localStorage.setItem(SESSION_KEY,JSON.stringify({user:currentUser,time:Date.now()}));}catch(e){}}
   function startAutoRefresh(r){if(autoRefreshTimer)clearInterval(autoRefreshTimer);autoRefreshTimer=setInterval(function(){if(r==='ops')loadMyPasses(false,true);else if(r==='admin')loadAdminData(true);},r==='admin'?30000:15000);}
   function toggleFullScreen(){const d=document,de=d.documentElement;const req=de.requestFullscreen||de.mozRequestFullScreen||de.webkitRequestFullScreen||de.msRequestFullscreen;const exit=d.exitFullscreen||d.mozCancelFullScreen||d.webkitExitFullscreen||d.msExitFullscreen;try{if(!d.fullscreenElement&&!d.mozFullScreenElement&&!d.webkitFullscreenElement&&!d.msFullscreenElement){if(req)Promise.resolve(req.call(de)).catch(function(e){console.warn('Fullscreen request failed:',e);});else alert("Fullscreen not supported");}else if(exit)Promise.resolve(exit.call(d)).catch(function(e){console.warn('Exiting fullscreen failed:',e);});}catch(e){console.warn('Fullscreen operation failed:',e);alert("Fullscreen is unavailable in this browser.");}}
-  function toggleSidebar(){const sb=document.getElementById('sidebar');if(sb)sb.classList.toggle('minimized');document.body.classList.toggle('sidebar-minimized');}
+  function toggleSidebar(){const sb=document.getElementById('sidebar');if(sb)sb.classList.toggle('minimized');document.body.classList.toggle('sidebar-minimized');const button=sb&&sb.querySelector('.toggle-btn');if(button)button.setAttribute('aria-expanded',String(!document.body.classList.contains('sidebar-minimized')));}
+  const appLayout=document.getElementById('app-layout');
+  if(appLayout)appLayout.addEventListener('click',function(event){if(event.target===appLayout&&window.innerWidth<=760&&!document.body.classList.contains('sidebar-minimized'))toggleSidebar();});
   function logout(){
     if(autoRefreshTimer)clearInterval(autoRefreshTimer);
     stopGuardCacheRefresh();
