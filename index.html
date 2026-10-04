@@ -472,6 +472,42 @@
     #dashboard-admin .btn-filter{width:100%;min-width:0;min-height:30px;padding:6px 2px;font-size:8px;letter-spacing:0;line-height:1.15;text-align:center;white-space:normal}
     #dashboard-admin .custom-date-picker{grid-column:1/-1;width:100%;min-width:0}
   }
+  @media(max-width:900px){
+    body.guard-scan-active #main-content{position:relative;z-index:1000000;isolation:auto}
+    #view-record-modal{align-items:flex-start}
+    #view-record-modal .record-modal-box{width:100%;max-width:none;min-width:0;max-height:calc(100dvh - 16px);overflow:hidden}
+    #view-record-modal .record-modal-header{flex:0 0 auto;padding:14px 16px}
+    #view-record-content{display:flex;flex-direction:column;gap:10px;width:100%;min-width:0;padding:12px;overflow-x:hidden;overflow-y:auto}
+    #view-record-content>div{grid-column:auto!important;min-width:0;max-width:100%;overflow-wrap:anywhere}
+    #view-record-content .record-img-box{grid-column:auto;min-width:0}
+    #view-record-content .modal-team-row{display:flex!important;flex-direction:column;align-items:stretch!important;gap:10px!important;width:100%;min-width:0}
+    #view-record-content .modal-team-row>div{width:100%;min-width:0;overflow-wrap:anywhere}
+    #view-record-content .modal-team-row>div:nth-child(2){justify-content:flex-start!important}
+    #view-record-content .modal-team-row>div:last-child{justify-content:flex-start!important}
+    #view-record-content .modal-team-row img{flex:0 0 52px}
+    #scan-result.fullscreen-scan{inset:0;left:0;width:100vw!important;height:100vh!important;height:100dvh!important;max-width:100vw;box-sizing:border-box;align-items:center;overflow-x:hidden;overflow-y:auto;padding:max(58px,env(safe-area-inset-top)) 12px max(18px,env(safe-area-inset-bottom))}
+    #scan-result.fullscreen-scan>div:first-child{top:max(12px,env(safe-area-inset-top));right:12px;left:auto;width:auto;max-width:calc(100% - 24px);min-width:0;display:flex;flex-wrap:wrap;justify-content:flex-end}
+    #scan-result.fullscreen-scan #r-decision{font-size:clamp(26px,8vw,38px)!important;overflow-wrap:anywhere}
+    #scan-result.fullscreen-scan>#r-reason{width:100%;overflow-wrap:anywhere}
+    #scan-result.fullscreen-scan #scan-result-top-info,
+    #scan-result.fullscreen-scan #guard-search-filter-container,
+    #scan-result.fullscreen-scan #guard-team-section,
+    #scan-result.fullscreen-scan #guard-details-preview{width:100%;min-width:0;max-width:100%}
+    #scan-result.fullscreen-scan #scan-result-top-info>div{width:100%;min-width:0;padding:12px!important;overflow-wrap:anywhere}
+    #scan-result.fullscreen-scan #scan-result-top-info strong{width:min(38%,130px)!important;vertical-align:top;overflow-wrap:anywhere}
+    #scan-result.fullscreen-scan #scan-result-top-info span{overflow-wrap:anywhere}
+    #scan-result.fullscreen-scan #guard-team-section>div{width:100%;min-width:0;max-width:100%;padding:10px!important}
+    #scan-result.fullscreen-scan #team-members-list-container{width:100%;min-width:0}
+    #scan-result.fullscreen-scan .team-member-scan-row{display:grid!important;grid-template-columns:minmax(0,1fr);gap:9px!important;width:100%;min-width:0;padding:10px!important;overflow-wrap:anywhere}
+    #scan-result.fullscreen-scan .team-member-scan-row>div:first-child{display:flex;align-items:center;flex-wrap:wrap;gap:8px!important;width:100%;min-width:0}
+    #scan-result.fullscreen-scan .team-member-scan-row>div:first-child>img{flex:0 0 40px}
+    #scan-result.fullscreen-scan .team-member-scan-row>div:first-child>div{flex:1 1 120px;min-width:0;overflow-wrap:anywhere}
+    #scan-result.fullscreen-scan .scan-member-gate-controls{display:grid!important;grid-template-columns:minmax(0,1fr) auto;align-items:center;width:100%;min-width:0;gap:8px}
+    #scan-result.fullscreen-scan .scan-member-gate-status{min-width:0;white-space:normal;overflow-wrap:anywhere;text-align:right}
+    #scan-result.fullscreen-scan .scan-member-gate-button{max-width:100%;white-space:normal}
+    #scan-result.fullscreen-scan .team-member-scan-row>input[type="checkbox"]{justify-self:start}
+    #scan-result.fullscreen-scan .device-photo-card{width:100%;min-width:0;max-width:100%;overflow-wrap:anywhere}
+  }
   body[dir="rtl"] .login-top-controls{left:max(12px,env(safe-area-inset-left))}
   </style>
   <style id="reference-background-colors">
