@@ -705,6 +705,14 @@
   function appsScriptJsonp(params,signal,timeoutMs){
     return appsScriptJsonpAttempt(params,signal,0,timeoutMs);
   }
+  function appsScriptReadOnly(params,timeoutMs){
+    return appsScriptJsonp(params,null,timeoutMs).catch(function(error){
+      if(!error||!/^The Apps Script API did not respond after /.test(error.message||''))throw error;
+      console.warn('[Apps Script] Read-only request timed out; retrying once.',error);
+      return new Promise(function(resolve){setTimeout(resolve,400);})
+        .then(function(){return appsScriptJsonp(params,null,timeoutMs);});
+    });
+  }
   function appsScriptJsonpAttempt(params,signal,attempt,timeoutMs){
     return new Promise(function(resolve,reject){
       var callback='noonApiCallback_'+Date.now()+'_'+Math.random().toString(36).slice(2);
@@ -1527,19 +1535,11 @@
       let d=Array.from(guardPassCache.values());
       let ms=findManualPassMatches(d,q);
       if(ms.length===0){
-        const res=await fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'get_all'}),redirect:'follow',cache:'no-store'});
-        if(!res.ok)throw new Error('Pass search failed (HTTP '+res.status+').');
-        const raw=convertDriveUrls(await res.json());
-        const arr=Array.isArray(raw)?raw:(raw&&Array.isArray(raw.passes)?raw.passes:null);
-        if(!arr)throw new Error('The server returned an invalid pass-search response.');
+        const arr=await appsScriptReadOnly({action:'search_passes',query:q},15000);
+        if(!Array.isArray(arr))throw new Error('The server returned an invalid pass-search response.');
         if(searchSequence!==manualPassSearchSequence)return;
-        guardPassCache.clear();
-        arr.forEach(function(pass){if(pass&&pass.UniqueID)guardPassCache.set(String(pass.UniqueID).toUpperCase(),pass);});
-        guardCacheLoaded=true;
-        try{localStorage.setItem('cached_guard_passes',JSON.stringify(arr));}catch(storageError){console.warn('[Manual pass search] Could not save refreshed pass cache.',storageError);}
-        if(currentUser&&currentUser.role==='guard')updateControlRoomStats();
         d=arr;
-        ms=findManualPassMatches(d,q);
+        ms=d;
       }
       if(searchSequence!==manualPassSearchSequence)return;
       if(ms.length===0){rd.innerHTML='<p style="color:var(--danger); font-size:12px;">No passes found.</p>';return;}
@@ -2459,6 +2459,7 @@
     const r=globalAdminData.find(function(x){return String(x.UniqueID)===String(id);})||myPassesData.find(function(x){return String(x.UniqueID)===String(id);})||(guardPassCache&&guardPassCache.get(String(id).toUpperCase()));
     if(!r)return;
     let rType=String(r.Type||'');
+    const validityPeriod=formatToDDMMYYYY(r.StartDate)+' - '+formatToDDMMYYYY(r.EndDate||r.StartDate);
     let displayHostName=(r.HostName||'-').split('||PIN:')[0];
     let actualPin=(r.HostName||'').includes('||PIN:')?(r.HostName||'').split('||PIN:')[1]:null;
     let h='<div><strong>'+t('lbl_host_name')+'</strong>'+displayHostName+'</div>';
@@ -2467,7 +2468,7 @@
       let actionBtn=actualPin?'<button onclick="adminResetPin(\''+r.HostEmail+'\')" class="btn-primary btn-danger btn-sm" style="width:auto; padding:4px 10px; font-size:11px;">🔄 RESET</button>':'';
       h+='<div style="margin-bottom:10px;"><strong>ACCOUNT PIN</strong><div style="display:flex; gap:10px; align-items:center; margin-top:5px;"><span id="admin-view-pin" style="color:'+(actualPin?'var(--danger)':'var(--text-muted)')+'; font-weight:bold; font-size:16px; letter-spacing: 2px; background:rgba(0,0,0,0.3); padding:4px 10px; border-radius:4px;">****</span><button onclick="document.getElementById(\'admin-view-pin\').innerText=\''+pinDisplay+'\'; this.style.display=\'none\';" class="btn-primary btn-outline btn-sm" style="width:auto; padding:4px 10px; font-size:11px;">👁️ SHOW</button>'+actionBtn+'</div></div>';
     }
-    h+='<div><strong>'+t('lbl_host_email')+'</strong>'+(r.HostEmail||'-')+'</div><div><strong>'+t('visitor_name')+'</strong>'+(r.VisitorName||'-')+'</div><div><strong>'+t('type_header')+'</strong>'+(t(rType.toLowerCase())||'-')+'</div><div><strong>'+t('location_label')+'</strong>'+(r.Location||'-')+'</div><div><strong>'+t('lbl_validity')+'</strong>'+(rType==='Visitor'?formatToDDMMYYYY(r.StartDate):formatToDDMMYYYY(r.StartDate)+' - '+formatToDDMMYYYY(r.EndDate||r.StartDate))+'</div><div><strong>'+t('slp_ticket')+'</strong>'+(r.SlpTicketNo||'-')+'</div><div><strong>'+t('contact_no')+'</strong>'+(r.ContactNo||'-')+'</div><div><strong>IMEI NUMBER</strong>'+(r.ImeiNumber||'-')+'</div>';
+    h+='<div><strong>'+t('lbl_host_email')+'</strong>'+(r.HostEmail||'-')+'</div><div><strong>'+t('visitor_name')+'</strong>'+(r.VisitorName||'-')+'</div><div><strong>'+t('type_header')+'</strong>'+(t(rType.toLowerCase())||'-')+'</div><div><strong>'+t('location_label')+'</strong>'+(r.Location||'-')+'</div><div><strong>'+t('lbl_validity')+'</strong>'+validityPeriod+'</div><div><strong>'+t('slp_ticket')+'</strong>'+(r.SlpTicketNo||'-')+'</div><div><strong>'+t('contact_no')+'</strong>'+(r.ContactNo||'-')+'</div><div><strong>IMEI NUMBER</strong>'+(r.ImeiNumber||'-')+'</div>';
     if(rType==='Visitor')h+='<div><strong>'+t('invited_by')+'</strong>'+(r.InvitedBy||'-')+'</div>';
     else h+='<div><strong>'+t('project_name')+'</strong>'+(r.ProjectName||'-')+'</div><div><strong>'+t('company_name')+'</strong>'+(r.CompanyName||'-')+'</div><div><strong>'+t('project_manager')+'</strong>'+(r.ProjectManager||'-')+'</div><div><strong>'+t('fm_poc')+'</strong>'+(r.FmPoc||'-')+'</div>';
     let fmpocStr=String(r.FmPoc||'');
@@ -2732,7 +2733,7 @@
       const verifyRequest=cachedData
         ?{action:'get_gate_verification',id:decodedText,passType:cachedData.Type}
         :{action:'get_single',id:decodedText};
-      const resData=await appsScriptJsonp(verifyRequest,null,15000);
+      const resData=await appsScriptReadOnly(verifyRequest,15000);
       if(resData&&!resData.error){
         data=cachedData?Object.assign({},cachedData,resData):convertDriveUrls(resData);
         guardPassCache.set(upperId,data);
