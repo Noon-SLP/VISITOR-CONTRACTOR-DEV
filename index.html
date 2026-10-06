@@ -1183,6 +1183,17 @@
     localStorage.setItem(key,until);
     sessionStorage.setItem(key,until);
   }
+  function sanitizeCachedPassPins(passes){
+    if(!Array.isArray(passes))return passes;
+    passes.forEach(function(pass){
+      if(!pass||typeof pass.HostName!=='string')return;
+      const legacy=pass.HostName.match(/^(.*?)\|\|PIN:\d{4}$/);
+      if(!legacy)return;
+      pass.HostName=legacy[1];
+      pass.HasAccountPIN=true;
+    });
+    return passes;
+  }
 
   async function confirmPinCreate(){
     let p=document.getElementById('new-pin-input').value.trim();
@@ -1190,11 +1201,12 @@
     userSecurityPin=p;
     let e=currentUser.email;
     if(currentUser.role==='admin'){const ei=document.getElementById('req-admin-email');if(ei&&ei.value)e=ei.value.toLowerCase().trim();}
-    localStorage.setItem('user_pin_'+e,p);
+    localStorage.removeItem('user_pin_'+e);
+    sessionStorage.removeItem('user_pin_'+e);
     rememberPinUnlock(e);
     document.getElementById('pin-create-modal').classList.add('hidden');
     if(pinCreateMode==='reset'){
-      try{await fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'update_pin',email:e,pin:p}),mode:'no-cors'});}catch(er){}
+      try{await appsScriptAction({action:'update_pin',email:e,pin:p});}catch(er){clearPinUnlock(e);alert('PIN could not be saved: '+(er&&er.message?er.message:'Please try again.'));document.getElementById('pin-create-modal').classList.remove('hidden');return;}
       let data=lockedPassesData;
       try{const c=localStorage.getItem('cached_passes_'+e);if(c){const a=JSON.parse(c);if(Array.isArray(a))data=a;}}catch(err){}
       renderMyPasses(Array.isArray(data)?data:[]);
@@ -1202,26 +1214,34 @@
     }else{submitRequest();}
   }
   function closePinCreate(){document.getElementById('pin-create-modal').classList.add('hidden');}
-  function confirmPinVerify(){
+  async function confirmPinVerify(){
     let p=document.getElementById('verify-pin-input').value.trim();
     let e=currentUser.email;
     if(currentUser.role==='admin'){const ei=document.getElementById('req-admin-email');if(ei&&ei.value)e=ei.value.toLowerCase().trim();}
-    let bp=null;
-    if(Array.isArray(lockedPassesData)){for(let i=lockedPassesData.length-1;i>=0;i--){if(lockedPassesData[i].HostName&&lockedPassesData[i].HostName.includes('||PIN:')){bp=lockedPassesData[i].HostName.split('||PIN:')[1];break;}}}
-    const cachedPin=localStorage.getItem('user_pin_'+e);
-    if(p===bp||(cachedPin&&p===cachedPin)){
-      userSecurityPin=p;localStorage.setItem('user_pin_'+e,p);rememberPinUnlock(e);
-      document.getElementById('pin-verify-modal').classList.add('hidden');
-      let data=lockedPassesData;
-      try{const c=localStorage.getItem('cached_passes_'+e);if(c){const a=JSON.parse(c);if(Array.isArray(a))data=a;}}catch(err){}
-      renderMyPasses(Array.isArray(data)?data:[]);
-    }else{
-      document.getElementById('pin-error-msg').classList.remove('hidden');
+    if(!/^\d{4}$/.test(p)){document.getElementById('pin-error-msg').classList.remove('hidden');return;}
+    const button=document.querySelector('#pin-verify-modal button[onclick="confirmPinVerify()"]');
+    if(button)button.disabled=true;
+    try{
+      const result=await appsScriptReadOnly({action:'verify_account_pin',email:e,pin:p},12000);
+      if(result&&result.configured&&result.valid){
+        userSecurityPin=p;localStorage.removeItem('user_pin_'+e);sessionStorage.removeItem('user_pin_'+e);rememberPinUnlock(e);
+        document.getElementById('pin-verify-modal').classList.add('hidden');
+        let data=lockedPassesData;
+        try{const c=localStorage.getItem('cached_passes_'+e);if(c){const a=JSON.parse(c);if(Array.isArray(a))data=a;}}catch(err){}
+        renderMyPasses(Array.isArray(data)?data:[]);
+      }else{
+        document.getElementById('pin-error-msg').classList.remove('hidden');
+      }
+    }catch(error){
+      console.error('[PIN verification] Server verification failed.',error);
+      alert('Could not verify your PIN because the server is unavailable. Please try again.');
+    }finally{
+      if(button)button.disabled=false;
     }
   }
   function closePinVerify(){document.getElementById('pin-verify-modal').classList.add('hidden');const ld=document.getElementById('my-passes-list');if(ld)ld.innerHTML='';}
 
-  function processAndRenderPasses(d,e,s){
+  async function processAndRenderPasses(d,e,s){
     try{
       if(currentUser&&currentUser.role==='admin'){renderMyPasses(d);return;}
       let ha=false;
@@ -1233,28 +1253,30 @@
         let ic=(tn>en)||ss==='Rejected'||ss==='Completed';
         if(!ic)ha=true;
       });}
-      let bp=null;
-      if(Array.isArray(d)){for(let i=d.length-1;i>=0;i--){if(d[i].HostName&&d[i].HostName.includes('||PIN:')){bp=d[i].HostName.split('||PIN:')[1];break;}}}
+      let hasAccountPin=Array.isArray(d)&&d.some(function(pass){return !!pass.HasAccountPIN||!!(pass.HostName&&String(pass.HostName).includes('||PIN:'));});
       let lp=localStorage.getItem('user_pin_'+e);
-      if(!ha&&d.length>0){renderMyPasses(d);return;}
       if(!ha&&d.length===0){renderMyPasses(d);return;}
-      if(!bp&&lp){bp=lp;fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'update_pin',email:e,pin:lp}),mode:'no-cors'}).catch(function(er){});}
-      if(bp&&!isPinUnlocked(e)){
+      if(hasAccountPin&&!isPinUnlocked(e)){
         lockedPassesData=d;
         const vm=document.getElementById('pin-verify-modal');
         if(!s&&vm){vm.classList.remove('hidden');document.getElementById('pin-error-msg').classList.add('hidden');document.getElementById('verify-pin-input').value='';}
         const ld=document.getElementById('my-passes-list');if(ld)ld.innerHTML='';
         return;
       }
-      if(!bp&&lp&&Array.isArray(d)&&d.length>0){userSecurityPin=lp;renderMyPasses(d);return;}
-      if(!bp&&!lp&&Array.isArray(d)&&d.length>0){
+      if(!ha){renderMyPasses(d);return;}
+      if(!hasAccountPin&&lp&&Array.isArray(d)&&d.length>0){
+        await appsScriptAction({action:'update_pin',email:e,pin:lp});
+        localStorage.removeItem('user_pin_'+e);sessionStorage.removeItem('user_pin_'+e);
+        userSecurityPin=lp;renderMyPasses(d);return;
+      }
+      if(!hasAccountPin&&!lp&&Array.isArray(d)&&d.length>0){
         lockedPassesData=d;
         const cm=document.getElementById('pin-create-modal');
         if(!s&&cm){pinCreateMode='reset';cm.classList.remove('hidden');document.getElementById('new-pin-input').value='';}
         const ld=document.getElementById('my-passes-list');if(ld)ld.innerHTML='';
         return;
       }
-      userSecurityPin=bp||lp;renderMyPasses(d);
+      userSecurityPin=lp;renderMyPasses(d);
     }finally{
       endPleaseWait();
     }
@@ -1304,8 +1326,8 @@
           const c=localStorage.getItem('cached_admin_data');
           if(c){
             const parsed=JSON.parse(c);
-            if(Array.isArray(parsed)){globalAdminHistory=[];renderAdminData(parsed.slice().reverse());}
-            else if(parsed&&Array.isArray(parsed.passes)){globalAdminHistory=Array.isArray(parsed.history)?parsed.history:[];renderAdminData(parsed.passes.slice().reverse());}
+            if(Array.isArray(parsed)){sanitizeCachedPassPins(parsed);localStorage.setItem('cached_admin_data',JSON.stringify(parsed));globalAdminHistory=[];renderAdminData(parsed.slice().reverse());}
+            else if(parsed&&Array.isArray(parsed.passes)){sanitizeCachedPassPins(parsed.passes);localStorage.setItem('cached_admin_data',JSON.stringify(parsed));globalAdminHistory=Array.isArray(parsed.history)?parsed.history:[];renderAdminData(parsed.passes.slice().reverse());}
           }
         }catch(e){}
 
@@ -1323,13 +1345,13 @@
           switchMainView('ops');
           const hasCache=hasCachedPasses(currentUser.email);
           if(!hasCache)beginPleaseWait('PLEASE WAIT...');
-          try{const c=localStorage.getItem('cached_passes_'+currentUser.email);if(c){const a=JSON.parse(c);if(Array.isArray(a))lockedPassesData=a;}}catch(e){}
+          try{const c=localStorage.getItem('cached_passes_'+currentUser.email);if(c){const a=sanitizeCachedPassPins(JSON.parse(c));if(Array.isArray(a)){lockedPassesData=a;localStorage.setItem('cached_passes_'+currentUser.email,JSON.stringify(a));}}}catch(e){}
 
           let hasPinInCachedPasses=false;
           if(Array.isArray(lockedPassesData)){
             for(let i=0;i<lockedPassesData.length;i++){
               const p=lockedPassesData[i];
-              if(p && p.HostName && String(p.HostName).includes('||PIN:')){hasPinInCachedPasses=true;break;}
+              if(p && (p.HasAccountPIN || (p.HostName && String(p.HostName).includes('||PIN:')))){hasPinInCachedPasses=true;break;}
             }
           }
 
@@ -1604,11 +1626,12 @@
     let existingPasses=[];
     try{existingPasses=JSON.parse(localStorage.getItem(cachedKey))||[];}catch(e){}
     let localPin=localStorage.getItem('user_pin_'+hMail);
+    let accountPin='';
     if(currentUser&&currentUser.role==='admin'){
-      if(userSecurityPin||localPin){hName=hName+"||PIN:"+(userSecurityPin||localPin);}
+      accountPin=userSecurityPin||localPin||'';
     }else{
       if(!localPin&&!userSecurityPin){pinCreateMode='submit';document.getElementById('pin-create-modal').classList.remove('hidden');return;}
-      let activePin=userSecurityPin||localPin;hName=hName+"||PIN:"+activePin;
+      accountPin=userSecurityPin||localPin;
     }
     const tempId='NOON-'+Math.floor(100000+Math.random()*900000);
     let tempPass={UniqueID:tempId,VisitorName:vName,Type:type,Location:document.getElementById('req-location').value,StartDate:startDateVal,EndDate:endDateVal,Status:'Pending',HostEmail:hMail};
@@ -1621,7 +1644,7 @@
     document.getElementById('req-lead-device-type').value="None";toggleLeadDeviceInput();
     clearCapturedData('iqama');clearCapturedData('selfie');clearCapturedData('imeiphoto');clearCapturedData('vehicle');
     teamList=[];currentTeamCounter=1;renderTeamRoster();hideTeamEntry();
-    const payload={action:'create',UniqueID:tempId,hostName:hName,hostEmail:hMail,visitorName:vName,type:type,location:document.getElementById('req-location').value,startDate:startDateVal,endDate:endDateVal,iqamaBase64:iB64,iqamaMimeType:iMime,selfieBase64:sB64,selfieMimeType:sMime,imeiNumber:leadImeiVal,imeiPhotoBase64:imB64,fmPoc:fmPocVal,vehicleBase64:vB64,vehicleMimeType:vMime,vehiclePlateNo:'',team:cleanTeam,slpTicketNo:type==='Visitor'?document.getElementById('req-vis-slp').value:document.getElementById('req-con-slp').value,contactNo:type==='Visitor'?document.getElementById('req-vis-contact').value:document.getElementById('req-con-contact').value,invitedBy:type==='Visitor'?document.getElementById('req-vis-invitedby').value:'',projectName:type==='Contractor'?document.getElementById('req-con-project').value:'',companyName:type==='Contractor'?document.getElementById('req-con-company').value:'',projectManager:type==='Contractor'?document.getElementById('req-con-pm').value:''};
+    const payload={action:'create',UniqueID:tempId,hostName:hName,hostEmail:hMail,accountPin:accountPin,visitorName:vName,type:type,location:document.getElementById('req-location').value,startDate:startDateVal,endDate:endDateVal,iqamaBase64:iB64,iqamaMimeType:iMime,selfieBase64:sB64,selfieMimeType:sMime,imeiNumber:leadImeiVal,imeiPhotoBase64:imB64,fmPoc:fmPocVal,vehicleBase64:vB64,vehicleMimeType:vMime,vehiclePlateNo:'',team:cleanTeam,slpTicketNo:type==='Visitor'?document.getElementById('req-vis-slp').value:document.getElementById('req-con-slp').value,contactNo:type==='Visitor'?document.getElementById('req-vis-contact').value:document.getElementById('req-con-contact').value,invitedBy:type==='Visitor'?document.getElementById('req-vis-invitedby').value:'',projectName:type==='Contractor'?document.getElementById('req-con-project').value:'',companyName:type==='Contractor'?document.getElementById('req-con-company').value:'',projectManager:type==='Contractor'?document.getElementById('req-con-pm').value:''};
     if(ka){
       btn.innerText="SUBMITTING...";btn.disabled=true;
       beginPleaseWait('PLEASE WAIT...');
@@ -1700,7 +1723,7 @@
     }
     const cachedKey='cached_passes_'+targetEmail,cached=localStorage.getItem(cachedKey);
     let hasCached=false;
-    if(cached){try{const parsed=JSON.parse(cached);if(Array.isArray(parsed)){hasCached=true;if(!isSilent)processAndRenderPasses(parsed,targetEmail,false);}else localStorage.removeItem(cachedKey);}catch(e){localStorage.removeItem(cachedKey);}}
+    if(cached){try{const parsed=sanitizeCachedPassPins(JSON.parse(cached));if(Array.isArray(parsed)){hasCached=true;localStorage.setItem(cachedKey,JSON.stringify(parsed));if(!isSilent)await processAndRenderPasses(parsed,targetEmail,false);}else localStorage.removeItem(cachedKey);}catch(e){localStorage.removeItem(cachedKey);}}
     if(!hasCached&&!isSilent)listDiv.innerHTML='<p style="color:var(--text-muted);font-size:13px;">'+t("fetching")+'</p>';
     try{
       const controller=new AbortController();
@@ -1713,21 +1736,14 @@
         localStorage.setItem(cachedKey,JSON.stringify(data));
         lockedPassesData=data;
         if(!isSilent){
-          processAndRenderPasses(data,targetEmail,false);
+          await processAndRenderPasses(data,targetEmail,false);
         }else{
           const vm=document.getElementById('pin-verify-modal');
           const cm=document.getElementById('pin-create-modal');
           const pinOpen=(vm&&!vm.classList.contains('hidden'))||(cm&&!cm.classList.contains('hidden'));
           if(!pinOpen){
-            let bp=null;
-            for(let i=data.length-1;i>=0;i--){
-              if(data[i]&&data[i].HostName&&String(data[i].HostName).includes('||PIN:')){
-                bp=String(data[i].HostName).split('||PIN:')[1];
-                break;
-              }
-            }
-            const lp=localStorage.getItem('user_pin_'+targetEmail);
-            if(bp&&!isPinUnlocked(targetEmail)){
+            const hasAccountPin=data.some(function(pass){return !!pass.HasAccountPIN||!!(pass.HostName&&String(pass.HostName).includes('||PIN:'));});
+            if(hasAccountPin&&!isPinUnlocked(targetEmail)){
               lockedPassesData=data;
               if(vm){
                 vm.classList.remove('hidden');
@@ -1737,7 +1753,7 @@
               }
               listDiv.innerHTML='';
             }else{
-              if(bp)userSecurityPin=bp||lp;
+              userSecurityPin=localStorage.getItem('user_pin_'+targetEmail);
               renderMyPasses(data);myPassesData=[].concat(data).reverse();
             }
           }
@@ -2461,12 +2477,11 @@
     let rType=String(r.Type||'');
     const validityPeriod=formatToDDMMYYYY(r.StartDate)+' - '+formatToDDMMYYYY(r.EndDate||r.StartDate);
     let displayHostName=(r.HostName||'-').split('||PIN:')[0];
-    let actualPin=(r.HostName||'').includes('||PIN:')?(r.HostName||'').split('||PIN:')[1]:null;
+    let hasAccountPin=!!r.HasAccountPIN||/\|\|PIN:\d{4}$/.test(String(r.HostName||''));
     let h='<div><strong>'+t('lbl_host_name')+'</strong>'+displayHostName+'</div>';
     if(currentUser&&currentUser.role==='admin'){
-      let pinDisplay=actualPin?actualPin:'NOT SET';
-      let actionBtn=actualPin?'<button onclick="adminResetPin(\''+r.HostEmail+'\')" class="btn-primary btn-danger btn-sm" style="width:auto; padding:4px 10px; font-size:11px;">🔄 RESET</button>':'';
-      h+='<div style="margin-bottom:10px;"><strong>ACCOUNT PIN</strong><div style="display:flex; gap:10px; align-items:center; margin-top:5px;"><span id="admin-view-pin" style="color:'+(actualPin?'var(--danger)':'var(--text-muted)')+'; font-weight:bold; font-size:16px; letter-spacing: 2px; background:rgba(0,0,0,0.3); padding:4px 10px; border-radius:4px;">****</span><button onclick="document.getElementById(\'admin-view-pin\').innerText=\''+pinDisplay+'\'; this.style.display=\'none\';" class="btn-primary btn-outline btn-sm" style="width:auto; padding:4px 10px; font-size:11px;">👁️ SHOW</button>'+actionBtn+'</div></div>';
+      let actionBtn=hasAccountPin?'<button onclick="adminResetPin(\''+r.HostEmail+'\')" class="btn-primary btn-danger btn-sm" style="width:auto; padding:4px 10px; font-size:11px;">🔄 RESET</button>':'';
+      h+='<div style="margin-bottom:10px;"><strong>ACCOUNT PIN</strong><div style="display:flex; gap:10px; align-items:center; margin-top:5px;"><span style="color:var(--text-muted);font-weight:bold;font-size:13px;">'+(hasAccountPin?'SET (HIDDEN)':'NOT SET')+'</span>'+actionBtn+'</div></div>';
     }
     h+='<div><strong>'+t('lbl_host_email')+'</strong>'+(r.HostEmail||'-')+'</div><div><strong>'+t('visitor_name')+'</strong>'+(r.VisitorName||'-')+'</div><div><strong>'+t('type_header')+'</strong>'+(t(rType.toLowerCase())||'-')+'</div><div><strong>'+t('location_label')+'</strong>'+(r.Location||'-')+'</div><div><strong>'+t('lbl_validity')+'</strong>'+validityPeriod+'</div><div><strong>'+t('slp_ticket')+'</strong>'+(r.SlpTicketNo||'-')+'</div><div><strong>'+t('contact_no')+'</strong>'+(r.ContactNo||'-')+'</div><div><strong>IMEI NUMBER</strong>'+(r.ImeiNumber||'-')+'</div>';
     if(rType==='Visitor')h+='<div><strong>'+t('invited_by')+'</strong>'+(r.InvitedBy||'-')+'</div>';
@@ -3078,7 +3093,7 @@
       showScanResult('SCAN ERROR','Could not process this QR code. Please try scanning again.','bg-red',false);
     });
   }
-  async function submitAddMorePeople(keepAdding){keepAdding=!!keepAdding;if(addMoreTeamList.length===0)return alert(addMemberText("empty"));if(addMoreTeamList.length>10)return alert(addMemberText("limit"));if(!keepAdding&&!confirm(addMemberText("confirm")))return;let memberCount=addMoreTeamList.length;let btn=document.getElementById("btn-submit-add-more");btn.innerText=currentLang==='ar'?'جارٍ الإرسال...':'SUBMITTING...';btn.disabled=true;let cleanTeam=addMoreTeamList.map(function(m){return {iqama:m.rawIqama,selfie:m.rawSelfie,devicePhoto:m.rawDevicePhoto,name:m.name,iqamaText:m.iqamaText,deviceString:m.deviceType!=="None"?m.deviceType+' ('+m.deviceId+')':"None"};});let payload={action:"add_team_members",id:addMorePassId,team:JSON.stringify(cleanTeam)};beginPleaseWait('PLEASE WAIT...');try{await submitAppsScriptForm(payload);await loadMyPasses(true,true);addMoreTeamList=[];renderAddTeamRoster();if(!keepAdding){closeAddMoreModal();}else{startAddMoreTimer();}endPleaseWait();alert(addMemberNotice(memberCount));}catch(e){endPleaseWait();console.error("[Add members] Submission failed.",e);alert(addMemberText("failed"));}finally{btn.innerText=t("submit_send_approval");btn.disabled=false;}}
+  async function submitAddMorePeople(keepAdding){keepAdding=!!keepAdding;if(addMoreTeamList.length===0)return alert(addMemberText("empty"));if(addMoreTeamList.length>10)return alert(addMemberText("limit"));if(!keepAdding&&!confirm(addMemberText("confirm")))return;let memberCount=addMoreTeamList.length;let btn=document.getElementById("btn-submit-add-more");btn.innerText=currentLang==='ar'?'جارٍ الإرسال...':'SUBMITTING...';btn.disabled=true;let cleanTeam=addMoreTeamList.map(function(m){return {iqama:m.rawIqama,selfie:m.rawSelfie,devicePhoto:m.rawDevicePhoto,name:m.name,iqamaText:m.iqamaText,deviceString:m.deviceType!=="None"?m.deviceType+' ('+m.deviceId+')':"None"};});let payload={action:"add_team_members",id:addMorePassId,team:JSON.stringify(cleanTeam)};beginPleaseWait('PLEASE WAIT...');try{let submitResult=await submitAppsScriptForm(payload);await loadMyPasses(true,true);addMoreTeamList=[];renderAddTeamRoster();if(!keepAdding){closeAddMoreModal();}else{startAddMoreTimer();}endPleaseWait();let notificationWarning=submitResult&&submitResult.notificationSent===false?(currentLang==='ar'?'تعذر إرسال إشعار البريد الإلكتروني. يرجى التواصل مع المسؤول.':'Email notification could not be sent. Please contact the administrator.'):'';alert(addMemberNotice(memberCount)+(notificationWarning?'\n\n'+notificationWarning:''));}catch(e){endPleaseWait();console.error("[Add members] Submission failed.",e);alert(addMemberText("failed"));}finally{btn.innerText=t("submit_send_approval");btn.disabled=false;}}
 
   document.addEventListener('DOMContentLoaded',function(){
     const em=document.getElementById('lo-mail');
