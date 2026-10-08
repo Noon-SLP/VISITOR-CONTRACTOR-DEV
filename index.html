@@ -694,7 +694,7 @@
   <script>
     async function adminApproveLeadDeviceAdd(passId,button){if(!confirm('Approve the lead additional device?'))return;if(button)button.disabled=true;try{await appsScriptAction({action:'approve_lead_device_add',id:passId});localStorage.removeItem('cached_admin_data');refreshMemberView(passId,'device-add');}catch(error){alert('Lead device approval failed: '+error.message);if(button)button.disabled=false;}}
     async function adminRejectLeadDeviceAdd(passId,button){if(!confirm('Reject the lead additional device request?'))return;if(button)button.disabled=true;try{await appsScriptAction({action:'reject_lead_device_add',id:passId});localStorage.removeItem('cached_admin_data');refreshMemberView(passId,'device-add');}catch(error){alert('Lead device rejection failed: '+error.message);if(button)button.disabled=false;}}
-  const SCRIPT_URL='https://script.google.com/macros/s/AKfycby6SBhfL178bNFOQbOeMldvLGfjcf5uP2eB4_MvgZhVhRGS8E5h6EKcA04r8ngrGi9E/exec';
+  const SCRIPT_URL='https://script.google.com/macros/s/AKfycbxyQ4kGKgsNS076UvKCk0ezCVSzp2DlqYobiprd8Qrvt5oJBWrVlszD7-jm2mOYtsTUvg/exec';
   function freshScriptUrl(){return SCRIPT_URL+'?cacheBust='+Date.now()+'-'+Math.random().toString(36).slice(2);}
   function appsScriptAction(params){
     return appsScriptJsonp(params).then(function(result){
