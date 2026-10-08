@@ -723,7 +723,7 @@
       if(query.length>1800)return reject(new Error('This request is too large for the cross-origin API. Please retry with fewer items.'));
       var script=document.createElement('script');
       var settled=false;
-      var requestTimeout=Number(timeoutMs)||60000;
+      var requestTimeout=Number(timeoutMs)||15000;
       var timeout=setTimeout(function(){finish(new Error('The Apps Script API did not respond after '+Math.round(requestTimeout/1000)+' seconds. Check the connection and try again.'));},requestTimeout);
       function finish(error,result){
         if(settled)return;
@@ -1550,11 +1550,30 @@
 
   let manualPassSearchSequence=0;
   function findManualPassMatches(passes,query){
+    if(!Array.isArray(passes)||!passes.length)return [];
     return passes.filter(function(pass){
       if(!pass||!pass.UniqueID||String(pass.Status||'')==='Rejected')return false;
-      let fields=String((pass.VisitorName||'')+" "+(pass.UniqueID||'')+" "+(pass.SlpTicketNo||'')+" "+(pass.ContactNo||'')+" "+(pass.HostEmail||'')).toLowerCase();
+      let fields=String((pass.VisitorName||'')+" "+(pass.UniqueID||'')+" "+(pass.SlpTicketNo||'')+" "+(pass.ContactNo||'')+" "+(pass.HostEmail||'')+" "+(pass.HostName||'')).toLowerCase();
       return fields.indexOf(query)!==-1;
     }).slice(0,5);
+  }
+  function getManualSearchPool(){
+    let pool=[];
+    try{
+      if(guardPassCache&&guardPassCache.size){pool=pool.concat(Array.from(guardPassCache.values()));}
+    }catch(e){}
+    try{
+      const cachedGuard=localStorage.getItem('cached_guard_passes');
+      if(cachedGuard){const parsed=JSON.parse(cachedGuard);if(Array.isArray(parsed))pool=pool.concat(parsed);}
+    }catch(e){}
+    try{
+      const cachedAdmin=localStorage.getItem('cached_admin_data');
+      if(cachedAdmin){const parsed=JSON.parse(cachedAdmin);const list=Array.isArray(parsed)?parsed:Array.isArray(parsed&&parsed.passes)?parsed.passes:[];if(Array.isArray(list))pool=pool.concat(list);}
+    }catch(e){}
+    return pool.filter(function(item,idx,array){
+      if(!item||!item.UniqueID)return false;
+      return array.findIndex(function(candidate){return candidate&&candidate.UniqueID===item.UniqueID;})===idx;
+    });
   }
   async function performManualSearch(){
     let q=document.getElementById('guard-search-input').value.toLowerCase().trim();
@@ -1563,14 +1582,19 @@
     if(!q){rd.innerHTML='';return;}
     rd.innerHTML='<p style="color:var(--text-muted); font-size:12px;">Searching...</p>';
     try{
-      let d=Array.from(guardPassCache.values());
+      let d=getManualSearchPool();
       let ms=findManualPassMatches(d,q);
+      if(searchSequence!==manualPassSearchSequence)return;
       if(ms.length===0){
-        const arr=await appsScriptReadOnly({action:'search_passes',query:q},15000);
-        if(!Array.isArray(arr))throw new Error('The server returned an invalid pass-search response.');
-        if(searchSequence!==manualPassSearchSequence)return;
-        d=arr;
-        ms=d;
+        try{
+          const arr=await appsScriptReadOnly({action:'search_passes',query:q},30000);
+          if(Array.isArray(arr)){
+            d=arr;
+            ms=findManualPassMatches(d,q);
+          }
+        }catch(error){
+          console.warn('[Manual search] Apps Script search timed out; falling back to cached guard data only.', error);
+        }
       }
       if(searchSequence!==manualPassSearchSequence)return;
       if(ms.length===0){rd.innerHTML='<p style="color:var(--danger); font-size:12px;">No passes found.</p>';return;}
@@ -3052,7 +3076,7 @@
     }
     return xhr.then(function(){
       if(payload.action==='add_team_members'){
-        var deadline=Date.now()+120000;
+        var deadline=Date.now()+15000;
         var pollDelay=500;
         function pollOperation(){
           return appsScriptJsonp({action:'get_operation_result',requestId:payload.requestId}).then(function(result){
@@ -3060,25 +3084,25 @@
             if(result&&result.status==='error')throw new Error(result.message||'The server could not save the new team members.');
             if(Date.now()>=deadline)throw new Error('The request was sent, but its result could not be confirmed. Refresh the pass before retrying.');
             var delay=pollDelay;
-            pollDelay=Math.min(pollDelay*2,4000);
+            pollDelay=Math.min(pollDelay*2,2000);
             return wait(delay).then(pollOperation);
           },function(){
             if(Date.now()>=deadline)throw new Error('The request was sent, but its result could not be confirmed. Refresh the pass before retrying.');
             var delay=pollDelay;
-            pollDelay=Math.min(pollDelay*2,4000);
+            pollDelay=Math.min(pollDelay*2,2000);
             return wait(delay).then(pollOperation);
           });
         }
         return pollOperation();
       }
-      var deadline=Date.now()+120000;
-      var pollDelay=1000;
+        var deadline=Date.now()+15000;
+        var pollDelay=500;
       function scheduleNext(){
         if(Date.now()>=deadline){
           throw new Error('The update may have been saved, but the server did not confirm it. Refresh the pass before retrying to avoid a duplicate.');
         }
         return wait(Math.min(pollDelay,deadline-Date.now())).then(function(){
-          pollDelay=Math.min(pollDelay*2,8000);
+            pollDelay=Math.min(pollDelay*2,4000);
           return poll();
         });
       }
