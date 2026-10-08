@@ -695,11 +695,38 @@
   <script>
     async function adminApproveLeadDeviceAdd(passId,button){if(!confirm('Approve the lead additional device?'))return;if(button)button.disabled=true;try{await appsScriptAction({action:'approve_lead_device_add',id:passId});localStorage.removeItem('cached_admin_data');refreshMemberView(passId,'device-add');}catch(error){alert('Lead device approval failed: '+error.message);if(button)button.disabled=false;}}
     async function adminRejectLeadDeviceAdd(passId,button){if(!confirm('Reject the lead additional device request?'))return;if(button)button.disabled=true;try{await appsScriptAction({action:'reject_lead_device_add',id:passId});localStorage.removeItem('cached_admin_data');refreshMemberView(passId,'device-add');}catch(error){alert('Lead device rejection failed: '+error.message);if(button)button.disabled=false;}}
-  const SCRIPT_URL='https://script.google.com/macros/s/AKfycby6SBhfL178bNFOQbOeMldvLGfjcf5uP2eB4_MvgZhVhRGS8E5h6EKcA04r8ngrGi9E/exec';
+  const SCRIPT_URL='https://script.google.com/macros/s/AKfycbxyQ4kGKgsNS076UvKCk0ezCVSzp2DlqYobiprd8Qrvt5oJBWrVlszD7-jm2mOYtsTUvg/exec';
   function freshScriptUrl(){return SCRIPT_URL+'?cacheBust='+Date.now()+'-'+Math.random().toString(36).slice(2);}
+  function showRequestEmailFailure(result,action){
+    var requestActions=['create','add_team_members','request_lead_device_add','request_member_device_add','request_revoke_device','request_lead_revoke_device','request_remove_member','request_lead_remove_member'];
+    if(!requestActions.includes(action))return;
+    if(result&&result.notificationSent===true)return;
+    if(result&&result.notificationSent===false){
+      alert('Your request was saved, but the notification email could not be sent: '+String(result.notificationError||'No error details were returned.')+'\n\nPlease ask an administrator to authorize MailApp in Apps Script and deploy the latest backend version.');
+      return;
+    }
+    alert('Your request was saved, but email status was not returned. Deploy the latest Apps Script backend and authorize it to send email.');
+  }
+  async function checkNewPassNotification(requestId){
+    try{
+      var result=await appsScriptJsonp({action:'get_operation_result',requestId:requestId},null,10000);
+      if(!result){
+        showRequestEmailFailure(null,'create');
+        return null;
+      }
+      if(result.status!=='success')throw new Error(result.message||'The server did not confirm the new pass.');
+      showRequestEmailFailure(result,'create');
+      return result;
+    }catch(error){
+      console.error('[Request email] Unable to confirm the new pass notification.',error);
+      alert('Your pass was submitted, but the email notification status could not be confirmed. Please ensure the latest Apps Script backend is deployed and authorized to send email.');
+      return null;
+    }
+  }
   function appsScriptAction(params){
     return appsScriptJsonp(params).then(function(result){
       if(!result||result.status!=='success')throw new Error(result&&result.message?result.message:'The server did not confirm the action.');
+      showRequestEmailFailure(result,params.action);
       return result;
     });
   }
@@ -1678,12 +1705,13 @@
     document.getElementById('req-lead-device-type').value="None";toggleLeadDeviceInput();
     clearCapturedData('iqama');clearCapturedData('selfie');clearCapturedData('imeiphoto');clearCapturedData('vehicle');
     teamList=[];currentTeamCounter=1;renderTeamRoster();hideTeamEntry();
-    const payload={action:'create',UniqueID:tempId,hostName:hName,hostEmail:hMail,accountPin:accountPin,visitorName:vName,type:type,location:document.getElementById('req-location').value,startDate:startDateVal,endDate:endDateVal,iqamaBase64:iB64,iqamaMimeType:iMime,selfieBase64:sB64,selfieMimeType:sMime,imeiNumber:leadImeiVal,imeiPhotoBase64:imB64,fmPoc:fmPocVal,vehicleBase64:vB64,vehicleMimeType:vMime,vehiclePlateNo:'',team:cleanTeam,slpTicketNo:type==='Visitor'?document.getElementById('req-vis-slp').value:document.getElementById('req-con-slp').value,contactNo:type==='Visitor'?document.getElementById('req-vis-contact').value:document.getElementById('req-con-contact').value,invitedBy:type==='Visitor'?document.getElementById('req-vis-invitedby').value:'',projectName:type==='Contractor'?document.getElementById('req-con-project').value:'',companyName:type==='Contractor'?document.getElementById('req-con-company').value:'',projectManager:type==='Contractor'?document.getElementById('req-con-pm').value:''};
+    const payload={action:'create',UniqueID:tempId,requestId:tempId,hostName:hName,hostEmail:hMail,accountPin:accountPin,visitorName:vName,type:type,location:document.getElementById('req-location').value,startDate:startDateVal,endDate:endDateVal,iqamaBase64:iB64,iqamaMimeType:iMime,selfieBase64:sB64,selfieMimeType:sMime,imeiNumber:leadImeiVal,imeiPhotoBase64:imB64,fmPoc:fmPocVal,vehicleBase64:vB64,vehicleMimeType:vMime,vehiclePlateNo:'',team:cleanTeam,slpTicketNo:type==='Visitor'?document.getElementById('req-vis-slp').value:document.getElementById('req-con-slp').value,contactNo:type==='Visitor'?document.getElementById('req-vis-contact').value:document.getElementById('req-con-contact').value,invitedBy:type==='Visitor'?document.getElementById('req-vis-invitedby').value:'',projectName:type==='Contractor'?document.getElementById('req-con-project').value:'',companyName:type==='Contractor'?document.getElementById('req-con-company').value:'',projectManager:type==='Contractor'?document.getElementById('req-con-pm').value:''};
     if(ka){
       btn.innerText="SUBMITTING...";btn.disabled=true;
       beginPleaseWait('PLEASE WAIT...');
       try{
         await fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),mode:'no-cors'});
+        await checkNewPassNotification(tempId);
         await loadMyPasses(true,true);
         openAddMoreModal(tempId);
       }catch(e){
@@ -1696,7 +1724,7 @@
     }else{
       btn.innerText="SUBMITTING...";btn.disabled=true;
       beginPleaseWait('PLEASE WAIT...');
-      try{await fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),mode:'no-cors'});await loadMyPasses(true,true);}
+      try{await fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),mode:'no-cors'});await checkNewPassNotification(tempId);await loadMyPasses(true,true);}
       catch(e){existingPasses.pop();localStorage.setItem(cachedKey,JSON.stringify(existingPasses));renderMyPasses(existingPasses);endPleaseWait();alert("Upload failed. Error: "+e.message);}
       finally{endPleaseWait();btn.innerText=t("submit_approval");btn.disabled=false;startAutoRefresh(currentUser.role);}
     }
@@ -2354,14 +2382,18 @@
   async function adminResetPin(email){if(!confirm('Reset PIN for '+email+'? They will be prompted to create a new one next time.'))return;try{const response=await fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'reset_pin',email:email}),redirect:'follow'});const result=await response.json();if(!result||result.status!=='success')throw new Error(result&&result.message?result.message:'The reset was not confirmed.');clearStoredPin(email);localStorage.removeItem('cached_admin_data');localStorage.removeItem('cached_passes_'+email);alert("PIN Reset Successful.");closeViewRecord();loadAdminData(true);}catch(e){alert('Error resetting PIN: '+(e&&e.message?e.message:'Unknown error'));}}
 
   async function runTeamMemberAction(action,passId,memberIndex,memberIqama){
-    return appsScriptAction({action:action,id:passId,memberIndex:memberIndex,memberIqama:memberIqama});
+    var payload={action:action,id:passId,memberIndex:memberIndex,memberIqama:memberIqama};
+    if(action==='request_revoke_device'||action==='request_remove_member'){
+      payload.requestId='request-'+action+'-'+Date.now()+'-'+Math.random().toString(36).slice(2);
+    }
+    return appsScriptAction(payload);
   }
 
   async function requestRevokeDevice(passId,memberIndex,memberIqama,btn){if(!confirm('Request admin to revoke device access for this member?'))return;btn.innerText="REQUESTING...";btn.disabled=true;try{await runTeamMemberAction('request_revoke_device',passId,memberIndex,memberIqama);localStorage.removeItem('cached_passes_'+currentUser.email);refreshMemberView(passId);}catch(e){alert("Failed to request: "+e.message);btn.disabled=false;}}
 
   async function requestRemoveTeamMember(passId,memberIndex,memberIqama,btn){if(!confirm('Request admin to permanently remove this team member?'))return;btn.innerText="REQUESTING...";btn.disabled=true;try{await runTeamMemberAction('request_remove_member',passId,memberIndex,memberIqama);updateCachedTeamMemberAction(passId,[memberIqama],'request_remove','remove');}catch(e){alert("Failed to request removal: "+e.message);btn.disabled=false;}}
-  async function requestRemoveLead(passId,btn){if(!confirm('Request admin to permanently remove the lead?'))return;btn.innerText="REQUESTING...";btn.disabled=true;try{await appsScriptAction({action:'request_lead_remove_member',id:passId});localStorage.removeItem('cached_passes_'+currentUser.email);refreshMemberView(passId);}catch(e){alert("Failed to request lead removal: "+e.message);btn.disabled=false;}}
-  async function requestRevokeLeadDevice(passId,btn){if(!confirm('Request admin to revoke device access for the lead?'))return;btn.innerText="REQUESTING...";btn.disabled=true;try{await appsScriptAction({action:'request_lead_revoke_device',id:passId});localStorage.removeItem('cached_passes_'+currentUser.email);refreshMemberView(passId);}catch(e){alert("Failed to request lead device revoke: "+e.message);btn.disabled=false;}}
+  async function requestRemoveLead(passId,btn){if(!confirm('Request admin to permanently remove the lead?'))return;btn.innerText="REQUESTING...";btn.disabled=true;try{await appsScriptAction({action:'request_lead_remove_member',id:passId,requestId:'request-lead-remove-'+Date.now()+'-'+Math.random().toString(36).slice(2)});localStorage.removeItem('cached_passes_'+currentUser.email);refreshMemberView(passId);}catch(e){alert("Failed to request lead removal: "+e.message);btn.disabled=false;}}
+  async function requestRevokeLeadDevice(passId,btn){if(!confirm('Request admin to revoke device access for the lead?'))return;btn.innerText="REQUESTING...";btn.disabled=true;try{await appsScriptAction({action:'request_lead_revoke_device',id:passId,requestId:'request-lead-device-revoke-'+Date.now()+'-'+Math.random().toString(36).slice(2)});localStorage.removeItem('cached_passes_'+currentUser.email);refreshMemberView(passId);}catch(e){alert("Failed to request lead device revoke: "+e.message);btn.disabled=false;}}
 
   async function cancelRemoveRequest(passId,memberIndex,memberIqama,btn){if(!confirm('Cancel this removal request?'))return;btn.innerText="CANCELLING...";btn.disabled=true;try{await runTeamMemberAction('cancel_remove_request',passId,memberIndex,memberIqama);localStorage.removeItem('cached_admin_data');refreshMemberView(passId);}catch(e){alert("Failed to cancel: "+e.message);btn.disabled=false;}}
 
@@ -2432,6 +2464,7 @@
         throw new Error('The request was sent, but the server did not confirm it. Refresh the pass before trying again.');
       }
       if(operationResult.status!=='success')throw new Error(operationResult.message||'The server could not save the device request.');
+      showRequestEmailFailure(operationResult,payload.action);
       closeExistingDeviceRequest();
       localStorage.removeItem('cached_passes_'+currentUser.email);
       refreshMemberView(context.passId);
