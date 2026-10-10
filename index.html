@@ -781,27 +781,11 @@
     return prefix+'-'+randomPart;
   }
   function verifyAdminApiReady(){
-    var requestId=createAdminRequestId('admin-auth');
-    return nativeFetch(freshScriptUrl(),{
-      method:'POST',
-      headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({
-        action:'admin_auth_result',
-        requestId:createAdminRequestId('admin-auth'),
-        adminRequestId:requestId
-      }),
-      mode:'cors',
-      cache:'no-store'
-    }).then(function(response){
-      if(!response.ok)throw new Error('The Apps Script health check failed with HTTP '+response.status+'.');
-      return response.json();
+    return postAdminRequest({
+      action:'admin_api_ready',
+      adminRequestId:createAdminRequestId('admin-auth')
     }).then(function(result){
-      if(result&&result.status==='accepted')return;
-      throw adminApiResponseError(result,'The deployed Apps Script backend is outdated. Deploy the latest code.gs version and try again.');
-    }).then(function(){
-      return fetchAdminRequestResult(requestId);
-    }).then(function(result){
-      if(result&&result.status==='pending')return;
+      if(result&&result.status==='success')return;
       throw adminApiResponseError(result,'The Apps Script backend could not confirm admin requests. Deploy the latest code.gs version and try again.');
     }).catch(function(error){
       if(error&&/outdated/.test(error.message||''))throw error;
@@ -815,11 +799,7 @@
     return new Error(result&&result.message?result.message:fallback);
   }
   function fetchAdminRequestResult(requestId){
-    var url=freshScriptUrl()+'&action=admin_auth_result&requestId='+encodeURIComponent(requestId);
-    return fetch(url,{method:'GET',mode:'cors',cache:'no-store'}).then(function(response){
-      if(!response.ok)throw new Error('The Apps Script request-result check failed with HTTP '+response.status+'.');
-      return response.json();
-    });
+    return appsScriptJsonpAttempt({action:'admin_auth_result',requestId:requestId},null,0,10000);
   }
   function postAdminRequest(payload){
     var requestId=payload.adminRequestId;
@@ -840,15 +820,9 @@
       method:'POST',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify(payload),
-      mode:'cors',
+      mode:'no-cors',
       cache:'no-store'
-    }).then(function(response){
-      if(!response.ok)throw new Error('The Apps Script admin request failed with HTTP '+response.status+'.');
-      return response.json();
-    }).then(function(result){
-      if(result&&result.status==='accepted')return;
-      throw adminApiResponseError(result,'The Apps Script backend did not accept the admin request.');
-    },function(error){
+    }).catch(function(error){
       console.warn('[Admin API] The credential-bearing POST response could not be read; checking its one-time result.',error);
     }).then(function(){
       return new Promise(function(resolve){setTimeout(resolve,400);}).then(poll);
@@ -4320,4 +4294,4 @@
   })();
   </script>
   </body></html>
-    
+  
