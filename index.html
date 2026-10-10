@@ -300,6 +300,10 @@
   #dashboard-admin .super-admin-bulk-buttons .super-admin-reject{border:1px solid rgba(255,112,112,.32);background:rgba(255,91,91,.055);color:#ffaaaa}
   #dashboard-admin .super-admin-save-status{min-height:16px;color:#ffe17a;font-size:10px;font-weight:700}
   #dashboard-admin .super-admin-history-filter{min-width:200px;max-width:min(360px,60vw);padding:8px 10px;border:1px solid rgba(148,166,190,.22);border-radius:8px;background:#111722;color:#e4e9f0;font:inherit;font-size:10px}
+  #dashboard-admin .admin-data-scope{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid rgba(148,163,184,.12);background:rgba(8,12,19,.42)}
+  #dashboard-admin .admin-data-scope-label{color:#8997aa;font-size:9px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}
+  #dashboard-admin .admin-data-scope select{min-width:145px;max-width:100%;padding:8px 10px;border:1px solid rgba(148,166,190,.22);border-radius:8px;background:#111722;color:#e4e9f0;font:inherit;font-size:10px}
+  #dashboard-admin .admin-data-scope-fixed{color:#ffe17a;font-size:10px;font-weight:700}
   #dashboard-admin .super-admin-request-date{display:block}
   @media(max-width:600px){#dashboard-admin #super-admin-approval-panel{padding:15px}#dashboard-admin .super-admin-approval-heading{align-items:flex-start}#dashboard-admin .super-admin-history-heading{align-items:flex-start;flex-direction:column}#dashboard-admin .super-admin-history-filter{max-width:100%;width:100%}#dashboard-admin .super-admin-request-card{align-items:flex-start;flex-direction:column}#dashboard-admin .super-admin-request-actions{width:100%}#dashboard-admin .super-admin-request-actions .btn-primary{flex:1}}
   #dashboard-admin .super-admin-approval-state{display:flex;align-items:center;gap:13px;padding:20px 17px;border:1px dashed rgba(148,166,190,.18);border-radius:10px;background:rgba(255,255,255,.015)}
@@ -963,7 +967,9 @@
       requested:'Requested',reviewed:'Reviewed',approve:'APPROVE',reject:'REJECT',remove_admin:'REMOVE ADMIN',
       confirm_approve_all:'Approve all pending facility admin requests?',confirm_reject_all:'Reject all pending facility admin requests?',
       confirm_remove_admin:'Remove facility admin access for this account? They will no longer be able to sign in.',
-      filter_all:'All countries and facilities',approval_error:'Could not load requests'
+      filter_all:'All countries and facilities',approval_error:'Could not load requests',
+      scope_country:'COUNTRY',scope_facility:'FACILITY',scope_all_countries:'All countries',
+      scope_all_facilities:'All facilities',scope_my_facility:'Your assigned scope'
     },
     ar:{
       admin_approval:'موافقات المسؤولين',facility_admin_requests:'طلبات صلاحيات مسؤولي المنشآت',
@@ -977,7 +983,9 @@
       confirm_approve_all:'هل تريد الموافقة على جميع طلبات مسؤولي المنشآت المعلقة؟',
       confirm_reject_all:'هل تريد رفض جميع طلبات مسؤولي المنشآت المعلقة؟',
       confirm_remove_admin:'هل تريد إزالة صلاحية هذا المسؤول؟ لن يتمكن من تسجيل الدخول بعد ذلك.',
-      filter_all:'كل الدول والمنشآت',approval_error:'تعذر تحميل الطلبات'
+      filter_all:'كل الدول والمنشآت',approval_error:'تعذر تحميل الطلبات',
+      scope_country:'الدولة',scope_facility:'المنشأة',scope_all_countries:'كل الدول',
+      scope_all_facilities:'كل المنشآت',scope_my_facility:'النطاق المخصص لك'
     }
   };
   function t(k){return (facilityAdminApprovalTranslations[currentLang]&&facilityAdminApprovalTranslations[currentLang][k])||(dict[currentLang]&&dict[currentLang][k])||dict['en'][k]||k||'';}
@@ -1079,7 +1087,10 @@
       approvalRefresh.setAttribute('aria-label',t('refresh'));
     }
     updateAdminPendingBadges(countPendingAccessRequests(globalAdminData),facilityAdminPendingCount);
-    if(currentUser&&currentUser.role==='admin')renderAdminData(globalAdminData);
+    document.querySelectorAll('.admin-data-scope').forEach(function(controls){
+      updateAdminDataScopeControl(controls.dataset.scope,controls);
+    });
+    if(currentUser&&(currentUser.role==='admin'||currentUser.role==='superadmin'))renderAdminData(globalAdminData);
   }
 
   const qrCache={};
@@ -1104,7 +1115,7 @@
   }
   function safeImg(u){return normalizeImageUrl(u)||'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'40\' height=\'40\'%3E%3Crect width=\'40\' height=\'40\' fill=\'%23333\'/%3E%3Ctext x=\'20\' y=\'24\' font-size=\'14\' text-anchor=\'middle\' fill=\'%23888\'%3E%3F%3C/text%3E%3C/svg%3E';}
 
-  const urlParams=new URLSearchParams(window.location.search);const currentRoleParam=urlParams.get('role')||'default';const SESSION_KEY='noon_session_'+currentRoleParam;let adminSignupMode=false;let html5QrCode=null;let scannerFacingMode='environment';let scannerLibraryPromise=null;let scannerOperation=Promise.resolve();let currentUser=null;let currentScannedID=null;let currentScanAction='check_in';let currentAdminFilter='all';let autoRefreshTimer=null;let globalAdminData=[];let globalAdminHistory=[];let myPassesData=[];let checkedPrintIds=new Set();let liveStream=null;let currentFacingMode='environment';let targetPhotoType='';let capturedImages={iqama:null,selfie:null,imeiphoto:null,vehicle:null,fmpoc:null};let teamList=[];let currentTeamCounter=1;let isProcessingScan=false;let userSecurityPin=null;let lockedPassesData=null;let pinCreateMode='submit';let currentBatchType='new';
+  const urlParams=new URLSearchParams(window.location.search);const currentRoleParam=urlParams.get('role')||'default';const SESSION_KEY='noon_session_'+currentRoleParam;let adminSignupMode=false;let html5QrCode=null;let scannerFacingMode='environment';let scannerLibraryPromise=null;let scannerOperation=Promise.resolve();let currentUser=null;let currentScannedID=null;let currentScanAction='check_in';let currentAdminFilter='all';let autoRefreshTimer=null;let globalAdminData=[];let globalAdminHistory=[];let adminDataScopes={history:{country:'all',facility:'all'},analytics:{country:'all',facility:'all'}};let myPassesData=[];let checkedPrintIds=new Set();let liveStream=null;let currentFacingMode='environment';let targetPhotoType='';let capturedImages={iqama:null,selfie:null,imeiphoto:null,vehicle:null,fmpoc:null};let teamList=[];let currentTeamCounter=1;let isProcessingScan=false;let userSecurityPin=null;let lockedPassesData=null;let pinCreateMode='submit';let currentBatchType='new';
   let historySortOrder='desc';
   let expandedHistoryGroups=new Set();
   let adminRefreshInProgress=false;
@@ -2070,7 +2081,9 @@
   var selectedFacilityAdminHistoryFilter='all';
   function countPendingAccessRequests(data){
     if(!Array.isArray(data))return 0;
-    return data.filter(function(record){return record&&record.UniqueID&&String(record.Status||'Pending').toLowerCase()==='pending';}).length;
+    return data.filter(function(record){
+      return record&&record.UniqueID&&String(record.Status||'Pending').trim().toLowerCase()==='pending';
+    }).length;
   }
 
   function createFacilityAdminApprovalState(iconText,titleText,messageText){
@@ -2882,7 +2895,9 @@
   function ensureHistoryTools(){
     const table=document.getElementById('admin-table-history');
     const card=document.getElementById('admin-sec-history');
-    if(!table||!card||document.getElementById('history-tools'))return;
+    if(!table||!card)return;
+    ensureAdminDataScopeControls('history',card);
+    if(document.getElementById('history-tools'))return;
     const tools=document.createElement('div');
     tools.id='history-tools';
     tools.className='history-tools';
@@ -2919,6 +2934,108 @@
     if(title)title.insertAdjacentElement('afterend',tools);
     else table.parentElement.insertBefore(tools,table);
   }
+  function isGlobalAdmin(){
+    return !!currentUser&&(currentUser.accessLevel==='superadmin'||currentUser.role==='superadmin');
+  }
+  function getCountryFromFacility(location){
+    const value=String(location||'').toUpperCase().trim();
+    if(value==='RUH01'||value==='JED01'||value==='KSA')return 'KSA';
+    if(value==='UAE')return 'UAE';
+    if(value==='EGY')return 'EGY';
+    return '';
+  }
+  function getAssignedAdminScope(){
+    const location=String(currentUser&&(currentUser.location||currentUser.facility)||'').toUpperCase().trim();
+    const country=String(currentUser&&currentUser.country||getCountryFromFacility(location)).toUpperCase().trim();
+    return {country:country,facility:location};
+  }
+  function ensureAdminDataScopeControls(scopeName,card){
+    if(!card)return;
+    const existing=card.querySelector('.admin-data-scope');
+    if(existing){updateAdminDataScopeControl(scopeName,existing);return;}
+    const controls=document.createElement('div');
+    controls.className='admin-data-scope';
+    controls.dataset.scope=scopeName;
+    const title=card.querySelector(':scope > .admin-card-title');
+    if(title)title.insertAdjacentElement('afterend',controls);
+    else card.insertBefore(controls,card.firstChild);
+    updateAdminDataScopeControl(scopeName,controls);
+  }
+  function updateAdminDataScopeControl(scopeName,controls){
+    if(!controls)return;
+    controls.textContent='';
+    if(!isGlobalAdmin()){
+      const fixed=document.createElement('span');
+      fixed.className='admin-data-scope-fixed';
+      const assigned=getAssignedAdminScope();
+      fixed.textContent=t('scope_my_facility')+': '+(assigned.country||'')+' / '+(assigned.facility||'');
+      controls.appendChild(fixed);
+      return;
+    }
+    const countryLabel=document.createElement('span');
+    countryLabel.className='admin-data-scope-label';
+    countryLabel.textContent=t('scope_country');
+    const country=document.createElement('select');
+    country.setAttribute('aria-label',t('scope_country'));
+    country.dataset.scopeSelect='country';
+    [['all',t('scope_all_countries')],['KSA','KSA'],['UAE','UAE'],['EGY','EGY']].forEach(function(item){
+      const option=document.createElement('option');
+      option.value=item[0];option.textContent=item[1];country.appendChild(option);
+    });
+    country.value=adminDataScopes[scopeName].country;
+    const facilityLabel=document.createElement('span');
+    facilityLabel.className='admin-data-scope-label';
+    facilityLabel.textContent=t('scope_facility');
+    const facility=document.createElement('select');
+    facility.setAttribute('aria-label',t('scope_facility'));
+    facility.dataset.scopeSelect='facility';
+    getAdminFacilitiesForCountry(country.value).forEach(function(item){
+      const option=document.createElement('option');
+      option.value=item.value;option.textContent=item.label;facility.appendChild(option);
+    });
+    facility.value=adminDataScopes[scopeName].facility;
+    country.addEventListener('change',function(){
+      adminDataScopes[scopeName].country=country.value;
+      const facilities=getAdminFacilitiesForCountry(country.value);
+      if(!facilities.some(function(item){return item.value===adminDataScopes[scopeName].facility;})){
+        adminDataScopes[scopeName].facility='all';
+      }
+      ensureAdminDataScopeControls(scopeName,controls.parentElement);
+      refreshAdminDataForScope(scopeName);
+    });
+    facility.addEventListener('change',function(){
+      adminDataScopes[scopeName].facility=facility.value;
+      refreshAdminDataForScope(scopeName);
+    });
+    controls.append(countryLabel,country,facilityLabel,facility);
+  }
+  function getAdminFacilitiesForCountry(country){
+    const all=[
+      {value:'RUH01',country:'KSA'},
+      {value:'JED01',country:'KSA'},
+      {value:'UAE',country:'UAE'},
+      {value:'EGY',country:'EGY'}
+    ];
+    return [{value:'all',label:t('scope_all_facilities')}].concat(all.filter(function(item){
+      return country==='all'||country===item.country;
+    }).map(function(item){return {value:item.value,label:item.value};}));
+  }
+  function refreshAdminDataForScope(scopeName){
+    if(scopeName==='history')renderHistorySheetRows(globalAdminHistory);
+    if(scopeName==='analytics')renderAdminData(globalAdminData);
+  }
+  function matchesAdminDataScope(record,scopeName){
+    const scope=adminDataScopes[scopeName]||{country:'all',facility:'all'};
+    const location=String(record&&(record.Location||record.Facility)||'').toUpperCase().trim();
+    const country=getCountryFromFacility(location);
+    if(!isGlobalAdmin()){
+      const assigned=getAssignedAdminScope();
+      return (!assigned.country||country===assigned.country)&&(!assigned.facility||location===assigned.facility);
+    }
+    if(scope.country!=='all'&&country!==scope.country)return false;
+    if(scope.facility!=='all'&&location!==scope.facility)return false;
+    return true;
+  }
   function getFilteredHistoryRows(history){
     const si=document.getElementById('filter-start'),ei=document.getElementById('filter-end');
     const fStart=si&&si.value?si.value:'',fEnd=ei&&ei.value?ei.value:'';
@@ -2930,7 +3047,9 @@
       if(!row||(!row.CheckInTime&&!row.CheckOutTime))return false;
       const filterDate=row.CheckInTime||row.CheckOutTime||row['Validity Period']||row.StartDate;
       if(!isDateInRange(filterDate,currentAdminFilter,fStart,fEnd))return false;
-      const fields=getHistoryFieldValues(row,getHistoryPassData(row));
+      const passData=getHistoryPassData(row);
+      if(!matchesAdminDataScope({Location:row.Location||row.Facility||(passData&&passData.Location)},'history'))return false;
+      const fields=getHistoryFieldValues(row,passData);
       return Object.keys(filters).every(function(key){
         return !filters[key]||String(fields[key]||'').toLocaleLowerCase().includes(filters[key]);
       });
@@ -3112,7 +3231,7 @@
   function renderAdminData(data){
     if(!Array.isArray(data)){data=[];}
     globalAdminData=data;
-    updateAdminPendingBadges(countPendingAccessRequests(data),facilityAdminPendingCount);
+    ensureAdminDataScopeControls('analytics',document.getElementById('admin-sec-analytics'));
     const tPending=document.getElementById('admin-table-pending'),tActive=document.getElementById('admin-table-active'),tHistory=document.getElementById('admin-table-history');
     let hPending='',hActionPending='',hActive='',hHistory='';
     const today=new Date();today.setHours(0,0,0,0);
@@ -3131,7 +3250,7 @@
       const inRange=isDateInRange(row.StartDate,currentAdminFilter,fStart,fEnd);
       let formattedStart=formatToDDMMYYYY(row.StartDate);let formattedEnd=formatToDDMMYYYY(row.EndDate||row.StartDate);
       const dateStr=(formattedStart===formattedEnd)?formattedStart:formattedStart+' - '+formattedEnd;
-      if(inRange){aType[rType]=(aType[rType]||0)+1;aFacility[rLocation]=(aFacility[rLocation]||0)+1;aStatus[rStatus]=(aStatus[rStatus]||0)+1;let dClean=formatToDDMMYYYY(row.StartDate);if(dClean!=='-')aDate[dClean]=(aDate[dClean]||0)+1;}
+      if(inRange&&matchesAdminDataScope(row,'analytics')){aType[rType]=(aType[rType]||0)+1;aFacility[rLocation]=(aFacility[rLocation]||0)+1;aStatus[rStatus]=(aStatus[rStatus]||0)+1;let dClean=formatToDDMMYYYY(row.StartDate);if(dClean!=='-')aDate[dClean]=(aDate[dClean]||0)+1;}
       let startD=parseFlexibleDate(row.StartDate);if(startD){startD=new Date(startD.getTime());startD.setHours(0,0,0,0);}
       let endD=parseFlexibleDate(row.EndDate||row.StartDate);if(endD){endD=new Date(endD.getTime());endD.setHours(0,0,0,0);}
       let isMultiDay=(startD&&endD&&endD.getTime()>startD.getTime());
@@ -3236,11 +3355,14 @@
     if(tActive){if(activeCount===0)hActive='<tr><td colspan="8" class="text-center" style="padding:30px;">'+t("msg_no_active")+'</td></tr>';tActive.innerHTML=hActive;}
     if(tHistory){if(historyCount===0)hHistory='<tr><td colspan="8" class="text-center" style="padding:30px;">'+t("msg_no_history")+'</td></tr>';tHistory.innerHTML=hHistory;}
     if(Array.isArray(globalAdminHistory))renderHistorySheetRows(globalAdminHistory);
+    updateAdminPendingBadges(countPendingAccessRequests(data),facilityAdminPendingCount);
     const st=document.getElementById('stat-type');if(st)st.innerHTML=Object.keys(aType).map(function(k){return '<div class="stat-row"><span>'+t(k.toLowerCase())+'</span><span class="stat-val">'+aType[k]+'</span></div>';}).join('')||'<div class="stat-row"><span>-</span></div>';
     const sf=document.getElementById('stat-facility');if(sf)sf.innerHTML=Object.keys(aFacility).map(function(k){return '<div class="stat-row"><span>'+k+'</span><span class="stat-val">'+aFacility[k]+'</span></div>';}).join('')||'<div class="stat-row"><span>-</span></div>';
     let sHtml='';
-    sHtml+='<div class="stat-row" style="border-bottom:2px solid var(--noon-yellow);"><span style="color:var(--noon-yellow);font-weight:bold;">TOTAL PASSES</span><span class="stat-val" style="color:var(--noon-yellow);">'+data.length+'</span></div>';
-    sHtml+='<div class="stat-row" style="border-bottom:2px solid var(--noon-yellow);"><span style="color:var(--noon-yellow);font-weight:bold;">TOTAL ACCESS EVENTS</span><span class="stat-val" style="color:var(--noon-yellow);">'+(Array.isArray(globalAdminHistory)?globalAdminHistory.length:0)+'</span></div>';
+    const scopedPassCount=data.filter(function(pass){return matchesAdminDataScope(pass,'analytics');}).length;
+    const scopedHistoryCount=getFilteredHistoryRows(globalAdminHistory).length;
+    sHtml+='<div class="stat-row" style="border-bottom:2px solid var(--noon-yellow);"><span style="color:var(--noon-yellow);font-weight:bold;">TOTAL PASSES</span><span class="stat-val" style="color:var(--noon-yellow);">'+scopedPassCount+'</span></div>';
+    sHtml+='<div class="stat-row" style="border-bottom:2px solid var(--noon-yellow);"><span style="color:var(--noon-yellow);font-weight:bold;">TOTAL ACCESS EVENTS</span><span class="stat-val" style="color:var(--noon-yellow);">'+scopedHistoryCount+'</span></div>';
     if(aStatus['Approved'])sHtml+='<div class="stat-row"><span style="color:var(--success)">'+t('status_approved')+'</span><span class="stat-val">'+aStatus['Approved']+'</span></div>';
     if(aStatus['Pending'])sHtml+='<div class="stat-row"><span style="color:var(--noon-yellow)">'+t('status_pending')+'</span><span class="stat-val">'+aStatus['Pending']+'</span></div>';
     if(aStatus['Rejected'])sHtml+='<div class="stat-row"><span style="color:var(--danger)">'+t('status_rejected')+'</span><span class="stat-val">'+aStatus['Rejected']+'</span></div>';
