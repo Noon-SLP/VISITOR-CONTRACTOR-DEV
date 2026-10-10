@@ -271,6 +271,9 @@
   #dashboard-admin .super-admin-approval-content{display:grid;gap:10px;padding-top:15px}
   #dashboard-admin .super-admin-approval-count{display:flex;align-items:center;gap:7px;margin:0 0 2px;color:#8e9bb0;font-size:9px;font-weight:900;letter-spacing:.14em;text-transform:uppercase}
   #dashboard-admin .super-admin-approval-count::before{content:"";width:6px;height:6px;border-radius:50%;background:#ffc700;box-shadow:0 0 10px rgba(255,199,0,.55)}
+  #dashboard-admin .super-admin-history-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:14px;padding:14px 0 3px;border-top:1px solid rgba(148,166,190,.14)}
+  #dashboard-admin .super-admin-history-title{margin:0;color:#e4e9f0;font-size:12px;font-weight:850;letter-spacing:.07em}
+  #dashboard-admin .super-admin-history-caption{color:#7f8ca0;font-size:10px}
   #dashboard-admin .super-admin-request-card{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:15px 16px;border:1px solid rgba(148,166,190,.13);border-radius:11px;background:linear-gradient(110deg,rgba(255,255,255,.035),rgba(255,255,255,.012));transition:border-color .18s ease,background .18s ease,transform .18s ease}
   #dashboard-admin .super-admin-request-card:hover{transform:translateY(-1px);border-color:rgba(255,199,0,.28);background:linear-gradient(110deg,rgba(255,199,0,.055),rgba(255,255,255,.015))}
   #dashboard-admin .super-admin-request-identity{display:flex;align-items:center;gap:13px;min-width:0}
@@ -281,6 +284,9 @@
   #dashboard-admin .super-admin-request-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
   #dashboard-admin .super-admin-request-location{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border:1px solid rgba(70,167,255,.2);border-radius:7px;background:rgba(70,167,255,.07);color:#c4e3ff;font-size:9px;font-weight:800;letter-spacing:.035em}
   #dashboard-admin .super-admin-request-date{color:#748196;font-size:10px}
+  #dashboard-admin .super-admin-request-status{display:inline-flex;align-items:center;padding:5px 8px;border:1px solid rgba(148,166,190,.19);border-radius:7px;background:rgba(148,166,190,.07);color:#b8c2d0;font-size:8px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+  #dashboard-admin .super-admin-request-status[data-status="approved"]{border-color:rgba(56,217,169,.23);background:rgba(56,217,169,.08);color:#83e8c9}
+  #dashboard-admin .super-admin-request-status[data-status="rejected"],#dashboard-admin .super-admin-request-status[data-status="removed"]{border-color:rgba(255,112,112,.2);background:rgba(255,91,91,.06);color:#ffaaaa}
   #dashboard-admin .super-admin-request-actions{display:flex;align-items:center;gap:8px;flex:0 0 auto}
   #dashboard-admin .super-admin-request-actions .btn-primary{min-width:94px;min-height:36px;border-radius:8px;font-size:10px;font-weight:900;letter-spacing:.045em;transition:transform .16s ease,filter .16s ease}
   #dashboard-admin .super-admin-request-actions .btn-primary:hover{transform:translateY(-1px);filter:brightness(1.08)}
@@ -1612,13 +1618,6 @@
     var emailInput=emailGroup.querySelector('input');
     emailInput.placeholder='name@noon.com';
     emailInput.title='Use your @noon.com work email.';
-    if(!isSuperAdmin){
-      var emailHint=document.createElement('small');
-      emailHint.className='admin-email-domain-hint';
-      emailHint.textContent='Facility administrator accounts require a @noon.com work email.';
-      emailHint.style.cssText='display:block;margin:-5px 2px 10px;color:var(--text-muted);font-size:11px;line-height:1.45;';
-      emailGroup.appendChild(emailHint);
-    }
     var passwordInput=createInput('la-pass','Password','password',isSuperAdmin?'current-password':'current-password').querySelector('input');
     var countryGroup=null;
     var facilityGroup=null;
@@ -1845,7 +1844,12 @@
     heading.append(titleGroup,refreshButton);
     panel.append(heading,content);
     section.appendChild(panel);
-    nav.parentNode.insertBefore(section,nav.nextSibling);
+    var periodFilter=dashboard.querySelector('.admin-filter-bar');
+    if(periodFilter&&periodFilter.parentNode===nav.parentNode){
+      nav.parentNode.insertBefore(section,periodFilter.nextSibling);
+    }else{
+      nav.parentNode.insertBefore(section,nav.nextSibling);
+    }
   }
 
   function refreshFacilityAdminRequests(){
@@ -1872,76 +1876,34 @@
     content.appendChild(loadingState);
     return appsScriptAction({action:'admin_list_facility_requests'}).then(function(result){
       content.textContent='';
-      if(!Array.isArray(result.requests)||result.requests.length===0){
-        var emptyState=document.createElement('div');
-        emptyState.className='super-admin-approval-state';
-        var emptyIcon=document.createElement('span');
-        emptyIcon.className='super-admin-approval-state-icon';
-        emptyIcon.setAttribute('aria-hidden','true');
-        emptyIcon.textContent='✓';
-        var emptyCopy=document.createElement('div');
-        var emptyTitle=document.createElement('p');
-        emptyTitle.className='super-admin-approval-state-title';
-        emptyTitle.textContent='You’re all caught up';
-        var emptyMessage=document.createElement('p');
-        emptyMessage.className='super-admin-approval-state-message';
-        emptyMessage.textContent='There are no pending facility admin requests.';
-        emptyCopy.append(emptyTitle,emptyMessage);
-        emptyState.append(emptyIcon,emptyCopy);
-        content.appendChild(emptyState);
-        return;
-      }
+      var requests=Array.isArray(result.requests)?result.requests:[];
+      var history=Array.isArray(result.history)?result.history:[];
       var count=document.createElement('p');
       count.className='super-admin-approval-count';
-      count.textContent=result.requests.length+' REQUEST'+(result.requests.length===1?'':'S')+' AWAITING REVIEW';
+      count.textContent=requests.length+' REQUEST'+(requests.length===1?'':'S')+' AWAITING REVIEW';
       content.appendChild(count);
-      result.requests.forEach(function(request){
-        var card=document.createElement('div');
-        card.className='super-admin-request-card';
-        var identity=document.createElement('div');
-        identity.className='super-admin-request-identity';
-        var avatar=document.createElement('span');
-        avatar.className='super-admin-request-avatar';
-        avatar.setAttribute('aria-hidden','true');
-        avatar.textContent=String(request.name||'A').trim().charAt(0)||'A';
-        var details=document.createElement('div');
-        details.className='super-admin-request-details';
-        var name=document.createElement('strong');
-        name.textContent=request.name||'Facility Admin';
-        name.className='super-admin-request-name';
-        var info=document.createElement('div');
-        info.textContent=request.email||'Email not provided';
-        info.className='super-admin-request-email';
-        var meta=document.createElement('div');
-        meta.className='super-admin-request-meta';
-        var location=document.createElement('span');
-        location.className='super-admin-request-location';
-        location.textContent='⌖ '+(request.country||'')+'  /  '+(request.location||'');
-        meta.appendChild(location);
-        if(request.createdAt){
-          var createdAt=new Date(request.createdAt);
-          if(!isNaN(createdAt.getTime())){
-            var date=document.createElement('span');
-            date.className='super-admin-request-date';
-            date.textContent='Requested '+createdAt.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
-            meta.appendChild(date);
-          }
-        }
-        details.append(name,info,meta);
-        identity.append(avatar,details);
-        var actions=document.createElement('div');
-        actions.className='super-admin-request-actions';
-        [['Approve',true],['Reject',false]].forEach(function(actionData){
-          var button=document.createElement('button');
-          button.type='button';
-          button.className='btn-primary'+(actionData[1]?'':' super-admin-reject');
-          button.textContent=(actionData[1]?'✓  ':'×  ')+actionData[0].toUpperCase();
-          button.addEventListener('click',function(){processFacilityAdminApproval(request.email,actionData[1],button);});
-          actions.appendChild(button);
+      if(requests.length){
+        requests.forEach(function(request){content.appendChild(createFacilityAdminRequestCard(request,'pending'));});
+      }else{
+        content.appendChild(createFacilityAdminApprovalState('✓','You’re all caught up','There are no pending facility admin requests.'));
+      }
+      var historyHeading=document.createElement('div');
+      historyHeading.className='super-admin-history-heading';
+      var historyTitle=document.createElement('h3');
+      historyTitle.className='super-admin-history-title';
+      historyTitle.textContent='Facility Admin History';
+      var historyCaption=document.createElement('span');
+      historyCaption.className='super-admin-history-caption';
+      historyCaption.textContent=history.length+' record'+(history.length===1?'':'s');
+      historyHeading.append(historyTitle,historyCaption);
+      content.appendChild(historyHeading);
+      if(history.length){
+        history.slice().reverse().forEach(function(record){
+          content.appendChild(createFacilityAdminRequestCard(record,'history'));
         });
-        card.append(identity,actions);
-        content.appendChild(card);
-      });
+      }else{
+        content.appendChild(createFacilityAdminApprovalState('◷','No history yet','Approved, rejected, and removed admin requests will be listed here.'));
+      }
     }).catch(function(error){
       content.textContent='';
       var errorState=document.createElement('div');
@@ -1965,12 +1927,109 @@
     });
   }
 
+  function createFacilityAdminApprovalState(iconText,titleText,messageText){
+    var state=document.createElement('div');
+    state.className='super-admin-approval-state';
+    var icon=document.createElement('span');
+    icon.className='super-admin-approval-state-icon';
+    icon.setAttribute('aria-hidden','true');
+    icon.textContent=iconText;
+    var copy=document.createElement('div');
+    var title=document.createElement('p');
+    title.className='super-admin-approval-state-title';
+    title.textContent=titleText;
+    var message=document.createElement('p');
+    message.className='super-admin-approval-state-message';
+    message.textContent=messageText;
+    copy.append(title,message);
+    state.append(icon,copy);
+    return state;
+  }
+
+  function createFacilityAdminRequestCard(request,view){
+    var isHistory=view==='history';
+    var card=document.createElement('div');
+    card.className='super-admin-request-card';
+    var identity=document.createElement('div');
+    identity.className='super-admin-request-identity';
+    var avatar=document.createElement('span');
+    avatar.className='super-admin-request-avatar';
+    avatar.setAttribute('aria-hidden','true');
+    avatar.textContent=String(request.name||'A').trim().charAt(0)||'A';
+    var details=document.createElement('div');
+    details.className='super-admin-request-details';
+    var name=document.createElement('strong');
+    name.textContent=request.name||'Facility Admin';
+    name.className='super-admin-request-name';
+    var info=document.createElement('div');
+    info.textContent=request.email||'Email not provided';
+    info.className='super-admin-request-email';
+    var meta=document.createElement('div');
+    meta.className='super-admin-request-meta';
+    var location=document.createElement('span');
+    location.className='super-admin-request-location';
+    location.textContent='⌖ '+(request.country||'')+'  /  '+(request.location||'');
+    meta.appendChild(location);
+    if(isHistory){
+      var status=document.createElement('span');
+      status.className='super-admin-request-status';
+      status.dataset.status=String(request.status||'').toLowerCase();
+      status.textContent=request.status||'Reviewed';
+      meta.appendChild(status);
+    }
+    var requestedAt=request.createdAt||request.requestedAt;
+    if(requestedAt){
+      var createdAt=new Date(requestedAt);
+      if(!isNaN(createdAt.getTime())){
+        var date=document.createElement('span');
+        date.className='super-admin-request-date';
+        date.textContent='Requested '+createdAt.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
+        meta.appendChild(date);
+      }
+    }
+    details.append(name,info,meta);
+    identity.append(avatar,details);
+    card.appendChild(identity);
+    var actions=document.createElement('div');
+    actions.className='super-admin-request-actions';
+    if(!isHistory){
+      [['Approve',true],['Reject',false]].forEach(function(actionData){
+        var button=document.createElement('button');
+        button.type='button';
+        button.className='btn-primary'+(actionData[1]?'':' super-admin-reject');
+        button.textContent=(actionData[1]?'✓  ':'×  ')+actionData[0].toUpperCase();
+        button.addEventListener('click',function(){processFacilityAdminApproval(request.email,actionData[1],button);});
+        actions.appendChild(button);
+      });
+    }else if(String(request.status||'').toLowerCase()==='approved'&&request.isCurrent===true){
+      var removeButton=document.createElement('button');
+      removeButton.type='button';
+      removeButton.className='btn-primary super-admin-reject';
+      removeButton.textContent='×  REMOVE ADMIN';
+      removeButton.addEventListener('click',function(){processFacilityAdminRemoval(request.email,removeButton);});
+      actions.appendChild(removeButton);
+    }
+    if(actions.childNodes.length)card.appendChild(actions);
+    return card;
+  }
+
   function processFacilityAdminApproval(email,approve,button){
     if(button)button.disabled=true;
     appsScriptAction({action:'admin_process_facility_request',email:email,approve:approve}).then(function(){
       refreshFacilityAdminRequests();
     }).catch(function(error){
       alert('Unable to '+(approve?'approve':'reject')+' this request: '+(error&&error.message?error.message:'Unknown error'));
+      if(button)button.disabled=false;
+    });
+  }
+
+  function processFacilityAdminRemoval(email,button){
+    if(!confirm('Remove facility admin access for '+email+'? They will no longer be able to sign in.'))return;
+    if(button)button.disabled=true;
+    appsScriptAction({action:'admin_remove_facility_admin',email:email}).then(function(){
+      refreshFacilityAdminRequests();
+    }).catch(function(error){
+      alert('Unable to remove this facility admin: '+(error&&error.message?error.message:'Unknown error'));
       if(button)button.disabled=false;
     });
   }
