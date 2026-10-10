@@ -1706,7 +1706,7 @@
       }
       currentUser=Object.assign({},result.user,{
         role:'admin',
-        accessLevel:isSuperAdmin?'superadmin':'facility',
+        accessLevel:result.user&&result.user.role==='superadmin'?'superadmin':'facility',
         adminToken:result.token
       });
       saveSession();
@@ -2037,7 +2037,7 @@
           const adminRoute=role==='staff'||role==='admin'||role==='superadmin';
           const adminSessionValid=savedUser&&savedUser.role==='admin'&&savedUser.adminToken&&
             Number(savedUser.expiresAt)>Date.now()&&
-            (role==='superadmin'?savedUser.accessLevel==='superadmin':savedUser.accessLevel==='facility');
+            (savedUser.accessLevel==='superadmin'||(role!=='superadmin'&&savedUser.accessLevel==='facility'));
           const savedRoleMatches=adminRoute?adminSessionValid:(!savedUser||savedUser.role!=='admin');
           if (ageHours < 12 && savedRoleMatches) {
               currentUser = savedSession.user;
