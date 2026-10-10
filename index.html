@@ -182,6 +182,8 @@
   #dashboard-admin .admin-nav-horizontal li{min-height:40px;display:flex;align-items:center;gap:8px;padding:0 17px;border:1px solid transparent;border-radius:9px;color:var(--admin-muted);font-size:12px;font-weight:700;letter-spacing:.035em;transition:color .18s ease,background .18s ease,border-color .18s ease,transform .18s ease}
   #dashboard-admin .admin-nav-horizontal li:hover{color:#fff;background:rgba(255,255,255,.045);transform:translateY(-1px)}
   #dashboard-admin .admin-nav-horizontal li.active{color:var(--noon-yellow);background:linear-gradient(135deg,rgba(255,199,0,.15),rgba(255,199,0,.055));border-color:rgba(255,199,0,.22);box-shadow:inset 0 1px rgba(255,255,255,.055)}
+  #dashboard-admin .admin-nav-horizontal .super-admin-approval-nav-button{min-height:40px;padding:0 17px;border:0;border-radius:8px;background:transparent;color:inherit;font:inherit;letter-spacing:inherit;white-space:nowrap;cursor:pointer}
+  #dashboard-admin .admin-nav-horizontal li.active .super-admin-approval-nav-button{color:#17130a}
   #dashboard-admin .admin-filter-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 18px;padding:10px 12px;background:rgba(17,22,32,.78);border:1px solid var(--admin-line);border-radius:13px}
   #dashboard-admin .admin-filter-bar>div:first-child{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
   #dashboard-admin .btn-filter{padding:8px 12px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--admin-muted);font-size:10px;font-weight:700;letter-spacing:.04em;cursor:pointer;transition:all .18s ease}
@@ -257,6 +259,37 @@
   #dashboard-admin .admin-card-title:nth-child(3){margin-top:0!important;border-top:1px solid rgba(148,166,190,.14)!important}
   #dashboard-admin .admin-card-title:nth-child(3) span::before{background:#38d9a9;box-shadow:0 0 12px rgba(56,217,169,.55)}
   #dashboard-admin .admin-card-title button{min-height:31px;padding:7px 12px!important;border-radius:7px;box-shadow:0 4px 13px rgba(255,199,0,.13)}
+  #dashboard-admin #super-admin-approval-panel{padding:22px;background:radial-gradient(ellipse at 100% 0,rgba(255,199,0,.075),transparent 42%),linear-gradient(145deg,rgba(17,23,34,.99),rgba(11,15,23,.99));border:1px solid rgba(255,199,0,.22);border-radius:14px;box-shadow:0 18px 46px rgba(0,0,0,.26),inset 0 1px rgba(255,255,255,.035)}
+  #dashboard-admin .super-admin-approval-heading{display:flex;align-items:center;justify-content:space-between;gap:18px;padding-bottom:18px;border-bottom:1px solid rgba(148,166,190,.13)}
+  #dashboard-admin .super-admin-approval-title-group{display:flex;align-items:center;gap:14px;min-width:0}
+  #dashboard-admin .super-admin-approval-icon{display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;border:1px solid rgba(255,199,0,.25);border-radius:13px;background:linear-gradient(145deg,rgba(255,199,0,.17),rgba(255,199,0,.045));color:#ffe17a;font-size:20px;box-shadow:inset 0 1px rgba(255,255,255,.08),0 8px 20px rgba(0,0,0,.17)}
+  #dashboard-admin .super-admin-approval-title{margin:0;color:#f3f5f8;font-size:16px;font-weight:800;letter-spacing:.01em;line-height:1.3}
+  #dashboard-admin .super-admin-approval-subtitle{margin:5px 0 0;color:#8997aa;font-size:11px;line-height:1.5}
+  #dashboard-admin .super-admin-approval-refresh{display:inline-flex;width:auto!important;flex:0 0 auto;align-items:center;justify-content:center;gap:8px;min-height:37px;padding:0 14px!important;border:1px solid rgba(255,199,0,.3)!important;border-radius:9px!important;background:rgba(255,199,0,.075)!important;color:#ffe17a!important;font-size:10px;font-weight:800;letter-spacing:.07em;white-space:nowrap;transition:background .18s ease,border-color .18s ease,transform .18s ease}
+  #dashboard-admin .super-admin-approval-refresh:hover{transform:translateY(-1px);border-color:rgba(255,199,0,.7)!important;background:rgba(255,199,0,.14)!important}
+  #dashboard-admin .super-admin-approval-refresh:disabled{opacity:.65;cursor:wait}
+  #dashboard-admin .super-admin-approval-content{display:grid;gap:10px;padding-top:15px}
+  #dashboard-admin .super-admin-approval-count{display:flex;align-items:center;gap:7px;margin:0 0 2px;color:#8e9bb0;font-size:9px;font-weight:900;letter-spacing:.14em;text-transform:uppercase}
+  #dashboard-admin .super-admin-approval-count::before{content:"";width:6px;height:6px;border-radius:50%;background:#ffc700;box-shadow:0 0 10px rgba(255,199,0,.55)}
+  #dashboard-admin .super-admin-request-card{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:15px 16px;border:1px solid rgba(148,166,190,.13);border-radius:11px;background:linear-gradient(110deg,rgba(255,255,255,.035),rgba(255,255,255,.012));transition:border-color .18s ease,background .18s ease,transform .18s ease}
+  #dashboard-admin .super-admin-request-card:hover{transform:translateY(-1px);border-color:rgba(255,199,0,.28);background:linear-gradient(110deg,rgba(255,199,0,.055),rgba(255,255,255,.015))}
+  #dashboard-admin .super-admin-request-identity{display:flex;align-items:center;gap:13px;min-width:0}
+  #dashboard-admin .super-admin-request-avatar{display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;border:1px solid rgba(255,199,0,.19);border-radius:12px;background:rgba(255,199,0,.085);color:#ffe17a;font-size:14px;font-weight:900;text-transform:uppercase}
+  #dashboard-admin .super-admin-request-details{min-width:0}
+  #dashboard-admin .super-admin-request-name{display:block;overflow:hidden;color:#f1f4f8;font-size:13px;font-weight:800;text-overflow:ellipsis;white-space:nowrap}
+  #dashboard-admin .super-admin-request-email{display:block;margin-top:3px;overflow-wrap:anywhere;color:#97a4b7;font-size:11px;line-height:1.45}
+  #dashboard-admin .super-admin-request-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+  #dashboard-admin .super-admin-request-location{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border:1px solid rgba(70,167,255,.2);border-radius:7px;background:rgba(70,167,255,.07);color:#c4e3ff;font-size:9px;font-weight:800;letter-spacing:.035em}
+  #dashboard-admin .super-admin-request-date{color:#748196;font-size:10px}
+  #dashboard-admin .super-admin-request-actions{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+  #dashboard-admin .super-admin-request-actions .btn-primary{min-width:94px;min-height:36px;border-radius:8px;font-size:10px;font-weight:900;letter-spacing:.045em;transition:transform .16s ease,filter .16s ease}
+  #dashboard-admin .super-admin-request-actions .btn-primary:hover{transform:translateY(-1px);filter:brightness(1.08)}
+  #dashboard-admin .super-admin-request-actions .super-admin-reject{border:1px solid rgba(255,112,112,.32);background:rgba(255,91,91,.055);color:#ffaaaa}
+  #dashboard-admin .super-admin-request-actions .super-admin-reject:hover{border-color:rgba(255,112,112,.62);background:rgba(255,91,91,.12)}
+  #dashboard-admin .super-admin-approval-state{display:flex;align-items:center;gap:13px;padding:20px 17px;border:1px dashed rgba(148,166,190,.18);border-radius:10px;background:rgba(255,255,255,.015)}
+  #dashboard-admin .super-admin-approval-state-icon{display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border:1px solid rgba(148,166,190,.14);border-radius:11px;background:rgba(148,166,190,.055);color:#aab6c6;font-size:16px}
+  #dashboard-admin .super-admin-approval-state-title{margin:0;color:#dce2eb;font-size:12px;font-weight:800}
+  #dashboard-admin .super-admin-approval-state-message{margin:4px 0 0;color:#8997aa;font-size:11px;line-height:1.5;overflow-wrap:anywhere}
   #dashboard-admin .admin-card>div[style*="overflow-x"]{position:relative}
   #dashboard-admin table{border-spacing:0}
   #dashboard-admin table thead{background:rgba(5,9,15,.78)}
@@ -421,7 +454,21 @@
     #dashboard-admin .history-group-meta{max-width:52%}
     #dashboard-admin .history-scanned-by{font-size:11px}
   }
-  @media(prefers-reduced-motion:reduce){
+    @media(max-width:760px){
+      #dashboard-admin #super-admin-approval-panel{padding:16px}
+      #dashboard-admin .super-admin-approval-heading{align-items:flex-start;gap:10px}
+      #dashboard-admin .super-admin-approval-title-group{align-items:flex-start;gap:10px}
+      #dashboard-admin .super-admin-approval-icon{flex-basis:38px;width:38px;height:38px;border-radius:11px;font-size:17px}
+      #dashboard-admin .super-admin-approval-title{font-size:14px}
+      #dashboard-admin .super-admin-approval-subtitle{font-size:10px}
+      #dashboard-admin .super-admin-approval-refresh{min-height:34px;padding-inline:10px!important;font-size:9px}
+      #dashboard-admin .super-admin-request-card{align-items:flex-start;flex-direction:column;gap:13px;padding:13px}
+      #dashboard-admin .super-admin-request-actions{width:100%}
+      #dashboard-admin .super-admin-request-actions .btn-primary{flex:1;min-width:0}
+      #dashboard-admin .super-admin-request-avatar{flex-basis:36px;width:36px;height:36px}
+      #dashboard-admin .super-admin-approval-state{padding:15px 13px}
+    }
+    @media(prefers-reduced-motion:reduce){
     #dashboard-admin *,#dashboard-admin *::before,#dashboard-admin *::after{animation:none!important}
   }
   </style>
@@ -1561,7 +1608,17 @@
       return group;
     }
     var nameGroup=createInput('la-name','Full Name','text','name');
-    var emailInput=createInput('la-mail','Gmail Address','email','username').querySelector('input');
+    var emailGroup=createInput('la-mail','Noon.com Work Email','email','username');
+    var emailInput=emailGroup.querySelector('input');
+    emailInput.placeholder='name@noon.com';
+    emailInput.title='Use your @noon.com work email.';
+    if(!isSuperAdmin){
+      var emailHint=document.createElement('small');
+      emailHint.className='admin-email-domain-hint';
+      emailHint.textContent='Facility administrator accounts require a @noon.com work email.';
+      emailHint.style.cssText='display:block;margin:-5px 2px 10px;color:var(--text-muted);font-size:11px;line-height:1.45;';
+      emailGroup.appendChild(emailHint);
+    }
     var passwordInput=createInput('la-pass','Password','password',isSuperAdmin?'current-password':'current-password').querySelector('input');
     var countryGroup=null;
     var facilityGroup=null;
@@ -1635,7 +1692,12 @@
     var button=document.getElementById('admin-auth-submit');
     var status=document.getElementById('admin-auth-status');
     if(!email||!credentialInput||!email.value.trim()||!credentialInput.value){
-      if(status)status.textContent='Enter your Gmail and password.';
+      if(status)status.textContent='Enter your Noon.com work email and password.';
+      return;
+    }
+    if(!/@noon\.com$/i.test(email.value.trim())){
+      if(status)status.textContent='Use your Noon.com work email (name@noon.com).';
+      email.focus();
       return;
     }
     var payload;
@@ -1741,8 +1803,8 @@
       navItem.style.padding='0';
       var navButton=document.createElement('button');
       navButton.type='button';
+      navButton.className='super-admin-approval-nav-button';
       navButton.textContent='Admin Approval';
-      navButton.style.cssText='min-height:40px;padding:0 17px;background:transparent;border:0;border-radius:9px;color:inherit;font:inherit;letter-spacing:inherit;cursor:pointer;';
       navButton.addEventListener('click',function(){switchAdminTab('facility-admin-requests');});
       navItem.appendChild(navButton);
       nav.appendChild(navItem);
@@ -1753,22 +1815,34 @@
     section.className='admin-card admin-section hidden';
     var panel=document.createElement('div');
     panel.id='super-admin-approval-panel';
-    panel.style.cssText='padding:18px;background:rgba(17,22,32,.94);border:1px solid rgba(255,199,0,.3);border-radius:12px;';
     var heading=document.createElement('div');
-    heading.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;';
+    heading.className='super-admin-approval-heading';
+    var titleGroup=document.createElement('div');
+    titleGroup.className='super-admin-approval-title-group';
+    var titleIcon=document.createElement('span');
+    titleIcon.className='super-admin-approval-icon';
+    titleIcon.setAttribute('aria-hidden','true');
+    titleIcon.textContent='✓';
+    var titleCopy=document.createElement('div');
     var title=document.createElement('h2');
     title.textContent='Facility Admin Access Requests';
-    title.style.cssText='margin:0;color:var(--noon-yellow);font-size:16px;';
+    title.className='super-admin-approval-title';
+    var subtitle=document.createElement('p');
+    subtitle.className='super-admin-approval-subtitle';
+    subtitle.textContent='Review facility access requests and manage administrator permissions.';
+    titleCopy.append(title,subtitle);
     var refreshButton=document.createElement('button');
     refreshButton.type='button';
-    refreshButton.className='btn-primary btn-outline btn-sm';
-    refreshButton.textContent='Refresh';
+    refreshButton.className='btn-primary super-admin-approval-refresh';
+    refreshButton.innerHTML='<span aria-hidden="true">↻</span><span>REFRESH</span>';
+    refreshButton.setAttribute('aria-label','Refresh facility admin requests');
     refreshButton.addEventListener('click',refreshFacilityAdminRequests);
     var content=document.createElement('div');
     content.id='super-admin-approval-content';
+    content.className='super-admin-approval-content';
     content.setAttribute('aria-live','polite');
-    content.textContent='Select Admin Approval to view requests.';
-    heading.append(title,refreshButton);
+    titleGroup.append(titleIcon,titleCopy);
+    heading.append(titleGroup,refreshButton);
     panel.append(heading,content);
     section.appendChild(panel);
     nav.parentNode.insertBefore(section,nav.nextSibling);
@@ -1777,38 +1851,117 @@
   function refreshFacilityAdminRequests(){
     var content=document.getElementById('super-admin-approval-content');
     if(!content)return Promise.resolve();
-    content.textContent='Loading approval requests...';
+    var refreshButton=document.querySelector('#super-admin-approval-panel .super-admin-approval-refresh');
+    if(refreshButton){refreshButton.disabled=true;refreshButton.setAttribute('aria-busy','true');}
+    content.textContent='';
+    var loadingState=document.createElement('div');
+    loadingState.className='super-admin-approval-state';
+    var loadingIcon=document.createElement('span');
+    loadingIcon.className='super-admin-approval-state-icon';
+    loadingIcon.setAttribute('aria-hidden','true');
+    loadingIcon.textContent='↻';
+    var loadingCopy=document.createElement('div');
+    var loadingTitle=document.createElement('p');
+    loadingTitle.className='super-admin-approval-state-title';
+    loadingTitle.textContent='Loading requests';
+    var loadingMessage=document.createElement('p');
+    loadingMessage.className='super-admin-approval-state-message';
+    loadingMessage.textContent='Checking for facility administrator requests...';
+    loadingCopy.append(loadingTitle,loadingMessage);
+    loadingState.append(loadingIcon,loadingCopy);
+    content.appendChild(loadingState);
     return appsScriptAction({action:'admin_list_facility_requests'}).then(function(result){
       content.textContent='';
       if(!Array.isArray(result.requests)||result.requests.length===0){
-        content.textContent='There are no pending facility admin requests.';
+        var emptyState=document.createElement('div');
+        emptyState.className='super-admin-approval-state';
+        var emptyIcon=document.createElement('span');
+        emptyIcon.className='super-admin-approval-state-icon';
+        emptyIcon.setAttribute('aria-hidden','true');
+        emptyIcon.textContent='✓';
+        var emptyCopy=document.createElement('div');
+        var emptyTitle=document.createElement('p');
+        emptyTitle.className='super-admin-approval-state-title';
+        emptyTitle.textContent='You’re all caught up';
+        var emptyMessage=document.createElement('p');
+        emptyMessage.className='super-admin-approval-state-message';
+        emptyMessage.textContent='There are no pending facility admin requests.';
+        emptyCopy.append(emptyTitle,emptyMessage);
+        emptyState.append(emptyIcon,emptyCopy);
+        content.appendChild(emptyState);
         return;
       }
+      var count=document.createElement('p');
+      count.className='super-admin-approval-count';
+      count.textContent=result.requests.length+' REQUEST'+(result.requests.length===1?'':'S')+' AWAITING REVIEW';
+      content.appendChild(count);
       result.requests.forEach(function(request){
         var card=document.createElement('div');
-        card.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;border-top:1px solid rgba(255,255,255,.1);';
+        card.className='super-admin-request-card';
+        var identity=document.createElement('div');
+        identity.className='super-admin-request-identity';
+        var avatar=document.createElement('span');
+        avatar.className='super-admin-request-avatar';
+        avatar.setAttribute('aria-hidden','true');
+        avatar.textContent=String(request.name||'A').trim().charAt(0)||'A';
         var details=document.createElement('div');
+        details.className='super-admin-request-details';
         var name=document.createElement('strong');
         name.textContent=request.name||'Facility Admin';
+        name.className='super-admin-request-name';
         var info=document.createElement('div');
-        info.textContent=(request.email||'')+' • '+(request.country||'')+' / '+(request.location||'');
-        info.style.cssText='margin-top:4px;color:var(--text-muted);font-size:12px;';
-        details.append(name,info);
+        info.textContent=request.email||'Email not provided';
+        info.className='super-admin-request-email';
+        var meta=document.createElement('div');
+        meta.className='super-admin-request-meta';
+        var location=document.createElement('span');
+        location.className='super-admin-request-location';
+        location.textContent='⌖ '+(request.country||'')+'  /  '+(request.location||'');
+        meta.appendChild(location);
+        if(request.createdAt){
+          var createdAt=new Date(request.createdAt);
+          if(!isNaN(createdAt.getTime())){
+            var date=document.createElement('span');
+            date.className='super-admin-request-date';
+            date.textContent='Requested '+createdAt.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
+            meta.appendChild(date);
+          }
+        }
+        details.append(name,info,meta);
+        identity.append(avatar,details);
         var actions=document.createElement('div');
-        actions.style.cssText='display:flex;gap:8px;flex-wrap:wrap;';
+        actions.className='super-admin-request-actions';
         [['Approve',true],['Reject',false]].forEach(function(actionData){
           var button=document.createElement('button');
           button.type='button';
-          button.className='btn-primary'+(actionData[1]?'':' btn-outline');
-          button.textContent=actionData[0];
+          button.className='btn-primary'+(actionData[1]?'':' super-admin-reject');
+          button.textContent=(actionData[1]?'✓  ':'×  ')+actionData[0].toUpperCase();
           button.addEventListener('click',function(){processFacilityAdminApproval(request.email,actionData[1],button);});
           actions.appendChild(button);
         });
-        card.append(details,actions);
+        card.append(identity,actions);
         content.appendChild(card);
       });
     }).catch(function(error){
-      content.textContent='Could not load approval requests: '+(error&&error.message?error.message:'Unknown error');
+      content.textContent='';
+      var errorState=document.createElement('div');
+      errorState.className='super-admin-approval-state';
+      var errorIcon=document.createElement('span');
+      errorIcon.className='super-admin-approval-state-icon';
+      errorIcon.setAttribute('aria-hidden','true');
+      errorIcon.textContent='!';
+      var errorCopy=document.createElement('div');
+      var errorTitle=document.createElement('p');
+      errorTitle.className='super-admin-approval-state-title';
+      errorTitle.textContent='Could not load requests';
+      var errorMessage=document.createElement('p');
+      errorMessage.className='super-admin-approval-state-message';
+      errorMessage.textContent=error&&error.message?error.message:'Unknown error';
+      errorCopy.append(errorTitle,errorMessage);
+      errorState.append(errorIcon,errorCopy);
+      content.appendChild(errorState);
+    }).finally(function(){
+      if(refreshButton){refreshButton.disabled=false;refreshButton.removeAttribute('aria-busy');}
     });
   }
 
