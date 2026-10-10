@@ -961,6 +961,7 @@
       facility_admin_subtitle:'Review facility access requests and manage administrator access.',
       refresh:'REFRESH',loading_requests:'Loading requests',checking_requests:'Checking for facility administrator requests...',
       awaiting_review:'REQUESTS AWAITING REVIEW',caught_up:'You’re all caught up',no_pending_admins:'There are no pending facility admin requests.',
+      password_reset_requests:'PASSWORD RESET REQUESTS',password_reset:'Password reset',request_password_reset:'Forgot password? Request a reset',cancel_password_reset:'Back to sign in',new_password:'New password (12+ characters)',request_reset:'REQUEST PASSWORD RESET',reset_request_sent:'Your password reset request was sent to Global Admin for approval.',no_password_reset_requests:'There are no pending password reset requests.',confirm_reset_approve:'Approve this password reset? The account password will change immediately.',confirm_reset_reject:'Reject this password reset request?',reset_approved:'Password reset approved.',reset_rejected:'Password reset rejected.',
       facility_admin_history:'Facility Admin History',current_admins:'CURRENT ADMINS WITH ACCESS',facility_admin:'Facility Admin',
       no_current_admins:'No facility admins currently have access.',all_countries_facilities:'All countries and facilities',
       approve_all:'APPROVE ALL',reject_all:'REJECT ALL',saving:'Saving...',save_failed:'Unable to save the decision.',
@@ -976,6 +977,7 @@
       facility_admin_subtitle:'راجع طلبات الوصول إلى المنشآت وأدر صلاحيات المسؤولين.',
       refresh:'تحديث',loading_requests:'جارٍ تحميل الطلبات',checking_requests:'جارٍ التحقق من طلبات مسؤولي المنشآت...',
       awaiting_review:'طلبات بانتظار المراجعة',caught_up:'لا توجد طلبات جديدة',no_pending_admins:'لا توجد طلبات معلقة لمسؤولي المنشآت.',
+      password_reset_requests:'طلبات إعادة تعيين كلمة المرور',password_reset:'إعادة تعيين كلمة المرور',request_password_reset:'هل نسيت كلمة المرور؟ اطلب إعادة تعيينها',cancel_password_reset:'العودة إلى تسجيل الدخول',new_password:'كلمة المرور الجديدة (12 حرفًا أو أكثر)',request_reset:'طلب إعادة تعيين كلمة المرور',reset_request_sent:'تم إرسال طلب إعادة تعيين كلمة المرور إلى المسؤول العام للموافقة.',no_password_reset_requests:'لا توجد طلبات معلقة لإعادة تعيين كلمة المرور.',confirm_reset_approve:'هل توافق على إعادة تعيين كلمة المرور؟ ستتغير كلمة مرور الحساب فورًا.',confirm_reset_reject:'هل تريد رفض طلب إعادة تعيين كلمة المرور؟',reset_approved:'تمت الموافقة على إعادة تعيين كلمة المرور.',reset_rejected:'تم رفض طلب إعادة تعيين كلمة المرور.',
       facility_admin_history:'مسؤولو المنشآت الذين لديهم صلاحية',current_admins:'المسؤولون الحاليون الذين لديهم صلاحية',facility_admin:'مسؤول منشأة',
       no_current_admins:'لا يوجد حاليًا مسؤولون لديهم صلاحية للمنشآت.',all_countries_facilities:'كل الدول والمنشآت',
       approve_all:'الموافقة على الكل',reject_all:'رفض الكل',saving:'جارٍ الحفظ...',save_failed:'تعذر حفظ القرار.',
@@ -1056,7 +1058,7 @@
     };
     return messages[currentLang][key];
   }
-  function toggleLang(){currentLang=currentLang==='en'?'ar':'en';document.documentElement.dir=currentLang==='ar'?'rtl':'ltr';updateUI();if(currentUser&&currentUser.accessLevel==='superadmin'&&!facilityAdminRequestActionInProgress)refreshFacilityAdminRequests();}
+  function toggleLang(){currentLang=currentLang==='en'?'ar':'en';document.documentElement.dir=currentLang==='ar'?'rtl':'ltr';updateUI();updateAdminAuthForm();if(currentUser&&currentUser.accessLevel==='superadmin'&&!facilityAdminRequestActionInProgress)refreshFacilityAdminRequests();}
   function updateUI(){
     document.querySelectorAll('[data-i18n]').forEach(function(el){const k=el.getAttribute('data-i18n');const v=t(k);if(v)el.innerHTML=v;});
     document.querySelectorAll('.t-ph').forEach(function(el){const k=el.getAttribute('data-i18n');const v=t(k);if(v)el.placeholder=v;});
@@ -1115,7 +1117,7 @@
   }
   function safeImg(u){return normalizeImageUrl(u)||'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'40\' height=\'40\'%3E%3Crect width=\'40\' height=\'40\' fill=\'%23333\'/%3E%3Ctext x=\'20\' y=\'24\' font-size=\'14\' text-anchor=\'middle\' fill=\'%23888\'%3E%3F%3C/text%3E%3C/svg%3E';}
 
-  const urlParams=new URLSearchParams(window.location.search);const currentRoleParam=urlParams.get('role')||'default';const SESSION_KEY='noon_session_'+currentRoleParam;let adminSignupMode=false;let html5QrCode=null;let scannerFacingMode='environment';let scannerLibraryPromise=null;let scannerOperation=Promise.resolve();let currentUser=null;let currentScannedID=null;let currentScanAction='check_in';let currentAdminFilter='all';let autoRefreshTimer=null;let globalAdminData=[];let globalAdminHistory=[];let adminDataScopes={history:{country:'all',facility:'all'},analytics:{country:'all',facility:'all'}};let myPassesData=[];let checkedPrintIds=new Set();let liveStream=null;let currentFacingMode='environment';let targetPhotoType='';let capturedImages={iqama:null,selfie:null,imeiphoto:null,vehicle:null,fmpoc:null};let teamList=[];let currentTeamCounter=1;let isProcessingScan=false;let userSecurityPin=null;let lockedPassesData=null;let pinCreateMode='submit';let currentBatchType='new';
+  const urlParams=new URLSearchParams(window.location.search);const currentRoleParam=urlParams.get('role')||'default';const SESSION_KEY='noon_session_'+currentRoleParam;let adminSignupMode=false;let adminPasswordResetMode=false;let html5QrCode=null;let scannerFacingMode='environment';let scannerLibraryPromise=null;let scannerOperation=Promise.resolve();let currentUser=null;let currentScannedID=null;let currentScanAction='check_in';let currentAdminFilter='all';let autoRefreshTimer=null;let globalAdminData=[];let globalAdminHistory=[];let adminDataScopes={history:{country:'all',facility:'all'},analytics:{country:'all',facility:'all'}};let myPassesData=[];let checkedPrintIds=new Set();let liveStream=null;let currentFacingMode='environment';let targetPhotoType='';let capturedImages={iqama:null,selfie:null,imeiphoto:null,vehicle:null,fmpoc:null};let teamList=[];let currentTeamCounter=1;let isProcessingScan=false;let userSecurityPin=null;let lockedPassesData=null;let pinCreateMode='submit';let currentBatchType='new';
   let historySortOrder='desc';
   let expandedHistoryGroups=new Set();
   let adminRefreshInProgress=false;
@@ -1716,6 +1718,7 @@
       toggle.id='admin-auth-toggle';
       toggle.style.marginTop='10px';
       toggle.addEventListener('click',function(){
+        adminPasswordResetMode=false;
         adminSignupMode=!adminSignupMode;
         emailInput.value='';
         passwordInput.value='';
@@ -1724,6 +1727,20 @@
         updateAdminAuthForm();
       });
       form.appendChild(toggle);
+      var resetToggle=document.createElement('button');
+      resetToggle.type='button';
+      resetToggle.className='btn-primary btn-outline';
+      resetToggle.id='admin-password-reset-toggle';
+      resetToggle.style.marginTop='8px';
+      resetToggle.addEventListener('click',function(){
+        adminPasswordResetMode=!adminPasswordResetMode;
+        adminSignupMode=false;
+        passwordInput.value='';
+        var statusEl=document.getElementById('admin-auth-status');
+        if(statusEl)statusEl.textContent='';
+        updateAdminAuthForm();
+      });
+      form.appendChild(resetToggle);
     }
     updateAdminAuthForm();
   }
@@ -1733,15 +1750,17 @@
     var nameGroup=document.getElementById('la-name');
     var button=document.getElementById('admin-auth-submit');
     var toggle=document.getElementById('admin-auth-toggle');
+    var resetToggle=document.getElementById('admin-password-reset-toggle');
     var countryGroup=document.getElementById('la-country');
     var facilityGroup=document.getElementById('la-location');
-    if(nameGroup&&nameGroup.parentElement)nameGroup.parentElement.classList.toggle('hidden',isSuperAdmin||!adminSignupMode);
-    if(button)button.textContent=isSuperAdmin?'LOGIN AS GLOBAL ADMIN':(adminSignupMode?'REQUEST ADMIN ACCESS':'LOGIN AS FACILITY ADMIN');
-    if(toggle)toggle.textContent=adminSignupMode?'I already have an account':'Create facility admin account';
+    if(nameGroup&&nameGroup.parentElement)nameGroup.parentElement.classList.toggle('hidden',isSuperAdmin||(!adminSignupMode));
+    if(button)button.textContent=isSuperAdmin?'LOGIN AS GLOBAL ADMIN':(adminPasswordResetMode?t('request_reset'):(adminSignupMode?'REQUEST ADMIN ACCESS':'LOGIN AS FACILITY ADMIN'));
+    if(toggle){toggle.textContent=adminSignupMode?'I already have an account':'Create facility admin account';toggle.classList.toggle('hidden',adminPasswordResetMode);}
+    if(resetToggle){resetToggle.textContent=adminPasswordResetMode?t('cancel_password_reset'):t('request_password_reset');resetToggle.classList.toggle('hidden',isSuperAdmin||adminSignupMode);}
     var credentialInput=document.getElementById('la-pass');
-    if(credentialInput)credentialInput.autocomplete=adminSignupMode?'new-password':'current-password';
-    if(countryGroup&&countryGroup.parentElement)countryGroup.parentElement.classList.toggle('hidden',isSuperAdmin);
-    if(facilityGroup&&facilityGroup.parentElement)facilityGroup.parentElement.classList.toggle('hidden',isSuperAdmin||document.getElementById('la-country').value!=='KSA');
+    if(credentialInput){credentialInput.autocomplete=(adminSignupMode||adminPasswordResetMode)?'new-password':'current-password';credentialInput.placeholder=adminPasswordResetMode?t('new_password'):'Password';credentialInput.setAttribute('aria-label',credentialInput.placeholder);}
+    if(countryGroup&&countryGroup.parentElement)countryGroup.parentElement.classList.toggle('hidden',isSuperAdmin||adminPasswordResetMode);
+    if(facilityGroup&&facilityGroup.parentElement)facilityGroup.parentElement.classList.toggle('hidden',isSuperAdmin||adminPasswordResetMode||document.getElementById('la-country').value!=='KSA');
   }
 
   function submitAdminAccess(){
@@ -1763,7 +1782,13 @@
       return;
     }
     var payload;
-    if(adminSignupMode&&!isSuperAdmin){
+    if(adminPasswordResetMode&&!isSuperAdmin){
+      if(credentialInput.value.length<12||credentialInput.value.length>128){
+        if(status)status.textContent='Choose a new password between 12 and 128 characters.';
+        return;
+      }
+      payload={action:'admin_request_password_reset',email:email.value.trim(),password:credentialInput.value};
+    }else if(adminSignupMode&&!isSuperAdmin){
       if(!name||name.value.trim().length<2||!country||!country.value||(country.value==='KSA'&&(!facility||!facility.value))){
         if(status)status.textContent='Enter your name and select a country and facility.';
         return;
@@ -1793,8 +1818,15 @@
       }
     }
     if(button)button.disabled=true;
-    if(status)status.textContent=adminSignupMode?'Sending access request...':'Signing in...';
+    if(status)status.textContent=adminPasswordResetMode?'Sending password reset request...':(adminSignupMode?'Sending access request...':'Signing in...');
     adminAuthRequest(payload).then(function(result){
+      if(adminPasswordResetMode&&!isSuperAdmin){
+        credentialInput.value='';
+        if(status)status.textContent=result.message||t('reset_request_sent');
+        adminPasswordResetMode=false;
+        updateAdminAuthForm();
+        return;
+      }
       if(adminSignupMode&&!isSuperAdmin){
         credentialInput.value='';
         if(status)status.textContent=result.message||'Your request was sent for approval.';
@@ -2006,8 +2038,9 @@
       content.textContent='';
       var requests=Array.isArray(result.requests)?result.requests:[];
       var history=Array.isArray(result.history)?result.history:[];
+      var passwordResetRequests=Array.isArray(result.passwordResetRequests)?result.passwordResetRequests:[];
       facilityAdminHistoryRecords=history;
-      facilityAdminPendingCount=requests.length;
+      facilityAdminPendingCount=requests.length+passwordResetRequests.length;
       updateAdminPendingBadges(countPendingAccessRequests(globalAdminData),facilityAdminPendingCount);
       var count=document.createElement('p');
       count.className='super-admin-approval-count';
@@ -2037,6 +2070,15 @@
         requests.forEach(function(request){content.appendChild(createFacilityAdminRequestCard(request,'pending'));});
       }else{
         content.appendChild(createFacilityAdminApprovalState('✓',t('caught_up'),t('no_pending_admins')));
+      }
+      var resetHeading=document.createElement('h3');
+      resetHeading.className='super-admin-history-title';
+      resetHeading.textContent=t('password_reset_requests')+' ('+passwordResetRequests.length+')';
+      content.appendChild(resetHeading);
+      if(passwordResetRequests.length){
+        passwordResetRequests.forEach(function(request){content.appendChild(createFacilityAdminPasswordResetCard(request));});
+      }else{
+        content.appendChild(createFacilityAdminApprovalState('✓',t('caught_up'),t('no_password_reset_requests')));
       }
       var historyHeading=document.createElement('div');
       historyHeading.className='super-admin-history-heading';
@@ -2208,6 +2250,46 @@
     return card;
   }
 
+  function createFacilityAdminPasswordResetCard(request){
+    var card=createFacilityAdminRequestCard(request,'pending');
+    var name=card.querySelector('.super-admin-request-name');
+    if(name)name.textContent=(request.name||t('facility_admin'))+' · '+t('password_reset');
+    var actions=card.querySelector('.super-admin-request-actions');
+    if(actions){
+      Array.prototype.slice.call(actions.querySelectorAll('button')).forEach(function(button){button.remove();});
+      [[true,'approve'],[false,'reject']].forEach(function(item){
+        var button=document.createElement('button');
+        button.type='button';
+        button.className='btn-primary'+(item[0]?'':' super-admin-reject');
+        button.textContent=(item[0]?'✓  ':'×  ')+t(item[1]);
+        button.addEventListener('click',function(){processFacilityAdminPasswordReset(request.email,item[0],button);});
+        actions.appendChild(button);
+      });
+    }
+    return card;
+  }
+
+  function processFacilityAdminPasswordReset(email,approve,button){
+    if(facilityAdminRequestActionInProgress)return;
+    if(!confirm(t(approve?'confirm_reset_approve':'confirm_reset_reject')))return;
+    facilityAdminRequestActionInProgress=true;
+    setFacilityAdminActionButtonsDisabled(true);
+    var originalText=button?button.textContent:'';
+    if(button){button.disabled=true;button.setAttribute('aria-busy','true');button.textContent=t('saving');}
+    var status=document.getElementById('super-admin-save-status');
+    if(status)status.textContent=t('saving');
+    appsScriptAction({action:'admin_process_password_reset',email:email,approve:approve}).then(function(){
+      if(status)status.textContent=t(approve?'reset_approved':'reset_rejected');
+      return refreshFacilityAdminRequests();
+    }).catch(function(error){
+      alert('Unable to process this password reset: '+(error&&error.message?error.message:'Unknown error'));
+      if(button){button.disabled=false;button.removeAttribute('aria-busy');button.textContent=originalText;}
+    }).finally(function(){
+      facilityAdminRequestActionInProgress=false;
+      setFacilityAdminActionButtonsDisabled(false);
+    });
+  }
+
   function processFacilityAdminApproval(email,approve,button){
     if(facilityAdminRequestActionInProgress)return;
     facilityAdminRequestActionInProgress=true;
@@ -2351,6 +2433,7 @@
         if(sb)sb.style.display='flex';
         setupAdminHeaderIdentity();
         ensureSuperAdminApprovalPanel();
+        if(currentUser.accessLevel==='superadmin')refreshFacilityAdminRequests();
         if(na)na.classList.remove('hidden');
         if(msb)msb.classList.remove('hidden');
         document.querySelectorAll('.admin-tab').forEach(function(el){el.classList.remove('hidden');});
