@@ -826,6 +826,20 @@
   dict.ar.gate_check_in_all="تسجيل دخول الجميع";
   dict.en.gate_check_out_all="CHECK OUT ALL";
   dict.ar.gate_check_out_all="تسجيل خروج الجميع";
+  dict.en.country_label="Country";
+  dict.ar.country_label="الدولة";
+  dict.en.country_select="Select Country...";
+  dict.ar.country_select="اختر الدولة...";
+  dict.en.country_ksa="KSA (Saudi Arabia)";
+  dict.ar.country_ksa="KSA (المملكة العربية السعودية)";
+  dict.en.country_uae="UAE (United Arab Emirates)";
+  dict.ar.country_uae="UAE (الإمارات العربية المتحدة)";
+  dict.en.country_egy="EGY (Egypt)";
+  dict.ar.country_egy="EGY (مصر)";
+  dict.en.facility_label="Facility";
+  dict.ar.facility_label="المنشأة";
+  dict.en.facility_select="Select Facility...";
+  dict.ar.facility_select="اختر المنشأة...";
   function addMemberNotice(count){
     if(currentLang==='ar'){
       if(count===1)return "تنبيه: تمت إضافة عضو جديد إلى هذا التصريح. يظل التصريح معتمدًا، ويجب أن يوافق المسؤول على العضو الجديد.";
@@ -1335,19 +1349,147 @@
 
   function isGateReadOnly(){return !!(currentUser&&currentUser.role==='guard'&&currentUser.guardMode==='gate');}
 
+  function createLoginSelectGroup(id,labelKey,placeholderKey,options){
+    const group=document.createElement('div');
+    group.className='input-group';
+    const label=document.createElement('label');
+    label.htmlFor=id;
+    label.setAttribute('data-i18n',labelKey);
+    label.textContent=t(labelKey);
+    const select=document.createElement('select');
+    select.id=id;
+    select.className='input-field';
+    select.setAttribute('aria-label',t(labelKey));
+    const placeholder=document.createElement('option');
+    placeholder.value='';
+    placeholder.setAttribute('data-i18n',placeholderKey);
+    placeholder.textContent=t(placeholderKey);
+    select.appendChild(placeholder);
+    options.forEach(function(optionData){
+      const option=document.createElement('option');
+      option.value=optionData[0];
+      option.setAttribute('data-i18n',optionData[1]);
+      option.textContent=t(optionData[1]);
+      select.appendChild(option);
+    });
+    group.appendChild(label);
+    group.appendChild(select);
+    return {group:group,select:select};
+  }
+
+  function configureLoginCountryFacility(countrySelect,facilityGroup,facilitySelect){
+    function updateFacilityVisibility(){
+      const requiresFacility=countrySelect.value==='KSA';
+      facilityGroup.classList.toggle('hidden',!requiresFacility);
+      facilitySelect.required=requiresFacility;
+      if(!requiresFacility)facilitySelect.value='';
+    }
+    countrySelect.addEventListener('change',updateFacilityVisibility);
+    updateFacilityVisibility();
+  }
+
+  function setupLoginCountrySelectors(){
+    const countries=[
+      ['KSA','country_ksa'],
+      ['UAE','country_uae'],
+      ['EGY','country_egy']
+    ];
+    const facilities=[['RUH01','RUH01'],['JED01','JED01']];
+    const guardLocation=document.getElementById('lg-location');
+    const guardLocationGroup=guardLocation&&guardLocation.parentElement;
+    const guardLogin=document.getElementById('login-guard');
+    if(guardLocation&&guardLocationGroup&&guardLogin&&!document.getElementById('lg-country')){
+      const guardCountry=createLoginSelectGroup('lg-country','country_label','country_select',countries);
+      guardLogin.insertBefore(guardCountry.group,guardLocationGroup);
+      const guardFacilityLabel=document.createElement('label');
+      guardFacilityLabel.htmlFor='lg-location';
+      guardFacilityLabel.setAttribute('data-i18n','facility_label');
+      guardFacilityLabel.textContent=t('facility_label');
+      guardLocationGroup.insertBefore(guardFacilityLabel,guardLocation);
+      guardLocation.setAttribute('aria-label',t('facility_label'));
+      guardLocation.textContent='';
+      const guardPlaceholder=document.createElement('option');
+      guardPlaceholder.value='';
+      guardPlaceholder.setAttribute('data-i18n','facility_select');
+      guardPlaceholder.textContent=t('facility_select');
+      guardLocation.appendChild(guardPlaceholder);
+      facilities.forEach(function(facility){
+        const option=document.createElement('option');
+        option.value=facility[0];
+        option.textContent=facility[1];
+        guardLocation.appendChild(option);
+      });
+      configureLoginCountryFacility(guardCountry.select,guardLocationGroup,guardLocation);
+    }
+
+    const adminLogin=document.getElementById('login-admin');
+    if(adminLogin&&!document.getElementById('la-country')){
+      const adminCountry=createLoginSelectGroup('la-country','country_label','country_select',countries);
+      const adminFacility=createLoginSelectGroup('la-location','facility_label','facility_select',facilities);
+      const submitButton=adminLogin.querySelector('button');
+      adminLogin.insertBefore(adminCountry.group,submitButton);
+      adminLogin.insertBefore(adminFacility.group,submitButton);
+      configureLoginCountryFacility(adminCountry.select,adminFacility.group,adminFacility.select);
+    }
+  }
+
+  function setupRequestCountrySelector(){
+    const requestLocation=document.getElementById('req-location');
+    const requestLocationGroup=requestLocation&&requestLocation.parentElement;
+    const requestForm=document.getElementById('dashboard-ops');
+    if(!requestLocation||!requestLocationGroup||!requestForm||document.getElementById('req-country'))return;
+    const countries=[
+      ['KSA','country_ksa'],
+      ['UAE','country_uae'],
+      ['EGY','country_egy']
+    ];
+    const facilities=[['RUH01','RUH01'],['JED01','JED01'],['UAE','country_uae'],['EGY','country_egy']];
+    const country=createLoginSelectGroup('req-country','country_label','country_select',countries);
+    requestLocationGroup.parentNode.insertBefore(country.group,requestLocationGroup);
+    const facilityLabel=document.createElement('label');
+    facilityLabel.htmlFor='req-location';
+    facilityLabel.setAttribute('data-i18n','facility_label');
+    facilityLabel.textContent=t('facility_label');
+    requestLocationGroup.insertBefore(facilityLabel,requestLocation);
+    requestLocation.setAttribute('aria-label',t('facility_label'));
+    requestLocation.textContent='';
+    const facilityPlaceholder=document.createElement('option');
+    facilityPlaceholder.value='';
+    facilityPlaceholder.setAttribute('data-i18n','facility_select');
+    facilityPlaceholder.textContent=t('facility_select');
+    requestLocation.appendChild(facilityPlaceholder);
+    facilities.forEach(function(facility){
+      const option=document.createElement('option');
+      option.value=facility[0];
+      if(facility[1].indexOf('country_')===0)option.setAttribute('data-i18n',facility[1]);
+      option.textContent=facility[1].indexOf('country_')===0?t(facility[1]):facility[1];
+      requestLocation.appendChild(option);
+    });
+    function updateRequestLocation(){
+      const requiresFacility=country.select.value==='KSA';
+      requestLocationGroup.classList.toggle('hidden',!requiresFacility);
+      requestLocation.required=requiresFacility;
+      requestLocation.value=requiresFacility?'':country.select.value;
+    }
+    country.select.addEventListener('change',updateRequestLocation);
+    updateRequestLocation();
+  }
+
   function login(role){
     if(role==='guard'){
-      const n=document.getElementById('lg-name'),i=document.getElementById('lg-id'),l=document.getElementById('lg-location'),m=document.getElementById('lg-mode');
-      if(!n||!i||!l||!m||!n.value||!i.value||!l.value||!m.value)return alert("Fill all Guard details");
-      currentUser={role:'guard',name:n.value,id:i.value,location:l.value,guardMode:m.value};
+      const n=document.getElementById('lg-name'),i=document.getElementById('lg-id'),country=document.getElementById('lg-country'),location=document.getElementById('lg-location'),m=document.getElementById('lg-mode');
+      if(!n||!i||!country||!location||!m||!n.value||!i.value||!country.value||!m.value)return alert("Fill all Guard details");
+      if(country.value==='KSA'&&!location.value)return alert("Select a facility.");
+      currentUser={role:'guard',name:n.value,id:i.value,country:country.value,location:country.value==='KSA'?location.value:country.value,guardMode:m.value};
     }else if(role==='ops'){
       const n=document.getElementById('lo-name'),m=document.getElementById('lo-mail');
       if(!n||!m||!n.value||!m.value)return alert("Enter Name and Gmail");
       currentUser={role:'ops',name:n.value,email:m.value.toLowerCase().trim()};
     }else if(role==='admin'){
-      const n=document.getElementById('la-name'),m=document.getElementById('la-mail'),p=document.getElementById('la-pass');
-      if(!n||!m||!p||!n.value||!m.value||!p.value)return alert("Enter all Admin details");
-      if(p.value==='NoonCCTVSLP#2026')currentUser={role:'admin',name:n.value,email:m.value.toLowerCase().trim(),location:''};
+      const n=document.getElementById('la-name'),m=document.getElementById('la-mail'),p=document.getElementById('la-pass'),country=document.getElementById('la-country'),location=document.getElementById('la-location');
+      if(!n||!m||!p||!country||!location||!n.value||!m.value||!p.value||!country.value)return alert("Enter all Admin details");
+      if(country.value==='KSA'&&!location.value)return alert("Select a facility.");
+      if(p.value==='NoonCCTVSLP#2026')currentUser={role:'admin',name:n.value,email:m.value.toLowerCase().trim(),country:country.value,location:country.value==='KSA'?location.value:country.value};
       else return alert("Incorrect Password");
     }
     saveSession();
@@ -1460,6 +1602,8 @@
 
   document.addEventListener('DOMContentLoaded',function(){
       buildLoginLayout();
+      setupLoginCountrySelectors();
+      setupRequestCountrySelector();
       updateUI();
       const params = new URLSearchParams(window.location.search);
       const role = params.get('role');
@@ -1697,6 +1841,11 @@
     const startDateVal=document.getElementById('req-date-start').value;
     const endDateVal=document.getElementById('req-date-end').value;
     if(!startDateVal||!endDateVal)return alert("Visit/Validity dates (From - To) are required.");
+    const selectedCountry=document.getElementById('req-country');
+    const selectedFacility=document.getElementById('req-location');
+    if(!selectedCountry||!selectedCountry.value)return alert("Select a country.");
+    if(selectedCountry.value==='KSA'&&(!selectedFacility||!selectedFacility.value))return alert("Select a facility.");
+    const selectedLocation=selectedCountry.value==='KSA'?selectedFacility.value:selectedCountry.value;
     let cachedKey='cached_passes_'+hMail;
     let existingPasses=[];
     try{existingPasses=JSON.parse(localStorage.getItem(cachedKey))||[];}catch(e){}
@@ -1709,7 +1858,7 @@
       accountPin=userSecurityPin||localPin;
     }
     const tempId='NOON-'+Math.floor(100000+Math.random()*900000);
-    let tempPass={UniqueID:tempId,VisitorName:vName,Type:type,Location:document.getElementById('req-location').value,StartDate:startDateVal,EndDate:endDateVal,Status:'Pending',HostEmail:hMail};
+    let tempPass={UniqueID:tempId,VisitorName:vName,Type:type,Location:selectedLocation,StartDate:startDateVal,EndDate:endDateVal,Status:'Pending',HostEmail:hMail};
     if(autoRefreshTimer)clearInterval(autoRefreshTimer);
     existingPasses.push(tempPass);localStorage.setItem(cachedKey,JSON.stringify(existingPasses));renderMyPasses(existingPasses);
     if(currentUser.role==='admin'&&vni)vni.value="";
@@ -1719,7 +1868,7 @@
     document.getElementById('req-lead-device-type').value="None";toggleLeadDeviceInput();
     clearCapturedData('iqama');clearCapturedData('selfie');clearCapturedData('imeiphoto');clearCapturedData('vehicle');
     teamList=[];currentTeamCounter=1;renderTeamRoster();hideTeamEntry();
-    const payload={action:'create',UniqueID:tempId,requestId:tempId,hostName:hName,hostEmail:hMail,accountPin:accountPin,visitorName:vName,type:type,location:document.getElementById('req-location').value,startDate:startDateVal,endDate:endDateVal,iqamaBase64:iB64,iqamaMimeType:iMime,selfieBase64:sB64,selfieMimeType:sMime,imeiNumber:leadImeiVal,imeiPhotoBase64:imB64,fmPoc:fmPocVal,vehicleBase64:vB64,vehicleMimeType:vMime,vehiclePlateNo:'',team:cleanTeam,slpTicketNo:type==='Visitor'?document.getElementById('req-vis-slp').value:document.getElementById('req-con-slp').value,contactNo:type==='Visitor'?document.getElementById('req-vis-contact').value:document.getElementById('req-con-contact').value,invitedBy:type==='Visitor'?document.getElementById('req-vis-invitedby').value:'',projectName:type==='Contractor'?document.getElementById('req-con-project').value:'',companyName:type==='Contractor'?document.getElementById('req-con-company').value:'',projectManager:type==='Contractor'?document.getElementById('req-con-pm').value:''};
+    const payload={action:'create',UniqueID:tempId,requestId:tempId,hostName:hName,hostEmail:hMail,accountPin:accountPin,visitorName:vName,type:type,location:selectedLocation,startDate:startDateVal,endDate:endDateVal,iqamaBase64:iB64,iqamaMimeType:iMime,selfieBase64:sB64,selfieMimeType:sMime,imeiNumber:leadImeiVal,imeiPhotoBase64:imB64,fmPoc:fmPocVal,vehicleBase64:vB64,vehicleMimeType:vMime,vehiclePlateNo:'',team:cleanTeam,slpTicketNo:type==='Visitor'?document.getElementById('req-vis-slp').value:document.getElementById('req-con-slp').value,contactNo:type==='Visitor'?document.getElementById('req-vis-contact').value:document.getElementById('req-con-contact').value,invitedBy:type==='Visitor'?document.getElementById('req-vis-invitedby').value:'',projectName:type==='Contractor'?document.getElementById('req-con-project').value:'',companyName:type==='Contractor'?document.getElementById('req-con-company').value:'',projectManager:type==='Contractor'?document.getElementById('req-con-pm').value:''};
     if(ka){
       btn.innerText="SUBMITTING...";btn.disabled=true;
       beginPleaseWait('PLEASE WAIT...');
