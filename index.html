@@ -765,7 +765,7 @@
       adminRequestId:createAdminRequestId('admin-api')
     });
     return postAdminRequest(payload).then(function(result){
-      if(!result||result.status!=='success')throw new Error(result&&result.message?result.message:'The server did not confirm the admin action.');
+      if(!result||result.status==='error')throw new Error(result&&result.message?result.message:'The server did not confirm the admin action.');
       return result;
     });
   }
@@ -4294,4 +4294,4 @@
   })();
   </script>
   </body></html>
-  
+    
