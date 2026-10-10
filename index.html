@@ -292,6 +292,16 @@
   #dashboard-admin .super-admin-request-actions .btn-primary:hover{transform:translateY(-1px);filter:brightness(1.08)}
   #dashboard-admin .super-admin-request-actions .super-admin-reject{border:1px solid rgba(255,112,112,.32);background:rgba(255,91,91,.055);color:#ffaaaa}
   #dashboard-admin .super-admin-request-actions .super-admin-reject:hover{border-color:rgba(255,112,112,.62);background:rgba(255,91,91,.12)}
+  #dashboard-admin .admin-nav-horizontal li[data-pending-count]{position:relative}
+  #dashboard-admin .admin-nav-horizontal li[data-pending-count]:not([data-pending-count="0"])::after{content:attr(data-pending-count);position:absolute;inset-block-start:-5px;inset-inline-end:-4px;z-index:2;display:grid;place-items:center;min-width:17px;height:17px;padding:0 4px;border:2px solid #111722;border-radius:999px;background:#ef5350;color:#fff;font-size:9px;font-weight:900;line-height:1}
+  #dashboard-admin .super-admin-bulk-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:2px 0 5px}
+  #dashboard-admin .super-admin-bulk-buttons{display:flex;gap:8px;flex-wrap:wrap}
+  #dashboard-admin .super-admin-bulk-buttons .btn-primary{width:auto;min-height:34px;padding:0 13px!important;border-radius:8px;font-size:9px;font-weight:900}
+  #dashboard-admin .super-admin-bulk-buttons .super-admin-reject{border:1px solid rgba(255,112,112,.32);background:rgba(255,91,91,.055);color:#ffaaaa}
+  #dashboard-admin .super-admin-save-status{min-height:16px;color:#ffe17a;font-size:10px;font-weight:700}
+  #dashboard-admin .super-admin-history-filter{min-width:200px;max-width:min(360px,60vw);padding:8px 10px;border:1px solid rgba(148,166,190,.22);border-radius:8px;background:#111722;color:#e4e9f0;font:inherit;font-size:10px}
+  #dashboard-admin .super-admin-request-date{display:block}
+  @media(max-width:600px){#dashboard-admin #super-admin-approval-panel{padding:15px}#dashboard-admin .super-admin-approval-heading{align-items:flex-start}#dashboard-admin .super-admin-history-heading{align-items:flex-start;flex-direction:column}#dashboard-admin .super-admin-history-filter{max-width:100%;width:100%}#dashboard-admin .super-admin-request-card{align-items:flex-start;flex-direction:column}#dashboard-admin .super-admin-request-actions{width:100%}#dashboard-admin .super-admin-request-actions .btn-primary{flex:1}}
   #dashboard-admin .super-admin-approval-state{display:flex;align-items:center;gap:13px;padding:20px 17px;border:1px dashed rgba(148,166,190,.18);border-radius:10px;background:rgba(255,255,255,.015)}
   #dashboard-admin .super-admin-approval-state-icon{display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border:1px solid rgba(148,166,190,.14);border-radius:11px;background:rgba(148,166,190,.055);color:#aab6c6;font-size:16px}
   #dashboard-admin .super-admin-approval-state-title{margin:0;color:#dce2eb;font-size:12px;font-weight:800}
@@ -941,7 +951,36 @@
 
   const dict={en:{"guard":"🛡️ Guard","visitor_ops":"📋 Visitor/Ops","admin":"⚙️ Admin","name":"Name","noon_id":"Noon ID","select_guard_loc":"Select Guard Location...","login_gate":"LOGIN TO GATE","your_full_name":"Your Full Name","your_email":"Your Gmail / Email","login_portal":"LOGIN TO PORTAL","admin_name":"Admin Name","admin_email":"Admin Gmail","admin_password":"Admin Password","login_admin":"LOGIN AS ADMIN","system_admin":"System Admin","visitor_portal":"Visitor Portal","gate_scanner":"Gate Scanner","admin_dashboard":"Admin Dashboard","logout":"LOGOUT","visitor_contractor_portal":"Visitor & Contractor Portal","submit_new_request":"Submit New Request","type":"Type","visitor":"Visitor","contractor":"Contractor","req_email_ph":"Email Address","req_vname_ph":"Visitor / Contractor Full Name","iqama_id_ph":"Lead Iqama / ID Number","visit_date":"Visit Date / Validity (From - To)","slp_ticket":"SLP Ticket No.","contact_no":"Contact No.","invited_by":"Invited by Whom","vehicle_plate":"Vehicle Plate / Picture","live_camera":"📷 Live Camera","contract_exp":"Contract Expiration (From - To)","project_name":"Project Name","company_name":"Company / Contractor Name","project_manager":"Project Manager","fm_poc":"FM POC Name / Details","upload_iqama":"Upload Iqama/ID Copy","upload_selfie":"Upload Selfie Photo","submit_approval":"Submit for Approval","my_passes":"My Passes","refresh":"Refresh","fetching":"Fetching your passes...","start_camera":"START CAMERA SCANNER","name_label":"Name:","type_label":"Type:","location_label":"Location:","confirm_action":"CONFIRM ACTION","access_approvals":"📋 Access Approvals","history":"🕰️ History","guard_approvals":"🛡️ Guard Approvals","analytics":"📊 Analytics","all_time":"All Time","today":"Today","weekly":"Weekly","monthly":"Monthly","6months":"6 Months","1year":"1 Year","custom":"Custom","to":"TO","apply":"APPLY","pending_req":"Pending Requests","active_req":"Active Requests","print_selected":"🖨️ PRINT SELECTED","val_period":"Validity Period","name_header":"Name","type_header":"Type","facility_header":"Facility","action":"Action","access_history":"Access & Gate History","final_status":"Final Status","check_in":"Check-In","check_out":"Check-Out","scanned_by":"Scanned By","live_gate":"Live Gate Operations","check_in_time":"Check-In Time","check_out_time":"Check-Out Time","visitor_name":"Visitor Name","date_analytics":"📅 Date Analytics","type_analytics":"👤 Type Analytics","facility_analytics":"🏢 Facility Analytics","status_analytics":"✅ Status Analytics","detailed_record":"Detailed Record View","extend_pass":"Extend Pass Validity","new_start_date":"New Visit / Start Date","new_end_date":"New End Date","save_extension":"SAVE EXTENSION","capture":"📸 CAPTURE","flip_cam":"🔄 FLIP CAM","cancel":"CANCEL","click_to_close":"Click anywhere to close","btn_approve":"Approve","btn_reject":"Reject","btn_extend":"📅 EXTEND","btn_view":"🔍 VIEW DATA","btn_print":"🖨️ PRINT PASS","btn_checkout":"🚪 CHECK OUT","lbl_host_name":"Host Name","lbl_host_email":"Host Email","lbl_validity":"Validity Period","lbl_iqama":"IQAMA/ID COPY","lbl_selfie":"SELFIE PHOTO","lbl_vehicle":"VEHICLE PLATE","status_approved":"Approved","status_pending":"Pending","status_rejected":"Rejected","status_expired":"EXPIRED","status_completed":"COMPLETED","msg_no_pending":"No pending requests found in this timeframe.","msg_no_active":"No active requests found in this timeframe.","msg_no_history":"No history found in this timeframe.","msg_no_gate":"No gate operations found in this timeframe.","msg_enter_email":"Enter an Email Address on the left to view passes.","msg_loading":"Loading requests...","msg_inside":"Inside Facility","msg_admin_select_loc":"Admin: Please select a facility first.","btn_add_team":"➕ ADD TEAM MEMBER","camera_scanner_btn":"📷 CAMERA SCANNER","hardware_gun_btn":"🔌 HARDWARE GUN","hw_scanner_ready":"HARDWARE SCANNER READY","hw_scanner_inst":"Point your handheld gun scanner at the QR code and trigger.","awaiting_scan":"Awaiting hardware scan...","save_qr":"⬇️ SAVE QR CODE","allowed":"ALLOWED","pass_validated":"Pass Validated","denied":"DENIED","admin_select_fac":"Admin: Please select a facility first.","pending":"PENDING","awaiting_admin":"Pass is awaiting Admin approval","not_approved":"Pass not approved by Admin","wrong_facility":"WRONG FACILITY","wrong_fac_msg":"Wrong Facility","invalid_date":"INVALID DATE","not_valid_today":"Pass is not valid for today","expired":"EXPIRED","contractor_expired":"Contractor Pass Expired","check_out":"CHECK OUT","scanning_out":"Scanning Out.<br><span style='color:#000; font-size:14px; font-weight:bold;'>⚠️ TAKE ID CARD FROM LEAD.</span>","select_all_members":"SELECT ALL MEMBERS","lead":"Lead","device_photos_all":"DEVICE & PHOTOS FOR ALL","device_label":"Device","iqama_id":"IQAMA / ID","selfie":"SELFIE","device_screen":"DEVICE SCREEN","vehicle":"VEHICLE","add_more_people":"➕ Add More People","add_more_warning":"⚠️ WARNING: Submitting this will change the pass status back to PENDING. It cannot be used until the Admin approves it again.","device_type_label":"Device Type","no_device":"No Device","upload_device_photo":"Upload Device Photo/Screen","full_name_ph":"Full Name","save_person_list":"✅ SAVE PERSON TO LIST","submit_send_approval":"SUBMIT & SEND FOR APPROVAL","save_add_next":"✅ SAVE & ADD NEXT","lead_device_details":"Lead Device Details & Photo Screen","max_devices_note":"* Note: A maximum of 10 members are allowed to bring devices.","total_people":"Total People","new_members_added":"➕ NEW MEMBERS ADDED","new_badge":"NEW","notice_new_people":"NOTICE: New members have been added to this pass.","btn_show_qr":"📱 SHOW QR","cam_hint_title":"CAMERA SCANNER","cam_hint_1":"Hold the QR code steady inside the frame","cam_hint_2":"Bright lighting works best — avoid glare","cam_hint_3":"Allow camera access when your browser asks","session_guard":"GUARD","session_facility":"FACILITY"},ar:{"guard":"🛡️ الحارس","visitor_ops":"📋 الزوار/العمليات","admin":"⚙️ الإدارة","name":"الاسم","noon_id":"الرقم الوظيفي (Noon ID)","select_guard_loc":"اختر موقع الحارس...","login_gate":"الدخول للبوابة","your_full_name":"الاسم الكامل","your_email":"البريد الإلكتروني","login_portal":"تسجيل الدخول للبوابة","admin_name":"اسم المشرف","admin_email":"بريد المشرف","admin_password":"كلمة المرور","login_admin":"دخول كمسؤول","system_admin":"إدارة النظام","visitor_portal":"بوابة الزوار","gate_scanner":"ماسح البوابة","admin_dashboard":"لوحة التحكم","logout":"تسجيل خروج","visitor_contractor_portal":"بوابة الزوار والمقاولين","submit_new_request":"تقديم طلب جديد","type":"النوع","visitor":"زائر","contractor":"مقاول","req_email_ph":"البريد الإلكتروني (لتتبع التصريح)","req_vname_ph":"الاسم الكامل للزائر/المقاول","iqama_id_ph":"رقم الهوية / الإقامة للقائد","visit_date":"تاريخ الزيارة / الصلاحية (من - إلى)","slp_ticket":"رقم تذكرة SLP","contact_no":"رقم الاتصال","invited_by":"بدعوة من","vehicle_plate":"صورة / لوحة السيارة","live_camera":"📷 كاميرا مباشرة","contract_exp":"صلاحية العقد (من - إلى)","project_name":"اسم المشروع","company_name":"اسم الشركة / المقاول","project_manager":"مدير المشروع","fm_poc":"اسم/تفاصيل مسؤول المرافق (FM POC)","upload_iqama":"رفع صورة الهوية/الإقامة","upload_selfie":"رفع صورة شخصية","submit_approval":"إرسال للموافقة","my_passes":"تصاريحي","refresh":"تحديث","fetching":"جاري جلب التصاريح...","start_camera":"تشغيل ماسح الكاميرا","name_label":"الاسم:","type_label":"النوع:","location_label":"الموقع:","confirm_action":"تأكيد الإجراء","access_approvals":"📋 موافقات الدخول","history":"🕰️ السجل","guard_approvals":"🛡️ عمليات البوابة","analytics":"📊 الإحصائيات","all_time":"الكل","today":"اليوم","weekly":"أسبوعي","monthly":"شهري","6months":"٦ أشهر","1year":"سنة","custom":"مخصص","to":"إلى","apply":"تطبيق","pending_req":"الطلبات المعلقة","active_req":"الطلبات النشطة","print_selected":"🖨️ طباعة المحدد","val_period":"فترة الصلاحية","name_header":"الاسم","type_header":"النوع","facility_header":"المنشأة","action":"الإجراء","access_history":"سجل الدخول والبوابة","final_status":"الحالة النهائية","check_in":"دخول","check_out":"خروج","scanned_by":"تم المسح بواسطة","live_gate":"عمليات البوابة المباشرة","check_in_time":"وقت الدخول","check_out_time":"وقت الخروج","visitor_name":"اسم الزائر","date_analytics":"📅 إحصائيات التواريخ","type_analytics":"👤 إحصائيات الأنواع","facility_analytics":"🏢 إحصائيات المنشآت","status_analytics":"✅ إحصائيات الحالات","detailed_record":"عرض السجل التفصيلي","extend_pass":"تمديد صلاحية التصريح","new_start_date":"تاريخ الزيارة/البداية الجديد","new_end_date":"تاريخ النهاية الجديد","save_extension":"حفظ التمديد","capture":"📸 التقاط","flip_cam":"🔄 قلب الكاميرا","cancel":"❌ إلغاء","click_to_close":"انقر في أي مكان للإغلاق","btn_approve":"موافقة","btn_reject":"رفض","btn_extend":"📅 تمديد","btn_view":"🔍 عرض البيانات","btn_print":"🖨️ طباعة","btn_checkout":"🚪 خروج","lbl_host_name":"اسم المضيف","lbl_host_email":"بريد المضيف","lbl_validity":"فترة الصلاحية","lbl_iqama":"صورة الهوية/الإقامة","lbl_selfie":"الصورة الشخصية","lbl_vehicle":"لوحة السيارة","status_approved":"مقبول","status_pending":"قيد الانتظار","status_rejected":"مرفوض","status_expired":"منتهي","status_completed":"مكتمل","msg_no_pending":"لا توجد طلبات معلقة في هذه الفترة.","msg_no_active":"لا توجد طلبات نشطة في هذه الفترة.","msg_no_history":"لا يوجد سجل في هذه الفترة.","msg_no_gate":"لا توجد عمليات بوابة في هذه الفترة.","msg_enter_email":"أدخل بريداً إلكترونياً لعرض التصاريح.","msg_loading":"جاري التحميل...","msg_inside":"داخل المنشأة","msg_admin_select_loc":"المشرف: يرجى تحديد المنشأة أولاً من القائمة العلوية.","btn_add_team":"➕ إضافة عضو للفريق","camera_scanner_btn":"📷 ماسح الكاميرا","hardware_gun_btn":"🔌 ماسح الباركود اليدوي","hw_scanner_ready":"ماسح الباركود جاهز","hw_scanner_inst":"قم بتوجيه الماسح الضوئي نحو رمز الاستجابة السريعة (QR).","awaiting_scan":"بانتظار المسح...","save_qr":"⬇️ حفظ الرمز","allowed":"مسموح","pass_validated":"تم التحقق من التصريح","denied":"مرفوض","admin_select_fac":"المشرف: يرجى تحديد المنشأة أولاً.","pending":"قيد الانتظار","awaiting_admin":"التصريح بانتظار موافقة المشرف","not_approved":"لم تتم الموافقة على التصريح","wrong_facility":"منشأة خاطئة","wrong_fac_msg":"منشأة خاطئة","invalid_date":"تاريخ غير صالح","not_valid_today":"التصريح غير صالح لهذا اليوم","expired":"منتهي","contractor_expired":"تصريح المقاول منتهي","check_out":"تسجيل خروج","scanning_out":"تسجيل الخروج.<br><span style='color:#000; font-size:14px; font-weight:bold;'>⚠️ خذ بطاقة الهوية من القائد.</span>","select_all_members":"تحديد جميع الأعضاء","lead":"القائد","device_photos_all":"الأجهزة والصور للجميع","device_label":"الجهاز","iqama_id":"الإقامة / الهوية","selfie":"الصورة الشخصية","device_screen":"شاشة الجهاز","vehicle":"المركبة","add_more_people":"➕ إضافة المزيد من الأشخاص","add_more_warning":"⚠️ تحذير: سيؤدي هذا إلى إعادة حالة التصريح إلى قيد الانتظار. لا يمكن استخدامه حتى يوافق عليه المشرف مرة أخرى.","device_type_label":"نوع الجهاز","no_device":"لا يوجد جهاز","upload_device_photo":"رفع صورة الجهاز/الشاشة","full_name_ph":"الاسم الكامل","save_person_list":"✅ حفظ الشخص في القائمة","submit_send_approval":"إرسال وطلب الموافقة","save_add_next":"✅ حفظ وإضافة التالي","lead_device_details":"تفاصيل جهاز القائد وصورة الشاشة","max_devices_note":"* ملاحظة: يُسمح لـ 10 أعضاء كحد أقصى بإحضار أجهزة.","total_people":"إجمالي الأشخاص","new_members_added":"➕ أعضاء جدد مضافون","new_badge":"جديد","notice_new_people":"تنبيه: تمت إضافة أعضاء جدد إلى هذا التصريح.","btn_show_qr":"📱 عرض الرمز","cam_hint_title":"ماسح الكاميرا","cam_hint_1":"ثبّت رمز الاستجابة السريعة داخل الإطار","cam_hint_2":"الإضاءة الساطعة أفضل — تجنّب الوهج","cam_hint_3":"اسمح بالوصول للكاميرا عند طلب المتصفح","session_guard":"الحارس","session_facility":"المنشأة"}};
   let currentLang='en';
-  function t(k){return (dict[currentLang]&&dict[currentLang][k])||dict['en'][k]||k||'';}
+  const facilityAdminApprovalTranslations={
+    en:{
+      admin_approval:'Admin Approval',facility_admin_requests:'Facility Admin Access Requests',
+      facility_admin_subtitle:'Review facility access requests and manage administrator access.',
+      refresh:'REFRESH',loading_requests:'Loading requests',checking_requests:'Checking for facility administrator requests...',
+      awaiting_review:'REQUESTS AWAITING REVIEW',caught_up:'You’re all caught up',no_pending_admins:'There are no pending facility admin requests.',
+      facility_admin_history:'Facility Admin History',current_admins:'CURRENT ADMINS WITH ACCESS',facility_admin:'Facility Admin',
+      no_current_admins:'No facility admins currently have access.',all_countries_facilities:'All countries and facilities',
+      approve_all:'APPROVE ALL',reject_all:'REJECT ALL',saving:'Saving...',save_failed:'Unable to save the decision.',
+      requested:'Requested',reviewed:'Reviewed',approve:'APPROVE',reject:'REJECT',remove_admin:'REMOVE ADMIN',
+      confirm_approve_all:'Approve all pending facility admin requests?',confirm_reject_all:'Reject all pending facility admin requests?',
+      confirm_remove_admin:'Remove facility admin access for this account? They will no longer be able to sign in.',
+      filter_all:'All countries and facilities',approval_error:'Could not load requests'
+    },
+    ar:{
+      admin_approval:'موافقات المسؤولين',facility_admin_requests:'طلبات صلاحيات مسؤولي المنشآت',
+      facility_admin_subtitle:'راجع طلبات الوصول إلى المنشآت وأدر صلاحيات المسؤولين.',
+      refresh:'تحديث',loading_requests:'جارٍ تحميل الطلبات',checking_requests:'جارٍ التحقق من طلبات مسؤولي المنشآت...',
+      awaiting_review:'طلبات بانتظار المراجعة',caught_up:'لا توجد طلبات جديدة',no_pending_admins:'لا توجد طلبات معلقة لمسؤولي المنشآت.',
+      facility_admin_history:'مسؤولو المنشآت الذين لديهم صلاحية',current_admins:'المسؤولون الحاليون الذين لديهم صلاحية',facility_admin:'مسؤول منشأة',
+      no_current_admins:'لا يوجد حاليًا مسؤولون لديهم صلاحية للمنشآت.',all_countries_facilities:'كل الدول والمنشآت',
+      approve_all:'الموافقة على الكل',reject_all:'رفض الكل',saving:'جارٍ الحفظ...',save_failed:'تعذر حفظ القرار.',
+      requested:'تاريخ الطلب',reviewed:'تاريخ المراجعة',approve:'موافقة',reject:'رفض',remove_admin:'إزالة المسؤول',
+      confirm_approve_all:'هل تريد الموافقة على جميع طلبات مسؤولي المنشآت المعلقة؟',
+      confirm_reject_all:'هل تريد رفض جميع طلبات مسؤولي المنشآت المعلقة؟',
+      confirm_remove_admin:'هل تريد إزالة صلاحية هذا المسؤول؟ لن يتمكن من تسجيل الدخول بعد ذلك.',
+      filter_all:'كل الدول والمنشآت',approval_error:'تعذر تحميل الطلبات'
+    }
+  };
+  function t(k){return (facilityAdminApprovalTranslations[currentLang]&&facilityAdminApprovalTranslations[currentLang][k])||(dict[currentLang]&&dict[currentLang][k])||dict['en'][k]||k||'';}
   dict.en.new_members_pending="NEW MEMBERS - PENDING ADMIN APPROVAL";
   dict.ar.new_members_pending="أعضاء جدد - بانتظار موافقة المسؤول";
   dict.en.pending_approval="PENDING APPROVAL";
@@ -1009,7 +1048,7 @@
     };
     return messages[currentLang][key];
   }
-  function toggleLang(){currentLang=currentLang==='en'?'ar':'en';document.documentElement.dir=currentLang==='ar'?'rtl':'ltr';updateUI();}
+  function toggleLang(){currentLang=currentLang==='en'?'ar':'en';document.documentElement.dir=currentLang==='ar'?'rtl':'ltr';updateUI();if(currentUser&&currentUser.accessLevel==='superadmin'&&!facilityAdminRequestActionInProgress)refreshFacilityAdminRequests();}
   function updateUI(){
     document.querySelectorAll('[data-i18n]').forEach(function(el){const k=el.getAttribute('data-i18n');const v=t(k);if(v)el.innerHTML=v;});
     document.querySelectorAll('.t-ph').forEach(function(el){const k=el.getAttribute('data-i18n');const v=t(k);if(v)el.placeholder=v;});
@@ -1027,6 +1066,19 @@
       checkInButton.textContent=t('gate_check_in_all')+' ('+eligibleInCount+')';
       checkOutButton.textContent=t('gate_check_out_all')+' ('+insideCount+')';
     }
+    const approvalNavButton=document.querySelector('#nav-facility-admin-requests .super-admin-approval-nav-button');
+    if(approvalNavButton)approvalNavButton.textContent=t('admin_approval');
+    const approvalTitle=document.querySelector('.super-admin-approval-title');
+    if(approvalTitle)approvalTitle.textContent=t('facility_admin_requests');
+    const approvalSubtitle=document.querySelector('.super-admin-approval-subtitle');
+    if(approvalSubtitle)approvalSubtitle.textContent=t('facility_admin_subtitle');
+    const approvalRefresh=document.querySelector('.super-admin-approval-refresh');
+    if(approvalRefresh){
+      const refreshLabel=approvalRefresh.querySelector('span:not([aria-hidden])');
+      if(refreshLabel)refreshLabel.textContent=t('refresh');
+      approvalRefresh.setAttribute('aria-label',t('refresh'));
+    }
+    updateAdminPendingBadges(countPendingAccessRequests(globalAdminData),facilityAdminPendingCount);
     if(currentUser&&currentUser.role==='admin')renderAdminData(globalAdminData);
   }
 
@@ -1803,7 +1855,7 @@
       var navButton=document.createElement('button');
       navButton.type='button';
       navButton.className='super-admin-approval-nav-button';
-      navButton.textContent='Admin Approval';
+      navButton.textContent=t('admin_approval');
       navButton.addEventListener('click',function(){switchAdminTab('facility-admin-requests');});
       navItem.appendChild(navButton);
       nav.appendChild(navItem);
@@ -1824,17 +1876,17 @@
     titleIcon.textContent='✓';
     var titleCopy=document.createElement('div');
     var title=document.createElement('h2');
-    title.textContent='Facility Admin Access Requests';
+    title.textContent=t('facility_admin_requests');
     title.className='super-admin-approval-title';
     var subtitle=document.createElement('p');
     subtitle.className='super-admin-approval-subtitle';
-    subtitle.textContent='Review facility access requests and manage administrator permissions.';
+    subtitle.textContent=t('facility_admin_subtitle');
     titleCopy.append(title,subtitle);
     var refreshButton=document.createElement('button');
     refreshButton.type='button';
     refreshButton.className='btn-primary super-admin-approval-refresh';
-    refreshButton.innerHTML='<span aria-hidden="true">↻</span><span>REFRESH</span>';
-    refreshButton.setAttribute('aria-label','Refresh facility admin requests');
+    refreshButton.innerHTML='<span aria-hidden="true">↻</span><span>'+t('refresh')+'</span>';
+    refreshButton.setAttribute('aria-label',t('refresh'));
     refreshButton.addEventListener('click',refreshFacilityAdminRequests);
     var content=document.createElement('div');
     content.id='super-admin-approval-content';
@@ -1852,6 +1904,54 @@
     }
   }
 
+  var facilityAdminHistoryRecords=[];
+  var facilityAdminRequestActionInProgress=false;
+  var facilityAdminPendingCount=0;
+
+  function updateAdminPendingBadges(accessCount,adminCount){
+    var accessNav=document.getElementById('nav-approvals');
+    if(accessNav){
+      accessNav.dataset.pendingCount=String(accessCount||0);
+      accessNav.setAttribute('aria-label',t('access_approvals')+' '+(accessCount||0));
+    }
+    var adminNav=document.getElementById('nav-facility-admin-requests');
+    if(adminNav){
+      adminNav.dataset.pendingCount=String(adminCount||0);
+      adminNav.setAttribute('aria-label',t('admin_approval')+' '+(adminCount||0));
+    }
+  }
+
+  function formatFacilityAdminTimestamp(value){
+    if(!value)return '';
+    if(Object.prototype.toString.call(value)==='[object Date]'&&!isNaN(value.getTime()))return formatHistoryDateTime(value);
+    var raw=String(value).trim();
+    var formatted=raw.match(/^(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2}):(\d{2}) ([AP]M)$/i);
+    if(formatted)return raw;
+    var parsed=parseFlexibleDate(raw);
+    return parsed?formatHistoryDateTime(parsed):raw;
+  }
+
+  function renderFacilityAdminHistory(history){
+    var content=document.getElementById('super-admin-approval-content');
+    if(!content)return;
+    var existing=content.querySelector('.super-admin-history-list');
+    if(existing)existing.remove();
+    var selector=content.querySelector('.super-admin-history-filter');
+    var selected=selector?selector.value:'all';
+    var filtered=selected==='all'?history:history.filter(function(record){
+      return (String(record.country||'')+'|'+String(record.location||''))===selected;
+    });
+    var list=document.createElement('div');
+    list.className='super-admin-history-list';
+    if(filtered.length){
+      filtered.slice().reverse().forEach(function(record){list.appendChild(createFacilityAdminRequestCard(record,'history'));});
+    }else{
+      list.appendChild(createFacilityAdminApprovalState('✓',t('current_admins'),t('no_current_admins')));
+    }
+    content.appendChild(list);
+    if(selector)selector.setAttribute('aria-label',t('facility_admin_history'));
+  }
+
   function refreshFacilityAdminRequests(){
     var content=document.getElementById('super-admin-approval-content');
     if(!content)return Promise.resolve();
@@ -1867,10 +1967,10 @@
     var loadingCopy=document.createElement('div');
     var loadingTitle=document.createElement('p');
     loadingTitle.className='super-admin-approval-state-title';
-    loadingTitle.textContent='Loading requests';
+    loadingTitle.textContent=t('loading_requests');
     var loadingMessage=document.createElement('p');
     loadingMessage.className='super-admin-approval-state-message';
-    loadingMessage.textContent='Checking for facility administrator requests...';
+    loadingMessage.textContent=t('checking_requests');
     loadingCopy.append(loadingTitle,loadingMessage);
     loadingState.append(loadingIcon,loadingCopy);
     content.appendChild(loadingState);
@@ -1878,32 +1978,73 @@
       content.textContent='';
       var requests=Array.isArray(result.requests)?result.requests:[];
       var history=Array.isArray(result.history)?result.history:[];
+      facilityAdminHistoryRecords=history;
+      facilityAdminPendingCount=requests.length;
+      updateAdminPendingBadges(countPendingAccessRequests(globalAdminData),facilityAdminPendingCount);
       var count=document.createElement('p');
       count.className='super-admin-approval-count';
-      count.textContent=requests.length+' REQUEST'+(requests.length===1?'':'S')+' AWAITING REVIEW';
+      count.textContent=requests.length+' '+t('awaiting_review');
       content.appendChild(count);
+      if(requests.length){
+        var bulkBar=document.createElement('div');
+        bulkBar.className='super-admin-bulk-actions';
+        var status=document.createElement('span');
+        status.className='super-admin-save-status';
+        status.setAttribute('aria-live','polite');
+        status.id='super-admin-save-status';
+        var bulkButtons=document.createElement('div');
+        bulkButtons.className='super-admin-bulk-buttons';
+        [[true,'approve_all'],[false,'reject_all']].forEach(function(item){
+          var button=document.createElement('button');
+          button.type='button';
+          button.className='btn-primary'+(item[0]?'':' super-admin-reject');
+          button.textContent=t(item[1]);
+          button.addEventListener('click',function(){processAllFacilityAdminRequests(requests,item[0],button,status);});
+          bulkButtons.appendChild(button);
+        });
+        bulkBar.append(status,bulkButtons);
+        content.appendChild(bulkBar);
+      }
       if(requests.length){
         requests.forEach(function(request){content.appendChild(createFacilityAdminRequestCard(request,'pending'));});
       }else{
-        content.appendChild(createFacilityAdminApprovalState('✓','You’re all caught up','There are no pending facility admin requests.'));
+        content.appendChild(createFacilityAdminApprovalState('✓',t('caught_up'),t('no_pending_admins')));
       }
       var historyHeading=document.createElement('div');
       historyHeading.className='super-admin-history-heading';
       var historyTitle=document.createElement('h3');
       historyTitle.className='super-admin-history-title';
-      historyTitle.textContent='Facility Admin History';
+      historyTitle.textContent=t('facility_admin_history');
       var historyCaption=document.createElement('span');
       historyCaption.className='super-admin-history-caption';
-      historyCaption.textContent=history.length+' record'+(history.length===1?'':'s');
-      historyHeading.append(historyTitle,historyCaption);
+      historyCaption.textContent=history.length+' '+t('current_admins').toLowerCase();
+      var historyFilter=document.createElement('select');
+      historyFilter.className='super-admin-history-filter';
+      historyFilter.setAttribute('aria-label',t('facility_admin_history'));
+      var allOption=document.createElement('option');
+      allOption.value='all';
+      allOption.textContent=t('filter_all');
+      historyFilter.appendChild(allOption);
+      var combinations=Object.create(null);
+      history.forEach(function(record){
+        var value=String(record.country||'')+'|'+String(record.location||'');
+        if(value==='|'||combinations[value])return;
+        combinations[value]=true;
+      });
+      Object.keys(combinations).sort().forEach(function(value){
+        var option=document.createElement('option');
+        option.value=value;
+        option.textContent=value.replace('|',' / ');
+        historyFilter.appendChild(option);
+      });
+      historyFilter.value=selectedFacilityAdminHistoryFilter;
+      historyFilter.addEventListener('change',function(){
+        selectedFacilityAdminHistoryFilter=historyFilter.value;
+        renderFacilityAdminHistory(facilityAdminHistoryRecords);
+      });
+      historyHeading.append(historyTitle,historyCaption,historyFilter);
       content.appendChild(historyHeading);
-      if(history.length){
-        history.slice().reverse().forEach(function(record){
-          content.appendChild(createFacilityAdminRequestCard(record,'history'));
-        });
-      }else{
-        content.appendChild(createFacilityAdminApprovalState('◷','No history yet','Approved, rejected, and removed admin requests will be listed here.'));
-      }
+      renderFacilityAdminHistory(history);
     }).catch(function(error){
       content.textContent='';
       var errorState=document.createElement('div');
@@ -1915,7 +2056,7 @@
       var errorCopy=document.createElement('div');
       var errorTitle=document.createElement('p');
       errorTitle.className='super-admin-approval-state-title';
-      errorTitle.textContent='Could not load requests';
+      errorTitle.textContent=t('approval_error');
       var errorMessage=document.createElement('p');
       errorMessage.className='super-admin-approval-state-message';
       errorMessage.textContent=error&&error.message?error.message:'Unknown error';
@@ -1925,6 +2066,11 @@
     }).finally(function(){
       if(refreshButton){refreshButton.disabled=false;refreshButton.removeAttribute('aria-busy');}
     });
+  }
+  var selectedFacilityAdminHistoryFilter='all';
+  function countPendingAccessRequests(data){
+    if(!Array.isArray(data))return 0;
+    return data.filter(function(record){return record&&record.UniqueID&&String(record.Status||'Pending').toLowerCase()==='pending';}).length;
   }
 
   function createFacilityAdminApprovalState(iconText,titleText,messageText){
@@ -1959,7 +2105,7 @@
     var details=document.createElement('div');
     details.className='super-admin-request-details';
     var name=document.createElement('strong');
-    name.textContent=request.name||'Facility Admin';
+    name.textContent=request.name||t('facility_admin');
     name.className='super-admin-request-name';
     var info=document.createElement('div');
     info.textContent=request.email||'Email not provided';
@@ -1974,18 +2120,22 @@
       var status=document.createElement('span');
       status.className='super-admin-request-status';
       status.dataset.status=String(request.status||'').toLowerCase();
-      status.textContent=request.status||'Reviewed';
+      status.textContent=t('status_'+String(request.status||'').toLowerCase())||request.status||'Reviewed';
       meta.appendChild(status);
     }
-    var requestedAt=request.createdAt||request.requestedAt;
+    var requestedAt=formatFacilityAdminTimestamp(request.createdAt||request.requestedAt);
+    var reviewedAt=formatFacilityAdminTimestamp(request.reviewedAt);
     if(requestedAt){
-      var createdAt=new Date(requestedAt);
-      if(!isNaN(createdAt.getTime())){
-        var date=document.createElement('span');
-        date.className='super-admin-request-date';
-        date.textContent='Requested '+createdAt.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
-        meta.appendChild(date);
-      }
+      var date=document.createElement('span');
+      date.className='super-admin-request-date';
+      date.textContent=t('requested')+': '+requestedAt;
+      meta.appendChild(date);
+    }
+    if(reviewedAt){
+      var reviewedDate=document.createElement('span');
+      reviewedDate.className='super-admin-request-date';
+      reviewedDate.textContent=t('reviewed')+': '+reviewedAt;
+      meta.appendChild(reviewedDate);
     }
     details.append(name,info,meta);
     identity.append(avatar,details);
@@ -1997,7 +2147,7 @@
         var button=document.createElement('button');
         button.type='button';
         button.className='btn-primary'+(actionData[1]?'':' super-admin-reject');
-        button.textContent=(actionData[1]?'✓  ':'×  ')+actionData[0].toUpperCase();
+        button.textContent=(actionData[1]?'✓  ':'×  ')+t(actionData[1]?'approve':'reject');
         button.addEventListener('click',function(){processFacilityAdminApproval(request.email,actionData[1],button);});
         actions.appendChild(button);
       });
@@ -2005,7 +2155,7 @@
       var removeButton=document.createElement('button');
       removeButton.type='button';
       removeButton.className='btn-primary super-admin-reject';
-      removeButton.textContent='×  REMOVE ADMIN';
+      removeButton.textContent='×  '+t('remove_admin');
       removeButton.addEventListener('click',function(){processFacilityAdminRemoval(request.email,removeButton);});
       actions.appendChild(removeButton);
     }
@@ -2014,23 +2164,67 @@
   }
 
   function processFacilityAdminApproval(email,approve,button){
-    if(button)button.disabled=true;
+    if(facilityAdminRequestActionInProgress)return;
+    facilityAdminRequestActionInProgress=true;
+    setFacilityAdminActionButtonsDisabled(true);
+    var previousText=button?button.textContent:'';
+    if(button){button.disabled=true;button.setAttribute('aria-busy','true');button.textContent=t('saving');}
+    var status=document.getElementById('super-admin-save-status');
+    if(status)status.textContent=t('saving');
     appsScriptAction({action:'admin_process_facility_request',email:email,approve:approve}).then(function(){
-      refreshFacilityAdminRequests();
+      return refreshFacilityAdminRequests();
     }).catch(function(error){
       alert('Unable to '+(approve?'approve':'reject')+' this request: '+(error&&error.message?error.message:'Unknown error'));
-      if(button)button.disabled=false;
+      if(button){button.disabled=false;button.removeAttribute('aria-busy');button.textContent=previousText;}
+    }).finally(function(){
+      facilityAdminRequestActionInProgress=false;
+      setFacilityAdminActionButtonsDisabled(false);
+    });
+  }
+
+  function setFacilityAdminActionButtonsDisabled(disabled){
+    document.querySelectorAll('#super-admin-approval-content .super-admin-request-actions button,#super-admin-approval-content .super-admin-bulk-buttons button').forEach(function(button){
+      button.disabled=disabled;
+    });
+  }
+
+  function processAllFacilityAdminRequests(requests,approve,button,status){
+    if(facilityAdminRequestActionInProgress||!requests.length)return;
+    if(!confirm(t(approve?'confirm_approve_all':'confirm_reject_all')))return;
+    facilityAdminRequestActionInProgress=true;
+    setFacilityAdminActionButtonsDisabled(true);
+    if(button){button.setAttribute('aria-busy','true');button.textContent=t('saving');}
+    if(status)status.textContent=t('saving');
+    var processed=0;
+    var chain=Promise.resolve();
+    requests.forEach(function(request){
+      chain=chain.then(function(){
+        return appsScriptAction({action:'admin_process_facility_request',email:request.email,approve:approve})
+          .then(function(){processed++;});
+      });
+    });
+    chain.catch(function(error){
+      alert((t('save_failed'))+' '+processed+'/'+requests.length+'. '+(error&&error.message?error.message:'Unknown error'));
+    }).then(function(){return refreshFacilityAdminRequests();}).finally(function(){
+      facilityAdminRequestActionInProgress=false;
+      setFacilityAdminActionButtonsDisabled(false);
     });
   }
 
   function processFacilityAdminRemoval(email,button){
-    if(!confirm('Remove facility admin access for '+email+'? They will no longer be able to sign in.'))return;
+    if(!confirm(t('confirm_remove_admin')+'\n'+email))return;
+    if(facilityAdminRequestActionInProgress)return;
+    facilityAdminRequestActionInProgress=true;
+    setFacilityAdminActionButtonsDisabled(true);
     if(button)button.disabled=true;
     appsScriptAction({action:'admin_remove_facility_admin',email:email}).then(function(){
-      refreshFacilityAdminRequests();
+      return refreshFacilityAdminRequests();
     }).catch(function(error){
       alert('Unable to remove this facility admin: '+(error&&error.message?error.message:'Unknown error'));
-      if(button)button.disabled=false;
+      if(button){button.disabled=false;}
+    }).finally(function(){
+      facilityAdminRequestActionInProgress=false;
+      setFacilityAdminActionButtonsDisabled(false);
     });
   }
 
@@ -2918,6 +3112,7 @@
   function renderAdminData(data){
     if(!Array.isArray(data)){data=[];}
     globalAdminData=data;
+    updateAdminPendingBadges(countPendingAccessRequests(data),facilityAdminPendingCount);
     const tPending=document.getElementById('admin-table-pending'),tActive=document.getElementById('admin-table-active'),tHistory=document.getElementById('admin-table-history');
     let hPending='',hActionPending='',hActive='',hHistory='';
     const today=new Date();today.setHours(0,0,0,0);
@@ -4506,4 +4701,4 @@
   })();
   </script>
   </body></html>
-  
+    
