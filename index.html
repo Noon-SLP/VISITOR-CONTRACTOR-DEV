@@ -1729,9 +1729,9 @@
       form.appendChild(toggle);
       var resetToggle=document.createElement('button');
       resetToggle.type='button';
-      resetToggle.className='btn-primary btn-outline';
+      resetToggle.className='btn-primary';
       resetToggle.id='admin-password-reset-toggle';
-      resetToggle.style.marginTop='8px';
+      resetToggle.style.cssText='margin-top:6px;font-size:10px;font-weight:500;line-height:1.3;padding:8px 12px;color:#c0c5cf;background:transparent;border:0;box-shadow:none;text-transform:none;';
       resetToggle.addEventListener('click',function(){
         adminPasswordResetMode=!adminPasswordResetMode;
         adminSignupMode=false;
