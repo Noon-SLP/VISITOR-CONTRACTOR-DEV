@@ -292,8 +292,8 @@
   #dashboard-admin .super-admin-request-actions .btn-primary:hover{transform:translateY(-1px);filter:brightness(1.08)}
   #dashboard-admin .super-admin-request-actions .super-admin-reject{border:1px solid rgba(255,112,112,.32);background:rgba(255,91,91,.055);color:#ffaaaa}
   #dashboard-admin .super-admin-request-actions .super-admin-reject:hover{border-color:rgba(255,112,112,.62);background:rgba(255,91,91,.12)}
-  #dashboard-admin .admin-nav-horizontal li[data-pending-count]{position:relative}
-  #dashboard-admin .admin-nav-horizontal li[data-pending-count]:not([data-pending-count="0"])::after{content:attr(data-pending-count);position:absolute;inset-block-start:-5px;inset-inline-end:-4px;z-index:2;display:grid;place-items:center;min-width:17px;height:17px;padding:0 4px;border:2px solid #111722;border-radius:999px;background:#ef5350;color:#fff;font-size:9px;font-weight:900;line-height:1}
+  #dashboard-admin .admin-nav-notification{position:static;flex:0 0 auto;display:inline-grid;place-items:center;min-width:17px;height:17px;margin-inline-start:3px;padding:0 4px;border-radius:999px;background:#ef4444;color:#fff;font-size:9px;font-weight:900;line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.3);vertical-align:middle;pointer-events:none}
+  #dashboard-admin .admin-nav-notification[hidden]{display:none}
   #dashboard-admin .super-admin-bulk-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:2px 0 5px}
   #dashboard-admin .super-admin-bulk-buttons{display:flex;gap:8px;flex-wrap:wrap}
   #dashboard-admin .super-admin-bulk-buttons .btn-primary{width:auto;min-height:34px;padding:0 13px!important;border-radius:8px;font-size:9px;font-weight:900}
@@ -957,7 +957,7 @@
   let currentLang='en';
   const facilityAdminApprovalTranslations={
     en:{
-      admin_approval:'Admin Approval',facility_admin_requests:'Facility Admin Access Requests',
+      admin_approval:'ADMIN APPROVAL',facility_admin_requests:'Facility Admin Access Requests',
       facility_admin_subtitle:'Review facility access requests and manage administrator access.',
       refresh:'REFRESH',loading_requests:'Loading requests',checking_requests:'Checking for facility administrator requests...',
       awaiting_review:'REQUESTS AWAITING REVIEW',caught_up:'You’re all caught up',no_pending_admins:'There are no pending facility admin requests.',
@@ -1922,14 +1922,31 @@
   function updateAdminPendingBadges(accessCount,adminCount){
     var accessNav=document.getElementById('nav-approvals');
     if(accessNav){
-      accessNav.dataset.pendingCount=String(accessCount||0);
-      accessNav.setAttribute('aria-label',t('access_approvals')+' '+(accessCount||0));
+      setAdminNavigationBadge(accessNav,accessCount,t('access_approvals'));
     }
     var adminNav=document.getElementById('nav-facility-admin-requests');
     if(adminNav){
-      adminNav.dataset.pendingCount=String(adminCount||0);
-      adminNav.setAttribute('aria-label',t('admin_approval')+' '+(adminCount||0));
+      setAdminNavigationBadge(adminNav,adminCount,t('admin_approval'));
     }
+  }
+
+  function setAdminNavigationBadge(nav,count,label){
+    var total=Math.max(0,Number(count)||0);
+    var dashboard=document.getElementById('dashboard-admin');
+    var loginView=document.getElementById('login-view');
+    var dashboardIsActive=!!currentUser&&!!dashboard&&!dashboard.classList.contains('hidden')&&
+      (!loginView||loginView.classList.contains('hidden'));
+    nav.dataset.pendingCount=String(total);
+    nav.setAttribute('aria-label',label+(dashboardIsActive?' '+total:''));
+    var badge=nav.querySelector('.admin-nav-notification');
+    if(!badge){
+      badge=document.createElement('span');
+      badge.className='admin-nav-notification';
+      badge.setAttribute('aria-hidden','true');
+      nav.appendChild(badge);
+    }
+    badge.textContent=String(total);
+    badge.hidden=!dashboardIsActive||total===0;
   }
 
   function formatFacilityAdminTimestamp(value){
@@ -2082,7 +2099,22 @@
   function countPendingAccessRequests(data){
     if(!Array.isArray(data))return 0;
     return data.filter(function(record){
-      return record&&record.UniqueID&&String(record.Status||'Pending').trim().toLowerCase()==='pending';
+      if(!record||!record.UniqueID)return false;
+      var status=String(record.Status||'Pending').trim().toLowerCase();
+      if(status==='pending')return true;
+      if(status!=='approved')return false;
+      var endDate=parseFlexibleDate(record.EndDate||record.StartDate);
+      if(endDate){endDate.setHours(23,59,59,999);if(endDate<new Date())return false;}
+      var teamMembers=String(record.TeamMembers||'');
+      var blocks=teamMembers.trim()?teamMembers.split(/\n\s*\n/).filter(function(block){return block.trim();}):[];
+      var hasPendingTeamAction=blocks.some(function(block){
+        var upper=block.toUpperCase();
+        return upper.includes('[REMOVE_REQUESTED]')||upper.includes('[DEVICE_REVOKE_REQUESTED]')||
+          upper.includes('[DEVICE_ADD_REQUESTED]')||upper.includes('*NEW_MEMBER*')||upper.includes('[NEW]');
+      });
+      return hasPendingTeamAction||String(record.VisitorName||'').toUpperCase().includes('[LEAD_REMOVE_REQUESTED]')||
+        String(record.ImeiNumber||'').toUpperCase().includes('[DEVICE_REVOKE_REQUESTED]')||
+        !!String(record.LeadPendingDevice||'').trim();
     }).length;
   }
 
@@ -2470,8 +2502,8 @@
   }
   function hardRefreshApp(){if(confirm("Reload the app with the latest data?")){window.location.reload();}}
   function toggleDateFields(){const te=document.getElementById('req-type');if(!te)return;const type=te.value,vf=document.getElementById('req-visitor-fields'),cf=document.getElementById('req-contractor-fields'),tms=document.getElementById('team-members-section');if(vf)vf.classList.toggle('hidden',type==='Contractor');if(cf)cf.classList.toggle('hidden',type==='Visitor');if(tms)tms.classList.toggle('hidden',type==='Visitor');}
-  function switchLoginTab(role){document.body.classList.toggle('blur-background',role!=='guard');document.querySelectorAll('.role-tab').forEach(function(t2){t2.classList.remove('active');});document.querySelectorAll('#login-guard, #login-ops, #login-admin').forEach(function(f){f.classList.add('hidden');});const te=document.getElementById('tab-'+role);if(te)te.classList.add('active');const le=document.getElementById('login-'+role);if(le)le.classList.remove('hidden');}
-  function switchMainView(vId){document.body.classList.toggle('blur-background',vId!=='guard');document.querySelectorAll('.dashboard').forEach(function(e){e.classList.add('hidden');});const tv=document.getElementById('dashboard-'+vId);if(tv)tv.classList.remove('hidden');document.querySelectorAll('.sidebar-nav a').forEach(function(a){a.classList.remove('active');});const an=document.getElementById('nav-sidebar-'+vId);if(an)an.classList.add('active');const sb=document.getElementById('sidebar');if(window.innerWidth<=900&&sb&&!sb.classList.contains('minimized'))toggleSidebar();if(vId==='ops'&&currentUser&&currentUser.role==='admin')loadMyPasses(false,false);}
+  function switchLoginTab(role){document.body.classList.toggle('blur-background',role!=='guard');document.querySelectorAll('.role-tab').forEach(function(t2){t2.classList.remove('active');});document.querySelectorAll('#login-guard, #login-ops, #login-admin').forEach(function(f){f.classList.add('hidden');});const te=document.getElementById('tab-'+role);if(te)te.classList.add('active');const le=document.getElementById('login-'+role);if(le)le.classList.remove('hidden');updateAdminPendingBadges(countPendingAccessRequests(globalAdminData),facilityAdminPendingCount);}
+  function switchMainView(vId){document.body.classList.toggle('blur-background',vId!=='guard');document.querySelectorAll('.dashboard').forEach(function(e){e.classList.add('hidden');});const tv=document.getElementById('dashboard-'+vId);if(tv)tv.classList.remove('hidden');document.querySelectorAll('.sidebar-nav a').forEach(function(a){a.classList.remove('active');});const an=document.getElementById('nav-sidebar-'+vId);if(an)an.classList.add('active');const sb=document.getElementById('sidebar');if(window.innerWidth<=900&&sb&&!sb.classList.contains('minimized'))toggleSidebar();updateAdminPendingBadges(countPendingAccessRequests(globalAdminData),facilityAdminPendingCount);if(vId==='ops'&&currentUser&&currentUser.role==='admin')loadMyPasses(false,false);}
 
   let imageGallery=[],imageGalleryIndex=0,imageZoom=1;
   function openFullscreenImage(src){if(!src)return;const images=[].slice.call(document.querySelectorAll('#view-record-content img[onclick*="openFullscreenImage"],#scan-result img[onclick*="openFullscreenImage"]'));imageGallery=images.map(function(img){const row=img.closest('.modal-team-row'),record=img.closest('.record-img-box'),rowText=row?row.innerText:'',nameNode=row&&row.querySelector('span[style*="noon-yellow"]');return{src:img.src||img.getAttribute('src'),name:nameNode?nameNode.textContent.trim():(rowText.match(/^[^\n]+/)||[])[0]||(record&&record.querySelector('strong')&&record.querySelector('strong').textContent.trim())||img.alt||'Photo',iqama:(rowText.match(/ID:\s*([^\n]+)/i)||[])[1]?(rowText.match(/ID:\s*([^\n]+)/i)||[])[1].trim():''};}).filter(function(x){return x.src;});imageGalleryIndex=Math.max(0,imageGallery.findIndex(function(x){return x.src===src;}));if(!imageGallery.length)imageGallery=[{src:src,name:'Photo',iqama:''}];renderFullscreenImage();}
