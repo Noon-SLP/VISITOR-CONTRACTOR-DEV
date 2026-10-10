@@ -275,7 +275,6 @@
   #dashboard-admin .analytics-box-title{position:relative;z-index:1;margin-bottom:16px;color:#c4cedd;font-size:9px;letter-spacing:.15em}
   #dashboard-admin .analytics-box>div:not(.analytics-box-title){position:relative;z-index:1}
   #dashboard-admin .custom-date-picker .input-field,#dashboard-admin .custom-date-picker .btn-primary{border-radius:7px}
-  #dashboard-admin .admin-header-top #header-admin-name{display:none!important}
   #dashboard-admin #admin-sec-approvals>.admin-card-title:nth-of-type(3){min-height:62px;padding:14px 20px!important}
   #dashboard-admin #admin-sec-approvals>.admin-card-title:nth-of-type(3) span{font-size:15px;letter-spacing:.12em}
   #dashboard-admin #admin-table-active{width:100%;table-layout:fixed}
@@ -655,7 +654,21 @@
     #dashboard-admin .admin-nav-horizontal li{min-width:0;padding:8px 4px;font-size:10px;text-align:center}
     #dashboard-admin .admin-filter-bar{flex-wrap:wrap;gap:8px}
   }
-  body.guard-scan-active #app-layout>#sidebar{display:none!important}
+  body.guard-scan-active #app-layout>#sidebar{display:none!important  }
+  </style>
+  <style id="admin-session-identity-style">
+    #dashboard-admin .admin-header-top .admin-brand-horizontal{display:none}
+    #dashboard-admin .admin-header-top .admin-session-identity{position:absolute;top:50%;left:50%;z-index:1;display:flex;max-width:44%;flex-direction:column;align-items:center;gap:4px;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+    #dashboard-admin .admin-header-top #header-admin-name{display:block!important;margin:0!important;color:var(--noon-yellow)!important;font-size:14px!important;font-weight:800;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+    #dashboard-admin .admin-session-location{color:#aeb9ca;font-size:10px;font-weight:600;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+    #dashboard-admin .admin-user-info{position:relative;z-index:2;margin-inline-start:auto}
+    @media(max-width:1000px){
+      #dashboard-admin .admin-header-top .admin-session-identity{position:static;order:3;flex:1 0 100%;max-width:100%;transform:none;margin-top:2px}
+      #dashboard-admin .admin-header-top #header-admin-name{font-size:12px!important}
+      #dashboard-admin .admin-session-location{font-size:9px}
+      #dashboard-admin .admin-user-info{order:2}
+      #dashboard-admin .admin-brand-horizontal{order:1}
+    }
   </style>
   <div id="please-wait-overlay"><div class="pw-spinner"></div><div id="please-wait-text">PLEASE WAIT...</div></div>
   <!-- Changed splash-logo div to img -->
@@ -743,7 +756,63 @@
       return result;
     });
   }
+  function adminApiPost(params,timeoutMs){
+    if(!currentUser||currentUser.role!=='admin'||!currentUser.adminToken){
+      return Promise.reject(new Error('Your admin session expired. Please sign in again.'));
+    }
+    var payload=Object.assign({},params,{
+      adminToken:currentUser.adminToken,
+      adminRequestId:createAdminRequestId('admin-api')
+    });
+    return postAdminRequest(payload).then(function(result){
+      if(!result||result.status!=='success')throw new Error(result&&result.message?result.message:'The server did not confirm the admin action.');
+      return result;
+    });
+  }
+  function createAdminRequestId(prefix){
+    var randomPart;
+    if(window.crypto&&window.crypto.getRandomValues){
+      var bytes=new Uint8Array(24);
+      window.crypto.getRandomValues(bytes);
+      randomPart=Array.prototype.map.call(bytes,function(byte){return byte.toString(16).padStart(2,'0');}).join('');
+    }else{
+      randomPart=Date.now().toString(36)+Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
+    }
+    return prefix+'-'+randomPart;
+  }
+  function postAdminRequest(payload){
+    var requestId=payload.adminRequestId;
+    var pollStartedAt=Date.now();
+    var pollTimeout=30000;
+    function poll(){
+      if(Date.now()-pollStartedAt>=pollTimeout){
+        throw new Error('The admin request was not confirmed within 30 seconds. Check the connection before trying again.');
+      }
+      return appsScriptJsonpAttempt({action:'admin_auth_result',requestId:requestId},null,0,30000).then(function(result){
+        if(result&&result.status==='pending'){
+          return new Promise(function(resolve){setTimeout(resolve,400);}).then(poll);
+        }
+        return result;
+      });
+    }
+    var submission=fetch(freshScriptUrl(),{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify(payload),
+      mode:'no-cors',
+      cache:'no-store'
+    }).catch(function(error){
+      console.warn('[Admin API] The credential-bearing POST response is not readable cross-origin; checking its one-time result.',error);
+    });
+    return submission.then(function(){
+      return new Promise(function(resolve){setTimeout(resolve,400);}).then(poll);
+    });
+  }
   function appsScriptJsonp(params,signal,timeoutMs){
+    if(currentUser&&currentUser.role==='admin'&&currentUser.adminToken){
+      if(signal&&signal.aborted)return Promise.reject(new Error('The Apps Script request was cancelled.'));
+      return adminApiPost(params,timeoutMs);
+    }
     return appsScriptJsonpAttempt(params,signal,0,timeoutMs);
   }
   function appsScriptReadOnly(params,timeoutMs){
@@ -840,6 +909,8 @@
   dict.ar.facility_label="المنشأة";
   dict.en.facility_select="Select Facility...";
   dict.ar.facility_select="اختر المنشأة...";
+  dict.en.country_not_set="Country not set";
+  dict.ar.country_not_set="لم يتم تحديد الدولة";
   function addMemberNotice(count){
     if(currentLang==='ar'){
       if(count===1)return "تنبيه: تمت إضافة عضو جديد إلى هذا التصريح. يظل التصريح معتمدًا، ويجب أن يوافق المسؤول على العضو الجديد.";
@@ -908,7 +979,7 @@
   }
   function safeImg(u){return normalizeImageUrl(u)||'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'40\' height=\'40\'%3E%3Crect width=\'40\' height=\'40\' fill=\'%23333\'/%3E%3Ctext x=\'20\' y=\'24\' font-size=\'14\' text-anchor=\'middle\' fill=\'%23888\'%3E%3F%3C/text%3E%3C/svg%3E';}
 
-  const urlParams=new URLSearchParams(window.location.search);const currentRoleParam=urlParams.get('role')||'default';const SESSION_KEY='noon_session_'+currentRoleParam;let html5QrCode=null;let scannerFacingMode='environment';let scannerLibraryPromise=null;let scannerOperation=Promise.resolve();let currentUser=null;let currentScannedID=null;let currentScanAction='check_in';let currentAdminFilter='all';let autoRefreshTimer=null;let globalAdminData=[];let globalAdminHistory=[];let myPassesData=[];let checkedPrintIds=new Set();let liveStream=null;let currentFacingMode='environment';let targetPhotoType='';let capturedImages={iqama:null,selfie:null,imeiphoto:null,vehicle:null,fmpoc:null};let teamList=[];let currentTeamCounter=1;let isProcessingScan=false;let userSecurityPin=null;let lockedPassesData=null;let pinCreateMode='submit';let currentBatchType='new';
+  const urlParams=new URLSearchParams(window.location.search);const currentRoleParam=urlParams.get('role')||'default';const SESSION_KEY='noon_session_'+currentRoleParam;let adminSignupMode=false;let html5QrCode=null;let scannerFacingMode='environment';let scannerLibraryPromise=null;let scannerOperation=Promise.resolve();let currentUser=null;let currentScannedID=null;let currentScanAction='check_in';let currentAdminFilter='all';let autoRefreshTimer=null;let globalAdminData=[];let globalAdminHistory=[];let myPassesData=[];let checkedPrintIds=new Set();let liveStream=null;let currentFacingMode='environment';let targetPhotoType='';let capturedImages={iqama:null,selfie:null,imeiphoto:null,vehicle:null,fmpoc:null};let teamList=[];let currentTeamCounter=1;let isProcessingScan=false;let userSecurityPin=null;let lockedPassesData=null;let pinCreateMode='submit';let currentBatchType='new';
   let historySortOrder='desc';
   let expandedHistoryGroups=new Set();
   let adminRefreshInProgress=false;
@@ -1433,6 +1504,277 @@
     }
   }
 
+  function adminAuthRequest(payload){
+    return postAdminRequest(Object.assign({},payload,{
+      adminRequestId:createAdminRequestId('admin-auth')
+    })).then(function(result){
+      if(!result||result.status!=='success')throw new Error(result&&result.message?result.message:'The admin request was not accepted.');
+      return result;
+    });
+  }
+
+  function setupAdminAuthForm(){
+    var form=document.getElementById('login-admin');
+    if(!form)return;
+    var isSuperAdmin=currentRoleParam==='superadmin';
+    form.innerHTML='';
+    var heading=document.createElement('h3');
+    heading.textContent=isSuperAdmin?'Global Admin Sign In':'Facility Admin Access';
+    heading.style.cssText='margin:0 0 8px;color:var(--noon-yellow);text-align:center;';
+    form.appendChild(heading);
+
+    function createInput(id,labelText,type,autocomplete){
+      var group=document.createElement('div');
+      group.className='input-group';
+      var input=document.createElement('input');
+      input.id=id;
+      input.type=type;
+      input.className='input-field';
+      input.placeholder=labelText;
+      input.setAttribute('aria-label',labelText);
+      input.autocomplete=autocomplete;
+      group.appendChild(input);
+      form.appendChild(group);
+      return group;
+    }
+    var nameGroup=createInput('la-name','Full Name','text','name');
+    var emailInput=createInput('la-mail','Gmail Address','email','username').querySelector('input');
+    var passwordInput=createInput('la-pass','Password','password',isSuperAdmin?'current-password':'current-password').querySelector('input');
+    var countryGroup=null;
+    var facilityGroup=null;
+    if(!isSuperAdmin){
+      var countries=[['KSA','country_ksa'],['UAE','country_uae'],['EGY','country_egy']];
+      var facilities=[['RUH01','RUH01'],['JED01','JED01']];
+      var country=createLoginSelectGroup('la-country','country_label','country_select',countries);
+      var facility=createLoginSelectGroup('la-location','facility_label','facility_select',facilities);
+      countryGroup=country.group;
+      facilityGroup=facility.group;
+      form.appendChild(countryGroup);
+      form.appendChild(facilityGroup);
+      configureLoginCountryFacility(country.select,facilityGroup,facility.select);
+    }
+    var submit=document.createElement('button');
+    submit.type='button';
+    submit.className='btn-primary';
+    submit.id='admin-auth-submit';
+    submit.addEventListener('click',submitAdminAccess);
+    form.appendChild(submit);
+
+    var status=document.createElement('div');
+    status.id='admin-auth-status';
+    status.setAttribute('role','status');
+    status.setAttribute('aria-live','polite');
+    status.style.cssText='min-height:18px;margin-top:10px;color:var(--text-muted);font-size:12px;text-align:center;';
+    form.appendChild(status);
+
+    if(!isSuperAdmin){
+      var toggle=document.createElement('button');
+      toggle.type='button';
+      toggle.className='btn-primary btn-outline';
+      toggle.id='admin-auth-toggle';
+      toggle.style.marginTop='10px';
+      toggle.addEventListener('click',function(){
+        adminSignupMode=!adminSignupMode;
+        emailInput.value='';
+        passwordInput.value='';
+        var statusEl=document.getElementById('admin-auth-status');
+        if(statusEl)statusEl.textContent='';
+        updateAdminAuthForm();
+      });
+      form.appendChild(toggle);
+    }
+    updateAdminAuthForm();
+  }
+
+  function updateAdminAuthForm(){
+    var isSuperAdmin=currentRoleParam==='superadmin';
+    var nameGroup=document.getElementById('la-name');
+    var button=document.getElementById('admin-auth-submit');
+    var toggle=document.getElementById('admin-auth-toggle');
+    var countryGroup=document.getElementById('la-country');
+    var facilityGroup=document.getElementById('la-location');
+    if(nameGroup&&nameGroup.parentElement)nameGroup.parentElement.classList.toggle('hidden',isSuperAdmin||!adminSignupMode);
+    if(button)button.textContent=isSuperAdmin?'LOGIN AS SUPER ADMIN':(adminSignupMode?'REQUEST ADMIN ACCESS':'LOGIN AS FACILITY ADMIN');
+    if(toggle)toggle.textContent=adminSignupMode?'I already have an account':'Create facility admin account';
+    var credentialInput=document.getElementById('la-pass');
+    if(credentialInput)credentialInput.autocomplete=adminSignupMode?'new-password':'current-password';
+    if(countryGroup&&countryGroup.parentElement)countryGroup.parentElement.classList.toggle('hidden',isSuperAdmin);
+    if(facilityGroup&&facilityGroup.parentElement)facilityGroup.parentElement.classList.toggle('hidden',isSuperAdmin||document.getElementById('la-country').value!=='KSA');
+  }
+
+  function submitAdminAccess(){
+    var isSuperAdmin=currentRoleParam==='superadmin';
+    var name=document.getElementById('la-name');
+    var email=document.getElementById('la-mail');
+    var credentialInput=document.getElementById('la-pass');
+    var country=document.getElementById('la-country');
+    var facility=document.getElementById('la-location');
+    var button=document.getElementById('admin-auth-submit');
+    var status=document.getElementById('admin-auth-status');
+    if(!email||!credentialInput||!email.value.trim()||!credentialInput.value){
+      if(status)status.textContent='Enter your Gmail and password.';
+      return;
+    }
+    var payload;
+    if(adminSignupMode&&!isSuperAdmin){
+      if(!name||name.value.trim().length<2||!country||!country.value||(country.value==='KSA'&&(!facility||!facility.value))){
+        if(status)status.textContent='Enter your name and select a country and facility.';
+        return;
+      }
+      payload={
+        action:'admin_register',
+        name:name.value.trim(),
+        email:email.value.trim(),
+        password:credentialInput.value,
+        country:country.value,
+        location:country.value==='KSA'?facility.value:country.value
+      };
+    }else{
+      payload={
+        action:'admin_login',
+        accountType:isSuperAdmin?'superadmin':'staff',
+        email:email.value.trim(),
+        password:credentialInput.value
+      };
+      if(!isSuperAdmin){
+        if(!country||!country.value||(country.value==='KSA'&&(!facility||!facility.value))){
+          if(status)status.textContent='Select your approved country and facility.';
+          return;
+        }
+        payload.country=country.value;
+        payload.location=country.value==='KSA'?facility.value:country.value;
+      }
+    }
+    if(button)button.disabled=true;
+    if(status)status.textContent=adminSignupMode?'Sending access request...':'Signing in...';
+    adminAuthRequest(payload).then(function(result){
+      if(adminSignupMode&&!isSuperAdmin){
+        credentialInput.value='';
+        if(status)status.textContent=result.message||'Your request was sent for approval.';
+        adminSignupMode=false;
+        updateAdminAuthForm();
+        return;
+      }
+      currentUser=Object.assign({},result.user,{
+        role:'admin',
+        accessLevel:isSuperAdmin?'superadmin':'facility',
+        adminToken:result.token
+      });
+      saveSession();
+      initApp();
+    }).catch(function(error){
+      if(status)status.textContent=error&&error.message?error.message:'Admin sign-in failed.';
+    }).finally(function(){if(button)button.disabled=false;});
+  }
+
+  function setupAdminHeaderIdentity(){
+    const header=document.querySelector('#dashboard-admin .admin-header-top');
+    const name=document.getElementById('header-admin-name');
+    if(!header||!name||!currentUser)return;
+    let identity=header.querySelector('.admin-session-identity');
+    if(!identity){
+      identity=document.createElement('div');
+      identity.className='admin-session-identity';
+      identity.setAttribute('aria-label','Signed-in administrator');
+      const controls=header.querySelector('.admin-user-info');
+      header.insertBefore(identity,controls);
+      identity.appendChild(name);
+      const location=document.createElement('span');
+      location.id='admin-session-location';
+      location.className='admin-session-location';
+      identity.appendChild(location);
+    }
+    name.textContent=currentUser.name||'Admin';
+    const location=document.getElementById('admin-session-location');
+    if(!location)return;
+    const knownCountries=['KSA','UAE','EGY'];
+    const countryCode=String(currentUser.country||(
+      currentUser.location==='RUH01'||currentUser.location==='JED01'?'KSA':currentUser.location
+    )||'').toUpperCase();
+    const countryName=knownCountries.indexOf(countryCode)!==-1
+      ?t('country_'+countryCode.toLowerCase())
+      :t('country_not_set');
+    if(currentUser.accessLevel==='superadmin'){
+      location.textContent='All countries • All facilities';
+    }else{
+      const details=t('country_label')+': '+countryName;
+      location.textContent=countryCode==='KSA'&&currentUser.location
+        ?details+'  •  '+t('facility_label')+': '+currentUser.location
+        :details;
+    }
+    const sidebarName=document.getElementById('sidebar-user-name');
+    const footer=sidebarName&&sidebarName.closest('.sidebar-footer');
+    if(footer)footer.remove();
+  }
+
+  function ensureSuperAdminApprovalPanel(){
+    if(!currentUser||currentUser.accessLevel!=='superadmin')return;
+    var dashboard=document.getElementById('dashboard-admin');
+    var header=dashboard&&dashboard.querySelector('.admin-header-top');
+    if(!dashboard||!header||document.getElementById('super-admin-approval-panel'))return;
+    var panel=document.createElement('section');
+    panel.id='super-admin-approval-panel';
+    panel.style.cssText='margin:0 0 18px;padding:18px;background:rgba(17,22,32,.94);border:1px solid rgba(255,199,0,.3);border-radius:12px;';
+    var title=document.createElement('h2');
+    title.textContent='Facility Admin Approval Requests';
+    title.style.cssText='margin:0 0 12px;color:var(--noon-yellow);font-size:16px;';
+    var content=document.createElement('div');
+    content.id='super-admin-approval-content';
+    content.setAttribute('aria-live','polite');
+    content.textContent='Loading approval requests...';
+    panel.append(title,content);
+    header.parentNode.insertBefore(panel,header.nextSibling);
+    refreshFacilityAdminRequests();
+  }
+
+  function refreshFacilityAdminRequests(){
+    var content=document.getElementById('super-admin-approval-content');
+    if(!content)return Promise.resolve();
+    content.textContent='Loading approval requests...';
+    return appsScriptAction({action:'admin_list_facility_requests'}).then(function(result){
+      content.textContent='';
+      if(!Array.isArray(result.requests)||result.requests.length===0){
+        content.textContent='There are no pending facility admin requests.';
+        return;
+      }
+      result.requests.forEach(function(request){
+        var card=document.createElement('div');
+        card.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;border-top:1px solid rgba(255,255,255,.1);';
+        var details=document.createElement('div');
+        var name=document.createElement('strong');
+        name.textContent=request.name||'Facility Admin';
+        var info=document.createElement('div');
+        info.textContent=(request.email||'')+' • '+(request.country||'')+' / '+(request.location||'');
+        info.style.cssText='margin-top:4px;color:var(--text-muted);font-size:12px;';
+        details.append(name,info);
+        var actions=document.createElement('div');
+        actions.style.cssText='display:flex;gap:8px;flex-wrap:wrap;';
+        [['Approve',true],['Reject',false]].forEach(function(actionData){
+          var button=document.createElement('button');
+          button.type='button';
+          button.className='btn-primary'+(actionData[1]?'':' btn-outline');
+          button.textContent=actionData[0];
+          button.addEventListener('click',function(){processFacilityAdminApproval(request.email,actionData[1],button);});
+          actions.appendChild(button);
+        });
+        card.append(details,actions);
+        content.appendChild(card);
+      });
+    }).catch(function(error){
+      content.textContent='Could not load approval requests: '+(error&&error.message?error.message:'Unknown error');
+    });
+  }
+
+  function processFacilityAdminApproval(email,approve,button){
+    if(button)button.disabled=true;
+    appsScriptAction({action:'admin_process_facility_request',email:email,approve:approve}).then(function(){
+      refreshFacilityAdminRequests();
+    }).catch(function(error){
+      alert('Unable to '+(approve?'approve':'reject')+' this request: '+(error&&error.message?error.message:'Unknown error'));
+      if(button)button.disabled=false;
+    });
+  }
+
   function setupRequestCountrySelector(){
     const requestLocation=document.getElementById('req-location');
     const requestLocationGroup=requestLocation&&requestLocation.parentElement;
@@ -1476,6 +1818,7 @@
   }
 
   function login(role){
+    if(role==='admin')return submitAdminAccess();
     if(role==='guard'){
       const n=document.getElementById('lg-name'),i=document.getElementById('lg-id'),country=document.getElementById('lg-country'),location=document.getElementById('lg-location'),m=document.getElementById('lg-mode');
       if(!n||!i||!country||!location||!m||!n.value||!i.value||!country.value||!m.value)return alert("Fill all Guard details");
@@ -1485,12 +1828,6 @@
       const n=document.getElementById('lo-name'),m=document.getElementById('lo-mail');
       if(!n||!m||!n.value||!m.value)return alert("Enter Name and Gmail");
       currentUser={role:'ops',name:n.value,email:m.value.toLowerCase().trim()};
-    }else if(role==='admin'){
-      const n=document.getElementById('la-name'),m=document.getElementById('la-mail'),p=document.getElementById('la-pass'),country=document.getElementById('la-country'),location=document.getElementById('la-location');
-      if(!n||!m||!p||!country||!location||!n.value||!m.value||!p.value||!country.value)return alert("Enter all Admin details");
-      if(country.value==='KSA'&&!location.value)return alert("Select a facility.");
-      if(p.value==='NoonCCTVSLP#2026')currentUser={role:'admin',name:n.value,email:m.value.toLowerCase().trim(),country:country.value,location:country.value==='KSA'?location.value:country.value};
-      else return alert("Incorrect Password");
     }
     saveSession();
     initApp();
@@ -1504,13 +1841,18 @@
       if(al)al.classList.remove('hidden');
 
       if(currentUser&&currentUser.role==='admin'){
-        const vn=document.getElementById('req-vname'),ae=document.getElementById('req-admin-email'),ag=document.getElementById('admin-email-group'),sb=document.getElementById('sidebar'),han=document.getElementById('header-admin-name'),sun=document.getElementById('sidebar-user-name'),na=document.getElementById('nav-sidebar-admin');
+        const vn=document.getElementById('req-vname'),ae=document.getElementById('req-admin-email'),ag=document.getElementById('admin-email-group'),sb=document.getElementById('sidebar'),han=document.getElementById('header-admin-name'),na=document.getElementById('nav-sidebar-admin');
         const msb=document.getElementById('admin-manual-search-box');
+        const cacheOwner=JSON.stringify([currentUser.email||'',currentUser.accessLevel||'',currentUser.location||'ALL']);
+        if(localStorage.getItem('cached_admin_data_owner')!==cacheOwner){
+          localStorage.removeItem('cached_admin_data');
+          localStorage.setItem('cached_admin_data_owner',cacheOwner);
+        }
         if(vn)vn.value='';if(ae)ae.value='';
         if(ag)ag.classList.remove('hidden');
         if(sb)sb.style.display='flex';
-        if(han)han.innerText=currentUser.name;
-        if(sun)sun.innerText=currentUser.name;
+        setupAdminHeaderIdentity();
+        ensureSuperAdminApprovalPanel();
         if(na)na.classList.remove('hidden');
         if(msb)msb.classList.remove('hidden');
         document.querySelectorAll('.admin-tab').forEach(function(el){el.classList.remove('hidden');});
@@ -1603,21 +1945,28 @@
   document.addEventListener('DOMContentLoaded',function(){
       buildLoginLayout();
       setupLoginCountrySelectors();
+      setupAdminAuthForm();
       setupRequestCountrySelector();
       updateUI();
       const params = new URLSearchParams(window.location.search);
       const role = params.get('role');
       document.body.classList.toggle('blur-background', role !== 'guard' && role !== 'staff');
-      if (role === 'staff' || role === 'guard' || role === 'admin') {
+      if (role === 'staff' || role === 'superadmin' || role === 'admin') {
           const roleTabs = document.getElementById('role-tabs');
-          if (roleTabs) roleTabs.style.display = 'flex';
-          switchLoginTab(role === 'admin' ? 'admin' : 'guard');
+          if (roleTabs) roleTabs.style.display = 'none';
+          switchLoginTab(role === 'guard' ? 'guard' : 'admin');
       }
       const session = localStorage.getItem(SESSION_KEY);
       if (session) {
           const savedSession = JSON.parse(session);
           const ageHours = (Date.now() - savedSession.time) / (1000 * 60 * 60);
-          if (ageHours < 12) {
+          const savedUser=savedSession.user;
+          const adminRoute=role==='staff'||role==='admin'||role==='superadmin';
+          const adminSessionValid=savedUser&&savedUser.role==='admin'&&savedUser.adminToken&&
+            Number(savedUser.expiresAt)>Date.now()&&
+            (role==='superadmin'?savedUser.accessLevel==='superadmin':savedUser.accessLevel==='facility');
+          const savedRoleMatches=adminRoute?adminSessionValid:(!savedUser||savedUser.role!=='admin');
+          if (ageHours < 12 && savedRoleMatches) {
               currentUser = savedSession.user;
               initApp();
           } else {
@@ -1634,6 +1983,15 @@
   if(appLayout)appLayout.addEventListener('click',function(event){if(event.target===appLayout&&window.innerWidth<=760&&!document.body.classList.contains('sidebar-minimized'))toggleSidebar();});
   function logout(){
     if(autoRefreshTimer)clearInterval(autoRefreshTimer);
+    if(currentUser&&currentUser.role==='admin'&&currentUser.adminToken){
+      fetch(freshScriptUrl(),{
+        method:'POST',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({action:'admin_logout',adminToken:currentUser.adminToken}),
+        keepalive:true,
+        mode:'no-cors'
+      }).catch(function(error){console.warn('[Admin logout] Server session could not be revoked; it will expire automatically.',error);});
+    }
     stopGuardCacheRefresh();
     stopGuardInactivityMonitor();
     stopAmbientPanels();
@@ -2446,7 +2804,23 @@
     isSilent=!!isSilent;
     const cachedM=localStorage.getItem('cached_admin_data');
     if(cachedM&&!isSilent){try{let parsedM=JSON.parse(cachedM);if(Array.isArray(parsedM)){globalAdminHistory=[];renderAdminData(parsedM.slice().reverse());}else if(parsedM&&Array.isArray(parsedM.passes)){globalAdminHistory=Array.isArray(parsedM.history)?parsedM.history:[];renderAdminData(parsedM.passes.slice().reverse());}else localStorage.removeItem('cached_admin_data');}catch(e){localStorage.removeItem('cached_admin_data');}}
-    try{const resMain=await fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'get_all'}),redirect:'follow',cache:'no-store'});if(!resMain.ok)throw new Error('Admin data request failed (HTTP '+resMain.status+').');const dataMain=convertDriveUrls(await resMain.json());if(dataMain&&(Array.isArray(dataMain)||Array.isArray(dataMain.passes))){globalAdminHistory=Array.isArray(dataMain.history)?dataMain.history:[];const newMStr=JSON.stringify(dataMain);if(isSilent&&cachedM===newMStr)return;localStorage.setItem('cached_admin_data',newMStr);renderAdminData((Array.isArray(dataMain)?dataMain:dataMain.passes).slice().reverse());}else renderAdminData([]);}catch(e){renderAdminData(globalAdminData||[]);if(!isSilent)console.error('[Admin data] Refresh failed; preserving the last rendered data.',e);}finally{adminRefreshInProgress=false;}
+    try{
+      const dataMain=convertDriveUrls(await appsScriptJsonp({action:'get_all'},null,30000));
+      if(dataMain&&(Array.isArray(dataMain)||Array.isArray(dataMain.passes))){
+        globalAdminHistory=Array.isArray(dataMain.history)?dataMain.history:[];
+        const newMStr=JSON.stringify(dataMain);
+        if(isSilent&&cachedM===newMStr)return;
+        localStorage.setItem('cached_admin_data',newMStr);
+        renderAdminData((Array.isArray(dataMain)?dataMain:dataMain.passes).slice().reverse());
+      }else{
+        renderAdminData([]);
+      }
+    }catch(e){
+      renderAdminData(globalAdminData||[]);
+      if(!isSilent)console.error('[Admin data] Refresh failed; preserving the last rendered data.',e);
+    }finally{
+      adminRefreshInProgress=false;
+    }
   }
 
   function refreshMemberView(passId, targetCategory){
@@ -2628,7 +3002,7 @@
     finally{if(isSubmission){pleaseWaitRequestCount--;hidePleaseWait();}}
   };
 
-  async function submitExtendPass(){const id=document.getElementById('extend-id').value,type=document.getElementById('extend-type').value,ns=document.getElementById('extend-start').value,ei=document.getElementById('extend-end');const ne=ei?ei.value:'';const btn=document.getElementById('btn-submit-extend');if(!ns||!ne)return alert('Please select both Start and End dates.');if(!confirm('Extend pass '+id+'?'))return;btn.innerText='SAVING...';btn.disabled=true;try{await fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'extend_pass',id:id,newStartDate:ns,newEndDate:ne}),mode:'no-cors'});closeExtendPass();loadAdminData(false);}catch(e){alert('Error.');}finally{btn.innerText=t("save_extension");btn.disabled=false;}}
+  async function submitExtendPass(){const id=document.getElementById('extend-id').value,type=document.getElementById('extend-type').value,ns=document.getElementById('extend-start').value,ei=document.getElementById('extend-end');const ne=ei?ei.value:'';const btn=document.getElementById('btn-submit-extend');if(!ns||!ne)return alert('Please select both Start and End dates.');if(!confirm('Extend pass '+id+'?'))return;btn.innerText='SAVING...';btn.disabled=true;try{await appsScriptAction({action:'extend_pass',id:id,newStartDate:ns,newEndDate:ne});closeExtendPass();loadAdminData(false);}catch(e){alert('Error: '+(e&&e.message?e.message:'Unable to extend this pass.'));}finally{btn.innerText=t("save_extension");btn.disabled=false;}}
 
   async function adminResetPin(email){if(!confirm('Reset PIN for '+email+'? They will be prompted to create a new one next time.'))return;try{const response=await fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'reset_pin',email:email}),redirect:'follow'});const result=await response.json();if(!result||result.status!=='success')throw new Error(result&&result.message?result.message:'The reset was not confirmed.');clearStoredPin(email);localStorage.removeItem('cached_admin_data');localStorage.removeItem('cached_passes_'+email);alert("PIN Reset Successful.");closeViewRecord();loadAdminData(true);}catch(e){alert('Error resetting PIN: '+(e&&e.message?e.message:'Unknown error'));}}
 
