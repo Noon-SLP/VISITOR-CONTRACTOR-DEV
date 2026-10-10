@@ -697,36 +697,49 @@
     async function adminRejectLeadDeviceAdd(passId,button){if(!confirm('Reject the lead additional device request?'))return;if(button)button.disabled=true;try{await appsScriptAction({action:'reject_lead_device_add',id:passId});localStorage.removeItem('cached_admin_data');refreshMemberView(passId,'device-add');}catch(error){alert('Lead device rejection failed: '+error.message);if(button)button.disabled=false;}}
   const SCRIPT_URL='https://script.google.com/macros/s/AKfycby6SBhfL178bNFOQbOeMldvLGfjcf5uP2eB4_MvgZhVhRGS8E5h6EKcA04r8ngrGi9E/exec';
   function freshScriptUrl(){return SCRIPT_URL+'?cacheBust='+Date.now()+'-'+Math.random().toString(36).slice(2);}
-  function showRequestEmailFailure(result,action){
-    var requestActions=['create','add_team_members','request_lead_device_add','request_member_device_add','request_revoke_device','request_lead_revoke_device','request_remove_member','request_lead_remove_member'];
-    if(!requestActions.includes(action))return;
+  function showRequestEmailFailure(result){
     if(result&&result.notificationSent===true)return;
     if(result&&result.notificationSent===false){
       alert('Your request was saved, but the notification email could not be sent: '+String(result.notificationError||'No error details were returned.')+'\n\nPlease ask an administrator to authorize MailApp in Apps Script and deploy the latest backend version.');
       return;
     }
-    alert('Your request was saved, but email status was not returned. Deploy the latest Apps Script backend and authorize it to send email.');
   }
-  async function checkNewPassNotification(requestId){
-    try{
-      var result=await appsScriptJsonp({action:'get_operation_result',requestId:requestId},null,10000);
-      if(!result){
-        showRequestEmailFailure(null,'create');
-        return null;
+  function notifyRequestAsync(action,params){
+    var requestActions=['create','add_team_members','request_lead_device_add','request_member_device_add','request_revoke_device','request_lead_revoke_device','request_remove_member','request_lead_remove_member'];
+    if(requestActions.indexOf(action)===-1)return;
+    var notificationParams={
+      action:'send_request_notification',
+      requestAction:action,
+      id:params.id||params.UniqueID,
+      requestId:params.requestId||(action==='create'?(params.UniqueID||''):'')
+    };
+    ['type','hostEmail','location','visitorName','imeiNumber','memberIqama','deviceType','deviceId'].forEach(function(key){
+      if(params[key]!==undefined)notificationParams[key]=params[key];
+    });
+    if(params.team){
+      try{
+        var members=typeof params.team==='string'?JSON.parse(params.team):params.team;
+        notificationParams.team=JSON.stringify((Array.isArray(members)?members:[]).map(function(member){
+          return {name:member&&member.name||'',iqamaText:member&&member.iqamaText||''};
+        }));
+      }catch(error){
+        console.error('[Request email] Unable to prepare member details for notification.',error);
       }
-      if(result.status!=='success')throw new Error(result.message||'The server did not confirm the new pass.');
-      showRequestEmailFailure(result,'create');
-      return result;
-    }catch(error){
-      console.error('[Request email] Unable to confirm the new pass notification.',error);
-      alert('Your pass was submitted, but the email notification status could not be confirmed. Please ensure the latest Apps Script backend is deployed and authorized to send email.');
-      return null;
     }
+    appsScriptJsonp(notificationParams,null,60000).then(function(result){
+      if(!result||result.status!=='success'){
+        throw new Error(result&&result.message?result.message:'The notification request was not accepted.');
+      }
+      showRequestEmailFailure(result);
+    }).catch(function(error){
+      console.error('[Request email] Notification delivery failed after the request was saved.',error);
+      alert('Your request was saved, but the notification email could not be confirmed: '+(error&&error.message?error.message:'Unknown error'));
+    });
   }
   function appsScriptAction(params){
     return appsScriptJsonp(params).then(function(result){
       if(!result||result.status!=='success')throw new Error(result&&result.message?result.message:'The server did not confirm the action.');
-      showRequestEmailFailure(result,params.action);
+      notifyRequestAsync(params.action,params);
       return result;
     });
   }
@@ -1712,8 +1725,8 @@
       beginPleaseWait('PLEASE WAIT...');
       try{
         await fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),mode:'no-cors'});
-        await checkNewPassNotification(tempId);
-        await loadMyPasses(true,true);
+        notifyRequestAsync(payload.action,payload);
+        loadMyPasses(true,true);
         openAddMoreModal(tempId);
       }catch(e){
         console.error(e);
@@ -1725,7 +1738,7 @@
     }else{
       btn.innerText="SUBMITTING...";btn.disabled=true;
       beginPleaseWait('PLEASE WAIT...');
-      try{await fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),mode:'no-cors'});await checkNewPassNotification(tempId);await loadMyPasses(true,true);}
+      try{await fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),mode:'no-cors'});notifyRequestAsync(payload.action,payload);loadMyPasses(true,true);}
       catch(e){existingPasses.pop();localStorage.setItem(cachedKey,JSON.stringify(existingPasses));renderMyPasses(existingPasses);endPleaseWait();alert("Upload failed. Error: "+e.message);}
       finally{endPleaseWait();btn.innerText=t("submit_approval");btn.disabled=false;startAutoRefresh(currentUser.role);}
     }
@@ -2465,7 +2478,7 @@
         throw new Error('The request was sent, but the server did not confirm it. Refresh the pass before trying again.');
       }
       if(operationResult.status!=='success')throw new Error(operationResult.message||'The server could not save the device request.');
-      showRequestEmailFailure(operationResult,payload.action);
+      notifyRequestAsync(payload.action,payload);
       closeExistingDeviceRequest();
       localStorage.removeItem('cached_passes_'+currentUser.email);
       refreshMemberView(context.passId);
@@ -3166,7 +3179,39 @@
       showScanResult('SCAN ERROR','Could not process this QR code. Please try scanning again.','bg-red',false);
     });
   }
-  async function submitAddMorePeople(keepAdding){keepAdding=!!keepAdding;if(addMoreTeamList.length===0)return alert(addMemberText("empty"));if(addMoreTeamList.length>10)return alert(addMemberText("limit"));if(!keepAdding&&!confirm(addMemberText("confirm")))return;let memberCount=addMoreTeamList.length;let btn=document.getElementById("btn-submit-add-more");btn.innerText=currentLang==='ar'?'جارٍ الإرسال...':'SUBMITTING...';btn.disabled=true;let cleanTeam=addMoreTeamList.map(function(m){return {iqama:m.rawIqama,selfie:m.rawSelfie,devicePhoto:m.rawDevicePhoto,name:m.name,iqamaText:m.iqamaText,deviceString:m.deviceType!=="None"?m.deviceType+' ('+m.deviceId+')':"None"};});let payload={action:"add_team_members",id:addMorePassId,team:JSON.stringify(cleanTeam)};beginPleaseWait('PLEASE WAIT...');try{let submitResult=await submitAppsScriptForm(payload);await loadMyPasses(true,true);addMoreTeamList=[];renderAddTeamRoster();if(!keepAdding){closeAddMoreModal();}else{startAddMoreTimer();}endPleaseWait();let notificationWarning='';if(!submitResult||typeof submitResult.notificationSent!=='boolean'){notificationWarning=currentLang==='ar'?'حالة البريد غير متوفرة. انشر أحدث إصدار من Code.gs في تطبيق الويب.':'Email status was not returned. The deployed Apps Script backend is outdated; deploy a new web app version.';}else if(submitResult.notificationSent===false){let detail=String(submitResult.notificationError||'No error details were returned.');notificationWarning=(currentLang==='ar'?'تعذر إرسال إشعار البريد الإلكتروني: ':'Email notification failed: ')+detail+(currentLang==='ar'?'\nشغّل testMemberRequestEmailNotifications من محرر Apps Script، ووافق على الصلاحيات.':'\nRun testMemberRequestEmailNotifications from the Apps Script editor and grant the requested permission.');}alert(addMemberNotice(memberCount)+(notificationWarning?'\n\n'+notificationWarning:''));}catch(e){endPleaseWait();console.error("[Add members] Submission failed.",e);alert(addMemberText("failed"));}finally{btn.innerText=t("submit_send_approval");btn.disabled=false;}}
+  async function submitAddMorePeople(keepAdding){
+    keepAdding=!!keepAdding;
+    if(addMoreTeamList.length===0)return alert(addMemberText("empty"));
+    if(addMoreTeamList.length>10)return alert(addMemberText("limit"));
+    if(!keepAdding&&!confirm(addMemberText("confirm")))return;
+    let memberCount=addMoreTeamList.length;
+    let btn=document.getElementById("btn-submit-add-more");
+    btn.innerText=currentLang==='ar'?'جارٍ الإرسال...':'SUBMITTING...';
+    btn.disabled=true;
+    let cleanTeam=addMoreTeamList.map(function(m){
+      return {iqama:m.rawIqama,selfie:m.rawSelfie,devicePhoto:m.rawDevicePhoto,name:m.name,iqamaText:m.iqamaText,deviceString:m.deviceType!=="None"?m.deviceType+' ('+m.deviceId+')':"None"};
+    });
+    let payload={action:"add_team_members",id:addMorePassId,team:JSON.stringify(cleanTeam)};
+    beginPleaseWait('PLEASE WAIT...');
+    try{
+      await submitAppsScriptForm(payload);
+      notifyRequestAsync(payload.action,payload);
+      loadMyPasses(true,true);
+      addMoreTeamList=[];
+      renderAddTeamRoster();
+      if(!keepAdding)closeAddMoreModal();
+      else startAddMoreTimer();
+      endPleaseWait();
+      alert(addMemberNotice(memberCount));
+    }catch(e){
+      endPleaseWait();
+      console.error("[Add members] Submission failed.",e);
+      alert(addMemberText("failed"));
+    }finally{
+      btn.innerText=t("submit_send_approval");
+      btn.disabled=false;
+    }
+  }
 
   document.addEventListener('DOMContentLoaded',function(){
     const em=document.getElementById('lo-mail');
