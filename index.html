@@ -708,7 +708,7 @@
   <script>
     async function adminApproveLeadDeviceAdd(passId,button){if(!confirm('Approve the lead additional device?'))return;if(button)button.disabled=true;try{await appsScriptAction({action:'approve_lead_device_add',id:passId});localStorage.removeItem('cached_admin_data');refreshMemberView(passId,'device-add');}catch(error){alert('Lead device approval failed: '+error.message);if(button)button.disabled=false;}}
     async function adminRejectLeadDeviceAdd(passId,button){if(!confirm('Reject the lead additional device request?'))return;if(button)button.disabled=true;try{await appsScriptAction({action:'reject_lead_device_add',id:passId});localStorage.removeItem('cached_admin_data');refreshMemberView(passId,'device-add');}catch(error){alert('Lead device rejection failed: '+error.message);if(button)button.disabled=false;}}
-  const SCRIPT_URL='https://script.google.com/macros/s/AKfycby6SBhfL178bNFOQbOeMldvLGfjcf5uP2eB4_MvgZhVhRGS8E5h6EKcA04r8ngrGi9E/exec';
+  const SCRIPT_URL='https://script.google.com/macros/s/AKfycbxyQ4kGKgsNS076UvKCk0ezCVSzp2DlqYobiprd8Qrvt5oJBWrVlszD7-jm2mOYtsTUvg/exec';
   function freshScriptUrl(){return SCRIPT_URL+'?cacheBust='+Date.now()+'-'+Math.random().toString(36).slice(2);}
   function showRequestEmailFailure(result){
     if(result&&result.notificationSent===true)return;
@@ -1594,7 +1594,7 @@
     var countryGroup=document.getElementById('la-country');
     var facilityGroup=document.getElementById('la-location');
     if(nameGroup&&nameGroup.parentElement)nameGroup.parentElement.classList.toggle('hidden',isSuperAdmin||!adminSignupMode);
-    if(button)button.textContent=isSuperAdmin?'LOGIN AS SUPER ADMIN':(adminSignupMode?'REQUEST ADMIN ACCESS':'LOGIN AS FACILITY ADMIN');
+    if(button)button.textContent=isSuperAdmin?'LOGIN AS GLOBAL ADMIN':(adminSignupMode?'REQUEST ADMIN ACCESS':'LOGIN AS FACILITY ADMIN');
     if(toggle)toggle.textContent=adminSignupMode?'I already have an account':'Create facility admin account';
     var credentialInput=document.getElementById('la-pass');
     if(credentialInput)credentialInput.autocomplete=adminSignupMode?'new-password':'current-password';
@@ -1710,21 +1710,45 @@
   function ensureSuperAdminApprovalPanel(){
     if(!currentUser||currentUser.accessLevel!=='superadmin')return;
     var dashboard=document.getElementById('dashboard-admin');
-    var header=dashboard&&dashboard.querySelector('.admin-header-top');
-    if(!dashboard||!header||document.getElementById('super-admin-approval-panel'))return;
-    var panel=document.createElement('section');
+    var nav=dashboard&&dashboard.querySelector('.admin-nav-horizontal');
+    if(!dashboard||!nav)return;
+    if(!document.getElementById('nav-facility-admin-requests')){
+      var navItem=document.createElement('li');
+      navItem.id='nav-facility-admin-requests';
+      navItem.style.padding='0';
+      var navButton=document.createElement('button');
+      navButton.type='button';
+      navButton.textContent='Admin Approval';
+      navButton.style.cssText='min-height:40px;padding:0 17px;background:transparent;border:0;border-radius:9px;color:inherit;font:inherit;letter-spacing:inherit;cursor:pointer;';
+      navButton.addEventListener('click',function(){switchAdminTab('facility-admin-requests');});
+      navItem.appendChild(navButton);
+      nav.appendChild(navItem);
+    }
+    if(document.getElementById('admin-sec-facility-admin-requests'))return;
+    var section=document.createElement('section');
+    section.id='admin-sec-facility-admin-requests';
+    section.className='admin-card admin-section hidden';
+    var panel=document.createElement('div');
     panel.id='super-admin-approval-panel';
-    panel.style.cssText='margin:0 0 18px;padding:18px;background:rgba(17,22,32,.94);border:1px solid rgba(255,199,0,.3);border-radius:12px;';
+    panel.style.cssText='padding:18px;background:rgba(17,22,32,.94);border:1px solid rgba(255,199,0,.3);border-radius:12px;';
+    var heading=document.createElement('div');
+    heading.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;';
     var title=document.createElement('h2');
-    title.textContent='Facility Admin Approval Requests';
-    title.style.cssText='margin:0 0 12px;color:var(--noon-yellow);font-size:16px;';
+    title.textContent='Facility Admin Access Requests';
+    title.style.cssText='margin:0;color:var(--noon-yellow);font-size:16px;';
+    var refreshButton=document.createElement('button');
+    refreshButton.type='button';
+    refreshButton.className='btn-primary btn-outline btn-sm';
+    refreshButton.textContent='Refresh';
+    refreshButton.addEventListener('click',refreshFacilityAdminRequests);
     var content=document.createElement('div');
     content.id='super-admin-approval-content';
     content.setAttribute('aria-live','polite');
-    content.textContent='Loading approval requests...';
-    panel.append(title,content);
-    header.parentNode.insertBefore(panel,header.nextSibling);
-    refreshFacilityAdminRequests();
+    content.textContent='Select Admin Approval to view requests.';
+    heading.append(title,refreshButton);
+    panel.append(heading,content);
+    section.appendChild(panel);
+    nav.parentNode.insertBefore(section,nav.nextSibling);
   }
 
   function refreshFacilityAdminRequests(){
@@ -2348,7 +2372,7 @@
   }
 
   function parseLogs(row){let visits=[];let gLogs=String(row.GateLogs||"");if(!gLogs.trim()&&row.CheckInTime){visits.push({in:new Date(row.CheckInTime),out:row.CheckOutTime?new Date(row.CheckOutTime):null,guardIn:row.ScannedByGuard||'Unknown',guardOut:row.ScannedByGuard||'Unknown'});return visits;}if(gLogs.startsWith("[")){try{let logs=JSON.parse(gLogs);let currentVisit=null;logs.forEach(function(l){if(l.action==='IN'){currentVisit={in:new Date(l.time),out:null,guardIn:l.guard||'Unknown',guardOut:''};visits.push(currentVisit);}else if(l.action==='OUT'){if(currentVisit&&!currentVisit.out){currentVisit.out=new Date(l.time);currentVisit.guardOut=l.guard||'Unknown';}else{visits.push({in:null,out:new Date(l.time),guardIn:'',guardOut:l.guard||'Unknown'});}}});}catch(e){}}return visits;}
-  function switchAdminTab(tName){document.querySelectorAll('.admin-nav-horizontal li').forEach(function(t2){t2.classList.remove('active');});const ni=document.getElementById('nav-'+tName);if(ni)ni.classList.add('active');document.querySelectorAll('.admin-section').forEach(function(s){s.classList.add('hidden');});const si=document.getElementById('admin-sec-'+tName);if(si)si.classList.remove('hidden');}
+  function switchAdminTab(tName){document.querySelectorAll('.admin-nav-horizontal li').forEach(function(t2){t2.classList.remove('active');});const ni=document.getElementById('nav-'+tName);if(ni)ni.classList.add('active');document.querySelectorAll('.admin-section').forEach(function(s){s.classList.add('hidden');});const si=document.getElementById('admin-sec-'+tName);if(si)si.classList.remove('hidden');if(tName==='facility-admin-requests'&&currentUser&&currentUser.accessLevel==='superadmin')refreshFacilityAdminRequests();}
   function setAdminFilter(range,btnElement){document.querySelectorAll('.btn-filter').forEach(function(b){b.classList.remove('active');});if(btnElement){const text=btnElement.innerText;document.querySelectorAll('.btn-filter').forEach(function(b){if(b.innerText===text)b.classList.add('active');});}currentAdminFilter=range;let p1=document.getElementById('custom-date-picker');if(range==='custom'){if(p1)p1.classList.remove('hidden');}else{if(p1)p1.classList.add('hidden');}if(range!=='custom')renderAdminData(globalAdminData);}
 
   function formatHistoryDateTime(value){const d=parseFlexibleDate(value);if(!d)return String(value||"");const hours=d.getHours(),minutes=d.getMinutes(),seconds=d.getSeconds(),period=hours>=12?"PM":"AM",hour12=hours%12||12;return d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,"0")+'/'+String(d.getDate()).padStart(2,"0")+' '+String(hour12).padStart(2,"0")+':'+String(minutes).padStart(2,"0")+':'+String(seconds).padStart(2,"0")+' '+period;}
@@ -4247,4 +4271,4 @@
   })();
   </script>
   </body></html>
-  
+    
