@@ -736,8 +736,8 @@
       alert('Your request was saved, but the notification email could not be confirmed: '+(error&&error.message?error.message:'Unknown error'));
     });
   }
-  function appsScriptAction(params){
-    return appsScriptJsonp(params).then(function(result){
+  function appsScriptAction(params,timeoutMs){
+    return appsScriptJsonp(params,null,timeoutMs).then(function(result){
       if(!result||result.status!=='success')throw new Error(result&&result.message?result.message:'The server did not confirm the action.');
       notifyRequestAsync(params.action,params);
       return result;
@@ -2343,6 +2343,13 @@
               return identity&&ids[identity[1].trim()]&&!/\[REMOVE_REQUESTED\]/i.test(line)?line+' [REMOVE_REQUESTED]':line;
             });
           });
+        }else if(action==='request_revoke'){
+          blocks=blocks.map(function(block){
+            return block.replace(/^(Device:.*)$/m,function(line){
+              var identity=block.split(/\r?\n/,1)[0].match(/^Name:\s*.*?\|\s*Iqama:\s*(.*?)\s*$/i);
+              return identity&&ids[identity[1].trim()]&&!/\[DEVICE_REVOKE_REQUESTED\]/i.test(line)?line+' [DEVICE_REVOKE_REQUESTED]':line;
+            });
+          });
         }
         pass.TeamMembers=blocks.join('\n\n');
         if(action==='remove'&&pass.Status==='Pending'&&!blocks.some(function(block){return /\*NEW_MEMBER\*|\[NEW\]|\[DEVICE_ADD_REQUESTED\]/i.test(block);}))pass.Status='Approved';
@@ -2356,14 +2363,95 @@
     openViewRecord(passId,targetCategory);
   }
 
+  function updateCachedLeadRequest(passId,field,marker){
+    var updated=[];
+    [globalAdminData,myPassesData].forEach(function(list){
+      if(!Array.isArray(list))return;
+      list.forEach(function(pass){
+        if(String(pass.UniqueID)!==String(passId)||updated.indexOf(pass)!==-1)return;
+        var value=String(pass[field]||'');
+        if(value.indexOf(marker)===-1)pass[field]=value+' '+marker;
+        updated.push(pass);
+      });
+    });
+    if(updated.length){
+      if(Array.isArray(globalAdminData)&&globalAdminData.some(function(pass){return String(pass.UniqueID)===String(passId);}))localStorage.setItem('cached_admin_data',JSON.stringify(globalAdminData));
+      if(Array.isArray(myPassesData)&&myPassesData.some(function(pass){return String(pass.UniqueID)===String(passId);})&&currentUser)localStorage.setItem('cached_passes_'+currentUser.email,JSON.stringify(myPassesData));
+    }
+    openViewRecord(passId,field==='VisitorName'?'remove':'revoke');
+  }
+
   async function updateStatus(id,newStatus){if(autoRefreshTimer)clearInterval(autoRefreshTimer);if(!confirm('Mark '+id+' as '+newStatus+'?')){startAutoRefresh(currentUser.role);return;}beginPleaseWait('PLEASE WAIT...');if(Array.isArray(globalAdminData)){let item=globalAdminData.find(function(x){return String(x.UniqueID)===String(id);});if(item){item.Status=newStatus;if(newStatus==='Approved'&&item.TeamMembers){item.TeamMembers=String(item.TeamMembers).replace(/\*NEW_MEMBER\*/gi,'').replace(/\[NEW\]/gi,'').replace(/\*\[REMOVE_REQUESTED\]\*/gi,'').replace(/\[REMOVE_REQUESTED\]/gi,'').replace(/\*\[DEVICE_REVOKE_REQUESTED\]\*/gi,'').replace(/\[DEVICE_REVOKE_REQUESTED\]/gi,'');}localStorage.setItem('cached_admin_data',JSON.stringify(globalAdminData));renderAdminData(globalAdminData);if(item.HostEmail)localStorage.removeItem('cached_passes_'+String(item.HostEmail).toLowerCase().trim());}}try{const payload={action:newStatus==='Approved'?'approve_pass':'update_status',id:id,newStatus:newStatus};await appsScriptAction(payload);localStorage.removeItem("cached_admin_data");await loadAdminData(true);}catch(e){alert("Update failed: "+e.message);await loadAdminData(true);}finally{endPleaseWait();startAutoRefresh(currentUser.role);}}
 
   function openAdminGateModal(id){const gi=document.getElementById('admin-gate-id'),gd=document.getElementById('admin-gate-id-display'),gm=document.getElementById('admin-gate-modal');if(gi)gi.value=id;if(gd)gd.innerText=id;if(gm)gm.classList.remove('hidden');}
   function closeAdminGateModal(){const gm=document.getElementById('admin-gate-modal');if(gm)gm.classList.add('hidden');}
 
-  async function submitAdminGateAction(actionType){const id=document.getElementById('admin-gate-id').value;if(!id)return;let item=globalAdminData.find(function(x){return String(x.UniqueID)===String(id);});if(item){const isInside=!!item.CheckInTime&&!item.CheckOutTime;const actor=item.ScannedByGuard||'Unknown';if(actionType==='check_in'&&isInside)return alert("This pass is already checked IN by:\n"+actor);if(actionType==='check_out'&&!isInside)return alert("This pass is already checked OUT by:\n"+actor);}if(!confirm('Proceed to '+(actionType==='check_in'?'Check In':'Check Out')+' pass '+id+'?'))return;if(autoRefreshTimer)clearInterval(autoRefreshTimer);try{const adminInfo=currentUser.role==='admin'?'Admin: '+currentUser.name:currentUser.name+' ('+currentUser.location+')';await fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:actionType,id:id,guardInfo:adminInfo,headCount:1}),mode:'no-cors'});localStorage.removeItem('cached_admin_data');closeAdminGateModal();loadAdminData(true).catch(function(){});}catch(e){alert("Action failed.");}finally{startAutoRefresh(currentUser.role);}}
+  async function submitAdminGateAction(actionType){
+    const id=document.getElementById('admin-gate-id').value;
+    if(!id)return;
+    const item=globalAdminData.find(function(pass){return String(pass.UniqueID)===String(id);});
+    if(item){
+      const isInside=!!item.CheckInTime&&!item.CheckOutTime;
+      const actor=item.ScannedByGuard||'Unknown';
+      if(actionType==='check_in'&&isInside)return alert("This pass is already checked IN by:\n"+actor);
+      if(actionType==='check_out'&&!isInside)return alert("This pass is already checked OUT by:\n"+actor);
+    }
+    if(!confirm('Proceed to '+(actionType==='check_in'?'Check In':'Check Out')+' pass '+id+'?'))return;
+    if(autoRefreshTimer)clearInterval(autoRefreshTimer);
+    try{
+      const adminInfo=currentUser.role==='admin'?'Admin: '+currentUser.name:currentUser.name+' ('+currentUser.location+')';
+      const result=await appsScriptAction({action:actionType,id:id,guardInfo:adminInfo,headCount:1},60000);
+      if(!result.time)throw new Error('The server confirmed the gate action without returning its recorded time.');
+      const confirmedAction=String(result.action||'').toUpperCase();
+      if(confirmedAction!==(actionType==='check_in'?'IN':'OUT'))throw new Error('The server response did not match the requested gate action.');
+      if(item){
+        if(confirmedAction==='IN'){
+          item.CheckInTime=result.time;
+          item.CheckOutTime='';
+        }else{
+          item.CheckOutTime=result.time;
+        }
+        item.ScannedByGuard=adminInfo;
+        localStorage.setItem('cached_admin_data',JSON.stringify(globalAdminData));
+        renderAdminData(globalAdminData);
+      }
+      closeAdminGateModal();
+      if(!item)await loadAdminData(true);
+    }catch(error){
+      alert('Action failed: '+(error&&error.message?error.message:'The server did not confirm the gate action.'));
+    }finally{
+      startAutoRefresh(currentUser.role);
+    }
+  }
 
-  async function adminRevokePass(id){if(autoRefreshTimer)clearInterval(autoRefreshTimer);if(!confirm('Revoke pass '+id+' completely? This will kill the QR code permanently.')){startAutoRefresh(currentUser.role);return;}if(Array.isArray(globalAdminData)){let item=globalAdminData.find(function(x){return String(x.UniqueID)===String(id);});if(item){item.Status='Completed';item.CheckOutTime=new Date().toISOString();localStorage.setItem('cached_admin_data',JSON.stringify(globalAdminData));renderAdminData(globalAdminData);if(item.HostEmail)localStorage.removeItem('cached_passes_'+String(item.HostEmail).toLowerCase().trim());}}try{const adminInfo=currentUser.role==='admin'?'Admin: '+currentUser.name:currentUser.name+' ('+currentUser.location+')';await fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'check_out',id:id,guardInfo:adminInfo,headCount:1,forceStatus:'Completed'}),mode:'no-cors'});localStorage.removeItem('cached_admin_data');setTimeout(function(){loadAdminData(true);},1000);}catch(e){}finally{startAutoRefresh(currentUser.role);}}
+  async function adminRevokePass(id){
+    if(autoRefreshTimer)clearInterval(autoRefreshTimer);
+    if(!confirm('Revoke pass '+id+' completely? This will kill the QR code permanently.')){
+      startAutoRefresh(currentUser.role);
+      return;
+    }
+    try{
+      const adminInfo=currentUser.role==='admin'?'Admin: '+currentUser.name:currentUser.name+' ('+currentUser.location+')';
+      const result=await appsScriptAction({action:'check_out',id:id,guardInfo:adminInfo,headCount:1,forceStatus:'Completed'},60000);
+      if(!result.time)throw new Error('The server confirmed the gate action without returning its recorded time.');
+      if(String(result.action||'').toUpperCase()!=='OUT')throw new Error('The server response did not confirm that the pass was checked out.');
+      const item=globalAdminData.find(function(pass){return String(pass.UniqueID)===String(id);});
+      if(item){
+        item.Status='Completed';
+        item.CheckOutTime=result.time;
+        item.ScannedByGuard=adminInfo;
+        localStorage.setItem('cached_admin_data',JSON.stringify(globalAdminData));
+        renderAdminData(globalAdminData);
+        if(item.HostEmail)localStorage.removeItem('cached_passes_'+String(item.HostEmail).toLowerCase().trim());
+      }else{
+        await loadAdminData(true);
+      }
+    }catch(error){
+      alert('Revoke failed: '+(error&&error.message?error.message:'The server did not confirm the gate action.'));
+    }finally{
+      startAutoRefresh(currentUser.role);
+    }
+  }
 
   function openExtendPass(id,type){const ei=document.getElementById('extend-id'),et=document.getElementById('extend-type'),eg=document.getElementById('extend-end-group'),em=document.getElementById('extend-pass-modal');if(ei)ei.value=id;if(et)et.value=type;if(eg)eg.classList.remove('hidden');if(em)em.classList.remove('hidden');}
   function closeExtendPass(){const em=document.getElementById('extend-pass-modal');if(em)em.classList.add('hidden');}
@@ -2400,14 +2488,14 @@
     if(action==='request_revoke_device'||action==='request_remove_member'){
       payload.requestId='request-'+action+'-'+Date.now()+'-'+Math.random().toString(36).slice(2);
     }
-    return appsScriptAction(payload);
+    return appsScriptAction(payload,action==='request_revoke_device'||action==='request_remove_member'?60000:undefined);
   }
 
-  async function requestRevokeDevice(passId,memberIndex,memberIqama,btn){if(!confirm('Request admin to revoke device access for this member?'))return;btn.innerText="REQUESTING...";btn.disabled=true;try{await runTeamMemberAction('request_revoke_device',passId,memberIndex,memberIqama);localStorage.removeItem('cached_passes_'+currentUser.email);refreshMemberView(passId);}catch(e){alert("Failed to request: "+e.message);btn.disabled=false;}}
+  async function requestRevokeDevice(passId,memberIndex,memberIqama,btn){if(!confirm('Request admin to revoke device access for this member?'))return;btn.innerText="REQUESTING...";btn.disabled=true;updateCachedTeamMemberAction(passId,[memberIqama],'request_revoke','revoke');try{await runTeamMemberAction('request_revoke_device',passId,memberIndex,memberIqama);localStorage.removeItem('cached_passes_'+currentUser.email);refreshMemberView(passId,'revoke');}catch(e){refreshMemberView(passId,'revoke');alert("The request is still being confirmed by the server: "+e.message);btn.disabled=false;}}
 
-  async function requestRemoveTeamMember(passId,memberIndex,memberIqama,btn){if(!confirm('Request admin to permanently remove this team member?'))return;btn.innerText="REQUESTING...";btn.disabled=true;try{await runTeamMemberAction('request_remove_member',passId,memberIndex,memberIqama);updateCachedTeamMemberAction(passId,[memberIqama],'request_remove','remove');}catch(e){alert("Failed to request removal: "+e.message);btn.disabled=false;}}
-  async function requestRemoveLead(passId,btn){if(!confirm('Request admin to permanently remove the lead?'))return;btn.innerText="REQUESTING...";btn.disabled=true;try{await appsScriptAction({action:'request_lead_remove_member',id:passId,requestId:'request-lead-remove-'+Date.now()+'-'+Math.random().toString(36).slice(2)});localStorage.removeItem('cached_passes_'+currentUser.email);refreshMemberView(passId);}catch(e){alert("Failed to request lead removal: "+e.message);btn.disabled=false;}}
-  async function requestRevokeLeadDevice(passId,btn){if(!confirm('Request admin to revoke device access for the lead?'))return;btn.innerText="REQUESTING...";btn.disabled=true;try{await appsScriptAction({action:'request_lead_revoke_device',id:passId,requestId:'request-lead-device-revoke-'+Date.now()+'-'+Math.random().toString(36).slice(2)});localStorage.removeItem('cached_passes_'+currentUser.email);refreshMemberView(passId);}catch(e){alert("Failed to request lead device revoke: "+e.message);btn.disabled=false;}}
+  async function requestRemoveTeamMember(passId,memberIndex,memberIqama,btn){if(!confirm('Request admin to permanently remove this team member?'))return;btn.innerText="REQUESTING...";btn.disabled=true;updateCachedTeamMemberAction(passId,[memberIqama],'request_remove','remove');try{await runTeamMemberAction('request_remove_member',passId,memberIndex,memberIqama);localStorage.removeItem('cached_passes_'+currentUser.email);refreshMemberView(passId,'remove');}catch(e){refreshMemberView(passId,'remove');alert("The removal request is still being confirmed by the server: "+e.message);btn.disabled=false;}}
+  async function requestRemoveLead(passId,btn){if(!confirm('Request admin to permanently remove the lead?'))return;btn.innerText="REQUESTING...";btn.disabled=true;updateCachedLeadRequest(passId,'VisitorName','[LEAD_REMOVE_REQUESTED]');try{await appsScriptAction({action:'request_lead_remove_member',id:passId,requestId:'request-lead-remove-'+Date.now()+'-'+Math.random().toString(36).slice(2)},60000);localStorage.removeItem('cached_passes_'+currentUser.email);refreshMemberView(passId,'remove');}catch(e){refreshMemberView(passId,'remove');alert("The lead removal request is still being confirmed by the server: "+e.message);btn.disabled=false;}}
+  async function requestRevokeLeadDevice(passId,btn){if(!confirm('Request admin to revoke device access for the lead?'))return;btn.innerText="REQUESTING...";btn.disabled=true;updateCachedLeadRequest(passId,'ImeiNumber','[DEVICE_REVOKE_REQUESTED]');try{await appsScriptAction({action:'request_lead_revoke_device',id:passId,requestId:'request-lead-device-revoke-'+Date.now()+'-'+Math.random().toString(36).slice(2)},60000);localStorage.removeItem('cached_passes_'+currentUser.email);refreshMemberView(passId,'revoke');}catch(e){refreshMemberView(passId,'revoke');alert("The lead device request is still being confirmed by the server: "+e.message);btn.disabled=false;}}
 
   async function cancelRemoveRequest(passId,memberIndex,memberIqama,btn){if(!confirm('Cancel this removal request?'))return;btn.innerText="CANCELLING...";btn.disabled=true;try{await runTeamMemberAction('cancel_remove_request',passId,memberIndex,memberIqama);localStorage.removeItem('cached_admin_data');refreshMemberView(passId);}catch(e){alert("Failed to cancel: "+e.message);btn.disabled=false;}}
 
@@ -3016,13 +3104,37 @@
     if(btn){btn.innerText="SAVING...";btn.disabled=true;}
     if(btnTop){btnTop.innerText="SAVING...";btnTop.disabled=true;}
     const gInfo=currentUser.name+' ('+currentUser.location+')';
-    const actionLabel=currentScanAction==='check_out'?t("btn_checkout"):t("confirm_action");
-    const pass=guardPassCache.get(String(currentScannedID||'').toUpperCase());
-    const payload=JSON.stringify({action:currentScanAction,id:currentScannedID,passType:pass&&pass.Type||'',guardInfo:gInfo,headCount:hcVal});
+    const scanAction=currentScanAction;
+    const scanId=currentScannedID;
+    const upperId=String(scanId||'').toUpperCase();
+    const actionLabel=scanAction==='check_out'?t("btn_checkout"):t("confirm_action");
+    const pass=guardPassCache.get(upperId);
+    if(!pass){
+      alert('Pass data is unavailable. Please close and scan the QR again.');
+      if(btn){btn.innerText=actionLabel;btn.disabled=false;}
+      if(btnTop){btnTop.innerText=actionLabel;btnTop.disabled=false;}
+      isProcessingScan=false;
+      return;
+    }
     try{
-      const response=await fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:payload,mode:'no-cors'});
-      const result=await response.json();
-      if(!result||result.status!=='success')throw new Error(result&&result.message?result.message:'The gate action was not confirmed by the server.');
+      const result=await appsScriptAction({
+        action:scanAction,
+        id:scanId,
+        passType:pass.Type||'',
+        guardInfo:gInfo,
+        headCount:hcVal
+      },60000);
+      if(!result.time)throw new Error('The server confirmed the gate action without returning its recorded time.');
+      const confirmedAction=String(result.action||'').toUpperCase();
+      if(confirmedAction!==(scanAction==='check_in'?'IN':'OUT'))throw new Error('The server response did not match the requested gate action.');
+      if(confirmedAction==='IN'){
+        pass.CheckInTime=result.time;
+        pass.CheckOutTime='';
+      }else{
+        pass.CheckOutTime=result.time;
+      }
+      pass.ScannedByGuard=gInfo;
+      guardPassCache.set(upperId,pass);
     }catch(e){
       alert(e&&e.message?e.message:"Network error. Please try again.");
       if(btn){btn.innerText=actionLabel;btn.disabled=false;}
@@ -3030,7 +3142,6 @@
       isProcessingScan=false;
       return;
     }
-    try{const upperId=String(currentScannedID).toUpperCase();const cached=guardPassCache.get(upperId);if(cached){const nowIso=new Date().toISOString();if(currentScanAction==='check_in'){cached.CheckInTime=nowIso;cached.CheckOutTime='';cached.ScannedByGuard=gInfo;}else{cached.CheckOutTime=nowIso;cached.ScannedByGuard=gInfo;}guardPassCache.set(upperId,cached);}}catch(e){}
     if(btn){btn.innerText=t("confirm_action");btn.disabled=false;}
     if(btnTop){btnTop.innerText=t("confirm_action");btnTop.disabled=false;}
     const modal=document.getElementById('scan-confirm-modal');if(modal)modal.classList.add('hidden');
