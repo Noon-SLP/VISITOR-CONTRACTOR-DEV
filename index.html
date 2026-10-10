@@ -782,11 +782,12 @@
   }
   function verifyAdminApiReady(){
     var requestId=createAdminRequestId('admin-auth');
-    return fetch(freshScriptUrl(),{
+    return nativeFetch(freshScriptUrl(),{
       method:'POST',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({
-        action:'admin_api_health_check',
+        action:'admin_auth_result',
+        requestId:createAdminRequestId('admin-auth'),
         adminRequestId:requestId
       }),
       mode:'cors',
@@ -797,6 +798,11 @@
     }).then(function(result){
       if(result&&result.status==='accepted')return;
       throw adminApiResponseError(result,'The deployed Apps Script backend is outdated. Deploy the latest code.gs version and try again.');
+    }).then(function(){
+      return fetchAdminRequestResult(requestId);
+    }).then(function(result){
+      if(result&&result.status==='pending')return;
+      throw adminApiResponseError(result,'The Apps Script backend could not confirm admin requests. Deploy the latest code.gs version and try again.');
     }).catch(function(error){
       if(error&&/outdated/.test(error.message||''))throw error;
       throw new Error('Could not verify the Apps Script admin API. Check the web app deployment and connection, then try again. '+(error&&error.message?error.message:''));
@@ -830,7 +836,7 @@
         return result;
       });
     }
-    return fetch(freshScriptUrl(),{
+    return nativeFetch(freshScriptUrl(),{
       method:'POST',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify(payload),
