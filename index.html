@@ -753,6 +753,9 @@
     #dashboard-admin .admin-session-location{color:#aeb9ca;font-size:10px;font-weight:600;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
     #dashboard-admin .admin-session-identity.is-global-admin #header-admin-name{color:#ffe17a!important;font-size:18px!important;font-weight:900!important;letter-spacing:.09em!important;text-transform:uppercase;text-shadow:0 0 18px rgba(255,199,0,.2)}
     #dashboard-admin .admin-session-identity.is-global-admin .admin-session-location{color:#e4eaf4;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+    #dashboard-admin .admin-session-identity.is-facility-admin #header-admin-name{color:#ffe17a!important;font-size:18px!important;font-weight:900!important;letter-spacing:.09em!important;text-transform:uppercase;text-shadow:0 0 18px rgba(255,199,0,.2)}
+    #dashboard-admin .admin-session-identity.is-facility-admin .admin-session-location{color:#e4eaf4;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+    #dashboard-admin #admin-sec-approvals .admin-data-scope-fixed{color:#ffe17a;font-size:11px;font-weight:850;letter-spacing:.055em;text-transform:uppercase}
     #dashboard-admin .admin-user-info{position:relative;z-index:2;margin-inline-start:auto}
     @media(max-width:1000px){
       #dashboard-admin .admin-header-top .admin-session-identity{position:static;order:3;flex:1 0 100%;max-width:100%;transform:none;margin-top:2px}
@@ -760,6 +763,9 @@
       #dashboard-admin .admin-session-location{font-size:9px}
       #dashboard-admin .admin-session-identity.is-global-admin #header-admin-name{font-size:15px!important}
       #dashboard-admin .admin-session-identity.is-global-admin .admin-session-location{font-size:10px}
+      #dashboard-admin .admin-session-identity.is-facility-admin #header-admin-name{font-size:15px!important}
+      #dashboard-admin .admin-session-identity.is-facility-admin .admin-session-location{font-size:10px}
+      #dashboard-admin #admin-sec-approvals .admin-data-scope-fixed{font-size:10px}
       #dashboard-admin .admin-user-info{order:2}
       #dashboard-admin .admin-brand-horizontal{order:1}
     }
@@ -2021,7 +2027,9 @@
     }
     const globalAdmin=isGlobalAdmin();
     identity.classList.toggle('is-global-admin',globalAdmin);
-    name.textContent=globalAdmin?String(currentUser.name||'Global Admin').toUpperCase():(currentUser.name||'Admin');
+    const facilityAdmin=!globalAdmin&&currentUser.role==='admin';
+    identity.classList.toggle('is-facility-admin',facilityAdmin);
+    name.textContent=globalAdmin?String(currentUser.name||'Global Admin').toUpperCase():(facilityAdmin?String(currentUser.name||'Admin').toUpperCase():(currentUser.name||'Admin'));
     const location=document.getElementById('admin-session-location');
     if(!location)return;
     const knownCountries=['KSA','UAE','EGY'];
@@ -5115,4 +5123,4 @@
   })();
   </script>
   </body></html>
-    
+  
