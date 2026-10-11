@@ -2456,6 +2456,7 @@
         ensureSuperAdminApprovalPanel();
         if(currentUser.accessLevel==='superadmin')refreshFacilityAdminRequests();
         if(na)na.classList.remove('hidden');
+        const ng=document.getElementById('nav-sidebar-guard');if(ng)ng.classList.toggle('hidden',currentUser.accessLevel==='facility');
         if(msb)msb.classList.remove('hidden');
         document.querySelectorAll('.admin-tab').forEach(function(el){el.classList.remove('hidden');});
 
@@ -2607,7 +2608,7 @@
   function hardRefreshApp(){if(confirm("Reload the app with the latest data?")){window.location.reload();}}
   function toggleDateFields(){const te=document.getElementById('req-type');if(!te)return;const type=te.value,vf=document.getElementById('req-visitor-fields'),cf=document.getElementById('req-contractor-fields'),tms=document.getElementById('team-members-section');if(vf)vf.classList.toggle('hidden',type==='Contractor');if(cf)cf.classList.toggle('hidden',type==='Visitor');if(tms)tms.classList.toggle('hidden',type==='Visitor');}
   function switchLoginTab(role){document.body.classList.toggle('blur-background',role!=='guard');document.querySelectorAll('.role-tab').forEach(function(t2){t2.classList.remove('active');});document.querySelectorAll('#login-guard, #login-ops, #login-admin').forEach(function(f){f.classList.add('hidden');});const te=document.getElementById('tab-'+role);if(te)te.classList.add('active');const le=document.getElementById('login-'+role);if(le)le.classList.remove('hidden');updateAdminPendingBadges(countPendingAccessRequests(globalAdminData),facilityAdminPendingCount);}
-  function switchMainView(vId){document.body.classList.toggle('blur-background',vId!=='guard');document.querySelectorAll('.dashboard').forEach(function(e){e.classList.add('hidden');});const tv=document.getElementById('dashboard-'+vId);if(tv)tv.classList.remove('hidden');document.querySelectorAll('.sidebar-nav a').forEach(function(a){a.classList.remove('active');});const an=document.getElementById('nav-sidebar-'+vId);if(an)an.classList.add('active');const sb=document.getElementById('sidebar');if(window.innerWidth<=900&&sb&&!sb.classList.contains('minimized'))toggleSidebar();updateAdminPendingBadges(countPendingAccessRequests(globalAdminData),facilityAdminPendingCount);if(vId==='ops'&&currentUser&&currentUser.role==='admin')loadMyPasses(false,false);}
+  function switchMainView(vId){if(vId==='guard'&&currentUser&&currentUser.role==='admin'&&currentUser.accessLevel==='facility')return;document.body.classList.toggle('blur-background',vId!=='guard');document.querySelectorAll('.dashboard').forEach(function(e){e.classList.add('hidden');});const tv=document.getElementById('dashboard-'+vId);if(tv)tv.classList.remove('hidden');document.querySelectorAll('.sidebar-nav a').forEach(function(a){a.classList.remove('active');});const an=document.getElementById('nav-sidebar-'+vId);if(an)an.classList.add('active');const sb=document.getElementById('sidebar');if(window.innerWidth<=900&&sb&&!sb.classList.contains('minimized'))toggleSidebar();updateAdminPendingBadges(countPendingAccessRequests(globalAdminData),facilityAdminPendingCount);if(vId==='ops'&&currentUser&&currentUser.role==='admin')loadMyPasses(false,false);}
 
   let imageGallery=[],imageGalleryIndex=0,imageZoom=1;
   function openFullscreenImage(src){if(!src)return;const images=[].slice.call(document.querySelectorAll('#view-record-content img[onclick*="openFullscreenImage"],#scan-result img[onclick*="openFullscreenImage"]'));imageGallery=images.map(function(img){const row=img.closest('.modal-team-row'),record=img.closest('.record-img-box'),rowText=row?row.innerText:'',nameNode=row&&row.querySelector('span[style*="noon-yellow"]');return{src:img.src||img.getAttribute('src'),name:nameNode?nameNode.textContent.trim():(rowText.match(/^[^\n]+/)||[])[0]||(record&&record.querySelector('strong')&&record.querySelector('strong').textContent.trim())||img.alt||'Photo',iqama:(rowText.match(/ID:\s*([^\n]+)/i)||[])[1]?(rowText.match(/ID:\s*([^\n]+)/i)||[])[1].trim():''};}).filter(function(x){return x.src;});imageGalleryIndex=Math.max(0,imageGallery.findIndex(function(x){return x.src===src;}));if(!imageGallery.length)imageGallery=[{src:src,name:'Photo',iqama:''}];renderFullscreenImage();}
@@ -4959,4 +4960,4 @@
   })();
   </script>
   </body></html>
-    
+  
