@@ -797,6 +797,7 @@
     #dashboard-ops .ops-grid>.ops-card:first-child>#req-visitor-fields>.input-group:nth-child(3){grid-column:2;grid-row:6}
     #dashboard-ops .ops-grid>.ops-card:first-child>#req-visitor-fields>.input-group:nth-child(4){grid-column:1;grid-row:7}
     #dashboard-ops .ops-grid>.ops-card:first-child>.input-group:has(#req-iqama){grid-column:1;grid-row:8}
+    #dashboard-ops .ops-grid>.ops-card:first-child:not(:has(#req-type option[value="Contractor"]:checked))>.input-group:has(#req-lead-device-type){grid-column:2;grid-row:8}
     #dashboard-ops .ops-grid>.ops-card:first-child>.input-group:has(#req-selfie){grid-column:2;grid-row:7}
     #dashboard-ops .ops-grid>.ops-card:first-child>.input-group:has(#req-imeiphoto){grid-column:2;grid-row:8}
     #dashboard-ops .ops-grid>.ops-card:first-child:has(#req-type option[value="Contractor"]:checked)>.input-group:has(#req-iqama){grid-column:1;grid-row:9}
@@ -834,7 +835,6 @@
     #dashboard-ops .ops-grid>.ops-card:first-child .input-group:has(#req-lead-device-type)>div:has(>button){display:flex;align-items:stretch;width:100%;height:34px;flex-wrap:nowrap!important}
     #dashboard-ops .ops-grid>.ops-card:first-child .input-group:has(#req-lead-device-type)>div:has(>button)>button{height:34px!important;min-height:34px!important;box-sizing:border-box}
     #dashboard-ops .ops-grid>.ops-card:first-child .input-group:has(#req-lead-device-type)>div:has(>select),#dashboard-ops .ops-grid>.ops-card:first-child .input-group:has(#req-lead-device-type)>div:has(>select)>select{width:100%;box-sizing:border-box}
-    #dashboard-ops .ops-grid>.ops-card:first-child:not(:has(#req-type option[value="Contractor"]:checked))>.input-group:has(#req-lead-device-type){grid-column:1/-1;grid-row:9}
     #dashboard-ops .ops-grid>.ops-card:first-child .input-group:has(#req-lead-device-type)>div:has(>select#req-lead-device-type){display:flex;align-items:stretch;gap:8px!important;width:100%;min-width:0;margin:0 0 4px!important}
     #dashboard-ops .ops-grid>.ops-card:first-child #req-lead-device-type{flex:1 1 auto!important;width:100%!important;min-width:0!important;max-width:100%!important;box-sizing:border-box!important}
     #dashboard-ops .ops-grid>.ops-card:first-child .input-group:has(#req-lead-device-id:not(.hidden)) #req-lead-device-type{flex:0 0 96px!important;width:96px!important;min-width:88px!important;max-width:42%!important}
@@ -5098,4 +5098,4 @@
   })();
   </script>
   </body></html>
-    
+  
