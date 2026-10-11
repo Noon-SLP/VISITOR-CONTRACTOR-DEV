@@ -168,7 +168,7 @@
   #main-content::before{display:none!important}
   body.blur-background #main-content::before,html.low-performance #main-content::before{filter:none!important;transform:none!important;will-change:auto!important}
   #login-view::before,html.low-performance #login-view::before{background:none!important;opacity:0!important}
-  html.low-performance #main-content::before{background-size:min(52vw,58vh,850px)!important;opacity:.08!important}
+  html.low-performance #main-content::before{background-size:min(52vw,58vh,850px)!important;opacity:.14!important}
   </style>
   <style id="admin-dashboard-appearance">
   #dashboard-admin{--admin-surface:rgba(18,23,34,.94);--admin-line:rgba(148,163,184,.17);--admin-muted:#a1adbf;padding-bottom:40px;background:radial-gradient(ellipse at 82% 12%,rgba(52,91,174,.13),transparent 34%),radial-gradient(ellipse at 14% 32%,rgba(255,199,0,.055),transparent 35%);isolation:isolate}
@@ -575,32 +575,40 @@
     #scan-result.fullscreen-scan .device-photo-card{width:100%;min-width:0;max-width:100%;overflow-wrap:anywhere}
   }
   body[dir="rtl"] .login-top-controls{left:max(12px,env(safe-area-inset-left))}
+  html{scrollbar-color:#596579 #12151c;scrollbar-width:thin}
+  *::-webkit-scrollbar{width:12px;height:12px}
+  *::-webkit-scrollbar-track{background:#12151c}
+  *::-webkit-scrollbar-thumb{background:#596579;border:3px solid #12151c;border-radius:8px}
+  *::-webkit-scrollbar-thumb:hover{background:#77849a}
+  *::-webkit-scrollbar-corner{background:#12151c}
   </style>
   <style id="reference-background-colors">
   body{background-color:#0b1019!important}
   #login-view{
     background-color:#0b1019!important;
     background-image:
-      radial-gradient(ellipse 45% 62% at 14% 51%,rgba(177,139,52,.25),transparent 72%),
-      radial-gradient(ellipse 48% 62% at 84% 53%,rgba(48,79,153,.2),transparent 72%),
-      linear-gradient(128deg,#090e17 0%,#151d2c 52%,#0a101b 100%)!important;
+      radial-gradient(ellipse 45% 62% at 14% 51%,rgba(177,139,52,.19),transparent 72%),
+      radial-gradient(ellipse 48% 62% at 84% 53%,rgba(48,79,153,.1),transparent 72%),
+      linear-gradient(128deg,#090e17 0%,#101725 52%,#0a101b 100%)!important;
   }
   #login-view::after{
     display:block!important;
     z-index:0!important;
     background:
-      radial-gradient(ellipse 45% 62% at 14% 51%,rgba(177,139,52,.21),transparent 72%),
-      radial-gradient(ellipse 48% 62% at 84% 53%,rgba(48,79,153,.16),transparent 72%),
-      linear-gradient(90deg,transparent 49.94%,rgba(255,255,255,.035) 50%,transparent 50.06%)!important;
+      radial-gradient(ellipse 45% 62% at 14% 51%,rgba(177,139,52,.16),transparent 72%),
+      radial-gradient(ellipse 48% 62% at 84% 53%,rgba(48,79,153,.08),transparent 72%),
+      linear-gradient(128deg,#090e17 0%,#101725 52%,#0a101b 100%)!important;
   }
   #login-layout{position:relative!important;z-index:auto!important}
   #login-brand-panel .logo-box{width:420px;height:420px;margin-bottom:42px}
   #main-content,html.low-performance #main-content{
     background-color:#0b1019!important;
     background-image:
-      radial-gradient(ellipse 46% 60% at 13% 50%,rgba(177,139,52,.14),transparent 72%),
-      radial-gradient(ellipse 45% 58% at 83% 54%,rgba(48,79,153,.13),transparent 72%),
-      linear-gradient(128deg,#0b1019 0%,#151e2d 52%,#0b111c 100%)!important;
+      radial-gradient(ellipse 45% 62% at 14% 51%,rgba(177,139,52,.19),transparent 72%),
+      radial-gradient(ellipse 48% 62% at 84% 53%,rgba(48,79,153,.1),transparent 72%),
+      radial-gradient(ellipse 45% 62% at 14% 51%,rgba(177,139,52,.16),transparent 72%),
+      radial-gradient(ellipse 48% 62% at 84% 53%,rgba(48,79,153,.08),transparent 72%),
+      linear-gradient(128deg,#090e17 0%,#101725 52%,#0a101b 100%)!important;
     background-size:cover!important;
     background-position:center!important;
   }
@@ -656,7 +664,7 @@
     z-index:0!important;
     pointer-events:none!important;
     background:url("Logo-optimized.png") center center/min(52vw,72vh) no-repeat!important;
-    opacity:.12!important;
+    opacity:.18!important;
     mix-blend-mode:screen!important;
     filter:none!important;
     transform:none!important;
@@ -694,7 +702,13 @@
   </style>
   <style id="landscape-sidebar-layout">
   @media (min-width:761px) and (max-width:900px){
-    #app-layout>#main-content{margin-inline-start:0!important}
+    #app-layout>.sidebar,#app-layout>.sidebar.minimized{position:fixed;inset-block:0;inset-inline-start:0;inset-inline-end:auto;height:100vh;height:100dvh;transform:none!important;flex:0 0 72px;width:72px;min-width:72px}
+    #sidebar .sidebar-header{justify-content:center;padding:8px}
+    #sidebar .sidebar-brand,#sidebar .sidebar-nav .nav-text,#sidebar .sidebar-footer{display:none}
+    #sidebar .sidebar-nav{padding:8px 4px}
+    #sidebar .sidebar-nav a{justify-content:center;padding:8px}
+    #sidebar .sidebar-nav a .icon{margin-inline-end:0}
+    #app-layout>#main-content{flex:1 1 0;width:calc(100% - 72px);min-width:0;margin-inline-start:72px!important;margin-inline-end:0!important}
   }
   </style>
   <style id="phone-landscape-layout">
@@ -1681,7 +1695,7 @@
     var nameGroup=createInput('la-name','Full Name','text','name');
     var emailGroup=createInput('la-mail','Noon.com Work Email','email','username');
     var emailInput=emailGroup.querySelector('input');
-    emailInput.placeholder='name@noon.com';
+    emailInput.placeholder='mail@noon.com';
     emailInput.title='Use your @noon.com work email.';
     var passwordInput=createInput('la-pass','Password','password',isSuperAdmin?'current-password':'current-password').querySelector('input');
     var countryGroup=null;
@@ -1777,7 +1791,7 @@
       return;
     }
     if(!/@noon\.com$/i.test(email.value.trim())){
-      if(status)status.textContent='Use your Noon.com work email (name@noon.com).';
+      if(status)status.textContent='Use your Noon.com work email (mail@noon.com).';
       email.focus();
       return;
     }
@@ -2365,7 +2379,7 @@
       ['UAE','country_uae'],
       ['EGY','country_egy']
     ];
-    const facilities=[['RUH01','RUH01'],['JED01','JED01'],['UAE','country_uae'],['EGY','country_egy']];
+    const facilities=[['RUH01','RUH01'],['JED01','JED01']];
     const country=createLoginSelectGroup('req-country','country_label','country_select',countries);
     requestLocationGroup.parentNode.insertBefore(country.group,requestLocationGroup);
     const facilityLabel=document.createElement('label');
