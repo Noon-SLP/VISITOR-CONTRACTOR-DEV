@@ -1072,7 +1072,7 @@
     };
     return messages[currentLang][key];
   }
-  function toggleLang(){currentLang=currentLang==='en'?'ar':'en';document.documentElement.dir=currentLang==='ar'?'rtl':'ltr';updateUI();updateAdminAuthForm();if(currentUser&&currentUser.accessLevel==='superadmin'&&!facilityAdminRequestActionInProgress)refreshFacilityAdminRequests();}
+  function toggleLang(){currentLang=currentLang==='en'?'ar':'en';document.documentElement.dir=currentLang==='ar'?'rtl':'ltr';updateUI();updateAdminAuthForm();if(currentUser&&currentUser.accessLevel==='superadmin'&&!facilityAdminRequestActionInProgress)refreshFacilityAdminRequests(true);}
   function updateUI(){
     document.querySelectorAll('[data-i18n]').forEach(function(el){const k=el.getAttribute('data-i18n');const v=t(k);if(v)el.innerHTML=v;});
     document.querySelectorAll('.t-ph').forEach(function(el){const k=el.getAttribute('data-i18n');const v=t(k);if(v)el.placeholder=v;});
@@ -1944,7 +1944,7 @@
     refreshButton.className='btn-primary super-admin-approval-refresh';
     refreshButton.innerHTML='<span aria-hidden="true">↻</span><span>'+t('refresh')+'</span>';
     refreshButton.setAttribute('aria-label',t('refresh'));
-    refreshButton.addEventListener('click',refreshFacilityAdminRequests);
+    refreshButton.addEventListener('click',function(){refreshFacilityAdminRequests(true);});
     var content=document.createElement('div');
     content.id='super-admin-approval-content';
     content.className='super-admin-approval-content';
@@ -1964,6 +1964,8 @@
   var facilityAdminHistoryRecords=[];
   var facilityAdminRequestActionInProgress=false;
   var facilityAdminPendingCount=0;
+  var facilityAdminRequestPromise=null;
+  var facilityAdminLastLoadedAt=0;
 
   function updateAdminPendingBadges(accessCount,adminCount){
     var accessNav=document.getElementById('nav-approvals');
@@ -2026,9 +2028,11 @@
     if(selector)selector.setAttribute('aria-label',t('facility_admin_history'));
   }
 
-  function refreshFacilityAdminRequests(){
+  function refreshFacilityAdminRequests(force){
     var content=document.getElementById('super-admin-approval-content');
     if(!content)return Promise.resolve();
+    if(facilityAdminRequestPromise)return facilityAdminRequestPromise;
+    if(!force&&facilityAdminLastLoadedAt&&Date.now()-facilityAdminLastLoadedAt<15000)return Promise.resolve();
     var refreshButton=document.querySelector('#super-admin-approval-panel .super-admin-approval-refresh');
     if(refreshButton){refreshButton.disabled=true;refreshButton.setAttribute('aria-busy','true');}
     content.textContent='';
@@ -2048,7 +2052,8 @@
     loadingCopy.append(loadingTitle,loadingMessage);
     loadingState.append(loadingIcon,loadingCopy);
     content.appendChild(loadingState);
-    return appsScriptAction({action:'admin_list_facility_requests'}).then(function(result){
+    facilityAdminRequestPromise=appsScriptAction({action:'admin_list_facility_requests'}).then(function(result){
+      facilityAdminLastLoadedAt=Date.now();
       content.textContent='';
       var requests=Array.isArray(result.requests)?result.requests:[];
       var history=Array.isArray(result.history)?result.history:[];
@@ -2149,7 +2154,9 @@
       content.appendChild(errorState);
     }).finally(function(){
       if(refreshButton){refreshButton.disabled=false;refreshButton.removeAttribute('aria-busy');}
+      facilityAdminRequestPromise=null;
     });
+    return facilityAdminRequestPromise;
   }
   var selectedFacilityAdminHistoryFilter='all';
   function countPendingAccessRequests(data){
@@ -2294,7 +2301,7 @@
     if(status)status.textContent=t('saving');
     appsScriptAction({action:'admin_process_password_reset',email:email,approve:approve}).then(function(){
       if(status)status.textContent=t(approve?'reset_approved':'reset_rejected');
-      return refreshFacilityAdminRequests();
+      return refreshFacilityAdminRequests(true);
     }).catch(function(error){
       alert('Unable to process this password reset: '+(error&&error.message?error.message:'Unknown error'));
       if(button){button.disabled=false;button.removeAttribute('aria-busy');button.textContent=originalText;}
@@ -2313,7 +2320,7 @@
     var status=document.getElementById('super-admin-save-status');
     if(status)status.textContent=t('saving');
     appsScriptAction({action:'admin_process_facility_request',email:email,approve:approve}).then(function(){
-      return refreshFacilityAdminRequests();
+      return refreshFacilityAdminRequests(true);
     }).catch(function(error){
       alert('Unable to '+(approve?'approve':'reject')+' this request: '+(error&&error.message?error.message:'Unknown error'));
       if(button){button.disabled=false;button.removeAttribute('aria-busy');button.textContent=previousText;}
@@ -2346,7 +2353,7 @@
     });
     chain.catch(function(error){
       alert((t('save_failed'))+' '+processed+'/'+requests.length+'. '+(error&&error.message?error.message:'Unknown error'));
-    }).then(function(){return refreshFacilityAdminRequests();}).finally(function(){
+    }).then(function(){return refreshFacilityAdminRequests(true);}).finally(function(){
       facilityAdminRequestActionInProgress=false;
       setFacilityAdminActionButtonsDisabled(false);
     });
@@ -2359,7 +2366,7 @@
     setFacilityAdminActionButtonsDisabled(true);
     if(button)button.disabled=true;
     appsScriptAction({action:'admin_remove_facility_admin',email:email}).then(function(){
-      return refreshFacilityAdminRequests();
+      return refreshFacilityAdminRequests(true);
     }).catch(function(error){
       alert('Unable to remove this facility admin: '+(error&&error.message?error.message:'Unknown error'));
       if(button){button.disabled=false;}
@@ -2548,7 +2555,7 @@
       document.body.classList.toggle('blur-background', role !== 'guard' && role !== 'staff');
       if (role === 'staff' || role === 'superadmin' || role === 'admin') {
           const roleTabs = document.getElementById('role-tabs');
-          if (roleTabs) roleTabs.style.display = 'none';
+          if (roleTabs) roleTabs.style.display = role === 'staff' ? 'flex' : 'none';
           switchLoginTab(role === 'guard' ? 'guard' : 'admin');
       }
       const session = localStorage.getItem(SESSION_KEY);
