@@ -751,11 +751,15 @@
     #dashboard-admin .admin-header-top .admin-session-identity{position:absolute;top:50%;left:50%;z-index:1;display:flex;max-width:44%;flex-direction:column;align-items:center;gap:4px;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
     #dashboard-admin .admin-header-top #header-admin-name{display:block!important;margin:0!important;color:var(--noon-yellow)!important;font-size:14px!important;font-weight:800;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
     #dashboard-admin .admin-session-location{color:#aeb9ca;font-size:10px;font-weight:600;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+    #dashboard-admin .admin-session-identity.is-global-admin #header-admin-name{color:#ffe17a!important;font-size:18px!important;font-weight:900!important;letter-spacing:.09em!important;text-transform:uppercase;text-shadow:0 0 18px rgba(255,199,0,.2)}
+    #dashboard-admin .admin-session-identity.is-global-admin .admin-session-location{color:#e4eaf4;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
     #dashboard-admin .admin-user-info{position:relative;z-index:2;margin-inline-start:auto}
     @media(max-width:1000px){
       #dashboard-admin .admin-header-top .admin-session-identity{position:static;order:3;flex:1 0 100%;max-width:100%;transform:none;margin-top:2px}
       #dashboard-admin .admin-header-top #header-admin-name{font-size:12px!important}
       #dashboard-admin .admin-session-location{font-size:9px}
+      #dashboard-admin .admin-session-identity.is-global-admin #header-admin-name{font-size:15px!important}
+      #dashboard-admin .admin-session-identity.is-global-admin .admin-session-location{font-size:10px}
       #dashboard-admin .admin-user-info{order:2}
       #dashboard-admin .admin-brand-horizontal{order:1}
     }
@@ -1269,7 +1273,7 @@
   }
   function safeImg(u){return normalizeImageUrl(u)||'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'40\' height=\'40\'%3E%3Crect width=\'40\' height=\'40\' fill=\'%23333\'/%3E%3Ctext x=\'20\' y=\'24\' font-size=\'14\' text-anchor=\'middle\' fill=\'%23888\'%3E%3F%3C/text%3E%3C/svg%3E';}
 
-  const urlParams=new URLSearchParams(window.location.search);const currentRoleParam=urlParams.get('role')||'default';const SESSION_KEY='noon_session_'+currentRoleParam;let adminSignupMode=false;let adminPasswordResetMode=false;let html5QrCode=null;let scannerFacingMode='environment';let scannerLibraryPromise=null;let scannerOperation=Promise.resolve();let currentUser=null;let currentScannedID=null;let currentScanAction='check_in';let currentAdminFilter='all';let autoRefreshTimer=null;let globalAdminData=[];let globalAdminHistory=[];let adminDataScopes={history:{country:'all',facility:'all'},analytics:{country:'all',facility:'all'}};let myPassesData=[];let checkedPrintIds=new Set();let liveStream=null;let currentFacingMode='environment';let targetPhotoType='';let capturedImages={iqama:null,selfie:null,imeiphoto:null,vehicle:null,fmpoc:null};let teamList=[];let currentTeamCounter=1;let isProcessingScan=false;let userSecurityPin=null;let lockedPassesData=null;let pinCreateMode='submit';let currentBatchType='new';
+  const urlParams=new URLSearchParams(window.location.search);const currentRoleParam=urlParams.get('role')||'default';const SESSION_KEY='noon_session_'+currentRoleParam;let adminSignupMode=false;let adminPasswordResetMode=false;let html5QrCode=null;let scannerFacingMode='environment';let scannerLibraryPromise=null;let scannerOperation=Promise.resolve();let currentUser=null;let currentScannedID=null;let currentScanAction='check_in';let currentAdminFilter='all';let autoRefreshTimer=null;let globalAdminData=[];let globalAdminHistory=[];let adminDataScopes={approvals:{country:'all',facility:'all'},history:{country:'all',facility:'all'},analytics:{country:'all',facility:'all'}};let myPassesData=[];let checkedPrintIds=new Set();let liveStream=null;let currentFacingMode='environment';let targetPhotoType='';let capturedImages={iqama:null,selfie:null,imeiphoto:null,vehicle:null,fmpoc:null};let teamList=[];let currentTeamCounter=1;let isProcessingScan=false;let userSecurityPin=null;let lockedPassesData=null;let pinCreateMode='submit';let currentBatchType='new';
   let historySortOrder='desc';
   let expandedHistoryGroups=new Set();
   let adminRefreshInProgress=false;
@@ -2015,7 +2019,9 @@
       location.className='admin-session-location';
       identity.appendChild(location);
     }
-    name.textContent=currentUser.name||'Admin';
+    const globalAdmin=isGlobalAdmin();
+    identity.classList.toggle('is-global-admin',globalAdmin);
+    name.textContent=globalAdmin?String(currentUser.name||'Global Admin').toUpperCase():(currentUser.name||'Admin');
     const location=document.getElementById('admin-session-location');
     if(!location)return;
     const knownCountries=['KSA','UAE','EGY'];
@@ -2026,7 +2032,7 @@
       ?t('country_'+countryCode.toLowerCase())
       :t('country_not_set');
     if(currentUser.accessLevel==='superadmin'){
-      location.textContent='All countries • All facilities';
+      location.textContent='ALL COUNTRIES • ALL FACILITIES';
     }else{
       const details=t('country_label')+': '+countryName;
       location.textContent=countryCode==='KSA'&&currentUser.location
@@ -3240,7 +3246,8 @@
     controls.className='admin-data-scope';
     controls.dataset.scope=scopeName;
     const title=card.querySelector(':scope > .admin-card-title');
-    if(title)title.insertAdjacentElement('afterend',controls);
+    if(scopeName==='approvals')card.insertBefore(controls,card.firstChild);
+    else if(title)title.insertAdjacentElement('afterend',controls);
     else card.insertBefore(controls,card.firstChild);
     updateAdminDataScopeControl(scopeName,controls);
   }
@@ -3304,6 +3311,7 @@
     }).map(function(item){return {value:item.value,label:item.value};}));
   }
   function refreshAdminDataForScope(scopeName){
+    if(scopeName==='approvals')renderAdminData(globalAdminData);
     if(scopeName==='history')renderHistorySheetRows(globalAdminHistory);
     if(scopeName==='analytics')renderAdminData(globalAdminData);
   }
@@ -3514,6 +3522,7 @@
   function renderAdminData(data){
     if(!Array.isArray(data)){data=[];}
     globalAdminData=data;
+    ensureAdminDataScopeControls('approvals',document.getElementById('admin-sec-approvals'));
     ensureAdminDataScopeControls('analytics',document.getElementById('admin-sec-analytics'));
     const tPending=document.getElementById('admin-table-pending'),tActive=document.getElementById('admin-table-active'),tHistory=document.getElementById('admin-table-history');
     let hPending='',hActionPending='',hActive='',hHistory='';
@@ -3577,7 +3586,7 @@
             }
           });
         }
-        if(!isPassExpiredOrFinished){
+        if(!isPassExpiredOrFinished&&matchesAdminDataScope(row,'approvals')){
           let newCount=0,removeCount=0,revokeCount=0,deviceAddCount=0;
           let tMembersStr=String(row.TeamMembers||'');
           if(tMembersStr.trim()!==''){
@@ -5106,4 +5115,4 @@
   })();
   </script>
   </body></html>
-  
+    
