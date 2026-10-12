@@ -3270,7 +3270,7 @@
       ['facility','Facility'],
       ['company','Company'],
       ['scannedBy','Scanned By']
-    ].forEach(function(field){
+    ].filter(function(field){return isGlobalAdmin()||field[0]!=='facility';}).forEach(function(field){
       const input=document.createElement('input');
       input.type='search';
       input.autocomplete='off';
