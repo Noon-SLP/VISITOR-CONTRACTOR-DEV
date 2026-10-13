@@ -59,6 +59,19 @@
   #dashboard-guard #btn-mode-camera,#dashboard-guard #btn-mode-gun{width:100%!important;flex:none!important}
   #dashboard-guard #guard-session-strip{grid-template-columns:1fr!important;text-align:left}
   #dashboard-guard #guard-session-strip .session-strip-item{align-items:flex-start}
+  #dashboard-guard .guard-history-panel{width:100%;margin:0 auto 20px;padding:20px;background:linear-gradient(155deg,rgba(17,23,34,.98),rgba(11,15,23,.98));border:1px solid rgba(56,217,169,.25);border-radius:14px;box-shadow:0 18px 46px rgba(0,0,0,.27),inset 0 1px rgba(255,255,255,.035)}
+  #dashboard-guard .guard-history-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px;padding-bottom:13px;border-bottom:1px solid rgba(148,166,190,.14)}
+  #dashboard-guard .guard-history-heading h2{color:#83e8c9;font-size:16px;font-weight:850;letter-spacing:.04em}
+  #dashboard-guard .guard-history-heading p{margin-top:5px;color:#8997aa;font-size:11px}
+  #dashboard-guard .guard-history-tools{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  #dashboard-guard .guard-history-tools .input-field{min-width:0}
+  #dashboard-guard .guard-history-count{margin:0 0 10px;color:#8e9bb0;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+  #dashboard-guard .guard-history-table-wrap{width:100%;overflow:auto;border:1px solid rgba(148,166,190,.14);border-radius:9px}
+  #dashboard-guard .guard-history-table{width:100%;min-width:900px;border-collapse:collapse}
+  #dashboard-guard .guard-history-table th{position:sticky;top:0;padding:11px 12px;background:#080c13;color:#8492a7;font-size:9px;letter-spacing:.1em;text-align:left;text-transform:uppercase}
+  #dashboard-guard .guard-history-table td{padding:11px 12px;border-top:1px solid rgba(148,166,190,.1);color:#dce2eb;font-size:11px;vertical-align:top}
+  #dashboard-guard .guard-history-empty{padding:20px!important;color:#8997aa!important;text-align:center}
+  @media(max-width:600px){#dashboard-guard .guard-history-panel{padding:14px}#dashboard-guard .guard-history-heading{align-items:flex-start}#dashboard-guard .guard-history-tools{align-items:stretch;flex-direction:column}#dashboard-guard .guard-history-tools .btn-primary{width:100%!important}}
   body.blur-background #login-view::before{filter:blur(5px);transform:translate3d(0,0,0) scale(1.025)}
   #login-view::before,#main-content::before{will-change:transform,filter;backface-visibility:hidden}
   @media(min-width:1280px){
@@ -1051,6 +1064,19 @@
       return result;
     });
   }
+  function guardApiPost(params){
+    if(!currentUser||currentUser.role!=='guard'||!currentUser.guardToken){
+      return Promise.reject(new Error('Your guard session expired. Please sign in again.'));
+    }
+    var payload=Object.assign({},params,{
+      guardToken:currentUser.guardToken,
+      adminRequestId:createAdminRequestId('admin-api')
+    });
+    return postAdminRequest(payload).then(function(result){
+      if(!result||result.status!=='success')throw new Error(result&&result.message?result.message:'The guard request could not be completed.');
+      return result;
+    });
+  }
   function createAdminRequestId(prefix){
     var randomPart;
     if(window.crypto&&window.crypto.getRandomValues){
@@ -1061,18 +1087,6 @@
       randomPart=Date.now().toString(36)+Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
     }
     return prefix+'-'+randomPart;
-  }
-  function verifyAdminApiReady(){
-    return postAdminRequest({
-      action:'admin_api_ready',
-      adminRequestId:createAdminRequestId('admin-auth')
-    }).then(function(result){
-      if(result&&result.status==='success')return;
-      throw adminApiResponseError(result,'The Apps Script backend could not confirm admin requests. Deploy the latest code.gs version and try again.');
-    }).catch(function(error){
-      if(error&&/outdated/.test(error.message||''))throw error;
-      throw new Error('Could not verify the Apps Script admin API. Check the web app deployment and connection, then try again. '+(error&&error.message?error.message:''));
-    });
   }
   function adminApiResponseError(result,fallback){
     if(result&&result.message==='Invalid action'){
@@ -1093,7 +1107,7 @@
       }
       return fetchAdminRequestResult(requestId).then(function(result){
         if(result&&result.status==='pending'){
-          return new Promise(function(resolve){setTimeout(resolve,400);}).then(poll);
+          return new Promise(function(resolve){setTimeout(resolve,150);}).then(poll);
         }
         return result;
       });
@@ -1106,9 +1120,7 @@
       cache:'no-store'
     }).catch(function(error){
       console.warn('[Admin API] The credential-bearing POST response could not be read; checking its one-time result.',error);
-    }).then(function(){
-      return new Promise(function(resolve){setTimeout(resolve,400);}).then(poll);
-    });
+    }).then(function(){return poll();});
   }
   function appsScriptJsonp(params,signal,timeoutMs){
     if(currentUser&&currentUser.role==='admin'&&currentUser.adminToken){
@@ -1647,6 +1659,191 @@
   }
   function stopGuardCacheRefresh(){if(guardCacheTimer){clearInterval(guardCacheTimer);guardCacheTimer=null;}}
 
+  var guardHistoryData={passes:[],history:[]};
+  var guardHistoryRequestPromise=null;
+  var guardHistoryLastLoadedAt=0;
+  function ensureGuardHistoryPanel(){
+    var dashboard=document.getElementById('dashboard-guard');
+    var header=dashboard&&dashboard.querySelector(':scope > .header');
+    if(!dashboard||!header)return;
+    var controls=header.querySelector('.header-controls');
+    if(!controls)return;
+    var button=document.getElementById('btn-guard-history');
+    if(!button){
+      button=document.createElement('button');
+      button.id='btn-guard-history';
+      button.type='button';
+      button.className='btn-primary btn-outline';
+      button.textContent='COUNTRY HISTORY';
+      button.setAttribute('aria-pressed','false');
+      button.addEventListener('click',toggleGuardHistoryView);
+      controls.insertBefore(button,controls.querySelector('button[onclick="logout()"]')||null);
+    }
+    if(document.getElementById('guard-history-panel'))return;
+    var panel=document.createElement('section');
+    panel.id='guard-history-panel';
+    panel.className='guard-history-panel hidden';
+    var heading=document.createElement('div');
+    heading.className='guard-history-heading';
+    var titleGroup=document.createElement('div');
+    var title=document.createElement('h2');
+    title.textContent='COUNTRY GUARD HISTORY';
+    var subtitle=document.createElement('p');
+    subtitle.id='guard-history-scope';
+    titleGroup.append(title,subtitle);
+    var refresh=document.createElement('button');
+    refresh.id='btn-refresh-guard-history';
+    refresh.type='button';
+    refresh.className='btn-primary btn-outline';
+    refresh.style.cssText='width:auto;padding:8px 13px;font-size:10px;';
+    refresh.textContent='REFRESH';
+    refresh.addEventListener('click',function(){refreshGuardHistory(true);});
+    heading.append(titleGroup,refresh);
+    var tools=document.createElement('div');
+    tools.className='guard-history-tools';
+    var search=document.createElement('input');
+    search.id='guard-history-search';
+    search.type='search';
+    search.className='input-field';
+    search.placeholder='Search name, company, facility, or guard...';
+    search.setAttribute('aria-label','Search gate history');
+    search.addEventListener('input',renderGuardHistoryRows);
+    tools.appendChild(search);
+    var count=document.createElement('p');
+    count.id='guard-history-count';
+    count.className='guard-history-count';
+    count.setAttribute('aria-live','polite');
+    var tableWrap=document.createElement('div');
+    tableWrap.className='guard-history-table-wrap';
+    var table=document.createElement('table');
+    table.className='guard-history-table';
+    var thead=document.createElement('thead');
+    var headerRow=document.createElement('tr');
+    ['DATE','NAME','COMPANY','TYPE','FACILITY','CHECK-IN','CHECK-OUT','DURATION','SCANNED BY'].forEach(function(label){
+      var cell=document.createElement('th');
+      cell.textContent=label;
+      headerRow.appendChild(cell);
+    });
+    thead.appendChild(headerRow);
+    var tbody=document.createElement('tbody');
+    tbody.id='guard-history-rows';
+    table.append(thead,tbody);
+    tableWrap.appendChild(table);
+    panel.append(heading,tools,count,tableWrap);
+    header.insertAdjacentElement('afterend',panel);
+  }
+
+  function toggleGuardHistoryView(){
+    var dashboard=document.getElementById('dashboard-guard');
+    ensureGuardHistoryPanel();
+    var panel=document.getElementById('guard-history-panel');
+    var button=document.getElementById('btn-guard-history');
+    var scanner=panel&&panel.nextElementSibling;
+    if(!panel||!scanner||!button)return;
+    var showHistory=panel.classList.contains('hidden');
+    panel.classList.toggle('hidden',!showHistory);
+    scanner.classList.toggle('hidden',showHistory);
+    button.setAttribute('aria-pressed',String(showHistory));
+    button.textContent=showHistory?'BACK TO SCANNER':'COUNTRY HISTORY';
+    if(showHistory&&(!guardHistoryLastLoadedAt||Date.now()-guardHistoryLastLoadedAt>30000)){
+      refreshGuardHistory();
+    }
+  }
+
+  function refreshGuardHistory(force){
+    var panel=document.getElementById('guard-history-panel');
+    if(!panel||!currentUser||currentUser.role!=='guard')return Promise.resolve();
+    if(guardHistoryRequestPromise)return guardHistoryRequestPromise;
+    if(!force&&guardHistoryLastLoadedAt&&Date.now()-guardHistoryLastLoadedAt<30000){
+      renderGuardHistoryRows();
+      return Promise.resolve();
+    }
+    var refresh=document.getElementById('btn-refresh-guard-history');
+    var tbody=document.getElementById('guard-history-rows');
+    var count=document.getElementById('guard-history-count');
+    var scope=document.getElementById('guard-history-scope');
+    if(refresh){refresh.disabled=true;refresh.setAttribute('aria-busy','true');}
+    if(count)count.textContent='Loading gate history...';
+    if(tbody)tbody.textContent='';
+    if(scope)scope.textContent=currentUser.isGlobalAdmin
+      ?'All countries and facilities'
+      :'Country: '+String(currentUser.country||'');
+    guardHistoryRequestPromise=guardApiPost({action:'guard_get_history'}).then(function(result){
+      if(!Array.isArray(result.passes)||!Array.isArray(result.history)){
+        throw new Error('The server returned incomplete gate history data. Deploy the latest code.gs version and try again.');
+      }
+      guardHistoryData={
+        passes:result.passes,
+        history:result.history
+      };
+      guardHistoryLastLoadedAt=Date.now();
+      renderGuardHistoryRows();
+    }).catch(function(error){
+      if(count)count.textContent='Unable to load gate history: '+(error&&error.message?error.message:'Unknown error');
+      if(tbody)tbody.textContent='';
+      console.error('[Guard History] Unable to load history.',error);
+    }).finally(function(){
+      if(refresh){refresh.disabled=false;refresh.removeAttribute('aria-busy');}
+      guardHistoryRequestPromise=null;
+    });
+    return guardHistoryRequestPromise;
+  }
+
+  function renderGuardHistoryRows(){
+    var tbody=document.getElementById('guard-history-rows');
+    var count=document.getElementById('guard-history-count');
+    if(!tbody||!count)return;
+    var search=String((document.getElementById('guard-history-search')||{}).value||'').trim().toLocaleLowerCase();
+    var passesById=Object.create(null);
+    guardHistoryData.passes.forEach(function(pass){
+      var id=String(pass.UniqueID||'').trim();
+      if(id)passesById[id]=pass;
+    });
+    var rows=guardHistoryData.history.map(function(row){
+      var id=String(row.PassID||row.TrackingID||row.UniqueID||'').trim();
+      var pass=passesById[id]||null;
+      var name=row.PersonKey?String(row.VisitorName||row.Name||''):String((pass&&pass.VisitorName)||row.VisitorName||row.Name||'');
+      var company=String(row.CompanyName||row.Company||row.ProjectName||(pass&&(pass.CompanyName||pass.ProjectName))||'');
+      var values=[
+        row.CheckInTime||row.CheckOutTime||row['Validity Period']||'',
+        name,
+        company,
+        row.Type||'',
+        row.Location||row.Facility||(pass&&pass.Location)||'',
+        row.CheckInTime?formatHistoryDateTime(row.CheckInTime):'',
+        row.CheckOutTime?formatHistoryDateTime(row.CheckOutTime):'',
+        formatHistoryDuration(row.CheckInTime,row.CheckOutTime,row.Duration).replace(/^DURATION:\\s*/,''),
+        row.ScannedByGuard||row.ScannedBy||row.Guard||''
+      ];
+      return { values:values, sortDate:parseFlexibleDate(values[0]) };
+    }).filter(function(item){
+      return !search||item.values.join(' ').toLocaleLowerCase().includes(search);
+    }).sort(function(a,b){
+      return (b.sortDate?b.sortDate.getTime():0)-(a.sortDate?a.sortDate.getTime():0);
+    });
+    count.textContent=rows.length+' matching history record'+(rows.length===1?'':'s');
+    tbody.textContent='';
+    if(!rows.length){
+      var empty=document.createElement('tr');
+      var message=document.createElement('td');
+      message.colSpan=9;
+      message.className='guard-history-empty';
+      message.textContent=guardHistoryData.history.length?'No history matches your search.':'No gate history is available for this scope.';
+      empty.appendChild(message);
+      tbody.appendChild(empty);
+      return;
+    }
+    rows.forEach(function(item){
+      var tr=document.createElement('tr');
+      item.values.forEach(function(value,index){
+        var cell=document.createElement('td');
+        cell.textContent=index===0&&value?formatHistoryDateTime(value):String(value||'—');
+        tr.appendChild(cell);
+      });
+      tbody.appendChild(tr);
+    });
+  }
+
   function checkBatchLimit(t2){currentBatchType=t2;document.getElementById('batch-limit-modal').classList.remove('hidden');}
   function handleBatchChoice(c){document.getElementById('batch-limit-modal').classList.add('hidden');let k=(c==='more');if(currentBatchType==='new')submitRequest(k);else submitAddMorePeople(k);}
   function normalizeImageUrl(value){let u=String(value||'').trim();if(!u||u==='No File')return '';if(/^data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/]+=*$/i.test(u))return u;if(/^\/9j\//.test(u)||/^iVBOR/.test(u)||/^UklGR/.test(u))return 'data:image/jpeg;base64,'+u;let m=u.match(/drive\.google\.com\/(?:file\/d\/|uc\?[^#]*?id=|thumbnail\?[^#]*?id=)([a-zA-Z0-9_-]+)/i);if(m)return 'https://lh3.googleusercontent.com/d/'+m[1]+'=w1000';if(/^https:\/\/lh3\.googleusercontent\.com\/d\/[^=]+$/.test(u))return u+'=w1000';return /^https?:\/\/[^\s"'<>]+$/i.test(u)?u:'';}
@@ -2038,10 +2235,10 @@
     var authPayload=Object.assign({},payload,{
       adminRequestId:createAdminRequestId('admin-auth')
     });
-    return verifyAdminApiReady().then(function(){
-      return postAdminRequest(authPayload);
-    }).then(function(result){
-      if(!result||result.status!=='success')throw new Error(result&&result.message?result.message:'The admin request was not accepted.');
+    return postAdminRequest(authPayload).then(function(result){
+      if(!result||result.status!=='success'){
+        throw adminApiResponseError(result,'The admin request was not accepted. Check the Apps Script deployment and try again.');
+      }
       return result;
     });
   }
@@ -3157,6 +3354,7 @@
           const glt=document.getElementById('guard-loc-text'),ld=document.getElementById('guard-loc-display'),dg=document.getElementById('dashboard-guard');
           if(glt)glt.classList.remove('hidden');
           if(ld)ld.innerText=currentUser.location||'';
+          ensureGuardHistoryPanel();
           document.querySelectorAll('.dashboard').forEach(function(e){e.classList.add('hidden');});
           if(dg)dg.classList.remove('hidden');
           loadGuardCacheFromStorage();
