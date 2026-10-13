@@ -2639,6 +2639,50 @@
     refresh.addEventListener('click',function(){refreshGuardSignupRequests(true);});
     heading.append(titleGroup,refresh);
     panel.appendChild(heading);
+    var historyPanel=document.createElement('section');
+    historyPanel.className='country-guard-history';
+    historyPanel.style.cssText='margin:16px 0;padding:15px;border:1px solid rgba(56,217,169,.2);border-radius:10px;background:rgba(56,217,169,.025);';
+    var historyHeading=document.createElement('div');
+    historyHeading.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;';
+    var historyTitleGroup=document.createElement('div');
+    var historyTitle=document.createElement('h3');
+    historyTitle.textContent='COUNTRY GUARD HISTORY';
+    historyTitle.style.cssText='margin:0;color:#83e8c9;font-size:13px;';
+    var historyScope=document.createElement('p');
+    historyScope.id='guard-approval-history-scope';
+    historyScope.style.cssText='margin:5px 0 0;color:var(--text-muted);font-size:10px;';
+    historyTitleGroup.append(historyTitle,historyScope);
+    var historyRefresh=document.createElement('button');
+    historyRefresh.id='btn-refresh-guard-approval-history';
+    historyRefresh.type='button';
+    historyRefresh.className='btn-primary btn-outline';
+    historyRefresh.style.cssText='width:auto;padding:7px 10px;font-size:10px;';
+    historyRefresh.textContent='↻ REFRESH HISTORY';
+    historyRefresh.addEventListener('click',function(){loadGuardApprovalHistory(true);});
+    historyHeading.append(historyTitleGroup,historyRefresh);
+    var historyTableWrap=document.createElement('div');
+    historyTableWrap.style.cssText='overflow:auto;border:1px solid var(--border-color);border-radius:8px;';
+    var historyTable=document.createElement('table');
+    historyTable.style.cssText='width:100%;min-width:780px;border-collapse:collapse;font-size:10px;';
+    var historyHead=document.createElement('thead');
+    var historyHeaderRow=document.createElement('tr');
+    ['DATE','NAME','COMPANY','TYPE','FACILITY','CHECK-IN','CHECK-OUT','DURATION','SCANNED BY'].forEach(function(label){
+      var cell=document.createElement('th');
+      cell.textContent=label;
+      cell.style.cssText='padding:9px;text-align:left;color:var(--text-muted);';
+      historyHeaderRow.appendChild(cell);
+    });
+    historyHead.appendChild(historyHeaderRow);
+    var historyBody=document.createElement('tbody');
+    historyBody.id='guard-approval-history-rows';
+    historyTable.append(historyHead,historyBody);
+    historyTableWrap.appendChild(historyTable);
+    var historyCount=document.createElement('p');
+    historyCount.id='guard-approval-history-count';
+    historyCount.setAttribute('aria-live','polite');
+    historyCount.style.cssText='margin:9px 0 0;color:var(--text-muted);font-size:10px;';
+    historyPanel.append(historyHeading,historyTableWrap,historyCount);
+    panel.appendChild(historyPanel);
     var status=document.createElement('p');
     status.id='guard-signup-approval-status';
     status.setAttribute('role','status');
@@ -2661,16 +2705,22 @@
 
   var guardSignupRequestPromise=null;
   var guardSignupPendingCount=0;
+  var guardSignupLastLoadedAt=0;
   function refreshGuardSignupRequests(){
     var content=document.getElementById('guard-signup-approval-content');
     if(!content||!currentUser||currentUser.role!=='admin')return Promise.resolve();
     if(guardSignupRequestPromise)return guardSignupRequestPromise;
     var refresh=document.querySelector('#guard-approval-panel .super-admin-approval-refresh');
     if(refresh){refresh.disabled=true;refresh.setAttribute('aria-busy','true');}
-    content.textContent='';
-    content.appendChild(createFacilityAdminApprovalState('↻',t('loading_requests'),t('checking_requests')));
+    if(!guardSignupLastLoadedAt){
+      content.textContent='';
+      content.appendChild(createFacilityAdminApprovalState('↻',t('loading_requests'),t('checking_requests')));
+    }
     guardSignupRequestPromise=adminApiPost({action:'guard_list_signup_requests'}).then(function(result){
-      var requests=Array.isArray(result.requests)?result.requests:[];
+      if(!Array.isArray(result.requests))throw new Error('The server returned an invalid guard request list. Existing requests were kept.');
+      var requests=mergePendingApprovalRequests(guardSignupPendingRequests,result.requests);
+      guardSignupPendingRequests=requests;
+      guardSignupLastLoadedAt=Date.now();
       guardSignupPendingCount=requests.length;
       updateAdminPendingBadges(countPendingAccessRequests(globalAdminData),facilityAdminPendingCount);
       content.textContent='';
@@ -2730,10 +2780,13 @@
         content.appendChild(card);
       });
     }).catch(function(error){
-      content.textContent='';
-      content.appendChild(createFacilityAdminApprovalState('!','Unable to load guard signup requests.',error&&error.message?error.message:'Unknown error'));
       var status=document.getElementById('guard-signup-approval-status');
-      if(status)status.textContent='';
+      if(guardSignupLastLoadedAt){
+        if(status)status.textContent='Background refresh failed; showing the last loaded requests. '+(error&&error.message?error.message:'');
+      }else{
+        content.textContent='';
+        content.appendChild(createFacilityAdminApprovalState('!','Unable to load guard signup requests.',error&&error.message?error.message:'Unknown error'));
+      }
       console.error('[Guard approvals] Unable to load signup requests.',error);
     }).finally(function(){
       if(refresh){refresh.disabled=false;refresh.removeAttribute('aria-busy');}
@@ -2751,6 +2804,11 @@
       email:request.email,
       approve:approve
     }).then(function(result){
+      guardSignupPendingRequests=guardSignupPendingRequests.filter(function(item){
+        return String(item.email||'').toLowerCase()!==String(request.email||'').toLowerCase();
+      });
+      guardSignupPendingCount=guardSignupPendingRequests.length;
+      updateAdminPendingBadges(countPendingAccessRequests(globalAdminData),facilityAdminPendingCount);
       if(status)status.textContent=result.notificationError
         ?'Decision saved, but the email notification failed: '+result.notificationError
         :'Guard signup '+(approve?'approved.':'rejected.');
@@ -2760,11 +2818,113 @@
     }).finally(function(){if(button)button.disabled=false;});
   }
 
+  var guardApprovalHistoryPromise=null;
+  var guardApprovalHistoryLastLoadedAt=0;
+  var guardApprovalHistoryData={passes:[],history:[]};
+  function loadGuardApprovalHistory(force){
+    var rows=document.getElementById('guard-approval-history-rows');
+    var count=document.getElementById('guard-approval-history-count');
+    var scope=document.getElementById('guard-approval-history-scope');
+    var refresh=document.getElementById('btn-refresh-guard-approval-history');
+    if(!rows||!count||!currentUser||currentUser.role!=='admin')return Promise.resolve();
+    if(guardApprovalHistoryPromise)return guardApprovalHistoryPromise;
+    if(!force&&guardApprovalHistoryLastLoadedAt&&Date.now()-guardApprovalHistoryLastLoadedAt<30000){
+      renderGuardApprovalHistory();
+      return Promise.resolve();
+    }
+    if(scope)scope.textContent=currentUser.accessLevel==='superadmin'||currentUser.role==='superadmin'
+      ?'All countries and facilities'
+      :'Country: '+String(currentUser.country||'');
+    count.textContent='Loading gate history...';
+    rows.textContent='';
+    if(refresh){refresh.disabled=true;refresh.setAttribute('aria-busy','true');}
+    guardApprovalHistoryPromise=adminApiPost({action:'guard_admin_get_history'}).then(function(result){
+      if(!Array.isArray(result.passes)||!Array.isArray(result.history)){
+        throw new Error('The server returned incomplete gate history data. Deploy the latest code.gs version and try again.');
+      }
+      guardApprovalHistoryData={passes:result.passes,history:result.history};
+      guardApprovalHistoryLastLoadedAt=Date.now();
+      renderGuardApprovalHistory();
+    }).catch(function(error){
+      rows.textContent='';
+      count.textContent='Unable to load gate history: '+(error&&error.message?error.message:'Unknown error');
+      console.error('[Guard Approval History] Unable to load gate history.',error);
+    }).finally(function(){
+      if(refresh){refresh.disabled=false;refresh.removeAttribute('aria-busy');}
+      guardApprovalHistoryPromise=null;
+    });
+    return guardApprovalHistoryPromise;
+  }
+  function renderGuardApprovalHistory(){
+    var rows=document.getElementById('guard-approval-history-rows');
+    var count=document.getElementById('guard-approval-history-count');
+    if(!rows||!count)return;
+    var passesById=Object.create(null);
+    guardApprovalHistoryData.passes.forEach(function(pass){
+      var id=String(pass.UniqueID||'').trim();
+      if(id)passesById[id]=pass;
+    });
+    var history=guardApprovalHistoryData.history.slice().sort(function(a,b){
+      var first=parseFlexibleDate(a.CheckInTime||a.CheckOutTime||a['Validity Period']);
+      var second=parseFlexibleDate(b.CheckInTime||b.CheckOutTime||b['Validity Period']);
+      return (second?second.getTime():0)-(first?first.getTime():0);
+    });
+    count.textContent=history.length+' history record'+(history.length===1?'':'s');
+    rows.textContent='';
+    if(!history.length){
+      var empty=document.createElement('tr');
+      var cell=document.createElement('td');
+      cell.colSpan=9;
+      cell.textContent='No gate history is available for this scope.';
+      cell.style.cssText='padding:14px;color:var(--text-muted);text-align:center;';
+      empty.appendChild(cell);
+      rows.appendChild(empty);
+      return;
+    }
+    history.forEach(function(entry){
+      var pass=passesById[String(entry.PassID||'').trim()]||{};
+      var values=[
+        entry.CheckInTime||entry.CheckOutTime||entry['Validity Period']||'',
+        entry.PersonKey?String(entry.VisitorName||entry.Name||''):String(pass.VisitorName||entry.VisitorName||entry.Name||''),
+        entry.CompanyName||entry.Company||entry.ProjectName||pass.CompanyName||pass.ProjectName||'',
+        entry.Type||pass.Type||'',
+        entry.Location||entry.Facility||pass.Location||'',
+        entry.CheckInTime?formatHistoryDateTime(entry.CheckInTime):'',
+        entry.CheckOutTime?formatHistoryDateTime(entry.CheckOutTime):'',
+        formatHistoryDuration(entry.CheckInTime,entry.CheckOutTime,entry.Duration).replace(/^DURATION:\s*/,''),
+        entry.ScannedByGuard||entry.ScannedBy||entry.Guard||''
+      ];
+      var row=document.createElement('tr');
+      values.forEach(function(value,index){
+        var cell=document.createElement('td');
+        cell.textContent=index===0&&value?formatHistoryDateTime(value):String(value||'—');
+        cell.style.cssText='padding:9px;border-top:1px solid var(--border-color);vertical-align:top;';
+        row.appendChild(cell);
+      });
+      rows.appendChild(row);
+    });
+  }
+
   var facilityAdminHistoryRecords=[];
   var facilityAdminRequestActionInProgress=false;
   var facilityAdminPendingCount=0;
   var facilityAdminRequestPromise=null;
   var facilityAdminLastLoadedAt=0;
+  var facilityAdminPendingRequests=[];
+  var facilityAdminPendingResetRequests=[];
+  var guardSignupPendingRequests=[];
+  function mergePendingApprovalRequests(previous,latest){
+    var merged=Object.create(null);
+    (Array.isArray(previous)?previous:[]).forEach(function(request){
+      var email=String(request&&request.email||'').trim().toLowerCase();
+      if(email)merged[email]=request;
+    });
+    latest.forEach(function(request){
+      var email=String(request&&request.email||'').trim().toLowerCase();
+      if(email)merged[email]=request;
+    });
+    return Object.keys(merged).map(function(email){return merged[email];});
+  }
 
   function updateAdminPendingBadges(accessCount,adminCount){
     var accessNav=document.getElementById('nav-approvals');
@@ -2838,29 +2998,21 @@
     if(!force&&facilityAdminLastLoadedAt&&Date.now()-facilityAdminLastLoadedAt<15000)return Promise.resolve();
     var refreshButton=document.querySelector('#super-admin-approval-panel .super-admin-approval-refresh');
     if(refreshButton){refreshButton.disabled=true;refreshButton.setAttribute('aria-busy','true');}
-    content.textContent='';
-    var loadingState=document.createElement('div');
-    loadingState.className='super-admin-approval-state';
-    var loadingIcon=document.createElement('span');
-    loadingIcon.className='super-admin-approval-state-icon';
-    loadingIcon.setAttribute('aria-hidden','true');
-    loadingIcon.textContent='↻';
-    var loadingCopy=document.createElement('div');
-    var loadingTitle=document.createElement('p');
-    loadingTitle.className='super-admin-approval-state-title';
-    loadingTitle.textContent=t('loading_requests');
-    var loadingMessage=document.createElement('p');
-    loadingMessage.className='super-admin-approval-state-message';
-    loadingMessage.textContent=t('checking_requests');
-    loadingCopy.append(loadingTitle,loadingMessage);
-    loadingState.append(loadingIcon,loadingCopy);
-    content.appendChild(loadingState);
+    if(!facilityAdminLastLoadedAt){
+      content.textContent='';
+      content.appendChild(createFacilityAdminApprovalState('↻',t('loading_requests'),t('checking_requests')));
+    }
     facilityAdminRequestPromise=appsScriptAction({action:'admin_list_facility_requests'}).then(function(result){
+      if(!Array.isArray(result.requests)||!Array.isArray(result.history)||!Array.isArray(result.passwordResetRequests)){
+        throw new Error('The server returned an invalid Admin Approval response. Existing requests were kept.');
+      }
       facilityAdminLastLoadedAt=Date.now();
       content.textContent='';
-      var requests=Array.isArray(result.requests)?result.requests:[];
+      var requests=mergePendingApprovalRequests(facilityAdminPendingRequests,result.requests);
+      var passwordResetRequests=mergePendingApprovalRequests(facilityAdminPendingResetRequests,result.passwordResetRequests);
+      facilityAdminPendingRequests=requests;
+      facilityAdminPendingResetRequests=passwordResetRequests;
       var history=Array.isArray(result.history)?result.history:[];
-      var passwordResetRequests=Array.isArray(result.passwordResetRequests)?result.passwordResetRequests:[];
       facilityAdminHistoryRecords=history;
       facilityAdminPendingCount=requests.length+passwordResetRequests.length;
       updateAdminPendingBadges(countPendingAccessRequests(globalAdminData),facilityAdminPendingCount);
@@ -2942,6 +3094,10 @@
       content.appendChild(historyHeading);
       renderFacilityAdminHistory(history);
     }).catch(function(error){
+      if(facilityAdminLastLoadedAt){
+        console.error('[Admin approvals] Refresh failed; keeping the last loaded requests.',error);
+        return;
+      }
       content.textContent='';
       var errorState=document.createElement('div');
       errorState.className='super-admin-approval-state';
@@ -3109,6 +3265,9 @@
     var status=document.getElementById('super-admin-save-status');
     if(status)status.textContent=t('saving');
     appsScriptAction({action:'admin_process_password_reset',email:email,approve:approve}).then(function(){
+      facilityAdminPendingResetRequests=facilityAdminPendingResetRequests.filter(function(request){
+        return String(request.email||'').toLowerCase()!==String(email||'').toLowerCase();
+      });
       if(status)status.textContent=t(approve?'reset_approved':'reset_rejected');
       return refreshFacilityAdminRequests(true);
     }).catch(function(error){
@@ -3129,6 +3288,9 @@
     var status=document.getElementById('super-admin-save-status');
     if(status)status.textContent=t('saving');
     appsScriptAction({action:'admin_process_facility_request',email:email,approve:approve}).then(function(){
+      facilityAdminPendingRequests=facilityAdminPendingRequests.filter(function(request){
+        return String(request.email||'').toLowerCase()!==String(email||'').toLowerCase();
+      });
       return refreshFacilityAdminRequests(true);
     }).catch(function(error){
       alert('Unable to '+(approve?'approve':'reject')+' this request: '+(error&&error.message?error.message:'Unknown error'));
@@ -3153,16 +3315,22 @@
     if(button){button.setAttribute('aria-busy','true');button.textContent=t('saving');}
     if(status)status.textContent=t('saving');
     var processed=0;
+    var processedEmails=[];
     var chain=Promise.resolve();
     requests.forEach(function(request){
       chain=chain.then(function(){
         return appsScriptAction({action:'admin_process_facility_request',email:request.email,approve:approve})
-          .then(function(){processed++;});
+          .then(function(){processed++;processedEmails.push(String(request.email||'').toLowerCase());});
       });
     });
     chain.catch(function(error){
       alert((t('save_failed'))+' '+processed+'/'+requests.length+'. '+(error&&error.message?error.message:'Unknown error'));
-    }).then(function(){return refreshFacilityAdminRequests(true);}).finally(function(){
+    }).then(function(){
+      facilityAdminPendingRequests=facilityAdminPendingRequests.filter(function(request){
+        return processedEmails.indexOf(String(request.email||'').toLowerCase())===-1;
+      });
+      return refreshFacilityAdminRequests(true);
+    }).finally(function(){
       facilityAdminRequestActionInProgress=false;
       setFacilityAdminActionButtonsDisabled(false);
     });
@@ -3809,7 +3977,10 @@
     var section=document.getElementById('admin-sec-'+tName);
     if(section)section.classList.remove('hidden');
     if(tName==='facility-admin-requests'&&currentUser&&currentUser.accessLevel==='superadmin')refreshFacilityAdminRequests();
-    if(tName==='guard-requests'&&currentUser&&(currentUser.role==='admin'||currentUser.role==='superadmin'))refreshGuardSignupRequests(true);
+    if(tName==='guard-requests'&&currentUser&&(currentUser.role==='admin'||currentUser.role==='superadmin')){
+      refreshGuardSignupRequests(true);
+      loadGuardApprovalHistory(true);
+    }
   }
   function setAdminFilter(range,btnElement){document.querySelectorAll('.btn-filter').forEach(function(b){b.classList.remove('active');});if(btnElement){const text=btnElement.innerText;document.querySelectorAll('.btn-filter').forEach(function(b){if(b.innerText===text)b.classList.add('active');});}currentAdminFilter=range;let p1=document.getElementById('custom-date-picker');if(range==='custom'){if(p1)p1.classList.remove('hidden');}else{if(p1)p1.classList.add('hidden');}if(range!=='custom')renderAdminData(globalAdminData);}
 
