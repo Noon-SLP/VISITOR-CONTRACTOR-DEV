@@ -2225,7 +2225,9 @@
     var locationChange=document.getElementById('guard-location-change');
     var countryGroup=document.getElementById('lg-country-group');
     var locationGroup=document.getElementById('lg-location-group');
-    if(submit)submit.textContent=guardSignupMode?'REQUEST GUARD ACCESS':'LOGIN TO GATE';
+    if(submit)submit.textContent=guardSignupMode
+      ?'REQUEST GUARD ACCESS'
+      :(guardChangeLocationMode?'REQUEST CHANGES':'LOGIN TO GATE');
     if(toggle)toggle.textContent=guardSignupMode?'I already have an account':'Create guard account';
     if(locationChange){
       locationChange.classList.toggle('hidden',guardSignupMode||globalAdmin);
@@ -2245,8 +2247,8 @@
     var modeGroup=mode&&mode.parentElement;
     if(passwordGroup)passwordGroup.classList.toggle('hidden',guardSignupMode);
     if(password)password.required=!guardSignupMode;
-    if(modeGroup)modeGroup.classList.toggle('hidden',guardSignupMode);
-    if(mode)mode.required=!guardSignupMode;
+    if(modeGroup)modeGroup.classList.toggle('hidden',guardSignupMode||guardChangeLocationMode);
+    if(mode)mode.required=!guardSignupMode&&!guardChangeLocationMode;
     if(password)password.autocomplete='current-password';
   }
 
@@ -2269,7 +2271,8 @@
     var missingRequiredDetails=!name||!email||!country||!location||
       !name.value.trim()||!email.value.trim()||
       (locationRequired&&(!country.value||!location.value))||
-      (!guardSignupMode&&(!password||!password.value||!mode||!mode.value));
+      (!guardSignupMode&&(!password||!password.value||
+        (!guardChangeLocationMode&&(!mode||!mode.value))));
     if(missingRequiredDetails){
       if(status)status.textContent='Complete all required guard details.';
       return;
@@ -2280,7 +2283,9 @@
       return;
     }
     var payload={
-      action:guardSignupMode?'guard_register':'guard_login',
+      action:guardSignupMode
+        ?'guard_register'
+        :(guardChangeLocationMode?'guard_request_location_change':'guard_login'),
       name:name.value.trim(),
       email:email.value.trim(),
       country:locationRequired?country.value:'',
@@ -2288,10 +2293,12 @@
     };
     if(!guardSignupMode){
       payload.password=password.value;
-      payload.guardMode=mode.value;
+      if(!guardChangeLocationMode)payload.guardMode=mode.value;
     }
     if(button)button.disabled=true;
-    if(status)status.textContent=guardSignupMode?'Sending guard signup request...':'Signing in...';
+    if(status)status.textContent=guardSignupMode
+      ?'Sending guard signup request...'
+      :(guardChangeLocationMode?'Sending location change request...':'Signing in...');
     adminAuthRequest(payload).then(function(result){
       if(guardSignupMode){
         guardSignupMode=false;
@@ -2299,6 +2306,13 @@
         password.value='';
         updateGuardAuthForm();
         if(status)status.textContent=result.message||'Your guard signup request was sent for approval.';
+        return;
+      }
+      if(guardChangeLocationMode){
+        guardChangeLocationMode=false;
+        password.value='';
+        updateGuardAuthForm();
+        if(status)status.textContent=result.message||'Your location change request was sent for admin approval. Your current access remains active until it is approved.';
         return;
       }
       currentUser=result.user;
@@ -2754,7 +2768,18 @@
     content.id='guard-signup-approval-content';
     content.className='super-admin-approval-content';
     content.setAttribute('aria-live','polite');
-    panel.append(status,content);
+    var locationChangePanel=document.createElement('section');
+    locationChangePanel.className='guard-approval-history';
+    locationChangePanel.style.cssText='margin-top:18px;';
+    var locationChangeHeading=document.createElement('h3');
+    locationChangeHeading.className='super-admin-history-title';
+    locationChangeHeading.textContent='Guard Location Change Requests';
+    var locationChangeContent=document.createElement('div');
+    locationChangeContent.id='guard-location-change-approval-content';
+    locationChangeContent.className='super-admin-approval-content';
+    locationChangeContent.setAttribute('aria-live','polite');
+    locationChangePanel.append(locationChangeHeading,locationChangeContent);
+    panel.append(status,content,locationChangePanel);
     panel.appendChild(historyPanel);
     section.appendChild(panel);
     var precedingSection=document.getElementById('admin-sec-facility-admin-requests')||
@@ -2769,6 +2794,9 @@
   var guardSignupRequestPromise=null;
   var guardSignupPendingCount=0;
   var guardSignupLastLoadedAt=0;
+  var guardLocationChangeRequests=[];
+  var guardLocationChangeRequestPromise=null;
+  var guardLocationChangeLastLoadedAt=0;
   function refreshGuardSignupRequests(){
     var content=document.getElementById('guard-signup-approval-content');
     if(!content||!currentUser||currentUser.role!=='admin')return Promise.resolve();
@@ -2784,7 +2812,7 @@
       var requests=mergePendingApprovalRequests(guardSignupPendingRequests,result.requests);
       guardSignupPendingRequests=requests;
       guardSignupLastLoadedAt=Date.now();
-      guardSignupPendingCount=requests.length;
+      guardSignupPendingCount=requests.length+guardLocationChangeRequests.length;
       updateAdminPendingBadges(countPendingAccessRequests(globalAdminData),facilityAdminPendingCount);
       content.textContent='';
       var count=document.createElement('p');
@@ -2795,53 +2823,54 @@
         var empty=createFacilityAdminApprovalState('✓','All caught up','There are no pending guard signup requests for your country.');
         empty.classList.add('facility-access-empty');
         content.appendChild(empty);
-        return;
-      }
-      requests.forEach(function(request){
-        var card=document.createElement('div');
-        card.className='super-admin-request-card facility-access-request guard-signup-request';
-        var identity=document.createElement('div');
-        identity.className='super-admin-request-identity';
-        var avatar=document.createElement('span');
-        avatar.className='super-admin-request-avatar';
-        avatar.setAttribute('aria-hidden','true');
-        avatar.textContent=String(request.name||'G').trim().charAt(0)||'G';
-        var details=document.createElement('div');
-        details.className='super-admin-request-details';
-        var name=document.createElement('strong');
-        name.textContent=request.name||'Guard';
-        name.className='super-admin-request-name';
-        var email=document.createElement('span');
-        email.textContent=request.email||'';
-        email.className='super-admin-request-email';
-        var meta=document.createElement('div');
-        meta.className='super-admin-request-meta';
-        var location=document.createElement('span');
-        location.className='super-admin-request-location';
-        location.textContent='⌖ '+[request.country,request.location].filter(Boolean).join('  /  ');
-        meta.appendChild(location);
-        var requestedAt=formatFacilityAdminTimestamp(request.requestedAt);
-        if(requestedAt){
-          var date=document.createElement('span');
-          date.className='super-admin-request-date';
-          date.textContent=t('requested')+': '+requestedAt;
-          meta.appendChild(date);
-        }
-        details.append(name,email,meta);
-        identity.append(avatar,details);
-        var actions=document.createElement('div');
-        actions.className='super-admin-request-actions';
-        [[true,'Approve'],[false,'Reject']].forEach(function(choice){
-          var button=document.createElement('button');
-          button.type='button';
-          button.className='btn-primary'+(choice[0]?'':' super-admin-reject');
-          button.textContent=choice[1];
-          button.addEventListener('click',function(){processGuardSignupDecision(request,choice[0],button);});
-          actions.appendChild(button);
+      }else{
+        requests.forEach(function(request){
+          var card=document.createElement('div');
+          card.className='super-admin-request-card facility-access-request guard-signup-request';
+          var identity=document.createElement('div');
+          identity.className='super-admin-request-identity';
+          var avatar=document.createElement('span');
+          avatar.className='super-admin-request-avatar';
+          avatar.setAttribute('aria-hidden','true');
+          avatar.textContent=String(request.name||'G').trim().charAt(0)||'G';
+          var details=document.createElement('div');
+          details.className='super-admin-request-details';
+          var name=document.createElement('strong');
+          name.textContent=request.name||'Guard';
+          name.className='super-admin-request-name';
+          var email=document.createElement('span');
+          email.textContent=request.email||'';
+          email.className='super-admin-request-email';
+          var meta=document.createElement('div');
+          meta.className='super-admin-request-meta';
+          var location=document.createElement('span');
+          location.className='super-admin-request-location';
+          location.textContent='⌖ '+[request.country,request.location].filter(Boolean).join('  /  ');
+          meta.appendChild(location);
+          var requestedAt=formatFacilityAdminTimestamp(request.requestedAt);
+          if(requestedAt){
+            var date=document.createElement('span');
+            date.className='super-admin-request-date';
+            date.textContent=t('requested')+': '+requestedAt;
+            meta.appendChild(date);
+          }
+          details.append(name,email,meta);
+          identity.append(avatar,details);
+          var actions=document.createElement('div');
+          actions.className='super-admin-request-actions';
+          [[true,'Approve'],[false,'Reject']].forEach(function(choice){
+            var button=document.createElement('button');
+            button.type='button';
+            button.className='btn-primary'+(choice[0]?'':' super-admin-reject');
+            button.textContent=choice[1];
+            button.addEventListener('click',function(){processGuardSignupDecision(request,choice[0],button);});
+            actions.appendChild(button);
+          });
+          card.append(identity,actions);
+          content.appendChild(card);
         });
-        card.append(identity,actions);
-        content.appendChild(card);
-      });
+      }
+      return refreshGuardLocationChangeRequests();
     }).catch(function(error){
       var status=document.getElementById('guard-signup-approval-status');
       if(guardSignupLastLoadedAt){
@@ -2858,6 +2887,116 @@
     return guardSignupRequestPromise;
   }
 
+  function refreshGuardLocationChangeRequests(){
+    var content=document.getElementById('guard-location-change-approval-content');
+    if(!content||!currentUser||currentUser.role!=='admin')return Promise.resolve();
+    if(guardLocationChangeRequestPromise)return guardLocationChangeRequestPromise;
+    if(!guardLocationChangeLastLoadedAt){
+      content.textContent='';
+      content.appendChild(createFacilityAdminApprovalState('↻',t('loading_requests'),'Checking for guard location change requests...'));
+    }
+    guardLocationChangeRequestPromise=adminApiPost({action:'guard_list_location_change_requests'}).then(function(result){
+      if(!Array.isArray(result.requests))throw new Error('The server returned an invalid guard location change request list. Existing requests were kept.');
+      guardLocationChangeRequests=mergePendingApprovalRequests(guardLocationChangeRequests,result.requests);
+      guardLocationChangeLastLoadedAt=Date.now();
+      guardSignupPendingCount=guardSignupPendingRequests.length+guardLocationChangeRequests.length;
+      updateAdminPendingBadges(countPendingAccessRequests(globalAdminData),facilityAdminPendingCount);
+      content.textContent='';
+      var count=document.createElement('p');
+      count.className='super-admin-approval-count';
+      count.textContent=guardLocationChangeRequests.length+' request'+(guardLocationChangeRequests.length===1?'':'s')+' awaiting review.';
+      content.appendChild(count);
+      if(!guardLocationChangeRequests.length){
+        var empty=createFacilityAdminApprovalState('✓','All caught up','There are no pending guard location change requests for your country.');
+        empty.classList.add('facility-access-empty');
+        content.appendChild(empty);
+        return;
+      }
+      guardLocationChangeRequests.forEach(function(request){
+        var card=document.createElement('div');
+        card.className='super-admin-request-card facility-access-request guard-location-change-request';
+        var identity=document.createElement('div');
+        identity.className='super-admin-request-identity';
+        var avatar=document.createElement('span');
+        avatar.className='super-admin-request-avatar';
+        avatar.setAttribute('aria-hidden','true');
+        avatar.textContent=String(request.name||'G').trim().charAt(0)||'G';
+        var details=document.createElement('div');
+        details.className='super-admin-request-details';
+        var name=document.createElement('strong');
+        name.textContent=request.name||'Guard';
+        name.className='super-admin-request-name';
+        var email=document.createElement('span');
+        email.textContent=request.email||'';
+        email.className='super-admin-request-email';
+        var meta=document.createElement('div');
+        meta.className='super-admin-request-meta';
+        var locations=document.createElement('span');
+        locations.className='super-admin-request-location';
+        locations.textContent='⌖ '+[request.currentCountry,request.currentLocation].filter(Boolean).join(' / ')+'  →  '+[request.country,request.location].filter(Boolean).join(' / ');
+        meta.appendChild(locations);
+        var requestedAt=formatFacilityAdminTimestamp(request.requestedAt);
+        if(requestedAt){
+          var date=document.createElement('span');
+          date.className='super-admin-request-date';
+          date.textContent=t('requested')+': '+requestedAt;
+          meta.appendChild(date);
+        }
+        details.append(name,email,meta);
+        identity.append(avatar,details);
+        var actions=document.createElement('div');
+        actions.className='super-admin-request-actions';
+        [[true,'Approve'],[false,'Reject']].forEach(function(choice){
+          var button=document.createElement('button');
+          button.type='button';
+          button.className='btn-primary'+(choice[0]?'':' super-admin-reject');
+          button.textContent=choice[1];
+          button.addEventListener('click',function(){processGuardLocationChangeDecision(request,choice[0],button);});
+          actions.appendChild(button);
+        });
+        card.append(identity,actions);
+        content.appendChild(card);
+      });
+    }).catch(function(error){
+      var status=document.getElementById('guard-signup-approval-status');
+      if(guardLocationChangeLastLoadedAt){
+        if(status)status.textContent='Background refresh failed; showing the last loaded location change requests. '+(error&&error.message?error.message:'');
+      }else{
+        content.textContent='';
+        content.appendChild(createFacilityAdminApprovalState('!','Unable to load guard location change requests.',error&&error.message?error.message:'Unknown error'));
+      }
+      console.error('[Guard approvals] Unable to load location change requests.',error);
+    }).finally(function(){guardLocationChangeRequestPromise=null;});
+    return guardLocationChangeRequestPromise;
+  }
+
+  function processGuardLocationChangeDecision(request,approve,button){
+    var status=document.getElementById('guard-signup-approval-status');
+    if(button)button.disabled=true;
+    if(status)status.textContent=approve?'Approving guard location change...':'Rejecting guard location change...';
+    adminApiPost({
+      action:'guard_process_location_change_request',
+      email:request.email,
+      approve:approve
+    }).then(function(result){
+      guardLocationChangeRequests=guardLocationChangeRequests.filter(function(item){
+        return String(item.email||'').toLowerCase()!==String(request.email||'').toLowerCase();
+      });
+      guardSignupPendingCount=guardSignupPendingRequests.length+guardLocationChangeRequests.length;
+      updateAdminPendingBadges(countPendingAccessRequests(globalAdminData),facilityAdminPendingCount);
+      if(status)status.textContent=result.notificationError
+        ?'Decision saved, but the email notification failed: '+result.notificationError
+        :'Guard location change '+(approve?'approved. The new assignment replaces the previous one.':'rejected. The existing assignment remains active.');
+      return Promise.all([
+        refreshGuardSignupRequests(true),
+        refreshGuardLocationChangeRequests(),
+        loadGuardApprovalHistory(true)
+      ]);
+    }).catch(function(error){
+      if(status)status.textContent=error&&error.message?error.message:'Unable to process guard location change.';
+    }).finally(function(){if(button)button.disabled=false;});
+  }
+
   function processGuardSignupDecision(request,approve,button){
     var status=document.getElementById('guard-signup-approval-status');
     if(button)button.disabled=true;
@@ -2870,13 +3009,14 @@
       guardSignupPendingRequests=guardSignupPendingRequests.filter(function(item){
         return String(item.email||'').toLowerCase()!==String(request.email||'').toLowerCase();
       });
-      guardSignupPendingCount=guardSignupPendingRequests.length;
+      guardSignupPendingCount=guardSignupPendingRequests.length+guardLocationChangeRequests.length;
       updateAdminPendingBadges(countPendingAccessRequests(globalAdminData),facilityAdminPendingCount);
       if(status)status.textContent=result.notificationError
         ?'Decision saved, but the email notification failed: '+result.notificationError
         :'Guard signup '+(approve?'approved.':'rejected.');
       return Promise.all([
         refreshGuardSignupRequests(true),
+        refreshGuardLocationChangeRequests(),
         loadGuardApprovalHistory(true)
       ]);
     }).catch(function(error){
@@ -3559,6 +3699,7 @@
         ensureSuperAdminApprovalPanel();
         ensureGuardSignupApprovalPanel();
         refreshGuardSignupRequests();
+        refreshGuardLocationChangeRequests();
         if(currentUser.accessLevel==='superadmin')refreshFacilityAdminRequests();
         if(na)na.classList.remove('hidden');
         const ng=document.getElementById('nav-sidebar-guard');if(ng)ng.classList.toggle('hidden',currentUser.accessLevel==='facility');
@@ -3661,7 +3802,7 @@
       const params = new URLSearchParams(window.location.search);
       const role = params.get('role');
       document.body.classList.toggle('blur-background', role !== 'guard' && role !== 'staff');
-      if (role === 'staff' || role === 'superadmin' || role === 'admin') {
+      if (role === 'guard' || role === 'staff' || role === 'superadmin' || role === 'admin') {
           const roleTabs = document.getElementById('role-tabs');
           if (roleTabs) roleTabs.style.display = role === 'staff' ? 'flex' : 'none';
           switchLoginTab(role === 'guard' ? 'guard' : 'admin');
@@ -3686,7 +3827,7 @@
   });
 
   function saveSession(){try{localStorage.setItem(SESSION_KEY,JSON.stringify({user:currentUser,time:Date.now()}));}catch(e){}}
-  function startAutoRefresh(r){if(autoRefreshTimer)clearInterval(autoRefreshTimer);autoRefreshTimer=setInterval(function(){if(r==='ops')loadMyPasses(false,true);else if(r==='admin'){loadAdminData(true);refreshGuardSignupRequests();}},r==='admin'?30000:15000);}
+  function startAutoRefresh(r){if(autoRefreshTimer)clearInterval(autoRefreshTimer);autoRefreshTimer=setInterval(function(){if(r==='ops')loadMyPasses(false,true);else if(r==='admin'){loadAdminData(true);refreshGuardSignupRequests();refreshGuardLocationChangeRequests();}},r==='admin'?30000:15000);}
   function toggleFullScreen(){const d=document,de=d.documentElement;const req=de.requestFullscreen||de.mozRequestFullScreen||de.webkitRequestFullScreen||de.msRequestFullscreen;const exit=d.exitFullscreen||d.mozCancelFullScreen||d.webkitExitFullscreen||d.msExitFullscreen;try{if(!d.fullscreenElement&&!d.mozFullScreenElement&&!d.webkitFullscreenElement&&!d.msFullscreenElement){if(req)Promise.resolve(req.call(de)).catch(function(e){console.warn('Fullscreen request failed:',e);});else alert("Fullscreen not supported");}else if(exit)Promise.resolve(exit.call(d)).catch(function(e){console.warn('Exiting fullscreen failed:',e);});}catch(e){console.warn('Fullscreen operation failed:',e);alert("Fullscreen is unavailable in this browser.");}}
   function toggleSidebar(){const sb=document.getElementById('sidebar');if(!sb)return;sb.classList.toggle('minimized');const isMinimized=sb.classList.contains('minimized');document.body.classList.toggle('sidebar-minimized',isMinimized);const button=sb.querySelector('.toggle-btn');if(button)button.setAttribute('aria-expanded',String(!isMinimized));}
   const appLayout=document.getElementById('app-layout');
@@ -4074,6 +4215,7 @@
     if(tName==='facility-admin-requests'&&currentUser&&currentUser.accessLevel==='superadmin')refreshFacilityAdminRequests();
     if(tName==='guard-requests'&&currentUser&&(currentUser.role==='admin'||currentUser.role==='superadmin')){
       refreshGuardSignupRequests(true);
+      refreshGuardLocationChangeRequests();
       loadGuardApprovalHistory(true);
     }
   }
