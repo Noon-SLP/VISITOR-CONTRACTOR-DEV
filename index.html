@@ -666,7 +666,7 @@
     position:relative!important;
     z-index:1!important;
     width:min(1320px,100%)!important;
-    grid-template-columns:minmax(0,1fr) minmax(360px,460px)!important;
+    grid-template-columns:minmax(0,1fr) minmax(380px,520px)!important;
     align-items:center!important;
     justify-items:stretch;
     gap:clamp(64px,10vw,160px)!important;
@@ -703,7 +703,7 @@
   @media(min-width:901px) and (max-width:1100px){
     #login-layout{
       width:100%!important;
-      grid-template-columns:minmax(0,1fr) minmax(300px,380px)!important;
+      grid-template-columns:minmax(0,1fr) minmax(360px,460px)!important;
       gap:clamp(24px,4vw,48px)!important;
     }
     #login-brand-panel .logo-box{width:clamp(270px,33vw,370px)!important;height:clamp(270px,33vw,370px)!important}
@@ -915,6 +915,7 @@
     @media(min-width:901px){
       #login-layout>.login-container:has(#login-guard:not(.hidden)){
         max-height:calc(100dvh - 32px)!important;
+        max-width:520px!important;
         overflow-y:auto;
         padding:18px!important;
       }
@@ -922,8 +923,8 @@
       #login-layout>.login-container:has(#login-guard:not(.hidden)) #login-guard{
         display:grid;
         grid-template-columns:repeat(2,minmax(0,1fr));
-        grid-template-areas:"name email" "country facility" "password mode" "submit submit" "status status" "toggle toggle";
-        gap:7px 10px;
+        grid-template-areas:"name email" "password mode" "country facility" "submit submit" "status status" "toggle toggle";
+        gap:10px 12px;
       }
       #login-layout>.login-container:has(#login-guard:not(.hidden)) #login-guard.is-signup-mode{
         grid-template-areas:"name email" "country facility" "submit submit" "status status" "toggle toggle";
@@ -935,19 +936,19 @@
       #login-guard>.input-group:has(#lg-location){grid-area:facility}
       #login-guard>.input-group:has(#lg-pass){grid-area:password}
       #login-guard>.input-group:has(#lg-mode){grid-area:mode}
-      #login-guard>.btn-primary{min-width:0;min-height:42px!important;padding:9px 12px!important;font-size:12px!important}
+      #login-guard>.btn-primary{min-width:0;min-height:48px!important;padding:11px 14px!important;font-size:13px!important}
       #login-guard>#guard-auth-submit{grid-area:submit}
       #login-guard>#guard-auth-status{grid-area:status;min-height:0!important;margin:0!important;font-size:10px!important}
       #login-guard>#guard-auth-toggle{grid-area:toggle;margin:0!important}
       #login-layout>.login-container:has(#login-guard:not(.hidden)) #login-guard .input-field{
         min-width:0;
-        min-height:42px!important;
-        padding:10px 11px!important;
-        font-size:13px!important;
+        min-height:50px!important;
+        padding:12px 13px!important;
+        font-size:14px!important;
       }
       #login-layout>.login-container:has(#login-guard:not(.hidden)) #login-guard label{
         margin-bottom:4px;
-        font-size:10px;
+        font-size:11px;
       }
     }
   </style>
