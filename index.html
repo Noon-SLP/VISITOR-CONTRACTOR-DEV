@@ -2640,49 +2640,33 @@
     heading.append(titleGroup,refresh);
     panel.appendChild(heading);
     var historyPanel=document.createElement('section');
-    historyPanel.className='country-guard-history';
-    historyPanel.style.cssText='margin:16px 0;padding:15px;border:1px solid rgba(56,217,169,.2);border-radius:10px;background:rgba(56,217,169,.025);';
+    historyPanel.className='guard-approval-history';
+    historyPanel.style.cssText='margin-top:18px;';
     var historyHeading=document.createElement('div');
-    historyHeading.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;';
-    var historyTitleGroup=document.createElement('div');
+    historyHeading.className='super-admin-history-heading';
     var historyTitle=document.createElement('h3');
-    historyTitle.textContent='COUNTRY GUARD HISTORY';
-    historyTitle.style.cssText='margin:0;color:#83e8c9;font-size:13px;';
-    var historyScope=document.createElement('p');
-    historyScope.id='guard-approval-history-scope';
-    historyScope.style.cssText='margin:5px 0 0;color:var(--text-muted);font-size:10px;';
-    historyTitleGroup.append(historyTitle,historyScope);
-    var historyRefresh=document.createElement('button');
-    historyRefresh.id='btn-refresh-guard-approval-history';
-    historyRefresh.type='button';
-    historyRefresh.className='btn-primary btn-outline';
-    historyRefresh.style.cssText='width:auto;padding:7px 10px;font-size:10px;';
-    historyRefresh.textContent='↻ REFRESH HISTORY';
-    historyRefresh.addEventListener('click',function(){loadGuardApprovalHistory(true);});
-    historyHeading.append(historyTitleGroup,historyRefresh);
-    var historyTableWrap=document.createElement('div');
-    historyTableWrap.style.cssText='overflow:auto;border:1px solid var(--border-color);border-radius:8px;';
-    var historyTable=document.createElement('table');
-    historyTable.style.cssText='width:100%;min-width:780px;border-collapse:collapse;font-size:10px;';
-    var historyHead=document.createElement('thead');
-    var historyHeaderRow=document.createElement('tr');
-    ['DATE','NAME','COMPANY','TYPE','FACILITY','CHECK-IN','CHECK-OUT','DURATION','SCANNED BY'].forEach(function(label){
-      var cell=document.createElement('th');
-      cell.textContent=label;
-      cell.style.cssText='padding:9px;text-align:left;color:var(--text-muted);';
-      historyHeaderRow.appendChild(cell);
+    historyTitle.className='super-admin-history-title';
+    historyTitle.textContent='Guard Approval History';
+    var historyCaption=document.createElement('span');
+    historyCaption.id='guard-approval-history-count';
+    historyCaption.className='super-admin-history-caption';
+    historyCaption.setAttribute('aria-live','polite');
+    var historyFilter=document.createElement('select');
+    historyFilter.id='guard-approval-history-filter';
+    historyFilter.className='super-admin-history-filter';
+    historyFilter.setAttribute('aria-label','Filter guard signup history by country');
+    [['all','All countries and facilities'],['KSA','KSA'],['UAE','UAE'],['EGY','EGY']].forEach(function(optionData){
+      var option=document.createElement('option');
+      option.value=optionData[0];
+      option.textContent=optionData[1];
+      historyFilter.appendChild(option);
     });
-    historyHead.appendChild(historyHeaderRow);
-    var historyBody=document.createElement('tbody');
-    historyBody.id='guard-approval-history-rows';
-    historyTable.append(historyHead,historyBody);
-    historyTableWrap.appendChild(historyTable);
-    var historyCount=document.createElement('p');
-    historyCount.id='guard-approval-history-count';
-    historyCount.setAttribute('aria-live','polite');
-    historyCount.style.cssText='margin:9px 0 0;color:var(--text-muted);font-size:10px;';
-    historyPanel.append(historyHeading,historyTableWrap,historyCount);
-    panel.appendChild(historyPanel);
+    historyFilter.addEventListener('change',renderGuardApprovalHistory);
+    historyHeading.append(historyTitle,historyCaption,historyFilter);
+    var historyList=document.createElement('div');
+    historyList.id='guard-approval-history-list';
+    historyList.className='super-admin-history-list';
+    historyPanel.append(historyHeading,historyList);
     var status=document.createElement('p');
     status.id='guard-signup-approval-status';
     status.setAttribute('role','status');
@@ -2693,6 +2677,7 @@
     content.className='super-admin-approval-content';
     content.setAttribute('aria-live','polite');
     panel.append(status,content);
+    panel.appendChild(historyPanel);
     section.appendChild(panel);
     var precedingSection=document.getElementById('admin-sec-facility-admin-requests')||
       document.getElementById('admin-sec-approvals');
@@ -2812,7 +2797,10 @@
       if(status)status.textContent=result.notificationError
         ?'Decision saved, but the email notification failed: '+result.notificationError
         :'Guard signup '+(approve?'approved.':'rejected.');
-      return refreshGuardSignupRequests(true);
+      return Promise.all([
+        refreshGuardSignupRequests(true),
+        loadGuardApprovalHistory(true)
+      ]);
     }).catch(function(error){
       if(status)status.textContent=error&&error.message?error.message:'Unable to process guard signup.';
     }).finally(function(){if(button)button.disabled=false;});
@@ -2820,89 +2808,106 @@
 
   var guardApprovalHistoryPromise=null;
   var guardApprovalHistoryLastLoadedAt=0;
-  var guardApprovalHistoryData={passes:[],history:[]};
+  var guardApprovalHistoryData=[];
   function loadGuardApprovalHistory(force){
-    var rows=document.getElementById('guard-approval-history-rows');
+    var list=document.getElementById('guard-approval-history-list');
     var count=document.getElementById('guard-approval-history-count');
-    var scope=document.getElementById('guard-approval-history-scope');
-    var refresh=document.getElementById('btn-refresh-guard-approval-history');
-    if(!rows||!count||!currentUser||currentUser.role!=='admin')return Promise.resolve();
+    var filter=document.getElementById('guard-approval-history-filter');
+    if(!list||!count||!currentUser||currentUser.role!=='admin')return Promise.resolve();
     if(guardApprovalHistoryPromise)return guardApprovalHistoryPromise;
     if(!force&&guardApprovalHistoryLastLoadedAt&&Date.now()-guardApprovalHistoryLastLoadedAt<30000){
       renderGuardApprovalHistory();
       return Promise.resolve();
     }
-    if(scope)scope.textContent=currentUser.accessLevel==='superadmin'||currentUser.role==='superadmin'
-      ?'All countries and facilities'
-      :'Country: '+String(currentUser.country||'');
-    count.textContent='Loading gate history...';
-    rows.textContent='';
-    if(refresh){refresh.disabled=true;refresh.setAttribute('aria-busy','true');}
-    guardApprovalHistoryPromise=adminApiPost({action:'guard_admin_get_history'}).then(function(result){
-      if(!Array.isArray(result.passes)||!Array.isArray(result.history)){
-        throw new Error('The server returned incomplete gate history data. Deploy the latest code.gs version and try again.');
+    var isGlobal=currentUser.accessLevel==='superadmin'||currentUser.role==='superadmin';
+    if(filter){
+      filter.classList.toggle('hidden',!isGlobal);
+      filter.value=isGlobal?(filter.value||'all'):String(currentUser.country||'');
+    }
+    if(!guardApprovalHistoryLastLoadedAt){
+      count.textContent='Loading reviewed guard requests...';
+      list.textContent='';
+    }
+    guardApprovalHistoryPromise=adminApiPost({action:'guard_list_signup_history'}).then(function(result){
+      if(!Array.isArray(result.history)){
+        throw new Error('The server returned an invalid guard signup history response. Deploy the latest code.gs version and try again.');
       }
-      guardApprovalHistoryData={passes:result.passes,history:result.history};
+      guardApprovalHistoryData=result.history;
       guardApprovalHistoryLastLoadedAt=Date.now();
       renderGuardApprovalHistory();
     }).catch(function(error){
-      rows.textContent='';
-      count.textContent='Unable to load gate history: '+(error&&error.message?error.message:'Unknown error');
-      console.error('[Guard Approval History] Unable to load gate history.',error);
+      if(guardApprovalHistoryLastLoadedAt){
+        console.error('[Guard Approval History] Refresh failed; keeping the last loaded history.',error);
+      }else{
+        count.textContent='Unable to load guard signup history: '+(error&&error.message?error.message:'Unknown error');
+        console.error('[Guard Approval History] Unable to load signup history.',error);
+      }
     }).finally(function(){
-      if(refresh){refresh.disabled=false;refresh.removeAttribute('aria-busy');}
       guardApprovalHistoryPromise=null;
     });
     return guardApprovalHistoryPromise;
   }
   function renderGuardApprovalHistory(){
-    var rows=document.getElementById('guard-approval-history-rows');
+    var list=document.getElementById('guard-approval-history-list');
     var count=document.getElementById('guard-approval-history-count');
-    if(!rows||!count)return;
-    var passesById=Object.create(null);
-    guardApprovalHistoryData.passes.forEach(function(pass){
-      var id=String(pass.UniqueID||'').trim();
-      if(id)passesById[id]=pass;
-    });
-    var history=guardApprovalHistoryData.history.slice().sort(function(a,b){
-      var first=parseFlexibleDate(a.CheckInTime||a.CheckOutTime||a['Validity Period']);
-      var second=parseFlexibleDate(b.CheckInTime||b.CheckOutTime||b['Validity Period']);
+    if(!list||!count)return;
+    var filter=document.getElementById('guard-approval-history-filter');
+    var isGlobal=!!currentUser&&(currentUser.accessLevel==='superadmin'||currentUser.role==='superadmin');
+    if(filter){
+      filter.classList.toggle('hidden',!isGlobal);
+      if(!isGlobal)filter.value=String(currentUser&&currentUser.country||'').toUpperCase();
+    }
+    var selectedCountry=isGlobal?(filter?filter.value:'all'):String(currentUser&&currentUser.country||'').toUpperCase();
+    var history=guardApprovalHistoryData.filter(function(record){
+      return (isGlobal&&selectedCountry==='all')||String(record.country||'').toUpperCase()===selectedCountry;
+    }).sort(function(a,b){
+      var first=parseFlexibleDate(a.reviewedAt||a.requestedAt);
+      var second=parseFlexibleDate(b.reviewedAt||b.requestedAt);
       return (second?second.getTime():0)-(first?first.getTime():0);
     });
-    count.textContent=history.length+' history record'+(history.length===1?'':'s');
-    rows.textContent='';
+    count.textContent=history.length+' reviewed guard request'+(history.length===1?'':'s');
+    list.textContent='';
     if(!history.length){
-      var empty=document.createElement('tr');
-      var cell=document.createElement('td');
-      cell.colSpan=9;
-      cell.textContent='No gate history is available for this scope.';
-      cell.style.cssText='padding:14px;color:var(--text-muted);text-align:center;';
-      empty.appendChild(cell);
-      rows.appendChild(empty);
+      list.appendChild(createFacilityAdminApprovalState('✓','No guard approval history','Reviewed guard signup requests will appear here.'));
       return;
     }
-    history.forEach(function(entry){
-      var pass=passesById[String(entry.PassID||'').trim()]||{};
-      var values=[
-        entry.CheckInTime||entry.CheckOutTime||entry['Validity Period']||'',
-        entry.PersonKey?String(entry.VisitorName||entry.Name||''):String(pass.VisitorName||entry.VisitorName||entry.Name||''),
-        entry.CompanyName||entry.Company||entry.ProjectName||pass.CompanyName||pass.ProjectName||'',
-        entry.Type||pass.Type||'',
-        entry.Location||entry.Facility||pass.Location||'',
-        entry.CheckInTime?formatHistoryDateTime(entry.CheckInTime):'',
-        entry.CheckOutTime?formatHistoryDateTime(entry.CheckOutTime):'',
-        formatHistoryDuration(entry.CheckInTime,entry.CheckOutTime,entry.Duration).replace(/^DURATION:\s*/,''),
-        entry.ScannedByGuard||entry.ScannedBy||entry.Guard||''
-      ];
-      var row=document.createElement('tr');
-      values.forEach(function(value,index){
-        var cell=document.createElement('td');
-        cell.textContent=index===0&&value?formatHistoryDateTime(value):String(value||'—');
-        cell.style.cssText='padding:9px;border-top:1px solid var(--border-color);vertical-align:top;';
-        row.appendChild(cell);
-      });
-      rows.appendChild(row);
+    history.forEach(function(record){
+      list.appendChild(createFacilityAdminRequestCard({
+        name:record.name,
+        email:record.email,
+        country:record.country,
+        location:record.location,
+        status:record.status,
+        requestedAt:record.requestedAt,
+        reviewedAt:record.reviewedAt,
+        reviewedBy:record.reviewedBy,
+        removeGuard:String(record.status||'').toLowerCase()==='approved'
+      },'history'));
     });
+  }
+
+  var guardRemovalInProgress=false;
+  function processGuardAccessRemoval(email,button){
+    if(guardRemovalInProgress)return;
+    if(!confirm('Remove guard access for '+email+'? The guard will no longer be able to sign in.'))return;
+    guardRemovalInProgress=true;
+    var originalText=button?button.textContent:'';
+    if(button){button.disabled=true;button.setAttribute('aria-busy','true');button.textContent='REMOVING...';}
+    adminApiPost({action:'guard_remove_access',email:email}).then(function(){
+      var normalizedEmail=String(email||'').trim().toLowerCase();
+      guardApprovalHistoryData.forEach(function(record){
+        if(String(record.email||'').trim().toLowerCase()===normalizedEmail){
+          record.status='removed';
+          record.reviewedAt=new Date().toISOString();
+          record.reviewedBy=currentUser.email||'';
+        }
+      });
+      renderGuardApprovalHistory();
+      return loadGuardApprovalHistory(true);
+    }).catch(function(error){
+      alert('Unable to remove this guard: '+(error&&error.message?error.message:'Unknown error'));
+      if(button){button.disabled=false;button.removeAttribute('aria-busy');button.textContent=originalText;}
+    }).finally(function(){guardRemovalInProgress=false;});
   }
 
   var facilityAdminHistoryRecords=[];
@@ -3190,8 +3195,13 @@
     if(isHistory){
       var status=document.createElement('span');
       status.className='super-admin-request-status';
-      status.dataset.status=String(request.status||'').toLowerCase();
-      status.textContent=t('status_'+String(request.status||'').toLowerCase())||request.status||'Reviewed';
+      var statusValue=String(request.status||'reviewed').toLowerCase();
+      var statusKey='status_'+statusValue;
+      var statusLabel=t(statusKey);
+      status.dataset.status=statusValue;
+      status.textContent=statusLabel===statusKey
+        ?statusValue.charAt(0).toUpperCase()+statusValue.slice(1)
+        :statusLabel;
       meta.appendChild(status);
     }
     var requestedAt=formatFacilityAdminTimestamp(request.createdAt||request.requestedAt);
@@ -3222,6 +3232,13 @@
         button.addEventListener('click',function(){processFacilityAdminApproval(request.email,actionData[1],button);});
         actions.appendChild(button);
       });
+    }else if(String(request.status||'').toLowerCase()==='approved'&&request.removeGuard===true){
+      var removeGuardButton=document.createElement('button');
+      removeGuardButton.type='button';
+      removeGuardButton.className='btn-primary super-admin-reject';
+      removeGuardButton.textContent='×  REMOVE GUARD';
+      removeGuardButton.addEventListener('click',function(){processGuardAccessRemoval(request.email,removeGuardButton);});
+      actions.appendChild(removeGuardButton);
     }else if(String(request.status||'').toLowerCase()==='approved'&&request.isCurrent===true){
       var removeButton=document.createElement('button');
       removeButton.type='button';
