@@ -920,6 +920,9 @@
     .password-visibility-toggle{position:absolute;right:14px;flex:0 0 auto;width:24px;height:24px;padding:0;border:none;border-radius:4px;background:transparent;color:var(--text-muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
     .password-visibility-toggle svg{display:block;width:18px;height:18px}
     .password-visibility-toggle:hover{color:var(--noon-yellow)}
+    #guard-location-change{display:block;width:100%;margin:6px auto 0;padding:8px 12px;color:#c0c5cf;background:transparent;border:0;box-shadow:none;font-size:10px;font-weight:500;line-height:1.3;text-align:center;text-transform:none;cursor:pointer}
+    #guard-location-change:hover{color:var(--noon-yellow);text-decoration:underline}
+    #guard-location-change:focus-visible{outline:2px solid var(--noon-yellow);outline-offset:2px}
     .global-admin-card-label{position:absolute;left:0;right:0;bottom:calc(100% + 28px);color:var(--noon-yellow);font-family:"Avenir Next","Trebuchet MS",sans-serif;font-size:26px;font-weight:800;letter-spacing:.1em;text-align:center}
     .login-container.is-global-admin{overflow:visible!important}
     .global-admin-login-heading{margin:0 0 8px!important;color:var(--noon-yellow)!important;font-family:'Inter',sans-serif!important;font-size:14px!important;font-weight:700!important;text-align:center}
@@ -935,12 +938,12 @@
       #login-layout>.login-container:has(#login-guard:not(.hidden))::before{margin:-18px -18px 12px}
       #login-layout>.login-container:has(#login-guard:not(.hidden)) #login-guard{
         display:grid;
-        grid-template-columns:repeat(2,minmax(0,1fr));
-        grid-template-areas:"name email" "password mode" "country facility" "submit submit" "status status" "toggle toggle";
+        grid-template-columns:minmax(0,1fr);
+        grid-template-areas:"name" "email" "password" "mode" "country" "facility" "submit" "status" "toggle" "change";
         gap:10px 12px;
       }
       #login-layout>.login-container:has(#login-guard:not(.hidden)) #login-guard.is-signup-mode{
-        grid-template-areas:"name email" "country facility" "submit submit" "status status" "toggle toggle";
+        grid-template-areas:"name" "email" "country" "facility" "submit" "status" "toggle" "change";
       }
       #login-guard>.input-group{min-width:0;margin:0!important}
       #login-guard>.input-group:has(#lg-name){grid-area:name}
@@ -950,6 +953,7 @@
       #login-guard>.input-group:has(#lg-pass){grid-area:password}
       #login-guard>.input-group:has(#lg-mode){grid-area:mode}
       #login-guard>.btn-primary{min-width:0;min-height:48px!important;padding:11px 14px!important;font-size:13px!important}
+      #login-guard>#guard-location-change{grid-area:change;min-width:0;min-height:0!important;margin:0;padding:8px 12px!important;font-size:10px!important}
       #login-guard>#guard-auth-submit{grid-area:submit}
       #login-guard>#guard-auth-status{grid-area:status;min-height:0!important;margin:0!important;font-size:10px!important}
       #login-guard>#guard-auth-toggle{grid-area:toggle;margin:0!important}
@@ -1383,6 +1387,7 @@
   let historySortOrder='desc';
   let expandedHistoryGroups=new Set();
   var guardSignupMode=false;
+  var guardChangeLocationMode=false;
   let adminRefreshInProgress=false;
   let currentQRViewDataUrl='';
 
@@ -2095,13 +2100,23 @@
       ['UAE','country_uae'],
       ['EGY','country_egy']
     ]);
+    countries.group.id='lg-country-group';
     form.appendChild(countries.group);
     countries.select.required=true;
     var facilities=createLoginSelectGroup('lg-location','facility_label','facility_select',[]);
+    facilities.group.id='lg-location-group';
     form.appendChild(facilities.group);
     facilities.select.disabled=true;
     facilities.select.required=true;
 
+    var locationChange=document.createElement('button');
+    locationChange.id='guard-location-change';
+    locationChange.type='button';
+    locationChange.className='guard-location-link';
+    locationChange.addEventListener('click',function(){
+      guardChangeLocationMode=!guardChangeLocationMode;
+      updateGuardAuthForm();
+    });
     var guardMode=createLoginSelectGroup('lg-mode','guard_mode','guard_mode_select',[
       ['reception','reception_mode'],
       ['gate','gate_mode']
@@ -2154,11 +2169,14 @@
     toggle.style.marginTop='10px';
     toggle.addEventListener('click',function(){
       guardSignupMode=!guardSignupMode;
+      guardChangeLocationMode=false;
       passwordInput.value='';
       status.textContent='';
       updateGuardAuthForm();
     });
     form.appendChild(toggle);
+    form.appendChild(locationChange);
+    emailInput.addEventListener('input',updateGuardAuthForm);
     updateGuardFacilities();
     updateGuardAuthForm();
   }
@@ -2168,8 +2186,26 @@
     if(form)form.classList.toggle('is-signup-mode',guardSignupMode);
     var submit=document.getElementById('guard-auth-submit');
     var toggle=document.getElementById('guard-auth-toggle');
+    var email=document.getElementById('lg-mail');
+    var globalAdmin=!!email&&isGlobalGuardAdminEmail(email.value);
+    var showLocationFields=guardSignupMode||guardChangeLocationMode||globalAdmin;
+    var locationChange=document.getElementById('guard-location-change');
+    var countryGroup=document.getElementById('lg-country-group');
+    var locationGroup=document.getElementById('lg-location-group');
     if(submit)submit.textContent=guardSignupMode?'REQUEST GUARD ACCESS':'LOGIN TO GATE';
     if(toggle)toggle.textContent=guardSignupMode?'I already have an account':'Create guard account';
+    if(locationChange){
+      locationChange.classList.toggle('hidden',guardSignupMode||globalAdmin);
+      locationChange.textContent=guardChangeLocationMode?'Use approved location':'Change country and facility';
+      locationChange.setAttribute('aria-expanded',String(guardChangeLocationMode));
+    }
+    if(countryGroup)countryGroup.classList.toggle('hidden',!showLocationFields);
+    if(locationGroup)locationGroup.classList.toggle('hidden',!showLocationFields);
+    var locationRequired=guardSignupMode||guardChangeLocationMode||globalAdmin;
+    var country=document.getElementById('lg-country');
+    var location=document.getElementById('lg-location');
+    if(country)country.required=locationRequired;
+    if(location)location.required=locationRequired;
     var password=document.getElementById('lg-pass');
     var passwordGroup=password&&password.parentElement;
     var mode=document.getElementById('lg-mode');
@@ -2181,6 +2217,11 @@
     if(password)password.autocomplete='current-password';
   }
 
+  function isGlobalGuardAdminEmail(email){
+    var normalized=String(email||'').trim().toLowerCase();
+    return normalized==='fsbutt@noon.com'||normalized==='mmaali@noon.com';
+  }
+
   function submitGuardAccess(){
     var name=document.getElementById('lg-name');
     var email=document.getElementById('lg-mail');
@@ -2190,8 +2231,11 @@
     var mode=document.getElementById('lg-mode');
     var button=document.getElementById('guard-auth-submit');
     var status=document.getElementById('guard-auth-status');
+    var globalAdmin=isGlobalGuardAdminEmail(email&&email.value);
+    var locationRequired=guardSignupMode||guardChangeLocationMode||globalAdmin;
     var missingRequiredDetails=!name||!email||!country||!location||
-      !name.value.trim()||!email.value.trim()||!country.value||!location.value||
+      !name.value.trim()||!email.value.trim()||
+      (locationRequired&&(!country.value||!location.value))||
       (!guardSignupMode&&(!password||!password.value||!mode||!mode.value));
     if(missingRequiredDetails){
       if(status)status.textContent='Complete all required guard details.';
@@ -2206,8 +2250,8 @@
       action:guardSignupMode?'guard_register':'guard_login',
       name:name.value.trim(),
       email:email.value.trim(),
-      country:country.value,
-      location:location.value
+      country:locationRequired?country.value:'',
+      location:locationRequired?location.value:''
     };
     if(!guardSignupMode){
       payload.password=password.value;
@@ -2218,6 +2262,7 @@
     adminAuthRequest(payload).then(function(result){
       if(guardSignupMode){
         guardSignupMode=false;
+        guardChangeLocationMode=false;
         password.value='';
         updateGuardAuthForm();
         if(status)status.textContent=result.message||'Your guard signup request was sent for approval.';
