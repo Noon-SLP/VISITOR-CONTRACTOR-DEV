@@ -2158,13 +2158,14 @@
       var previous=facilities.select.value;
       var byCountry={
         KSA:[['RUH01','RUH01'],['JED01','JED01']],
-        UAE:[['UAE','UAE']],
-        EGY:[['EGY','EGY']]
+        UAE:[['AUH01','Kezad FC - AUH01']]
       };
       facilities.select.textContent='';
       var placeholder=document.createElement('option');
       placeholder.value='';
-      placeholder.textContent=t('facility_select');
+      placeholder.textContent=country&&!byCountry[country]
+        ?'No facilities available'
+        :t('facility_select');
       facilities.select.appendChild(placeholder);
       (byCountry[country]||[]).forEach(function(item){
         var option=document.createElement('option');
@@ -2172,7 +2173,9 @@
         option.textContent=item[1];
         facilities.select.appendChild(option);
       });
-      facilities.select.disabled=!country;
+      facilities.select.disabled=!country||(byCountry[country]||[]).length===0;
+      facilities.select.style.opacity=facilities.select.disabled?'.55':'';
+      facilities.select.style.cursor=facilities.select.disabled?'not-allowed':'';
       facilities.select.value=(byCountry[country]||[]).some(function(item){return item[0]===previous;})?previous:'';
     }
     countries.select.addEventListener('change',updateGuardFacilities);
@@ -2274,7 +2277,9 @@
       (!guardSignupMode&&(!password||!password.value||
         (!guardChangeLocationMode&&(!mode||!mode.value))));
     if(missingRequiredDetails){
-      if(status)status.textContent='Complete all required guard details.';
+      if(status)status.textContent=locationRequired&&country&&country.value&&location&&location.disabled
+        ?'No facilities are available for the selected country.'
+        :'Complete all required guard details.';
       return;
     }
     if(!/@noon\.com$/i.test(email.value.trim())){
@@ -3614,7 +3619,10 @@
       ['UAE','country_uae'],
       ['EGY','country_egy']
     ];
-    const facilities=[['RUH01','RUH01'],['JED01','JED01']];
+    const facilitiesByCountry={
+      KSA:[['RUH01','RUH01'],['JED01','JED01']],
+      UAE:[['AUH01','Kezad FC - AUH01']]
+    };
     const country=createLoginSelectGroup('req-country','country_label','country_select',countries);
     requestLocationGroup.parentNode.insertBefore(country.group,requestLocationGroup);
     const countryFacilityRow=document.createElement('div');
@@ -3635,18 +3643,32 @@
     facilityPlaceholder.setAttribute('data-i18n','facility_select');
     facilityPlaceholder.textContent=t('facility_select');
     requestLocation.appendChild(facilityPlaceholder);
-    facilities.forEach(function(facility){
-      const option=document.createElement('option');
-      option.value=facility[0];
-      if(facility[1].indexOf('country_')===0)option.setAttribute('data-i18n',facility[1]);
-      option.textContent=facility[1].indexOf('country_')===0?t(facility[1]):facility[1];
-      requestLocation.appendChild(option);
-    });
     function updateRequestLocation(){
-      const requiresFacility=country.select.value==='KSA';
-      requestLocationGroup.classList.toggle('hidden',!requiresFacility);
-      requestLocation.required=requiresFacility;
-      requestLocation.value=requiresFacility?'':country.select.value;
+      const selectedCountry=country.select.value;
+      const availableFacilities=facilitiesByCountry[selectedCountry]||[];
+      const previous=requestLocation.value;
+      requestLocation.textContent='';
+      const placeholder=document.createElement('option');
+      placeholder.value='';
+      placeholder.setAttribute('data-i18n','facility_select');
+      placeholder.textContent=t('facility_select');
+      requestLocation.appendChild(placeholder);
+      availableFacilities.forEach(function(facility){
+        const option=document.createElement('option');
+        option.value=facility[0];
+        option.textContent=facility[1];
+        requestLocation.appendChild(option);
+      });
+      const hasFacilities=availableFacilities.length>0;
+      placeholder.textContent=selectedCountry&&!hasFacilities?'No facilities available':t('facility_select');
+      requestLocation.disabled=!hasFacilities;
+      requestLocation.style.opacity=requestLocation.disabled?'.55':'';
+      requestLocation.style.cursor=requestLocation.disabled?'not-allowed':'';
+      requestLocationGroup.classList.toggle('hidden',!hasFacilities);
+      requestLocation.dataset.hasFacilities=String(hasFacilities);
+      requestLocation.required=hasFacilities;
+      requestLocation.value=availableFacilities.some(function(facility){return facility[0]===previous;})
+        ?previous:'';
     }
     country.select.addEventListener('change',updateRequestLocation);
     updateRequestLocation();
@@ -4072,8 +4094,9 @@
     const selectedCountry=document.getElementById('req-country');
     const selectedFacility=document.getElementById('req-location');
     if(!selectedCountry||!selectedCountry.value)return alert("Select a country.");
-    if(selectedCountry.value==='KSA'&&(!selectedFacility||!selectedFacility.value))return alert("Select a facility.");
-    const selectedLocation=selectedCountry.value==='KSA'?selectedFacility.value:selectedCountry.value;
+    const countryHasFacilities=!!selectedFacility&&selectedFacility.dataset.hasFacilities==='true';
+    if(countryHasFacilities&&(!selectedFacility.value||selectedFacility.disabled))return alert("Select a facility.");
+    const selectedLocation=countryHasFacilities?selectedFacility.value:selectedCountry.value;
     let cachedKey='cached_passes_'+hMail;
     let existingPasses=[];
     try{existingPasses=JSON.parse(localStorage.getItem(cachedKey))||[];}catch(e){}
@@ -4373,7 +4396,7 @@
   function getCountryFromFacility(location){
     const value=String(location||'').toUpperCase().trim();
     if(value==='RUH01'||value==='JED01'||value==='KSA')return 'KSA';
-    if(value==='UAE')return 'UAE';
+    if(value==='UAE'||value==='AUH01')return 'UAE';
     if(value==='EGY')return 'EGY';
     return '';
   }
@@ -4424,11 +4447,24 @@
     const facility=document.createElement('select');
     facility.setAttribute('aria-label',t('scope_facility'));
     facility.dataset.scopeSelect='facility';
-    getAdminFacilitiesForCountry(country.value).forEach(function(item){
+    const availableFacilities=getAdminFacilitiesForCountry(country.value);
+    availableFacilities.forEach(function(item){
       const option=document.createElement('option');
       option.value=item.value;option.textContent=item.label;facility.appendChild(option);
     });
-    facility.value=adminDataScopes[scopeName].facility;
+    if(availableFacilities.length){
+      facility.value=adminDataScopes[scopeName].facility;
+    }else{
+      const emptyOption=document.createElement('option');
+      emptyOption.value='none';
+      emptyOption.textContent='No facilities available';
+      emptyOption.disabled=true;
+      facility.appendChild(emptyOption);
+      facility.value='none';
+      facility.disabled=true;
+      facility.style.opacity='.55';
+      facility.style.cursor='not-allowed';
+    }
     country.addEventListener('change',function(){
       adminDataScopes[scopeName].country=country.value;
       const facilities=getAdminFacilitiesForCountry(country.value);
@@ -4448,12 +4484,12 @@
     const all=[
       {value:'RUH01',country:'KSA'},
       {value:'JED01',country:'KSA'},
-      {value:'UAE',country:'UAE'},
-      {value:'EGY',country:'EGY'}
+      {value:'AUH01',country:'UAE',label:'Kezad FC - AUH01'},
     ];
-    return [{value:'all',label:t('scope_all_facilities')}].concat(all.filter(function(item){
+    const facilities=all.filter(function(item){
       return country==='all'||country===item.country;
-    }).map(function(item){return {value:item.value,label:item.value};}));
+    }).map(function(item){return {value:item.value,label:item.label||item.value};});
+    return facilities.length?[{value:'all',label:t('scope_all_facilities')}].concat(facilities):[];
   }
   function refreshAdminDataForScope(scopeName){
     if(scopeName==='approvals')renderAdminData(globalAdminData);
