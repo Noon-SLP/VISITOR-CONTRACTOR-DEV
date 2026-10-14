@@ -2334,6 +2334,11 @@
     });
     return postAdminRequest(authPayload).then(function(result){
       if(!result||result.status!=='success'){
+        var isNewUaeFacility=String(payload.country||'').toUpperCase()==='UAE'&&
+          String(payload.location||'').toUpperCase()==='AUH01';
+        if(isNewUaeFacility&&result&&result.message==='Select a valid country and facility.'){
+          throw new Error('The deployed Apps Script backend does not recognize UAE facility AUH01 yet. Update Code.gs, deploy a new version, and try again.');
+        }
         throw adminApiResponseError(result,'The admin request was not accepted. Check the Apps Script deployment and try again.');
       }
       return result;
@@ -3796,7 +3801,6 @@
           const glt=document.getElementById('guard-loc-text'),ld=document.getElementById('guard-loc-display'),dg=document.getElementById('dashboard-guard');
           if(glt)glt.classList.remove('hidden');
           if(ld)ld.innerText=currentUser.location||'';
-          ensureGuardHistoryPanel();
           document.querySelectorAll('.dashboard').forEach(function(e){e.classList.add('hidden');});
           if(dg)dg.classList.remove('hidden');
           loadGuardCacheFromStorage();
