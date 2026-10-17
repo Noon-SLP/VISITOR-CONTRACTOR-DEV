@@ -952,7 +952,7 @@
       #login-layout>.login-container:has(#login-guard:not(.hidden)) #login-guard{
         display:grid;
         grid-template-columns:minmax(0,1fr);
-        grid-template-areas:"name" "email" "password" "mode" "country" "facility" "submit" "status" "toggle" "change";
+        grid-template-areas:"name" "email" "password" "country" "facility" "mode" "submit" "status" "toggle" "change";
         gap:10px 12px;
       }
       #login-layout>.login-container:has(#login-guard:not(.hidden)) #login-guard.is-signup-mode{
@@ -1619,6 +1619,7 @@
   function stopAmbientPanels(){
     if(ambientClockTimer){clearInterval(ambientClockTimer);ambientClockTimer=null;}
     if(officeVisitorRefreshTimer){clearInterval(officeVisitorRefreshTimer);officeVisitorRefreshTimer=null;}
+    if(officeVisitorElapsedTimer){clearInterval(officeVisitorElapsedTimer);officeVisitorElapsedTimer=null;}
     const left=document.getElementById('ambient-left');
     const right=document.getElementById('ambient-right');
     if(left)left.classList.add('hidden');
@@ -1697,6 +1698,7 @@
   function stopGuardCacheRefresh(){if(guardCacheTimer){clearInterval(guardCacheTimer);guardCacheTimer=null;}}
 
   var officeVisitorRefreshTimer=null;
+  var officeVisitorElapsedTimer=null;
   var officeVisitorRequestPromise=null;
   var officeVisitors=[];
   var officeVisitorStatus='';
@@ -1708,7 +1710,7 @@
   function updateOfficeGuardLabel(){
     if(!currentUser||currentUser.role!=='guard'||String(currentUser.guardMode||'').toLowerCase()!=='office')return;
     var title=document.querySelector('#dashboard-guard .header [data-i18n="gate_scanner"]');
-    if(title)title.textContent=officeLabel('Office Visitor Log','سجل زوار المكتب');
+    if(title)title.textContent=officeLabel('OFFICE VISITOR LOG','سجل زوار المكتب');
     var visitorButton=document.getElementById('btn-office-visitor');
     if(visitorButton)visitorButton.textContent=officeLabel('+ OFFICE VISITOR','+ زائر المكتب');
     var activeTitle=document.querySelector('#office-visitors-panel h2');
@@ -1720,11 +1722,14 @@
   function restoreKsaOfficeVisitorUi(){
     var dashboard=document.getElementById('dashboard-guard');
     var scanner=dashboard&&dashboard.querySelector(':scope > .header + div');
+    var scanResult=document.getElementById('scan-result');
+    var scannerResult=scanResult&&scanResult.parentElement;
     var right=document.getElementById('ambient-right');
     var panel=document.getElementById('office-visitors-panel');
     var button=document.getElementById('btn-office-visitor');
     var controls=dashboard&&dashboard.querySelector(':scope > .header .header-controls');
     if(right)right.classList.remove('office-visitor-mode');
+    if(scannerResult)scannerResult.style.display='';
     if(panel){
       panel.style.cssText='width:100%;max-width:1100px;margin:22px auto;padding:22px;background:linear-gradient(145deg,rgba(49,51,57,.72),rgba(31,35,45,.78));border:1px solid rgba(210,216,230,.36);border-radius:17px;box-shadow:0 20px 55px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.14);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);';
       panel.classList.add('hidden');
@@ -1746,6 +1751,9 @@
     dashboard.classList.add('office-guard-mode');
     var scanner=header.nextElementSibling;
     if(scanner)scanner.style.display='';
+    var scanResult=document.getElementById('scan-result');
+    var scannerResult=scanResult&&scanResult.parentElement;
+    if(scannerResult)scannerResult.style.display='none';
     var visitorButton=document.getElementById('btn-office-visitor');
     if(!visitorButton){
       visitorButton=document.createElement('button');
@@ -1796,7 +1804,7 @@
       if(!document.getElementById('office-visitor-layout-style')){
         var layoutStyle=document.createElement('style');
         layoutStyle.id='office-visitor-layout-style';
-        layoutStyle.textContent='#ambient-right.office-visitor-mode> :not(#office-visitors-panel){display:none!important}#ambient-right.office-visitor-mode{width:min(500px,calc(100vw - 40px))!important;max-height:calc(100vh - 160px);padding:22px!important;overflow-y:auto;background:linear-gradient(145deg,rgba(49,51,57,.78),rgba(31,35,45,.84));border:1px solid rgba(210,216,230,.4);border-radius:17px;box-shadow:0 20px 55px rgba(0,0,0,.34),inset 0 1px rgba(255,255,255,.14);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}#office-visitors-panel.office-visitor-compact{width:100%;max-width:none;margin:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none}#office-visitors-panel.office-visitor-compact .office-visitors-heading{gap:14px;margin-bottom:17px;padding-bottom:15px;border-bottom:1px solid rgba(131,232,201,.24)}#office-visitors-panel.office-visitor-compact h2{font-size:18px!important;line-height:1.35;letter-spacing:.025em}#office-visitors-panel.office-visitor-compact h2:before{content:\"\";display:inline-block;width:8px;height:8px;margin:0 9px 2px 0;border-radius:50%;background:#38d9a9;box-shadow:0 0 12px rgba(56,217,169,.75)}#office-visitors-panel.office-visitor-compact #btn-refresh-office-visitors{flex:none;border-radius:7px;padding:8px 12px;font-size:10px;letter-spacing:.04em}#office-visitors-panel.office-visitor-compact .office-visitors-status{display:flex;align-items:center;gap:8px;margin:0 0 13px;padding:8px 11px;border:1px solid rgba(131,232,201,.2);border-radius:8px;background:rgba(56,217,169,.08);font-size:12px;line-height:1.45;color:#d5dee8}#office-visitors-panel.office-visitor-compact .office-visitors-status:before{content:\"\";width:7px;height:7px;flex:none;border-radius:50%;background:#38d9a9;box-shadow:0 0 8px rgba(56,217,169,.6)}#office-visitors-panel.office-visitor-compact #office-visitors-list{gap:12px!important}#office-visitors-panel.office-visitor-compact #office-visitors-list>article{flex-direction:row;align-items:center!important;gap:16px!important;padding:16px;background:linear-gradient(120deg,rgba(49,51,57,.72),rgba(31,35,45,.78));border:1px solid rgba(210,216,230,.3);border-radius:12px;box-shadow:inset 0 1px rgba(255,255,255,.08);transition:border-color .2s,transform .2s,box-shadow .2s}#office-visitors-panel.office-visitor-compact #office-visitors-list>article:hover{border-color:rgba(56,217,169,.48);transform:translateY(-1px);box-shadow:0 8px 20px rgba(0,0,0,.2),inset 0 1px rgba(255,255,255,.11)}#office-visitors-panel.office-visitor-compact #office-visitors-list>article>div:first-child{flex:1;gap:7px!important}#office-visitors-panel.office-visitor-compact #office-visitors-list>article strong{font-size:15px!important;line-height:1.45}#office-visitors-panel.office-visitor-compact #office-visitors-list>article span{font-size:13px!important;line-height:1.5}#office-visitors-panel.office-visitor-compact #office-visitors-list>article span:last-child{font-size:12px!important;color:#c2ccda}#office-visitors-panel.office-visitor-compact #office-visitors-list>article button{align-self:center;flex:none;border-radius:8px;padding:9px 12px;font-weight:800;letter-spacing:.03em}#office-visitors-panel.office-visitor-compact #office-visitors-list>p{padding:26px 16px!important;border:1px dashed rgba(210,216,230,.34);border-radius:10px;background:rgba(255,255,255,.06)}@media(max-width:700px){#office-visitors-panel.office-visitor-compact #office-visitors-list>article{flex-direction:column;align-items:flex-start!important}#office-visitors-panel.office-visitor-compact #office-visitors-list>article button{align-self:flex-start}}';
+        layoutStyle.textContent='#ambient-right.office-visitor-mode> :not(#office-visitors-panel){display:none!important}#ambient-right.office-visitor-mode{width:min(500px,calc(100vw - 40px))!important;max-height:calc(100vh - 160px);padding:22px!important;overflow-y:auto;background:linear-gradient(145deg,rgba(49,51,57,.78),rgba(31,35,45,.84));border:1px solid rgba(210,216,230,.4);border-radius:17px;box-shadow:0 20px 55px rgba(0,0,0,.34),inset 0 1px rgba(255,255,255,.14);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}#ambient-left.ambient-panel:not(.hidden){background:linear-gradient(145deg,rgba(49,51,57,.78),rgba(31,35,45,.84));border:1px solid rgba(210,216,230,.4);box-shadow:0 20px 55px rgba(0,0,0,.34),inset 0 1px rgba(255,255,255,.14);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}#ambient-left .ambient-shift-row{background:linear-gradient(120deg,rgba(255,255,255,.09),rgba(255,255,255,.035));border:1px solid rgba(210,216,230,.28);box-shadow:inset 0 1px rgba(255,255,255,.09);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}#office-visitors-panel.office-visitor-compact{width:100%;max-width:none;margin:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none}#office-visitors-panel.office-visitor-compact .office-visitors-heading{gap:14px;margin-bottom:17px;padding-bottom:15px;border-bottom:1px solid rgba(131,232,201,.24)}#office-visitors-panel.office-visitor-compact h2{font-size:18px!important;line-height:1.35;letter-spacing:.025em}#office-visitors-panel.office-visitor-compact h2:before{content:\"\";display:inline-block;width:8px;height:8px;margin:0 9px 2px 0;border-radius:50%;background:#38d9a9;box-shadow:0 0 12px rgba(56,217,169,.75)}#office-visitors-panel.office-visitor-compact #btn-refresh-office-visitors{flex:none;border-radius:7px;padding:8px 12px;font-size:10px;letter-spacing:.04em}#office-visitors-panel.office-visitor-compact .office-visitors-status{display:flex;align-items:center;gap:8px;margin:0 0 13px;padding:8px 11px;border:1px solid rgba(131,232,201,.2);border-radius:8px;background:rgba(56,217,169,.08);font-size:12px;line-height:1.45;color:#d5dee8}#office-visitors-panel.office-visitor-compact .office-visitors-status:before{content:\"\";width:7px;height:7px;flex:none;border-radius:50%;background:#38d9a9;box-shadow:0 0 8px rgba(56,217,169,.6)}#office-visitors-panel.office-visitor-compact #office-visitors-list{gap:12px!important}#office-visitors-panel.office-visitor-compact #office-visitors-list>article{flex-direction:row;align-items:center!important;gap:16px!important;padding:16px;background:linear-gradient(120deg,rgba(49,51,57,.72),rgba(31,35,45,.78));border:1px solid rgba(210,216,230,.3);border-radius:12px;box-shadow:inset 0 1px rgba(255,255,255,.08);transition:border-color .2s,transform .2s,box-shadow .2s}#office-visitors-panel.office-visitor-compact #office-visitors-list>article:hover{border-color:rgba(56,217,169,.48);transform:translateY(-1px);box-shadow:0 8px 20px rgba(0,0,0,.2),inset 0 1px rgba(255,255,255,.11)}#office-visitors-panel.office-visitor-compact #office-visitors-list>article>div:first-child{flex:1;gap:7px!important}#office-visitors-panel.office-visitor-compact #office-visitors-list>article strong{font-size:15px!important;line-height:1.45}#office-visitors-panel.office-visitor-compact #office-visitors-list>article span{font-size:13px!important;line-height:1.5}#office-visitors-panel.office-visitor-compact #office-visitors-list>article span:last-child{font-size:12px!important;color:#c2ccda}#office-visitors-panel.office-visitor-compact #office-visitors-list>article button{align-self:center;flex:none;border-radius:8px;padding:9px 12px;font-weight:800;letter-spacing:.03em}#office-visitors-panel.office-visitor-compact #office-visitors-list>p{padding:26px 16px!important;border:1px dashed rgba(210,216,230,.34);border-radius:10px;background:rgba(255,255,255,.06)}@media(max-width:700px){#office-visitors-panel.office-visitor-compact #office-visitors-list>article{flex-direction:column;align-items:flex-start!important}#office-visitors-panel.office-visitor-compact #office-visitors-list>article button{align-self:flex-start}}';
         document.head.appendChild(layoutStyle);
       }
     }
@@ -2148,6 +2156,7 @@
       empty.style.cssText='padding:18px;color:var(--text-muted);text-align:center;';
       empty.textContent=officeLabel('No visitors are currently checked in.','لا يوجد زوار مسجلون دخولهم حالياً.');
       list.appendChild(empty);
+      updateOfficeVisitorElapsedTimers();
       return;
     }
     officeVisitors.forEach(function(visitor){
@@ -2167,10 +2176,11 @@
       var meta=document.createElement('span');
       meta.style.cssText='color:#d0d9e4;font-size:13px;line-height:1.5;overflow-wrap:anywhere;';
       meta.textContent=officeLabel('ID: ','الهوية: ')+(visitor.idNumber||'-')+' · '+officeLabel('Meeting: ','المقابلة: ')+(visitor.meetingWith||'-');
-      var dates=document.createElement('span');
-      dates.style.cssText='color:#c2ccda;font-size:12px;line-height:1.5;';
-      dates.textContent=officeLabel('Visit date: ','تاريخ الزيارة: ')+(visitor.visitDate||'-')+' · '+officeLabel('Checked in: ','وقت الدخول: ')+(visitor.checkedInAt?formatHistoryDateTime(visitor.checkedInAt):'-');
-      details.append(name,checkin,meta,dates);
+      var elapsed=document.createElement('span');
+      elapsed.className='office-visitor-elapsed';
+      elapsed.dataset.checkedInAt=visitor.checkedInAt||'';
+      elapsed.style.cssText='color:#c2ccda;font-size:12px;line-height:1.5;font-variant-numeric:tabular-nums;';
+      details.append(name,checkin,meta,elapsed);
       var checkout=document.createElement('button');
       checkout.type='button';
       checkout.className='btn-primary btn-outline';
@@ -2180,6 +2190,26 @@
       card.append(details,checkout);
       list.appendChild(card);
     });
+    updateOfficeVisitorElapsedTimers();
+  }
+
+  function formatOfficeVisitorElapsed(value){
+    var checkedInAt=new Date(value);
+    if(isNaN(checkedInAt.getTime()))return '--:--:--';
+    var elapsedSeconds=Math.max(0,Math.floor((Date.now()-checkedInAt.getTime())/1000));
+    var hours=String(Math.floor(elapsedSeconds/3600)).padStart(2,'0');
+    var minutes=String(Math.floor((elapsedSeconds%3600)/60)).padStart(2,'0');
+    var seconds=String(elapsedSeconds%60).padStart(2,'0');
+    return hours+':'+minutes+':'+seconds;
+  }
+
+  function updateOfficeVisitorElapsedTimers(){
+    document.querySelectorAll('.office-visitor-elapsed').forEach(function(timer){
+      timer.textContent=officeLabel('TIME INSIDE: ','الوقت داخل المكتب: ')+formatOfficeVisitorElapsed(timer.dataset.checkedInAt||'');
+    });
+    if(!officeVisitorElapsedTimer&&currentUser&&currentUser.role==='guard'&&String(currentUser.guardMode||'').toLowerCase()==='office'){
+      officeVisitorElapsedTimer=setInterval(updateOfficeVisitorElapsedTimers,1000);
+    }
   }
 
   function checkOutKsaOfficeVisitor(visitor,button){
@@ -2676,6 +2706,8 @@
     form.appendChild(guardMode.group);
     guardMode.select.required=true;
     guardMode.select.addEventListener('change',updateGuardAuthForm);
+    var officeModeOption=guardMode.select.querySelector('option[value="office"]');
+    if(officeModeOption)officeModeOption.disabled=true;
 
     function updateGuardFacilities(){
       var country=countries.select.value;
@@ -2702,7 +2734,22 @@
       facilities.select.style.cursor=facilities.select.disabled?'not-allowed':'';
       facilities.select.value=(byCountry[country]||[]).some(function(item){return item[0]===previous;})?previous:'';
     }
-    countries.select.addEventListener('change',updateGuardFacilities);
+    function updateGuardOfficeModeAvailability(){
+      var officeOption=guardMode.select.querySelector('option[value="office"]');
+      var ksaSelected=countries.select.value==='KSA';
+      if(officeOption){
+        officeOption.hidden=!ksaSelected;
+        officeOption.disabled=!ksaSelected;
+      }
+      if(!ksaSelected&&guardMode.select.value==='office'){
+        guardMode.select.value='gate';
+        updateGuardAuthForm();
+      }
+    }
+    countries.select.addEventListener('change',function(){
+      updateGuardFacilities();
+      updateGuardOfficeModeAvailability();
+    });
 
     var submit=document.createElement('button');
     submit.id='guard-auth-submit';
@@ -2738,6 +2785,7 @@
     form.appendChild(locationChange);
     emailInput.addEventListener('input',updateGuardAuthForm);
     updateGuardFacilities();
+    updateGuardOfficeModeAvailability();
     updateGuardAuthForm();
   }
 
@@ -2748,7 +2796,7 @@
     var toggle=document.getElementById('guard-auth-toggle');
     var email=document.getElementById('lg-mail');
     var globalAdmin=!!email&&isGlobalGuardAdminEmail(email.value);
-    var showLocationFields=guardSignupMode||guardChangeLocationMode||globalAdmin;
+    var showLocationFields=true;
     var locationChange=document.getElementById('guard-location-change');
     var countryGroup=document.getElementById('lg-country-group');
     var locationGroup=document.getElementById('lg-location-group');
@@ -2764,7 +2812,7 @@
     }
     if(countryGroup)countryGroup.classList.toggle('hidden',!showLocationFields);
     if(locationGroup)locationGroup.classList.toggle('hidden',!showLocationFields);
-    var locationRequired=guardSignupMode||guardChangeLocationMode||globalAdmin;
+    var locationRequired=true;
     var country=document.getElementById('lg-country');
     var location=document.getElementById('lg-location');
     if(country)country.required=locationRequired;
@@ -2793,8 +2841,7 @@
     var mode=document.getElementById('lg-mode');
     var button=document.getElementById('guard-auth-submit');
     var status=document.getElementById('guard-auth-status');
-    var globalAdmin=isGlobalGuardAdminEmail(email&&email.value);
-    var locationRequired=guardSignupMode||guardChangeLocationMode||globalAdmin;
+    var locationRequired=true;
     var missingRequiredDetails=!name||!email||!country||!location||
       !name.value.trim()||!email.value.trim()||
       (locationRequired&&(!country.value||!location.value))||
