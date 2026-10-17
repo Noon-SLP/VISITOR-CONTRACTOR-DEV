@@ -3746,9 +3746,6 @@
         setupAdminHeaderIdentity();
         ensureSuperAdminApprovalPanel();
         ensureGuardSignupApprovalPanel();
-        refreshGuardSignupRequests();
-        refreshGuardLocationChangeRequests();
-        if(currentUser.accessLevel==='superadmin')refreshFacilityAdminRequests();
         if(na)na.classList.remove('hidden');
         const ng=document.getElementById('nav-sidebar-guard');if(ng)ng.classList.toggle('hidden',currentUser.accessLevel==='facility');
         if(msb)msb.classList.remove('hidden');
@@ -3877,7 +3874,7 @@
   });
 
   function saveSession(){try{localStorage.setItem(SESSION_KEY,JSON.stringify({user:currentUser,time:Date.now()}));}catch(e){}}
-  function startAutoRefresh(r){if(autoRefreshTimer)clearInterval(autoRefreshTimer);autoRefreshTimer=setInterval(function(){if(r==='ops')loadMyPasses(false,true);else if(r==='admin'){loadAdminData(true);refreshGuardSignupRequests();refreshGuardLocationChangeRequests();}},r==='admin'?30000:15000);}
+  function startAutoRefresh(r){if(autoRefreshTimer)clearInterval(autoRefreshTimer);autoRefreshTimer=setInterval(function(){if(r==='ops')loadMyPasses(false,true);else if(r==='admin'){loadAdminData(true);var activeTab=document.querySelector('.admin-nav-horizontal li.active');if(activeTab&&activeTab.id==='nav-guard-requests'){refreshGuardSignupRequests();refreshGuardLocationChangeRequests();}else if(activeTab&&activeTab.id==='nav-facility-admin-requests'&&currentUser&&currentUser.accessLevel==='superadmin'){refreshFacilityAdminRequests();}}},r==='admin'?30000:15000);}
   function toggleFullScreen(){const d=document,de=d.documentElement;const req=de.requestFullscreen||de.mozRequestFullScreen||de.webkitRequestFullScreen||de.msRequestFullscreen;const exit=d.exitFullscreen||d.mozCancelFullScreen||d.webkitExitFullscreen||d.msExitFullscreen;try{if(!d.fullscreenElement&&!d.mozFullScreenElement&&!d.webkitFullscreenElement&&!d.msFullscreenElement){if(req)Promise.resolve(req.call(de)).catch(function(e){console.warn('Fullscreen request failed:',e);});else alert("Fullscreen not supported");}else if(exit)Promise.resolve(exit.call(d)).catch(function(e){console.warn('Exiting fullscreen failed:',e);});}catch(e){console.warn('Fullscreen operation failed:',e);alert("Fullscreen is unavailable in this browser.");}}
   function toggleSidebar(){const sb=document.getElementById('sidebar');if(!sb)return;sb.classList.toggle('minimized');const isMinimized=sb.classList.contains('minimized');document.body.classList.toggle('sidebar-minimized',isMinimized);const button=sb.querySelector('.toggle-btn');if(button)button.setAttribute('aria-expanded',String(!isMinimized));}
   const appLayout=document.getElementById('app-layout');
