@@ -2138,7 +2138,8 @@
         officeVisitors.unshift(savedVisitor);
       }
       closeKsaOfficeVisitorForm();
-      officeVisitorStatus=officeLabel('Visitor saved and checked in.','تم حفظ بيانات الزائر وتسجيل دخوله.');
+      officeVisitorStatus=officeLabel('Visitor checked in','تم تسجيل دخول الزائر')+
+        (savedVisitor&&savedVisitor.checkedInAt?': '+formatOfficeVisitorDateTime(savedVisitor.checkedInAt):'.');
       if(savedVisitor&&savedVisitor.recordId){
         renderKsaOfficeVisitors();
         var visitorStatus=document.getElementById('office-visitor-status');
@@ -2208,7 +2209,7 @@
       var checkin=document.createElement('span');
       checkin.className='office-visitor-checkin';
       checkin.style.cssText='display:inline-flex;align-self:flex-start;padding:4px 8px;border:1px solid rgba(56,217,169,.3);border-radius:999px;background:rgba(56,217,169,.12);color:#6ee7bd;font-size:9px;font-weight:800;letter-spacing:.1em;';
-      checkin.textContent=officeLabel('CHECKED IN','تم تسجيل الدخول');
+      checkin.textContent=officeLabel('CHECKED IN: ','تسجيل الدخول: ')+formatOfficeVisitorDateTime(visitor.checkedInAt);
       var meta=document.createElement('span');
       meta.style.cssText='color:#d0d9e4;font-size:13px;line-height:1.5;overflow-wrap:anywhere;';
       meta.textContent=officeLabel('ID: ','الهوية: ')+(visitor.idNumber||'-')+' · '+officeLabel('Meeting: ','المقابلة: ')+(visitor.meetingWith||'-');
@@ -2246,6 +2247,16 @@
     return hours+':'+minutes+':'+seconds;
   }
 
+  function formatOfficeVisitorDateTime(value){
+    var date=new Date(value);
+    if(isNaN(date.getTime()))return value||'--';
+    return date.toLocaleString(currentLang==='ar'?'ar-SA':'en-GB',{
+      dateStyle:'medium',
+      timeStyle:'medium',
+      timeZone:'Asia/Riyadh'
+    });
+  }
+
   function updateOfficeVisitorElapsedTimers(){
     document.querySelectorAll('.office-visitor-elapsed').forEach(function(timer){
       var label=timer.querySelector('.office-visitor-elapsed-label');
@@ -2261,10 +2272,11 @@
   function checkOutKsaOfficeVisitor(visitor,button){
     if(!visitor||!visitor.recordId)return;
     if(button)button.disabled=true;
-    guardApiPost({action:'office_check_out_visitor',recordId:visitor.recordId}).then(function(){
+    guardApiPost({action:'office_check_out_visitor',recordId:visitor.recordId}).then(function(result){
       officeVisitorMutationVersion++;
       officeVisitors=officeVisitors.filter(function(currentVisitor){return currentVisitor.recordId!==visitor.recordId;});
-      officeVisitorStatus=officeLabel(visitor.name+' checked out.','تم تسجيل خروج '+visitor.name+'.');
+      officeVisitorStatus=officeLabel(visitor.name+' checked out','تم تسجيل خروج '+visitor.name)+
+        (result&&result.checkedOutAt?': '+formatOfficeVisitorDateTime(result.checkedOutAt):'.');
       renderKsaOfficeVisitors();
       var status=document.getElementById('office-visitor-status');
       if(status)status.textContent=officeVisitorStatus;
