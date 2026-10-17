@@ -59,6 +59,9 @@
   #dashboard-guard #btn-mode-camera,#dashboard-guard #btn-mode-gun{width:100%!important;flex:none!important}
   #dashboard-guard #guard-session-strip{grid-template-columns:1fr!important;text-align:left}
   #dashboard-guard #guard-session-strip .session-strip-item{align-items:flex-start}
+  #dashboard-guard>.header+div>div:first-child,#dashboard-guard>.header+div>div:last-child{background:linear-gradient(145deg,rgba(49,51,57,.72),rgba(31,35,45,.78))!important;border:1px solid rgba(210,216,230,.36)!important;border-radius:17px!important;box-shadow:0 20px 55px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.14)!important;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+  #dashboard-guard>.header+div>div:first-child{padding:18px!important}
+  #dashboard-guard>.header+div>div:last-child{padding:16px!important}
   #dashboard-guard .guard-history-panel{width:100%;margin:0 auto 20px;padding:20px;background:linear-gradient(155deg,rgba(17,23,34,.98),rgba(11,15,23,.98));border:1px solid rgba(56,217,169,.25);border-radius:14px;box-shadow:0 18px 46px rgba(0,0,0,.27),inset 0 1px rgba(255,255,255,.035)}
   #dashboard-guard .guard-history-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px;padding-bottom:13px;border-bottom:1px solid rgba(148,166,190,.14)}
   #dashboard-guard .guard-history-heading h2{color:#83e8c9;font-size:16px;font-weight:850;letter-spacing:.04em}
@@ -1397,7 +1400,8 @@
   }
   function safeImg(u){return normalizeImageUrl(u)||'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'40\' height=\'40\'%3E%3Crect width=\'40\' height=\'40\' fill=\'%23333\'/%3E%3Ctext x=\'20\' y=\'24\' font-size=\'14\' text-anchor=\'middle\' fill=\'%23888\'%3E%3F%3C/text%3E%3C/svg%3E';}
 
-  const urlParams=new URLSearchParams(window.location.search);const currentRoleParam=urlParams.get('role')||'default';const SESSION_KEY='noon_session_'+currentRoleParam;let adminSignupMode=false;let adminPasswordResetMode=false;let html5QrCode=null;let scannerFacingMode='environment';let scannerLibraryPromise=null;let scannerOperation=Promise.resolve();let currentUser=null;let currentScannedID=null;let currentScanAction='check_in';let currentAdminFilter='all';let autoRefreshTimer=null;let globalAdminData=[];let globalAdminHistory=[];let adminDataScopes={approvals:{country:'all',facility:'all'},history:{country:'all',facility:'all'},analytics:{country:'all',facility:'all'}};let myPassesData=[];let checkedPrintIds=new Set();let liveStream=null;let currentFacingMode='environment';let targetPhotoType='';let capturedImages={iqama:null,selfie:null,imeiphoto:null,vehicle:null,fmpoc:null};let teamList=[];let currentTeamCounter=1;let isProcessingScan=false;let userSecurityPin=null;let lockedPassesData=null;let pinCreateMode='submit';let currentBatchType='new';
+  const urlParams=new URLSearchParams(window.location.search);const currentRoleParam=urlParams.get('role')||'default';const SESSION_KEY='noon_session_'+currentRoleParam;const GUARD_SESSION_KEY='noon_session_guard';const SESSION_MAX_AGE_MS=12*60*60*1000;let adminSignupMode=false;let adminPasswordResetMode=false;let html5QrCode=null;let scannerFacingMode='environment';let scannerLibraryPromise=null;let scannerOperation=Promise.resolve();let currentUser=null;let currentScannedID=null;let currentScanAction='check_in';let currentAdminFilter='all';let autoRefreshTimer=null;let globalAdminData=[];let globalAdminHistory=[];let adminDataScopes={approvals:{country:'all',facility:'all'},history:{country:'all',facility:'all'},analytics:{country:'all',facility:'all'}};let myPassesData=[];let checkedPrintIds=new Set();let liveStream=null;let currentFacingMode='environment';let targetPhotoType='';let capturedImages={iqama:null,selfie:null,imeiphoto:null,vehicle:null,fmpoc:null};let teamList=[];let currentTeamCounter=1;let isProcessingScan=false;let userSecurityPin=null;let lockedPassesData=null;let pinCreateMode='submit';let currentBatchType='new';
+  let guardSessionExpiryTimer=null;
   let historySortOrder='desc';
   let expandedHistoryGroups=new Set();
   var guardSignupMode=false;
@@ -1722,7 +1726,7 @@
     var controls=dashboard&&dashboard.querySelector(':scope > .header .header-controls');
     if(right)right.classList.remove('office-visitor-mode');
     if(panel){
-      panel.style.cssText='width:100%;max-width:1100px;margin:22px auto;padding:22px;background:linear-gradient(155deg,rgba(17,23,34,.98),rgba(11,15,23,.98));border:1px solid rgba(56,217,169,.25);border-radius:14px;box-shadow:0 18px 46px rgba(0,0,0,.27);';
+      panel.style.cssText='width:100%;max-width:1100px;margin:22px auto;padding:22px;background:linear-gradient(145deg,rgba(49,51,57,.72),rgba(31,35,45,.78));border:1px solid rgba(210,216,230,.36);border-radius:17px;box-shadow:0 20px 55px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.14);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);';
       panel.classList.add('hidden');
       if(scanner)scanner.insertAdjacentElement('afterend',panel);
     }
@@ -1756,27 +1760,34 @@
     if(!panel){
       panel=document.createElement('section');
       panel.id='office-visitors-panel';
-      panel.style.cssText='width:100%;max-width:1100px;margin:22px auto;padding:22px;background:linear-gradient(155deg,rgba(17,23,34,.98),rgba(11,15,23,.98));border:1px solid rgba(56,217,169,.25);border-radius:14px;box-shadow:0 18px 46px rgba(0,0,0,.27);';
+      panel.className='office-visitors-panel';
+      panel.style.cssText='width:100%;max-width:1100px;margin:22px auto;padding:22px;background:linear-gradient(145deg,rgba(49,51,57,.72),rgba(31,35,45,.78));border:1px solid rgba(210,216,230,.36);border-radius:17px;box-shadow:0 20px 55px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.14);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);';
       var heading=document.createElement('div');
-      heading.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;padding-bottom:13px;border-bottom:1px solid rgba(148,166,190,.14);';
+      heading.className='office-visitors-heading';
+      heading.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:17px;padding-bottom:15px;border-bottom:1px solid rgba(131,232,201,.24);';
       var title=document.createElement('h2');
+      title.className='office-visitors-title';
       title.style.cssText='color:#83e8c9;font-size:16px;font-weight:850;letter-spacing:.04em;';
       var refresh=document.createElement('button');
       refresh.id='btn-refresh-office-visitors';
       refresh.type='button';
       refresh.className='btn-primary btn-outline';
+      refresh.setAttribute('aria-label','Refresh office visitors');
       refresh.style.cssText='width:auto;padding:8px 13px;font-size:10px;';
       refresh.addEventListener('click',function(){refreshKsaOfficeVisitors(true);});
       heading.append(title,refresh);
       var status=document.createElement('p');
       status.id='office-visitor-status';
+      status.className='office-visitors-status';
       status.setAttribute('aria-live','polite');
-      status.style.cssText='margin:0 0 12px;color:var(--text-muted);font-size:12px;';
+      status.style.cssText='display:flex;align-items:center;gap:8px;margin:0 0 14px;padding:9px 11px;border:1px solid rgba(131,232,201,.2);border-radius:8px;background:rgba(56,217,169,.08);color:#d5dee8;font-size:12px;line-height:1.45;';
       var list=document.createElement('div');
       list.id='office-visitors-list';
+      list.className='office-visitors-list';
       list.style.cssText='display:flex;flex-direction:column;gap:10px;';
       panel.append(heading,status,list);
     }
+    panel.classList.add('office-visitors-panel');
     var sessionStrip=document.getElementById('guard-session-strip');
     if(sessionStrip)sessionStrip.insertAdjacentElement('afterend',visitorButton);
     var right=document.getElementById('ambient-right');
@@ -1785,7 +1796,7 @@
       if(!document.getElementById('office-visitor-layout-style')){
         var layoutStyle=document.createElement('style');
         layoutStyle.id='office-visitor-layout-style';
-        layoutStyle.textContent='#ambient-right.office-visitor-mode> :not(#office-visitors-panel){display:none!important}#ambient-right.office-visitor-mode{width:min(460px,calc(100vw - 40px))!important;max-height:calc(100vh - 160px);padding:20px!important;overflow-y:auto}#office-visitors-panel.office-visitor-compact{width:100%;max-width:none;margin:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none}#office-visitors-panel.office-visitor-compact h2{font-size:18px!important;line-height:1.35;letter-spacing:.02em}#office-visitors-panel.office-visitor-compact #office-visitors-list>article{flex-direction:row;align-items:center!important;padding:16px}#office-visitors-panel.office-visitor-compact #office-visitors-list>article strong{font-size:15px!important}#office-visitors-panel.office-visitor-compact #office-visitors-list>article span{font-size:13px!important;line-height:1.45}#office-visitors-panel.office-visitor-compact #office-visitors-list>article span:last-child{font-size:12px!important}#office-visitors-panel.office-visitor-compact #office-visitors-list>article button{align-self:center;flex:none}@media(max-width:700px){#office-visitors-panel.office-visitor-compact #office-visitors-list>article{flex-direction:column;align-items:flex-start!important}#office-visitors-panel.office-visitor-compact #office-visitors-list>article button{align-self:flex-start}}';
+        layoutStyle.textContent='#ambient-right.office-visitor-mode> :not(#office-visitors-panel){display:none!important}#ambient-right.office-visitor-mode{width:min(500px,calc(100vw - 40px))!important;max-height:calc(100vh - 160px);padding:22px!important;overflow-y:auto;background:linear-gradient(145deg,rgba(49,51,57,.78),rgba(31,35,45,.84));border:1px solid rgba(210,216,230,.4);border-radius:17px;box-shadow:0 20px 55px rgba(0,0,0,.34),inset 0 1px rgba(255,255,255,.14);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}#office-visitors-panel.office-visitor-compact{width:100%;max-width:none;margin:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none}#office-visitors-panel.office-visitor-compact .office-visitors-heading{gap:14px;margin-bottom:17px;padding-bottom:15px;border-bottom:1px solid rgba(131,232,201,.24)}#office-visitors-panel.office-visitor-compact h2{font-size:18px!important;line-height:1.35;letter-spacing:.025em}#office-visitors-panel.office-visitor-compact h2:before{content:\"\";display:inline-block;width:8px;height:8px;margin:0 9px 2px 0;border-radius:50%;background:#38d9a9;box-shadow:0 0 12px rgba(56,217,169,.75)}#office-visitors-panel.office-visitor-compact #btn-refresh-office-visitors{flex:none;border-radius:7px;padding:8px 12px;font-size:10px;letter-spacing:.04em}#office-visitors-panel.office-visitor-compact .office-visitors-status{display:flex;align-items:center;gap:8px;margin:0 0 13px;padding:8px 11px;border:1px solid rgba(131,232,201,.2);border-radius:8px;background:rgba(56,217,169,.08);font-size:12px;line-height:1.45;color:#d5dee8}#office-visitors-panel.office-visitor-compact .office-visitors-status:before{content:\"\";width:7px;height:7px;flex:none;border-radius:50%;background:#38d9a9;box-shadow:0 0 8px rgba(56,217,169,.6)}#office-visitors-panel.office-visitor-compact #office-visitors-list{gap:12px!important}#office-visitors-panel.office-visitor-compact #office-visitors-list>article{flex-direction:row;align-items:center!important;gap:16px!important;padding:16px;background:linear-gradient(120deg,rgba(49,51,57,.72),rgba(31,35,45,.78));border:1px solid rgba(210,216,230,.3);border-radius:12px;box-shadow:inset 0 1px rgba(255,255,255,.08);transition:border-color .2s,transform .2s,box-shadow .2s}#office-visitors-panel.office-visitor-compact #office-visitors-list>article:hover{border-color:rgba(56,217,169,.48);transform:translateY(-1px);box-shadow:0 8px 20px rgba(0,0,0,.2),inset 0 1px rgba(255,255,255,.11)}#office-visitors-panel.office-visitor-compact #office-visitors-list>article>div:first-child{flex:1;gap:7px!important}#office-visitors-panel.office-visitor-compact #office-visitors-list>article strong{font-size:15px!important;line-height:1.45}#office-visitors-panel.office-visitor-compact #office-visitors-list>article span{font-size:13px!important;line-height:1.5}#office-visitors-panel.office-visitor-compact #office-visitors-list>article span:last-child{font-size:12px!important;color:#c2ccda}#office-visitors-panel.office-visitor-compact #office-visitors-list>article button{align-self:center;flex:none;border-radius:8px;padding:9px 12px;font-weight:800;letter-spacing:.03em}#office-visitors-panel.office-visitor-compact #office-visitors-list>p{padding:26px 16px!important;border:1px dashed rgba(210,216,230,.34);border-radius:10px;background:rgba(255,255,255,.06)}@media(max-width:700px){#office-visitors-panel.office-visitor-compact #office-visitors-list>article{flex-direction:column;align-items:flex-start!important}#office-visitors-panel.office-visitor-compact #office-visitors-list>article button{align-self:flex-start}}';
         document.head.appendChild(layoutStyle);
       }
     }
@@ -2112,7 +2123,10 @@
     officeVisitorRequestPromise=guardApiPost({action:'office_list_visitors'}).then(function(result){
       if(!Array.isArray(result.visitors))throw new Error('The server returned an invalid office visitor list.');
       officeVisitors=result.visitors;
-      if(status)status.textContent=officeVisitorStatus||officeLabel(officeVisitors.length+' visitor(s) currently checked in.','عدد الزوار المسجلين دخولهم حالياً: '+officeVisitors.length);
+      if(status)status.textContent=officeVisitorStatus||officeLabel(
+        officeVisitors.length+' visitor'+(officeVisitors.length===1?'':'s')+' currently checked in',
+        'الزوار المسجلون دخولهم حالياً: '+officeVisitors.length
+      );
       officeVisitorStatus='';
       renderKsaOfficeVisitors();
     }).catch(function(error){
@@ -2138,23 +2152,29 @@
     }
     officeVisitors.forEach(function(visitor){
       var card=document.createElement('article');
-      card.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px;background:rgba(0,0,0,.22);border:1px solid rgba(148,166,190,.15);border-radius:10px;';
+      card.className='office-visitor-card';
+      card.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px;background:linear-gradient(120deg,rgba(49,51,57,.72),rgba(31,35,45,.78));border:1px solid rgba(210,216,230,.3);border-radius:12px;box-shadow:inset 0 1px rgba(255,255,255,.08);';
       var details=document.createElement('div');
-      details.style.cssText='min-width:0;display:flex;flex-direction:column;gap:5px;';
+      details.className='office-visitor-details';
+      details.style.cssText='min-width:0;flex:1;display:flex;flex-direction:column;gap:7px;';
       var name=document.createElement('strong');
-      name.style.cssText='color:#fff;font-size:14px;';
-      name.textContent=(visitor.name||'-')+' · '+officeLabel('CHECKED IN','تم تسجيل الدخول');
+      name.style.cssText='color:#f8fafc;font-size:15px;line-height:1.45;';
+      name.textContent=visitor.name||'-';
+      var checkin=document.createElement('span');
+      checkin.className='office-visitor-checkin';
+      checkin.style.cssText='display:inline-flex;align-self:flex-start;padding:4px 8px;border:1px solid rgba(56,217,169,.3);border-radius:999px;background:rgba(56,217,169,.12);color:#6ee7bd;font-size:9px;font-weight:800;letter-spacing:.1em;';
+      checkin.textContent=officeLabel('CHECKED IN','تم تسجيل الدخول');
       var meta=document.createElement('span');
-      meta.style.cssText='color:var(--text-muted);font-size:12px;overflow-wrap:anywhere;';
+      meta.style.cssText='color:#d0d9e4;font-size:13px;line-height:1.5;overflow-wrap:anywhere;';
       meta.textContent=officeLabel('ID: ','الهوية: ')+(visitor.idNumber||'-')+' · '+officeLabel('Meeting: ','المقابلة: ')+(visitor.meetingWith||'-');
       var dates=document.createElement('span');
-      dates.style.cssText='color:var(--text-muted);font-size:11px;';
+      dates.style.cssText='color:#c2ccda;font-size:12px;line-height:1.5;';
       dates.textContent=officeLabel('Visit date: ','تاريخ الزيارة: ')+(visitor.visitDate||'-')+' · '+officeLabel('Checked in: ','وقت الدخول: ')+(visitor.checkedInAt?formatHistoryDateTime(visitor.checkedInAt):'-');
-      details.append(name,meta,dates);
+      details.append(name,checkin,meta,dates);
       var checkout=document.createElement('button');
       checkout.type='button';
       checkout.className='btn-primary btn-outline';
-      checkout.style.cssText='width:auto;flex:none;padding:9px 12px;';
+      checkout.style.cssText='width:auto;flex:none;padding:10px 14px;border-radius:8px;font-weight:800;letter-spacing:.03em;';
       checkout.textContent=officeLabel('CHECK OUT','تسجيل الخروج');
       checkout.addEventListener('click',function(){checkOutKsaOfficeVisitor(visitor,checkout);});
       card.append(details,checkout);
@@ -4364,30 +4384,69 @@
           if (roleTabs) roleTabs.style.display = role === 'staff' ? 'flex' : 'none';
           switchLoginTab(role === 'guard' ? 'guard' : 'admin');
       }
-      const session = localStorage.getItem(SESSION_KEY);
-      if (session) {
-          const savedSession = JSON.parse(session);
-          const ageHours = (Date.now() - savedSession.time) / (1000 * 60 * 60);
-          const savedUser=savedSession.user;
-          const adminRoute=role==='staff'||role==='admin'||role==='superadmin';
-          const adminSessionValid=savedUser&&savedUser.role==='admin'&&savedUser.adminToken&&
-            Number(savedUser.expiresAt)>Date.now()&&
-            (savedUser.accessLevel==='superadmin'||(role!=='superadmin'&&savedUser.accessLevel==='facility'));
-          const guardSessionValid=savedUser&&savedUser.role==='guard'&&
-            typeof savedUser.guardToken==='string'&&savedUser.guardToken.length>0;
-          const savedRoleMatches=adminRoute
-            ?adminSessionValid
-            :(savedUser&&savedUser.role==='guard'?guardSessionValid:(!savedUser||savedUser.role!=='admin'));
-          if (ageHours < 12 && savedRoleMatches) {
-              currentUser = savedSession.user;
-              initApp();
-          } else {
-              localStorage.removeItem(SESSION_KEY);
-          }
+      const adminRoute=role==='staff'||role==='admin'||role==='superadmin';
+      const savedSessionKeys=adminRoute?[SESSION_KEY]:[SESSION_KEY,GUARD_SESSION_KEY];
+      const checkedSessionKeys=new Set();
+      for(const sessionKey of savedSessionKeys){
+        if(checkedSessionKeys.has(sessionKey))continue;
+        checkedSessionKeys.add(sessionKey);
+        const sessionText=localStorage.getItem(sessionKey);
+        if(!sessionText)continue;
+        let savedSession;
+        try{
+          savedSession=JSON.parse(sessionText);
+        }catch(parseError){
+          console.warn('[Session] Removing unreadable saved session.',parseError);
+          localStorage.removeItem(sessionKey);
+          continue;
+        }
+        const savedUser=savedSession&&savedSession.user;
+        const loginTime=Number(savedSession&&savedSession.time);
+        const age=Date.now()-loginTime;
+        const adminSessionValid=savedUser&&savedUser.role==='admin'&&savedUser.adminToken&&
+          Number(savedUser.expiresAt)>Date.now()&&
+          (savedUser.accessLevel==='superadmin'||(role!=='superadmin'&&savedUser.accessLevel==='facility'));
+        const guardSessionValid=savedUser&&savedUser.role==='guard'&&
+          typeof savedUser.guardToken==='string'&&savedUser.guardToken.length>0;
+        const savedRoleMatches=adminRoute
+          ?adminSessionValid
+          :(savedUser&&savedUser.role==='guard'?guardSessionValid:(!savedUser||savedUser.role!=='admin'));
+        if(age>=0&&age<SESSION_MAX_AGE_MS&&savedRoleMatches){
+          currentUser=savedUser;
+          if(currentUser.role==='guard')scheduleGuardSessionExpiry(loginTime);
+          initApp();
+          break;
+        }
+        localStorage.removeItem(sessionKey);
       }
   });
 
-  function saveSession(){try{localStorage.setItem(SESSION_KEY,JSON.stringify({user:currentUser,time:Date.now()}));}catch(e){}}
+  function saveSession(){
+    if(!currentUser)return;
+    const loginTime=Date.now();
+    const sessionText=JSON.stringify({user:currentUser,time:loginTime});
+    try{
+      localStorage.setItem(SESSION_KEY,sessionText);
+      if(currentUser.role==='guard'){
+        localStorage.setItem(GUARD_SESSION_KEY,sessionText);
+        scheduleGuardSessionExpiry(loginTime);
+      }
+    }catch(storageError){
+      console.error('[Session] Unable to save the signed-in session.',storageError);
+    }
+  }
+  function scheduleGuardSessionExpiry(loginTime){
+    if(guardSessionExpiryTimer)clearTimeout(guardSessionExpiryTimer);
+    const remaining=SESSION_MAX_AGE_MS-(Date.now()-Number(loginTime));
+    if(remaining<=0){
+      logout();
+      return;
+    }
+    guardSessionExpiryTimer=setTimeout(function(){
+      guardSessionExpiryTimer=null;
+      logout();
+    },remaining);
+  }
   function startAutoRefresh(r){if(autoRefreshTimer)clearInterval(autoRefreshTimer);autoRefreshTimer=setInterval(function(){if(r==='ops')loadMyPasses(false,true);else if(r==='admin'){loadAdminData(true);var activeTab=document.querySelector('.admin-nav-horizontal li.active');if(activeTab&&activeTab.id==='nav-guard-requests'){refreshGuardSignupRequests();refreshGuardLocationChangeRequests();}else if(activeTab&&activeTab.id==='nav-facility-admin-requests'&&currentUser&&currentUser.accessLevel==='superadmin'){refreshFacilityAdminRequests();}}},r==='admin'?30000:15000);}
   function toggleFullScreen(){const d=document,de=d.documentElement;const req=de.requestFullscreen||de.mozRequestFullScreen||de.webkitRequestFullScreen||de.msRequestFullscreen;const exit=d.exitFullscreen||d.mozCancelFullScreen||d.webkitExitFullscreen||d.msExitFullscreen;try{if(!d.fullscreenElement&&!d.mozFullScreenElement&&!d.webkitFullscreenElement&&!d.msFullscreenElement){if(req)Promise.resolve(req.call(de)).catch(function(e){console.warn('Fullscreen request failed:',e);});else alert("Fullscreen not supported");}else if(exit)Promise.resolve(exit.call(d)).catch(function(e){console.warn('Exiting fullscreen failed:',e);});}catch(e){console.warn('Fullscreen operation failed:',e);alert("Fullscreen is unavailable in this browser.");}}
   function toggleSidebar(){const sb=document.getElementById('sidebar');if(!sb)return;sb.classList.toggle('minimized');const isMinimized=sb.classList.contains('minimized');document.body.classList.toggle('sidebar-minimized',isMinimized);const button=sb.querySelector('.toggle-btn');if(button)button.setAttribute('aria-expanded',String(!isMinimized));}
@@ -4407,8 +4466,10 @@
     stopGuardCacheRefresh();
     stopGuardInactivityMonitor();
     stopAmbientPanels();
+    if(guardSessionExpiryTimer){clearTimeout(guardSessionExpiryTimer);guardSessionExpiryTimer=null;}
     clearShiftStart(); // <-- Reset shift timer on logout
     localStorage.removeItem(SESSION_KEY);
+    if(currentUser&&currentUser.role==='guard')localStorage.removeItem(GUARD_SESSION_KEY);
     Object.keys(localStorage).forEach(function(key){if(key.startsWith('user_pin_')||key.startsWith('pin_unlock_until_'))localStorage.removeItem(key);});
     Object.keys(sessionStorage).forEach(function(key){if(key.startsWith('user_pin_')||key.startsWith('pin_unlock_until_'))sessionStorage.removeItem(key);});
     try{if(html5QrCode&&html5QrCode.isScanning)html5QrCode.stop();}catch(e){}
