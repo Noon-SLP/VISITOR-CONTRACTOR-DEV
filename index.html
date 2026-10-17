@@ -103,6 +103,7 @@
   @media(max-width:1000px){#dashboard-ops .ops-grid{grid-template-columns:minmax(0,1fr);gap:18px}}
   #ambient-right.ambient-panel:not(.hidden){top:300px}
   @media(min-width:1280px){#ambient-right.ambient-panel:not(.hidden){top:300px}}
+  @media(min-width:1280px){#ambient-right.office-visitor-mode:not(.hidden){top:clamp(190px,27vh,300px)!important;bottom:16px!important;height:auto!important;max-height:none!important;transform:none!important;overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:contain;scrollbar-gutter:stable}}
   html.low-performance body{transition:none!important}
   html.low-performance #login-view::before{filter:blur(2px)!important;transform:none!important;will-change:auto!important}
   html.low-performance .login-container,html.low-performance .ops-card,html.low-performance .admin-card,html.low-performance .analytics-box,html.low-performance #reader,html.low-performance .scan-result-card,html.low-performance .ambient-panel{box-shadow:none!important}
@@ -1700,6 +1701,7 @@
   var officeVisitorRefreshTimer=null;
   var officeVisitorElapsedTimer=null;
   var officeVisitorRequestPromise=null;
+  var officeVisitorMutationVersion=0;
   var officeVisitors=[];
   var officeVisitorStatus='';
   var officeVisitorCameraStream=null;
@@ -1826,7 +1828,7 @@
     if(!modal){
       var style=document.createElement('style');
       style.id='office-visitor-modal-style';
-      style.textContent='#office-visitor-modal{position:fixed;inset:0;z-index:1000000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.78)}#office-visitor-modal.hidden{display:none!important}#office-visitor-modal .office-visitor-card{width:min(620px,100%);max-height:92vh;overflow:auto;padding:22px;background:var(--card-bg,#171d29);border:1px solid var(--border-color,#394354);border-radius:14px;box-shadow:0 18px 60px rgba(0,0,0,.6)}#office-visitor-modal .office-visitor-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}#office-visitor-modal .office-visitor-field{display:flex;flex-direction:column;gap:6px}#office-visitor-modal .office-visitor-field.full{grid-column:1/-1}#office-visitor-modal .office-visitor-field label{color:var(--text-muted);font-size:12px}#office-visitor-modal .office-visitor-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}#office-visitor-modal .office-visitor-error{min-height:18px;margin-top:12px;color:var(--danger,#ef4444);font-size:12px}@media(max-width:520px){#office-visitor-modal .office-visitor-grid{grid-template-columns:1fr}#office-visitor-modal .office-visitor-field.full{grid-column:auto}}';
+      style.textContent='#office-visitor-modal{position:fixed;inset:0;z-index:1000000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.62);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}#office-visitor-modal.hidden{display:none!important}#office-visitor-modal .office-visitor-card{width:min(620px,100%);max-height:92vh;overflow:auto;padding:22px;background:linear-gradient(145deg,rgba(49,51,57,.88),rgba(31,35,45,.92));border:1px solid rgba(210,216,230,.38);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.48),inset 0 1px rgba(255,255,255,.12);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}#office-visitor-modal .office-visitor-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}#office-visitor-modal .office-visitor-field{display:flex;flex-direction:column;gap:6px}#office-visitor-modal .office-visitor-field.full{grid-column:1/-1}#office-visitor-modal .office-visitor-field label{color:var(--text-muted);font-size:12px}#office-visitor-modal .office-visitor-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}#office-visitor-modal .office-visitor-error{min-height:18px;margin-top:12px;color:var(--danger,#ef4444);font-size:12px}@media(max-width:520px){#office-visitor-modal .office-visitor-grid{grid-template-columns:1fr}#office-visitor-modal .office-visitor-field.full{grid-column:auto}}';
       document.head.appendChild(style);
       modal=document.createElement('div');
       modal.id='office-visitor-modal';
@@ -1985,6 +1987,8 @@
     var modal=document.getElementById('office-visitor-modal');
     var error=document.getElementById('office-visitor-form-error');
     if(form)form.reset();
+    var visitDate=document.getElementById('office-visitor-date');
+    if(visitDate)visitDate.value=ambientDateKey(new Date());
     officeVisitorCapturedIdCopy='';
     stopKsaOfficeVisitorCamera();
     var preview=document.getElementById('office-visitor-camera-preview');
@@ -2100,7 +2104,7 @@
     if(error)error.textContent='';
     try{
       var idCopy=officeVisitorCapturedIdCopy||await readOfficeVisitorIdCopy(file);
-      await guardApiPost({
+      var result=await guardApiPost({
         action:'office_create_visitor',
         name:document.getElementById('office-visitor-name').value.trim(),
         idNumber:document.getElementById('office-visitor-id').value.trim(),
@@ -2109,9 +2113,21 @@
         meetingWith:document.getElementById('office-visitor-meeting').value.trim(),
         idCopy:idCopy
       });
+      var savedVisitor=result&&result.visitor;
+      if(savedVisitor&&savedVisitor.recordId){
+        officeVisitorMutationVersion++;
+        officeVisitors=officeVisitors.filter(function(visitor){return visitor.recordId!==savedVisitor.recordId;});
+        officeVisitors.unshift(savedVisitor);
+      }
       closeKsaOfficeVisitorForm();
       officeVisitorStatus=officeLabel('Visitor saved and checked in.','تم حفظ بيانات الزائر وتسجيل دخوله.');
-      await refreshKsaOfficeVisitors(true);
+      if(savedVisitor&&savedVisitor.recordId){
+        renderKsaOfficeVisitors();
+        var visitorStatus=document.getElementById('office-visitor-status');
+        if(visitorStatus)visitorStatus.textContent=officeVisitorStatus;
+      }else{
+        await refreshKsaOfficeVisitors(true);
+      }
     }catch(requestError){
       console.error('[Office visitors] Unable to save visitor.',requestError);
       if(error)error.textContent=requestError&&requestError.message?requestError.message:'Unable to save the office visitor.';
@@ -2128,8 +2144,10 @@
     if(officeVisitorRequestPromise)return officeVisitorRequestPromise;
     var refresh=document.getElementById('btn-refresh-office-visitors');
     if(refresh){refresh.disabled=true;refresh.setAttribute('aria-busy','true');}
+    var requestMutationVersion=officeVisitorMutationVersion;
     officeVisitorRequestPromise=guardApiPost({action:'office_list_visitors'}).then(function(result){
       if(!Array.isArray(result.visitors))throw new Error('The server returned an invalid office visitor list.');
+      if(requestMutationVersion!==officeVisitorMutationVersion)return;
       officeVisitors=result.visitors;
       if(status)status.textContent=officeVisitorStatus||officeLabel(
         officeVisitors.length+' visitor'+(officeVisitors.length===1?'':'s')+' currently checked in',
@@ -2224,11 +2242,14 @@
 
   function checkOutKsaOfficeVisitor(visitor,button){
     if(!visitor||!visitor.recordId)return;
-    if(!confirm(officeLabel('Check out '+visitor.name+'?','هل تريد تسجيل خروج '+visitor.name+'؟')))return;
     if(button)button.disabled=true;
     guardApiPost({action:'office_check_out_visitor',recordId:visitor.recordId}).then(function(){
+      officeVisitorMutationVersion++;
+      officeVisitors=officeVisitors.filter(function(currentVisitor){return currentVisitor.recordId!==visitor.recordId;});
       officeVisitorStatus=officeLabel(visitor.name+' checked out.','تم تسجيل خروج '+visitor.name+'.');
-      return refreshKsaOfficeVisitors(true);
+      renderKsaOfficeVisitors();
+      var status=document.getElementById('office-visitor-status');
+      if(status)status.textContent=officeVisitorStatus;
     }).catch(function(error){
       alert('Unable to check out this visitor: '+(error&&error.message?error.message:'Unknown error'));
       console.error('[Office visitors] Check-out failed.',error);
