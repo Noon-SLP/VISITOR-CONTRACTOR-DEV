@@ -85,6 +85,7 @@
     #ambient-left.ambient-panel:not(.hidden){top:120px!important}
     #ambient-right.ambient-panel:not(.hidden){top:275px}
   }
+
   @media(max-width:1279px){
     #dashboard-guard>.header+div{width:100%!important;max-width:none!important;margin:0!important;justify-content:flex-start!important}
     #dashboard-guard>.header+div>div:first-child,#dashboard-guard>.header+div>div:last-child{min-width:0!important}
@@ -447,11 +448,17 @@
   #dashboard-guard .office-visitor-card{display:grid!important;width:100%;box-sizing:border-box;grid-template-columns:minmax(0,1fr) auto;align-items:center!important;gap:12px!important}
   #dashboard-guard .office-visitor-details{width:100%;min-width:0;box-sizing:border-box;overflow:hidden}
   #dashboard-guard .office-visitor-checkin{display:flex!important;align-self:flex-start;max-width:100%;width:max-content;box-sizing:border-box;white-space:normal;line-height:1.45;overflow-wrap:anywhere}
-  #dashboard-guard .office-visitor-card>button{width:auto!important;max-width:150px;min-width:116px;white-space:normal;line-height:1.25}
+  #dashboard-guard .office-visitor-actions{min-width:132px}
+  #dashboard-guard .office-visitor-actions>button{width:100%!important;max-width:180px;min-width:132px;white-space:normal;line-height:1.25}
+  #dashboard-guard .office-visitor-checkin-button{background:#16a34a;border-color:#22c55e;color:#fff}
+  #dashboard-guard .office-visitor-checkout-button{background:#dc2626;border-color:#ef4444;color:#fff}
+  #dashboard-guard .office-visitor-actions>button:disabled{opacity:.58;cursor:not-allowed}
   @media(max-width:520px){
     #dashboard-guard .office-visitor-card{grid-template-columns:minmax(0,1fr)}
-    #dashboard-guard .office-visitor-card>button{justify-self:start;max-width:none}
+    #dashboard-guard .office-visitor-actions{width:100%;min-width:0}
+    #dashboard-guard .office-visitor-actions>button{justify-self:start;max-width:none}
   }
+  #camera-video-stream{transform:scaleX(1)}
   #dashboard-admin #admin-table-active td:nth-child(2),#dashboard-admin #admin-table-active th:nth-child(2){width:13%}
   #dashboard-admin #admin-table-active td:nth-child(3),#dashboard-admin #admin-table-active th:nth-child(3){width:19%}
   #dashboard-admin #admin-table-active td:nth-child(4),#dashboard-admin #admin-table-active th:nth-child(4){width:8%}
@@ -2063,7 +2070,7 @@
     var save=document.getElementById('office-visitor-save');
     if(title)title.textContent=officeLabel('New Office Visitor','زائر مكتب جديد');
     if(cancel)cancel.textContent=officeLabel('CANCEL','إلغاء');
-    if(save&&!save.disabled)save.textContent=officeLabel('SAVE & CHECK IN','حفظ وتسجيل الدخول');
+    if(save&&!save.disabled)save.textContent=officeLabel('SAVE VISITOR','حفظ بيانات الزائر');
     ['office-visitor-camera-start','office-visitor-camera-switch','office-visitor-camera-capture','office-visitor-camera-cancel'].forEach(function(id){
       var button=document.getElementById(id);
       if(button)button.textContent=currentLang==='ar'?button.dataset.officeArabic:button.dataset.officeEnglish;
@@ -2114,6 +2121,7 @@
       officeVisitorCameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:officeVisitorCameraFacingMode}},audio:false});
       if(!video)throw new Error('Camera preview is unavailable.');
       video.srcObject=officeVisitorCameraStream;
+      video.style.transform=officeVisitorCameraFacingMode==='user'?'scaleX(-1)':'';
       if(cameraPanel)cameraPanel.classList.remove('hidden');
       await video.play();
     }catch(cameraError){
@@ -2157,7 +2165,12 @@
     if(width>maxWidth){height=Math.round(height*maxWidth/width);width=maxWidth;}
     canvas.width=width;
     canvas.height=height;
-    canvas.getContext('2d').drawImage(video,0,0,width,height);
+    var context=canvas.getContext('2d');
+    if(officeVisitorCameraFacingMode==='user'){
+      context.translate(width,0);
+      context.scale(-1,1);
+    }
+    context.drawImage(video,0,0,width,height);
     officeVisitorCapturedIdCopy=canvas.toDataURL('image/jpeg',0.86);
     var photo=document.getElementById('office-visitor-id-copy');
     if(photo)photo.value='';
@@ -2211,11 +2224,13 @@
       if(savedVisitor&&savedVisitor.recordId){
         officeVisitorMutationVersion++;
         officeVisitors=officeVisitors.filter(function(visitor){return visitor.recordId!==savedVisitor.recordId;});
-        officeVisitors.unshift(savedVisitor);
+        officeVisitors.push(savedVisitor);
       }
       closeKsaOfficeVisitorForm();
-      officeVisitorStatus=officeLabel('Visitor checked in','تم تسجيل دخول الزائر')+
-        (savedVisitor&&savedVisitor.checkedInAt?': '+formatOfficeVisitorDateTime(savedVisitor.checkedInAt):'.');
+      officeVisitorStatus=officeLabel(
+        (savedVisitor&&savedVisitor.name?savedVisitor.name:'Visitor')+' saved and waiting to check in.',
+        'تم حفظ بيانات الزائر وبانتظار تسجيل الدخول.'
+      );
       if(savedVisitor&&savedVisitor.recordId){
         renderKsaOfficeVisitors();
         var visitorStatus=document.getElementById('office-visitor-status');
@@ -2251,8 +2266,8 @@
       if(requestVersion!==officeVisitorRequestVersion||requestMutationVersion!==officeVisitorMutationVersion)return;
       officeVisitors=result.visitors;
       if(status)status.textContent=officeVisitorStatus||officeLabel(
-        officeVisitors.length+' visitor'+(officeVisitors.length===1?'':'s')+' currently checked in',
-        'الزوار المسجلون دخولهم حالياً: '+officeVisitors.length
+        officeVisitors.length+' visitor'+(officeVisitors.length===1?'':'s')+' awaiting entry or currently inside',
+        'الزوار بانتظار الدخول أو الموجودون حالياً: '+officeVisitors.length
       );
       officeVisitorStatus='';
       renderKsaOfficeVisitors();
@@ -2281,7 +2296,7 @@
     if(!officeVisitors.length){
       var empty=document.createElement('p');
       empty.style.cssText='padding:18px;color:var(--text-muted);text-align:center;';
-      empty.textContent=officeLabel('No visitors are currently checked in.','لا يوجد زوار مسجلون دخولهم حالياً.');
+      empty.textContent=officeLabel('No saved office visitors are waiting or currently inside.','لا يوجد زوار محفوظون بانتظار الدخول أو موجودون حالياً.');
       list.appendChild(empty);
       updateOfficeVisitorElapsedTimers();
       return;
@@ -2289,7 +2304,7 @@
     officeVisitors.forEach(function(visitor){
       var card=document.createElement('article');
       card.className='office-visitor-card';
-      card.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px;background:linear-gradient(120deg,rgba(49,51,57,.72),rgba(31,35,45,.78));border:1px solid rgba(210,216,230,.3);border-radius:12px;box-shadow:inset 0 1px rgba(255,255,255,.08);';
+      card.style.cssText='display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:14px;padding:16px;background:linear-gradient(120deg,rgba(49,51,57,.72),rgba(31,35,45,.78));border:1px solid rgba(210,216,230,.3);border-radius:12px;box-shadow:inset 0 1px rgba(255,255,255,.08);';
       var details=document.createElement('div');
       details.className='office-visitor-details';
       details.style.cssText='min-width:0;flex:1;display:flex;flex-direction:column;gap:7px;';
@@ -2299,12 +2314,14 @@
       var checkin=document.createElement('span');
       checkin.className='office-visitor-checkin';
       checkin.style.cssText='display:inline-flex;align-self:flex-start;padding:4px 8px;border:1px solid rgba(56,217,169,.3);border-radius:999px;background:rgba(56,217,169,.12);color:#6ee7bd;font-size:9px;font-weight:800;letter-spacing:.1em;';
-      checkin.textContent=officeLabel('CHECKED IN: ','تسجيل الدخول: ')+formatOfficeVisitorDateTime(visitor.checkedInAt);
+      checkin.textContent=visitor.checkedInAt
+        ?officeLabel('CHECKED IN: ','تسجيل الدخول: ')+formatOfficeVisitorDateTime(visitor.checkedInAt)
+        :officeLabel('WAITING TO CHECK IN','بانتظار تسجيل الدخول');
       var meta=document.createElement('span');
       meta.style.cssText='color:#d0d9e4;font-size:13px;line-height:1.5;overflow-wrap:anywhere;';
       meta.textContent=officeLabel('ID: ','الهوية: ')+(visitor.idNumber||'-')+' · '+officeLabel('Meeting: ','المقابلة: ')+(visitor.meetingWith||'-');
       var elapsed=document.createElement('span');
-      elapsed.className='office-visitor-elapsed';
+      elapsed.className='office-visitor-elapsed'+(visitor.checkedInAt?'':' hidden');
       elapsed.dataset.checkedInAt=visitor.checkedInAt||'';
       elapsed.style.cssText='color:#c2ccda;font-size:12px;line-height:1.5;font-variant-numeric:tabular-nums;';
       var elapsedLabel=document.createElement('span');
@@ -2315,13 +2332,29 @@
       elapsedValue.style.cssText='color:var(--noon-yellow);font-weight:800;';
       elapsed.append(elapsedLabel,elapsedValue);
       details.append(name,checkin,meta,elapsed);
+      var actions=document.createElement('div');
+      actions.className='office-visitor-actions';
+      actions.style.cssText='display:flex;flex-direction:column;gap:8px;min-width:132px;';
+      var checkInButton=document.createElement('button');
+      checkInButton.type='button';
+      checkInButton.className='btn-primary office-visitor-checkin-button';
+      checkInButton.style.cssText='width:auto;min-width:132px;padding:10px 14px;border-radius:8px;font-weight:800;letter-spacing:.03em;';
+      checkInButton.textContent=officeLabel('CHECK IN','تسجيل الدخول');
+      checkInButton.disabled=!!visitor.checkedInAt;
+      if(visitor.checkedInAt){
+        checkInButton.classList.add('btn-outline');
+        checkInButton.textContent=officeLabel('CHECKED IN','تم تسجيل الدخول');
+      }
+      checkInButton.addEventListener('click',function(){checkInKsaOfficeVisitor(visitor,checkInButton);});
       var checkout=document.createElement('button');
       checkout.type='button';
-      checkout.className='btn-primary btn-outline';
-      checkout.style.cssText='width:auto;flex:none;padding:10px 14px;border-radius:8px;font-weight:800;letter-spacing:.03em;';
+      checkout.className='btn-primary btn-outline office-visitor-checkout-button';
+      checkout.style.cssText='width:auto;min-width:132px;padding:10px 14px;border-radius:8px;font-weight:800;letter-spacing:.03em;';
       checkout.textContent=officeLabel('CHECK OUT','تسجيل الخروج');
+      checkout.disabled=!visitor.checkedInAt;
       checkout.addEventListener('click',function(){checkOutKsaOfficeVisitor(visitor,checkout);});
-      card.append(details,checkout);
+      actions.append(checkInButton,checkout);
+      card.append(details,actions);
       list.appendChild(card);
     });
     updateOfficeVisitorElapsedTimers();
@@ -2382,6 +2415,34 @@
         button.disabled=false;
         button.textContent=button.dataset.officeCheckoutLabel||officeLabel('CHECK OUT','تسجيل الخروج');
         delete button.dataset.officeCheckoutLabel;
+      }
+    });
+  }
+
+  function checkInKsaOfficeVisitor(visitor,button){
+    if(!visitor||!visitor.recordId||visitor.checkedInAt)return;
+    if(button){
+      if(button.disabled)return;
+      button.disabled=true;
+      button.dataset.officeCheckinLabel=button.textContent||officeLabel('CHECK IN','تسجيل الدخول');
+      button.textContent=officeLabel('CHECKING IN...','جارٍ تسجيل الدخول...');
+    }
+    guardApiPost({action:'office_check_in_visitor',recordId:visitor.recordId}).then(function(result){
+      officeVisitorMutationVersion++;
+      visitor.checkedInAt=result.checkedInAt;
+      visitor.checkedInBy=result.checkedInBy||currentUser.name||'';
+      officeVisitorStatus=officeLabel(visitor.name+' checked in','تم تسجيل دخول '+visitor.name)+
+        (result.checkedInAt?': '+formatOfficeVisitorDateTime(result.checkedInAt):'.');
+      renderKsaOfficeVisitors();
+      var status=document.getElementById('office-visitor-status');
+      if(status)status.textContent=officeVisitorStatus;
+    }).catch(function(error){
+      alert('Unable to check in this visitor: '+(error&&error.message?error.message:'Unknown error'));
+      console.error('[Office visitors] Check-in failed.',error);
+      if(button){
+        button.disabled=false;
+        button.textContent=button.dataset.officeCheckinLabel||officeLabel('CHECK IN','تسجيل الدخول');
+        delete button.dataset.officeCheckinLabel;
       }
     });
   }
@@ -4823,11 +4884,11 @@
 
   async function openLiveCamera(type){targetPhotoType=type;const m=document.getElementById('custom-camera-modal');if(m){m.classList.remove('hidden');await startStream('camera-video-stream');}}
   function switchLiveCamera(){currentFacingMode=currentFacingMode==='environment'?'user':'environment';startStream('camera-video-stream');}
-  function captureLivePhoto(){const v=document.getElementById('camera-video-stream'),c=document.getElementById('camera-hidden-canvas');if(!v||!c)return;let width=v.videoWidth,height=v.videoHeight;const MAX_WIDTH=400;if(width>MAX_WIDTH){height=Math.round((height*MAX_WIDTH)/width);width=MAX_WIDTH;}c.width=width;c.height=height;c.getContext('2d').drawImage(v,0,0,width,height);const b64=c.toDataURL('image/jpeg',0.4);capturedImages[targetPhotoType]=b64;const p=document.getElementById('preview-'+targetPhotoType);if(p){p.src=b64;p.classList.remove('hidden');p.onclick=function(){openFullscreenImage(b64);};}let idStr='req-'+targetPhotoType;if(targetPhotoType==='team_iqama')idStr='req-team-iqama';if(targetPhotoType==='team_selfie')idStr='req-team-selfie';if(targetPhotoType==='team_imeiphoto')idStr='req-team-imeiphoto';if(targetPhotoType==='add_team_iqama')idStr='req-add-team-iqama';if(targetPhotoType==='add_team_selfie')idStr='req-add-team-selfie';if(targetPhotoType==='add_team_imeiphoto')idStr='req-add-team-imeiphoto';const fi=document.getElementById(idStr);if(fi){fi.value="";updateSelectedFileName(fi);}closeLiveCamera();}
+  function captureLivePhoto(){const v=document.getElementById('camera-video-stream'),c=document.getElementById('camera-hidden-canvas');if(!v||!c)return;let width=v.videoWidth,height=v.videoHeight;const MAX_WIDTH=400;if(width>MAX_WIDTH){height=Math.round((height*MAX_WIDTH)/width);width=MAX_WIDTH;}c.width=width;c.height=height;const context=c.getContext('2d');if(currentFacingMode==='user'){context.translate(width,0);context.scale(-1,1);}context.drawImage(v,0,0,width,height);const b64=c.toDataURL('image/jpeg',0.4);capturedImages[targetPhotoType]=b64;const p=document.getElementById('preview-'+targetPhotoType);if(p){p.src=b64;p.classList.remove('hidden');p.onclick=function(){openFullscreenImage(b64);};}let idStr='req-'+targetPhotoType;if(targetPhotoType==='team_iqama')idStr='req-team-iqama';if(targetPhotoType==='team_selfie')idStr='req-team-selfie';if(targetPhotoType==='team_imeiphoto')idStr='req-team-imeiphoto';if(targetPhotoType==='add_team_iqama')idStr='req-add-team-iqama';if(targetPhotoType==='add_team_selfie')idStr='req-add-team-selfie';if(targetPhotoType==='add_team_imeiphoto')idStr='req-add-team-imeiphoto';const fi=document.getElementById(idStr);if(fi){fi.value="";updateSelectedFileName(fi);}closeLiveCamera();}
   function closeLiveCamera(){if(liveStream){liveStream.getTracks().forEach(function(t2){t2.stop();});liveStream=null;}const m=document.getElementById('custom-camera-modal');if(m)m.classList.add('hidden');}
   function updateSelectedFileName(input){if(!input||input.type!=='file')return;const group=input.closest('.input-group');if(!group)return;let fileName=group.querySelector('.selected-file-name');if(input.files&&input.files.length){if(!fileName){fileName=document.createElement('span');fileName.className='selected-file-name';input.parentElement.insertAdjacentElement('afterend',fileName);}fileName.textContent=input.files[0].name;}else if(fileName)fileName.remove();}
   function clearCapturedData(type){capturedImages[type]=null;const p=document.getElementById('preview-'+type);if(p){p.classList.add('hidden');p.src="";}updateSelectedFileName(document.getElementById('req-'+type));}
-  async function startStream(vId){if(liveStream)liveStream.getTracks().forEach(function(t2){t2.stop();});if(!navigator.mediaDevices||typeof navigator.mediaDevices.getUserMedia!=='function'){alert("Live camera requires a supported browser and a secure HTTPS connection.");closeLiveCamera();return;}try{liveStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:currentFacingMode}});const ve=document.getElementById(vId);if(!ve)throw new Error("Camera preview is unavailable.");ve.muted=true;ve.playsInline=true;ve.srcObject=liveStream;await ve.play();}catch(e){console.error("Camera startup failed:",e);const message=e&&e.name==='NotAllowedError'?"Camera access was blocked. Allow camera access in your browser settings and try again.":"Unable to start the camera. Check camera permissions and try again.";alert(message);closeLiveCamera();}}
+  async function startStream(vId){if(liveStream)liveStream.getTracks().forEach(function(t2){t2.stop();});if(!navigator.mediaDevices||typeof navigator.mediaDevices.getUserMedia!=='function'){alert("Live camera requires a supported browser and a secure HTTPS connection.");closeLiveCamera();return;}try{liveStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:currentFacingMode}});const ve=document.getElementById(vId);if(!ve)throw new Error("Camera preview is unavailable.");ve.muted=true;ve.playsInline=true;ve.srcObject=liveStream;ve.style.transform=currentFacingMode==='user'?'scaleX(-1)':'';await ve.play();}catch(e){console.error("Camera startup failed:",e);const message=e&&e.name==='NotAllowedError'?"Camera access was blocked. Allow camera access in your browser settings and try again.":"Unable to start the camera. Check camera permissions and try again.";alert(message);closeLiveCamera();}}
 
   function parseFlexibleDate(s){if(!s)return null;if(s instanceof Date)return isNaN(s.getTime())?null:s;let d=new Date(s);if(!isNaN(d.getTime()))return d;if(typeof s==='string'){const p=s.trim().split(/[\/\-\s]/);if(p.length>=3){let p0=parseInt(p[0],10),p1=parseInt(p[1],10),p2=parseInt(p[2],10);if(p2<100)p2+=2000;if(p0>12)d=new Date(p2,p1-1,p0);else if(p1>12)d=new Date(p2,p0-1,p1);else d=new Date(p2,p1-1,p0);if(!isNaN(d.getTime()))return d;}}return null;}
   function formatToDDMMYYYY(s){if(!s)return '-';const d=parseFlexibleDate(s);if(!d)return '-';return String(d.getDate()).padStart(2,'0')+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+d.getFullYear();}
