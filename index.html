@@ -1556,15 +1556,19 @@
 
   function startAmbientPanels(){
     if(!currentUser||currentUser.role!=='guard')return;
-    if(String(currentUser.guardMode||'').toLowerCase()==='office'){
-      const officeLeft=document.getElementById('ambient-left');
-      const officeRight=document.getElementById('ambient-right');
-      if(officeLeft)officeLeft.classList.add('hidden');
-      if(officeRight)officeRight.classList.add('hidden');
-      return;
-    }
     const left=document.getElementById('ambient-left');
     const right=document.getElementById('ambient-right');
+    if(String(currentUser.guardMode||'').toLowerCase()==='office'){
+      if(left)left.classList.remove('hidden');
+      if(right)right.classList.remove('hidden');
+      if(right)right.classList.add('office-visitor-mode');
+      ambientShiftStart=loadOrCreateShiftStart();
+      tickAmbientClock();
+      if(ambientClockTimer)clearInterval(ambientClockTimer);
+      ambientClockTimer=setInterval(tickAmbientClock,1000);
+      return;
+    }
+    restoreKsaOfficeVisitorUi();
     if(left)left.classList.remove('hidden');
     if(right)right.classList.remove('hidden');
     
@@ -1706,6 +1710,27 @@
     if(refreshButton)refreshButton.textContent=officeLabel('REFRESH','تحديث');
   }
 
+  function restoreKsaOfficeVisitorUi(){
+    var dashboard=document.getElementById('dashboard-guard');
+    var scanner=dashboard&&dashboard.querySelector(':scope > .header + div');
+    var right=document.getElementById('ambient-right');
+    var panel=document.getElementById('office-visitors-panel');
+    var button=document.getElementById('btn-office-visitor');
+    var controls=dashboard&&dashboard.querySelector(':scope > .header .header-controls');
+    if(right)right.classList.remove('office-visitor-mode');
+    if(panel){
+      panel.style.cssText='width:100%;max-width:1100px;margin:22px auto;padding:22px;background:linear-gradient(155deg,rgba(17,23,34,.98),rgba(11,15,23,.98));border:1px solid rgba(56,217,169,.25);border-radius:14px;box-shadow:0 18px 46px rgba(0,0,0,.27);';
+      panel.classList.add('hidden');
+      if(scanner)scanner.insertAdjacentElement('afterend',panel);
+    }
+    if(button){
+      button.classList.add('hidden');
+      button.style.cssText='width:auto;padding:9px 14px;';
+      if(controls)controls.insertBefore(button,controls.querySelector('button[onclick="logout()"]')||null);
+    }
+    if(dashboard)dashboard.classList.remove('office-guard-mode');
+  }
+
   function ensureKsaOfficeVisitorUi(){
     var dashboard=document.getElementById('dashboard-guard');
     var header=dashboard&&dashboard.querySelector(':scope > .header');
@@ -1713,17 +1738,17 @@
     if(!dashboard||!header||!controls)return;
     dashboard.classList.add('office-guard-mode');
     var scanner=header.nextElementSibling;
-    if(scanner)scanner.style.display='none';
+    if(scanner)scanner.style.display='';
     var visitorButton=document.getElementById('btn-office-visitor');
     if(!visitorButton){
       visitorButton=document.createElement('button');
       visitorButton.id='btn-office-visitor';
       visitorButton.type='button';
       visitorButton.className='btn-primary';
-      visitorButton.style.cssText='width:auto;padding:9px 14px;';
+      visitorButton.style.cssText='width:100%;padding:11px 14px;margin:0 0 16px;';
       visitorButton.addEventListener('click',openKsaOfficeVisitorForm);
-      controls.insertBefore(visitorButton,controls.querySelector('button[onclick="logout()"]')||null);
     }
+    visitorButton.classList.remove('hidden');
     var panel=document.getElementById('office-visitors-panel');
     if(!panel){
       panel=document.createElement('section');
@@ -1748,8 +1773,32 @@
       list.id='office-visitors-list';
       list.style.cssText='display:flex;flex-direction:column;gap:10px;';
       panel.append(heading,status,list);
+    }
+    var sessionStrip=document.getElementById('guard-session-strip');
+    if(sessionStrip)sessionStrip.insertAdjacentElement('afterend',visitorButton);
+    var right=document.getElementById('ambient-right');
+    if(right){
+      right.classList.add('office-visitor-mode');
+      if(!document.getElementById('office-visitor-layout-style')){
+        var layoutStyle=document.createElement('style');
+        layoutStyle.id='office-visitor-layout-style';
+        layoutStyle.textContent='#ambient-right.office-visitor-mode> :not(#office-visitors-panel){display:none!important}#ambient-right.office-visitor-mode{max-height:calc(100vh - 270px);overflow-y:auto}#office-visitors-panel.office-visitor-compact{width:100%;max-width:none;margin:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none}#office-visitors-panel.office-visitor-compact #office-visitors-list>article{flex-direction:column;align-items:flex-start!important}#office-visitors-panel.office-visitor-compact #office-visitors-list>article button{align-self:flex-start}';
+        document.head.appendChild(layoutStyle);
+      }
+    }
+    panel.style.cssText='width:100%;max-width:1100px;margin:22px auto;padding:22px;background:linear-gradient(155deg,rgba(17,23,34,.98),rgba(11,15,23,.98));border:1px solid rgba(56,217,169,.25);border-radius:14px;box-shadow:0 18px 46px rgba(0,0,0,.27);';
+    panel.classList.remove('hidden');
+    if(window.matchMedia('(min-width: 1280px)').matches&&right){
+      panel.classList.add('office-visitor-compact');
+      panel.style.cssText='width:100%;max-width:none;margin:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;';
+      right.appendChild(panel);
+    }else{
+      panel.classList.remove('office-visitor-compact');
       if(scanner)scanner.insertAdjacentElement('afterend',panel);
       else header.insertAdjacentElement('afterend',panel);
+    }
+    if(sessionStrip&&visitorButton.parentElement!==sessionStrip.parentElement){
+      sessionStrip.insertAdjacentElement('afterend',visitorButton);
     }
     var modal=document.getElementById('office-visitor-modal');
     if(!modal){
@@ -4126,6 +4175,7 @@
           populateGuardSessionStrip();
           if(String(currentUser.guardMode||'').toLowerCase()==='office'){
             ensureKsaOfficeVisitorUi();
+            startAmbientPanels();
             refreshKsaOfficeVisitors();
             if(officeVisitorRefreshTimer)clearInterval(officeVisitorRefreshTimer);
             officeVisitorRefreshTimer=setInterval(function(){refreshKsaOfficeVisitors(true);},30000);
