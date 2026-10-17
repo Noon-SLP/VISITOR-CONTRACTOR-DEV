@@ -406,9 +406,12 @@
   #dashboard-admin #office-visitor-history-panel{width:100%}
   #dashboard-admin #office-visitor-history-panel .table-responsive{overflow-x:auto}
   #dashboard-admin #office-visitor-history-panel table{min-width:1100px}
-  #dashboard-admin #admin-sec-history>.admin-card-title{gap:10px}
-  #dashboard-admin #admin-sec-history>.admin-card-title>button{flex:0 0 auto;min-height:30px!important;padding:6px 10px!important;border:1px solid rgba(255,199,0,.32);border-radius:7px!important;background:rgba(255,199,0,.07);color:#f3cf55;font-size:9px!important;font-weight:800;letter-spacing:.045em;white-space:nowrap}
-  #dashboard-admin #admin-sec-history>.admin-card-title>#office-history-toggle{margin-left:auto}
+  #dashboard-admin #admin-sec-history>.admin-card-title{justify-content:flex-start!important;gap:9px}
+  #dashboard-admin #admin-sec-history>.admin-card-title>button{width:auto!important;min-width:0!important;flex:0 0 auto;min-height:30px!important;padding:6px 10px!important;border:1px solid rgba(255,199,0,.32);border-radius:7px!important;background:rgba(255,199,0,.07);color:#f3cf55;font-size:9px!important;font-weight:800;letter-spacing:.045em;white-space:nowrap}
+  #dashboard-admin #admin-sec-history>.admin-card-title>#history-sort-btn,
+  #dashboard-admin #admin-sec-history>.admin-card-title>#office-history-toggle{margin:0!important}
+  #dashboard-admin #admin-sec-history.office-history-mode #history-tools,
+  #dashboard-admin #admin-sec-history.office-history-mode>.admin-data-scope{display:none!important}
   #dashboard-admin #admin-sec-history.office-history-mode>.admin-card-title>[data-i18n="access_history"]{color:#ffe17a;font-size:15px;font-weight:900;letter-spacing:.12em}
   #dashboard-admin #office-visitor-history-panel{padding:0 15px 16px}
   #dashboard-admin #office-visitor-history-panel .office-history-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:14px 0 12px;padding:13px 16px;border:1px solid rgba(255,199,0,.18);border-radius:11px;background:linear-gradient(110deg,rgba(255,199,0,.105),rgba(70,167,255,.055) 58%,rgba(255,255,255,.018));box-shadow:inset 0 1px rgba(255,255,255,.045)}
@@ -441,13 +444,13 @@
     #dashboard-admin #admin-sec-history>.admin-card-title{flex-wrap:wrap}
     #dashboard-admin #admin-sec-history.office-history-mode>.admin-card-title>[data-i18n="access_history"]{flex-basis:100%}
   }
-  #dashboard-ops .office-visitor-card{display:grid!important;grid-template-columns:minmax(0,1fr) auto;align-items:center!important;gap:12px!important}
-  #dashboard-ops .office-visitor-details{min-width:0;overflow:hidden}
-  #dashboard-ops .office-visitor-checkin{display:flex!important;align-self:flex-start;max-width:100%;width:max-content;box-sizing:border-box;white-space:normal;line-height:1.45;overflow-wrap:anywhere}
-  #dashboard-ops .office-visitor-card>button{width:auto!important;max-width:150px;min-width:116px;white-space:normal;line-height:1.25}
+  #dashboard-guard .office-visitor-card{display:grid!important;width:100%;box-sizing:border-box;grid-template-columns:minmax(0,1fr) auto;align-items:center!important;gap:12px!important}
+  #dashboard-guard .office-visitor-details{width:100%;min-width:0;box-sizing:border-box;overflow:hidden}
+  #dashboard-guard .office-visitor-checkin{display:flex!important;align-self:flex-start;max-width:100%;width:max-content;box-sizing:border-box;white-space:normal;line-height:1.45;overflow-wrap:anywhere}
+  #dashboard-guard .office-visitor-card>button{width:auto!important;max-width:150px;min-width:116px;white-space:normal;line-height:1.25}
   @media(max-width:520px){
-    #dashboard-ops .office-visitor-card{grid-template-columns:minmax(0,1fr)}
-    #dashboard-ops .office-visitor-card>button{justify-self:start;max-width:none}
+    #dashboard-guard .office-visitor-card{grid-template-columns:minmax(0,1fr)}
+    #dashboard-guard .office-visitor-card>button{justify-self:start;max-width:none}
   }
   #dashboard-admin #admin-table-active td:nth-child(2),#dashboard-admin #admin-table-active th:nth-child(2){width:13%}
   #dashboard-admin #admin-table-active td:nth-child(3),#dashboard-admin #admin-table-active th:nth-child(3){width:19%}
@@ -631,6 +634,7 @@
     body:not(.sidebar-minimized) #sidebar .sidebar-nav .nav-text{display:inline}
     body:not(.sidebar-minimized) #sidebar .sidebar-footer{display:block}
     #app-layout>#main-content{flex:1 1 0;width:calc(100% - 56px);min-width:0;margin-inline-start:56px!important;margin-inline-end:0!important}
+    #app-layout>#sidebar[style*="display: none"]+#main-content{flex-basis:100%;width:100%;margin-inline-start:0!important;margin-inline-end:0!important}
     #dashboard-admin{width:100%;min-width:0;padding-inline:10px!important}
     #dashboard-admin .admin-header-top{width:100%;min-width:0}
     #dashboard-admin .admin-nav-horizontal{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;width:100%;max-width:100%;overflow:visible}
@@ -834,6 +838,7 @@
     body:not(.sidebar-minimized) #sidebar .sidebar-nav .nav-text{display:inline}
     body:not(.sidebar-minimized) #sidebar .sidebar-footer{display:block}
     #app-layout>#main-content{flex:1 1 0;width:calc(100% - 56px);min-width:0;margin-inline-start:56px!important;margin-inline-end:0!important}
+    #app-layout>#sidebar[style*="display: none"]+#main-content{flex-basis:100%;width:100%;margin-inline-start:0!important;margin-inline-end:0!important}
     #dashboard-admin{width:100%;min-width:0;padding-inline:10px!important}
     #dashboard-admin .admin-nav-horizontal{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;width:100%;max-width:100%;overflow:visible}
     #dashboard-admin .admin-nav-horizontal li{min-width:0;padding:8px 4px;font-size:10px;text-align:center}
@@ -7307,4 +7312,4 @@
   })();
   </script>
   </body></html>
-  
+    
