@@ -450,8 +450,10 @@
   #dashboard-guard .office-visitor-checkin{display:flex!important;align-self:flex-start;max-width:100%;width:max-content;box-sizing:border-box;white-space:normal;line-height:1.45;overflow-wrap:anywhere}
   #dashboard-guard .office-visitor-actions{min-width:132px}
   #dashboard-guard .office-visitor-actions>button{width:100%!important;max-width:180px;min-width:132px;white-space:normal;line-height:1.25}
-  #dashboard-guard .office-visitor-checkin-button{background:#16a34a;border-color:#22c55e;color:#fff}
-  #dashboard-guard .office-visitor-checkout-button{background:#dc2626;border-color:#ef4444;color:#fff}
+  #dashboard-guard .office-visitor-actions>.btn-primary.office-visitor-checkin-button,
+  #dashboard-guard .office-visitor-actions>.btn-primary.btn-outline.office-visitor-checkin-button{background:#16a34a!important;border-color:#22c55e!important;color:#fff!important}
+  #dashboard-guard .office-visitor-actions>.btn-primary.office-visitor-checkout-button,
+  #dashboard-guard .office-visitor-actions>.btn-primary.btn-outline.office-visitor-checkout-button{background:#dc2626!important;border-color:#ef4444!important;color:#fff!important}
   #dashboard-guard .office-visitor-actions>button:disabled{opacity:.58;cursor:not-allowed}
   @media(max-width:520px){
     #dashboard-guard .office-visitor-card{grid-template-columns:minmax(0,1fr)}
@@ -2161,7 +2163,7 @@
     var canvas=document.createElement('canvas');
     var width=video.videoWidth;
     var height=video.videoHeight;
-    var maxWidth=1600;
+    var maxWidth=1400;
     if(width>maxWidth){height=Math.round(height*maxWidth/width);width=maxWidth;}
     canvas.width=width;
     canvas.height=height;
@@ -2171,7 +2173,7 @@
       context.scale(-1,1);
     }
     context.drawImage(video,0,0,width,height);
-    officeVisitorCapturedIdCopy=canvas.toDataURL('image/jpeg',0.86);
+    officeVisitorCapturedIdCopy=canvas.toDataURL('image/jpeg',0.7);
     var photo=document.getElementById('office-visitor-id-copy');
     if(photo)photo.value='';
     if(preview){
@@ -2185,7 +2187,22 @@
   function readOfficeVisitorIdCopy(file){
     return new Promise(function(resolve,reject){
       var reader=new FileReader();
-      reader.onload=function(){resolve(String(reader.result||''));};
+      reader.onload=function(){
+        var image=new Image();
+        image.onload=function(){
+          var maxDimension=1400;
+          var scale=Math.min(1,maxDimension/Math.max(image.naturalWidth,image.naturalHeight));
+          var canvas=document.createElement('canvas');
+          canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));
+          canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));
+          var context=canvas.getContext('2d');
+          if(!context){reject(new Error('The selected ID image could not be processed.'));return;}
+          context.drawImage(image,0,0,canvas.width,canvas.height);
+          resolve(canvas.toDataURL('image/jpeg',0.7));
+        };
+        image.onerror=function(){reject(new Error('The selected ID image could not be decoded.'));};
+        image.src=String(reader.result||'');
+      };
       reader.onerror=function(){reject(new Error('The selected ID image could not be read.'))};
       reader.readAsDataURL(file);
     });
@@ -7373,4 +7390,4 @@
   })();
   </script>
   </body></html>
-    
+  
