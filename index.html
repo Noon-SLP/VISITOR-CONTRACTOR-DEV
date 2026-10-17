@@ -2180,6 +2180,13 @@
       elapsed.className='office-visitor-elapsed';
       elapsed.dataset.checkedInAt=visitor.checkedInAt||'';
       elapsed.style.cssText='color:#c2ccda;font-size:12px;line-height:1.5;font-variant-numeric:tabular-nums;';
+      var elapsedLabel=document.createElement('span');
+      elapsedLabel.className='office-visitor-elapsed-label';
+      elapsedLabel.textContent=officeLabel('TIME INSIDE: ','الوقت داخل المكتب: ');
+      var elapsedValue=document.createElement('strong');
+      elapsedValue.className='office-visitor-elapsed-value';
+      elapsedValue.style.cssText='color:var(--noon-yellow);font-weight:800;';
+      elapsed.append(elapsedLabel,elapsedValue);
       details.append(name,checkin,meta,elapsed);
       var checkout=document.createElement('button');
       checkout.type='button';
@@ -2205,7 +2212,10 @@
 
   function updateOfficeVisitorElapsedTimers(){
     document.querySelectorAll('.office-visitor-elapsed').forEach(function(timer){
-      timer.textContent=officeLabel('TIME INSIDE: ','الوقت داخل المكتب: ')+formatOfficeVisitorElapsed(timer.dataset.checkedInAt||'');
+      var label=timer.querySelector('.office-visitor-elapsed-label');
+      var value=timer.querySelector('.office-visitor-elapsed-value');
+      if(label)label.textContent=officeLabel('TIME INSIDE: ','الوقت داخل المكتب: ');
+      if(value)value.textContent=formatOfficeVisitorElapsed(timer.dataset.checkedInAt||'');
     });
     if(!officeVisitorElapsedTimer&&currentUser&&currentUser.role==='guard'&&String(currentUser.guardMode||'').toLowerCase()==='office'){
       officeVisitorElapsedTimer=setInterval(updateOfficeVisitorElapsedTimers,1000);
@@ -4433,58 +4443,72 @@
       }
       const adminRoute=role==='staff'||role==='admin'||role==='superadmin';
       const savedSessionKeys=adminRoute?[SESSION_KEY]:[SESSION_KEY,GUARD_SESSION_KEY];
+      const savedSessionEntries=[];
+      [localStorage,sessionStorage].forEach(function(storage){
+        savedSessionKeys.forEach(function(sessionKey){
+          savedSessionEntries.push({storage:storage,key:sessionKey});
+        });
+      });
       const checkedSessionKeys=new Set();
-      for(const sessionKey of savedSessionKeys){
-        if(checkedSessionKeys.has(sessionKey))continue;
-        checkedSessionKeys.add(sessionKey);
-        const sessionText=localStorage.getItem(sessionKey);
+      for(const sessionEntry of savedSessionEntries){
+        const sessionKey=sessionEntry.key;
+        const checkedKey=(sessionEntry.storage===sessionStorage?'session:':'local:')+sessionKey;
+        if(checkedSessionKeys.has(checkedKey))continue;
+        checkedSessionKeys.add(checkedKey);
+        const sessionText=sessionEntry.storage.getItem(sessionKey);
         if(!sessionText)continue;
         let savedSession;
         try{
           savedSession=JSON.parse(sessionText);
         }catch(parseError){
           console.warn('[Session] Removing unreadable saved session.',parseError);
-          localStorage.removeItem(sessionKey);
+          sessionEntry.storage.removeItem(sessionKey);
           continue;
         }
         const savedUser=savedSession&&savedSession.user;
         const loginTime=Number(savedSession&&savedSession.time);
-        const age=Date.now()-loginTime;
+        const guardExpiry=Number(savedSession&&savedSession.expiresAt)||
+          Number(savedUser&&savedUser.expiresAt)||loginTime+SESSION_MAX_AGE_MS;
         const adminSessionValid=savedUser&&savedUser.role==='admin'&&savedUser.adminToken&&
           Number(savedUser.expiresAt)>Date.now()&&
           (savedUser.accessLevel==='superadmin'||(role!=='superadmin'&&savedUser.accessLevel==='facility'));
         const guardSessionValid=savedUser&&savedUser.role==='guard'&&
-          typeof savedUser.guardToken==='string'&&savedUser.guardToken.length>0;
+          typeof savedUser.guardToken==='string'&&savedUser.guardToken.length>0&&
+          Number.isFinite(guardExpiry)&&guardExpiry>Date.now();
         const savedRoleMatches=adminRoute
           ?adminSessionValid
           :(savedUser&&savedUser.role==='guard'?guardSessionValid:(!savedUser||savedUser.role!=='admin'));
-        if(age>=0&&age<SESSION_MAX_AGE_MS&&savedRoleMatches){
+        const loginTimeValid=Number.isFinite(loginTime)&&loginTime>0&&loginTime<=Date.now();
+        if(savedRoleMatches&&(savedUser.role==='guard'||(loginTimeValid&&Date.now()-loginTime<SESSION_MAX_AGE_MS))){
           currentUser=savedUser;
-          if(currentUser.role==='guard')scheduleGuardSessionExpiry(loginTime);
+          if(currentUser.role==='guard')scheduleGuardSessionExpiry(guardExpiry);
           initApp();
           break;
         }
-        localStorage.removeItem(sessionKey);
+        sessionEntry.storage.removeItem(sessionKey);
       }
   });
 
   function saveSession(){
     if(!currentUser)return;
     const loginTime=Date.now();
-    const sessionText=JSON.stringify({user:currentUser,time:loginTime});
-    try{
-      localStorage.setItem(SESSION_KEY,sessionText);
-      if(currentUser.role==='guard'){
-        localStorage.setItem(GUARD_SESSION_KEY,sessionText);
-        scheduleGuardSessionExpiry(loginTime);
+    const guardExpiry=currentUser.role==='guard'
+      ?Number(currentUser.expiresAt)||loginTime+SESSION_MAX_AGE_MS
+      :null;
+    const sessionText=JSON.stringify({user:currentUser,time:loginTime,expiresAt:guardExpiry});
+    [localStorage].concat(currentUser.role==='guard'?[sessionStorage]:[]).forEach(function(storage){
+      try{
+        storage.setItem(SESSION_KEY,sessionText);
+        if(currentUser.role==='guard')storage.setItem(GUARD_SESSION_KEY,sessionText);
+      }catch(storageError){
+        console.error('[Session] Unable to save the signed-in session to browser storage.',storageError);
       }
-    }catch(storageError){
-      console.error('[Session] Unable to save the signed-in session.',storageError);
-    }
+    });
+    if(currentUser.role==='guard')scheduleGuardSessionExpiry(guardExpiry);
   }
-  function scheduleGuardSessionExpiry(loginTime){
+  function scheduleGuardSessionExpiry(expiresAt){
     if(guardSessionExpiryTimer)clearTimeout(guardSessionExpiryTimer);
-    const remaining=SESSION_MAX_AGE_MS-(Date.now()-Number(loginTime));
+    const remaining=Number(expiresAt)-Date.now();
     if(remaining<=0){
       logout();
       return;
@@ -4516,7 +4540,11 @@
     if(guardSessionExpiryTimer){clearTimeout(guardSessionExpiryTimer);guardSessionExpiryTimer=null;}
     clearShiftStart(); // <-- Reset shift timer on logout
     localStorage.removeItem(SESSION_KEY);
-    if(currentUser&&currentUser.role==='guard')localStorage.removeItem(GUARD_SESSION_KEY);
+    sessionStorage.removeItem(SESSION_KEY);
+    if(currentUser&&currentUser.role==='guard'){
+      localStorage.removeItem(GUARD_SESSION_KEY);
+      sessionStorage.removeItem(GUARD_SESSION_KEY);
+    }
     Object.keys(localStorage).forEach(function(key){if(key.startsWith('user_pin_')||key.startsWith('pin_unlock_until_'))localStorage.removeItem(key);});
     Object.keys(sessionStorage).forEach(function(key){if(key.startsWith('user_pin_')||key.startsWith('pin_unlock_until_'))sessionStorage.removeItem(key);});
     try{if(html5QrCode&&html5QrCode.isScanning)html5QrCode.stop();}catch(e){}
