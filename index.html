@@ -1399,6 +1399,8 @@
   var guardSignupMode=false;
   var guardChangeLocationMode=false;
   let adminRefreshInProgress=false;
+  let adminHistoryRefreshInProgress=false;
+  let adminHistoryLastLoadedAt=0;
   let currentQRViewDataUrl='';
 
   // ============================================================
@@ -3733,6 +3735,9 @@
         const cacheOwner=JSON.stringify([currentUser.email||'',currentUser.accessLevel||'',currentUser.location||'ALL']);
         if(localStorage.getItem('cached_admin_data_owner')!==cacheOwner){
           localStorage.removeItem('cached_admin_data');
+          localStorage.removeItem('cached_admin_history');
+          globalAdminHistory=[];
+          adminHistoryLastLoadedAt=0;
           localStorage.setItem('cached_admin_data_owner',cacheOwner);
         }
         if(vn)vn.value='';if(ae)ae.value='';
@@ -3752,9 +3757,10 @@
         try{
           const c=localStorage.getItem('cached_admin_data');
           if(c){
-            const parsed=JSON.parse(c);
-            if(Array.isArray(parsed)){sanitizeCachedPassPins(parsed);localStorage.setItem('cached_admin_data',JSON.stringify(parsed));globalAdminHistory=[];renderAdminData(parsed.slice().reverse());}
-            else if(parsed&&Array.isArray(parsed.passes)){sanitizeCachedPassPins(parsed.passes);localStorage.setItem('cached_admin_data',JSON.stringify(parsed));globalAdminHistory=Array.isArray(parsed.history)?parsed.history:[];renderAdminData(parsed.passes.slice().reverse());}
+            if(c.trim().charAt(0)==='['){
+              const parsed=JSON.parse(c);
+              if(Array.isArray(parsed)){sanitizeCachedPassPins(parsed);localStorage.setItem('cached_admin_data',JSON.stringify(parsed));renderAdminData(parsed.slice().reverse());}
+            }else localStorage.removeItem('cached_admin_data');
           }
         }catch(e){}
 
@@ -4258,6 +4264,18 @@
     var section=document.getElementById('admin-sec-'+tName);
     if(section)section.classList.remove('hidden');
     if(tName==='facility-admin-requests'&&currentUser&&currentUser.accessLevel==='superadmin')refreshFacilityAdminRequests();
+    if((tName==='history'||tName==='analytics')&&!globalAdminHistory.length){
+      try{
+        const cachedHistory=JSON.parse(localStorage.getItem('cached_admin_history')||'null');
+        if(Array.isArray(cachedHistory))globalAdminHistory=cachedHistory;
+      }catch(error){localStorage.removeItem('cached_admin_history');}
+    }
+    if(tName==='history'&&(globalAdminHistory.length||adminHistoryLastLoadedAt))renderHistorySheetRows(globalAdminHistory);
+    if(tName==='analytics'&&globalAdminHistory.length){
+      const totalEvents=document.getElementById('stat-total-events');
+      if(totalEvents)totalEvents.textContent=String(getFilteredHistoryRows(globalAdminHistory).length);
+    }
+    if(tName==='history'||tName==='analytics')loadAdminHistory(false);
     if(tName==='guard-requests'&&currentUser&&(currentUser.role==='admin'||currentUser.role==='superadmin')){
       refreshGuardSignupRequests(true);
       refreshGuardLocationChangeRequests();
@@ -4266,6 +4284,7 @@
   }
   function applyAdminDateFilter(){
     renderAdminData(globalAdminData);
+    if(document.querySelector('#nav-history.active'))renderHistorySheetRows(globalAdminHistory);
     var activeTab=document.querySelector('.admin-nav-horizontal li.active');
     if(!activeTab)return;
     if(activeTab.id==='nav-facility-admin-requests'&&currentUser&&currentUser.accessLevel==='superadmin'){
@@ -4709,14 +4728,14 @@
     globalAdminData=data;
     ensureAdminDataScopeControls('approvals',document.getElementById('admin-sec-approvals'));
     ensureAdminDataScopeControls('analytics',document.getElementById('admin-sec-analytics'));
-    const tPending=document.getElementById('admin-table-pending'),tActive=document.getElementById('admin-table-active'),tHistory=document.getElementById('admin-table-history');
-    let hPending='',hActionPending='',hActive='',hHistory='';
+    const tPending=document.getElementById('admin-table-pending'),tActive=document.getElementById('admin-table-active');
+    let hPending='',hActionPending='',hActive='';
     const today=new Date();today.setHours(0,0,0,0);
     const tomorrow=new Date(today.getTime());tomorrow.setDate(tomorrow.getDate()+1);
     let si=document.getElementById('filter-start'),ei=document.getElementById('filter-end');
     let fStart=(si&&si.value)?si.value:'';
     let fEnd=(ei&&ei.value)?ei.value:'';
-    let pendingCount=0,activeCount=0,historyCount=0;
+    let pendingCount=0,activeCount=0;
     let aDate={},aType={},aFacility={},aStatus={};
     data.forEach(function(row){
       if(!row||!row.UniqueID)return;
@@ -4738,39 +4757,6 @@
       if(dateBadge!=='')dateBadge='<br>'+dateBadge;
       const finalDateStr=dateStr+dateBadge;
       if(inRange){
-        let visits=parseLogs(row);
-        let dailyCounts={};
-        visits.forEach(function(v){if(v.in){let dStr=formatToDDMMYYYY(v.in);dailyCounts[dStr]=(dailyCounts[dStr]||0)+1;}});
-        let visitTrackers={};
-        if(visits.length===0){
-          if(isPassExpiredOrFinished){
-            let finalStatus=rStatus,sColor='var(--text-muted)';
-            if(rStatus==='Rejected'){finalStatus=t('status_rejected');sColor='var(--danger)';}
-            else if(isExpired){finalStatus=t('status_expired');sColor='var(--danger)';}
-            else if(rStatus==='Completed'){finalStatus=t('status_completed');sColor='var(--success)';}
-            let badge='<br><span style="color:'+sColor+';font-size:10px;font-weight:bold;">'+finalStatus+'</span>';
-            hHistory+='<tr><td style="color:var(--text-muted);">'+dateStr+'</td><td><strong>'+rVisitorName+'</strong>'+badge+'</td><td><strong style="color:var(--noon-yellow);">'+t(rType.toLowerCase())+'</strong></td><td>'+rLocation+'</td><td style="color:#10b981;font-size:12px;font-weight:bold;">-</td><td style="color:#3b82f6;font-size:12px;font-weight:bold;">-</td><td style="color:var(--text-muted);font-size:11px;">-</td><td style="color:var(--text-muted);font-size:11px;">-</td></tr>';
-            historyCount++;
-          }
-        }else{
-          visits.forEach(function(v){
-            if(v.out||isPassExpiredOrFinished){
-              let inStr=v.in?formatTime(v.in):'-';
-              let outStr=v.out?formatTime(v.out):'<span style="color:var(--danger);font-weight:bold;">Missed Out-Scan</span>';
-              let durStr='-';
-              if(v.in&&v.out){let diffMins=Math.floor((v.out.getTime()-v.in.getTime())/60000);if(diffMins<0)diffMins=0;let hs=Math.floor(diffMins/60);let ms=diffMins%60;durStr='<span style="color:var(--noon-yellow);font-weight:bold;">'+hs+'h '+ms+'m</span>';}
-              let gStr=v.guardIn||'-';if(v.guardOut&&v.guardOut!==v.guardIn)gStr+=' / '+v.guardOut;
-              let dStr=v.in?formatToDDMMYYYY(v.in):'';
-              let dayCount=dailyCounts[dStr]||1;
-              visitTrackers[dStr]=(visitTrackers[dStr]||0)+1;
-              let visitBadge='';
-              if(dayCount>1){visitBadge='<br><span style="color:var(--noon-yellow);font-size:9px;font-weight:bold;letter-spacing:0.5px;text-transform:uppercase;">VISIT '+visitTrackers[dStr]+' OF '+dayCount+' (THIS DAY)</span>';}
-              else{visitBadge='<br><span style="color:var(--text-muted);font-size:9px;font-weight:bold;letter-spacing:0.5px;text-transform:uppercase;">VISIT 1 OF 1</span>';}
-              hHistory+='<tr><td style="color:var(--text-muted);">'+dateStr+'</td><td><strong>'+rVisitorName+'</strong>'+visitBadge+'</td><td><strong style="color:var(--noon-yellow);">'+t(rType.toLowerCase())+'</strong></td><td>'+rLocation+'</td><td style="color:#10b981;font-size:12px;font-weight:bold;">'+inStr+'</td><td style="color:#3b82f6;font-size:12px;font-weight:bold;">'+outStr+'</td><td style="font-size:12px;">'+durStr+'</td><td style="color:var(--text-muted);font-size:11px;">🛡️ '+gStr+'</td></tr>';
-              historyCount++;
-            }
-          });
-        }
         if(!isPassExpiredOrFinished&&matchesAdminDataScope(row,'approvals')){
           let newCount=0,removeCount=0,revokeCount=0,deviceAddCount=0;
           let tMembersStr=String(row.TeamMembers||'');
@@ -4830,8 +4816,6 @@
     });
     if(tPending){hPending=hActionPending+hPending;if(pendingCount===0)hPending='<tr><td colspan="5" class="text-center" style="padding:30px;">'+t("msg_no_pending")+'</td></tr>';tPending.innerHTML=hPending;}
     if(tActive){if(activeCount===0)hActive='<tr><td colspan="8" class="text-center" style="padding:30px;">'+t("msg_no_active")+'</td></tr>';tActive.innerHTML=hActive;}
-    if(tHistory){if(historyCount===0)hHistory='<tr><td colspan="8" class="text-center" style="padding:30px;">'+t("msg_no_history")+'</td></tr>';tHistory.innerHTML=hHistory;}
-    if(Array.isArray(globalAdminHistory))renderHistorySheetRows(globalAdminHistory);
     updateAdminPendingBadges(countPendingAccessRequests(data),facilityAdminPendingCount);
     const st=document.getElementById('stat-type');if(st)st.innerHTML=Object.keys(aType).map(function(k){return '<div class="stat-row"><span>'+t(k.toLowerCase())+'</span><span class="stat-val">'+aType[k]+'</span></div>';}).join('')||'<div class="stat-row"><span>-</span></div>';
     const sf=document.getElementById('stat-facility');if(sf)sf.innerHTML=Object.keys(aFacility).map(function(k){return '<div class="stat-row"><span>'+k+'</span><span class="stat-val">'+aFacility[k]+'</span></div>';}).join('')||'<div class="stat-row"><span>-</span></div>';
@@ -4839,7 +4823,7 @@
     const scopedPassCount=data.filter(function(pass){return matchesAdminDataScope(pass,'analytics');}).length;
     const scopedHistoryCount=getFilteredHistoryRows(globalAdminHistory).length;
     sHtml+='<div class="stat-row" style="border-bottom:2px solid var(--noon-yellow);"><span style="color:var(--noon-yellow);font-weight:bold;">TOTAL PASSES</span><span class="stat-val" style="color:var(--noon-yellow);">'+scopedPassCount+'</span></div>';
-    sHtml+='<div class="stat-row" style="border-bottom:2px solid var(--noon-yellow);"><span style="color:var(--noon-yellow);font-weight:bold;">TOTAL ACCESS EVENTS</span><span class="stat-val" style="color:var(--noon-yellow);">'+scopedHistoryCount+'</span></div>';
+    sHtml+='<div class="stat-row" style="border-bottom:2px solid var(--noon-yellow);"><span style="color:var(--noon-yellow);font-weight:bold;">TOTAL ACCESS EVENTS</span><span id="stat-total-events" class="stat-val" style="color:var(--noon-yellow);">'+scopedHistoryCount+'</span></div>';
     if(aStatus['Approved'])sHtml+='<div class="stat-row"><span style="color:var(--success)">'+t('status_approved')+'</span><span class="stat-val">'+aStatus['Approved']+'</span></div>';
     if(aStatus['Pending'])sHtml+='<div class="stat-row"><span style="color:var(--noon-yellow)">'+t('status_pending')+'</span><span class="stat-val">'+aStatus['Pending']+'</span></div>';
     if(aStatus['Rejected'])sHtml+='<div class="stat-row"><span style="color:var(--danger)">'+t('status_rejected')+'</span><span class="stat-val">'+aStatus['Rejected']+'</span></div>';
@@ -4856,23 +4840,64 @@
     adminRefreshInProgress=true;
     isSilent=!!isSilent;
     const cachedM=localStorage.getItem('cached_admin_data');
-    if(cachedM&&!isSilent){try{let parsedM=JSON.parse(cachedM);if(Array.isArray(parsedM)){globalAdminHistory=[];renderAdminData(parsedM.slice().reverse());}else if(parsedM&&Array.isArray(parsedM.passes)){globalAdminHistory=Array.isArray(parsedM.history)?parsedM.history:[];renderAdminData(parsedM.passes.slice().reverse());}else localStorage.removeItem('cached_admin_data');}catch(e){localStorage.removeItem('cached_admin_data');}}
+    if(cachedM&&!isSilent){
+      try{
+        if(cachedM.trim().charAt(0)==='['){
+          const parsedM=JSON.parse(cachedM);
+          if(Array.isArray(parsedM))renderAdminData(parsedM.slice().reverse());
+          else localStorage.removeItem('cached_admin_data');
+        }else localStorage.removeItem('cached_admin_data');
+      }catch(e){localStorage.removeItem('cached_admin_data');}
+    }
     try{
-      const dataMain=convertDriveUrls(await appsScriptJsonp({action:'get_all'},null,30000));
-      if(dataMain&&(Array.isArray(dataMain)||Array.isArray(dataMain.passes))){
-        globalAdminHistory=Array.isArray(dataMain.history)?dataMain.history:[];
+      const dataMain=convertDriveUrls(await appsScriptJsonp({action:'get_admin_passes'},null,30000));
+      if(Array.isArray(dataMain)){
         const newMStr=JSON.stringify(dataMain);
         if(isSilent&&cachedM===newMStr)return;
         localStorage.setItem('cached_admin_data',newMStr);
-        renderAdminData((Array.isArray(dataMain)?dataMain:dataMain.passes).slice().reverse());
+        renderAdminData(dataMain.slice().reverse());
       }else{
-        renderAdminData([]);
+        throw new Error('The admin pass list response was invalid.');
       }
     }catch(e){
       renderAdminData(globalAdminData||[]);
       if(!isSilent)console.error('[Admin data] Refresh failed; preserving the last rendered data.',e);
     }finally{
       adminRefreshInProgress=false;
+    }
+  }
+
+  async function loadAdminHistory(forceRefresh){
+    if(!currentUser||currentUser.role!=='admin')return;
+    if(adminHistoryRefreshInProgress)return;
+    if(!forceRefresh&&Date.now()-adminHistoryLastLoadedAt<60000)return;
+    adminHistoryRefreshInProgress=true;
+    const historyTable=document.getElementById('admin-table-history');
+    const totalEvents=document.getElementById('stat-total-events');
+    if(historyTable&&!globalAdminHistory.length){
+      historyTable.innerHTML='<tr><td colspan="8" class="text-center" style="padding:30px;">Loading history...</td></tr>';
+    }
+    if(totalEvents&&!globalAdminHistory.length)totalEvents.textContent='Loading...';
+    try{
+      const history=await appsScriptJsonp({action:'get_admin_history'},null,60000);
+      if(!Array.isArray(history))throw new Error('The history response was invalid.');
+      globalAdminHistory=history;
+      adminHistoryLastLoadedAt=Date.now();
+      if(document.querySelector('#nav-history.active'))renderHistorySheetRows(globalAdminHistory);
+      if(totalEvents)totalEvents.textContent=String(getFilteredHistoryRows(globalAdminHistory).length);
+      try{
+        localStorage.setItem('cached_admin_history',JSON.stringify(globalAdminHistory));
+      }catch(cacheError){
+        console.warn('[Admin history] Unable to update the local history cache.',cacheError);
+      }
+    }catch(error){
+      console.error('[Admin history] Load failed.',error);
+      if(totalEvents)totalEvents.textContent='Unavailable';
+      if(historyTable){
+        historyTable.innerHTML='<tr><td colspan="8" class="text-center" style="padding:30px;">History could not be loaded. Reopen the History tab to retry.</td></tr>';
+      }
+    }finally{
+      adminHistoryRefreshInProgress=false;
     }
   }
 
