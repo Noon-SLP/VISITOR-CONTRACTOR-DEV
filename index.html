@@ -406,6 +406,49 @@
   #dashboard-admin #office-visitor-history-panel{width:100%}
   #dashboard-admin #office-visitor-history-panel .table-responsive{overflow-x:auto}
   #dashboard-admin #office-visitor-history-panel table{min-width:1100px}
+  #dashboard-admin #admin-sec-history>.admin-card-title{gap:10px}
+  #dashboard-admin #admin-sec-history>.admin-card-title>button{flex:0 0 auto;min-height:30px!important;padding:6px 10px!important;border:1px solid rgba(255,199,0,.32);border-radius:7px!important;background:rgba(255,199,0,.07);color:#f3cf55;font-size:9px!important;font-weight:800;letter-spacing:.045em;white-space:nowrap}
+  #dashboard-admin #admin-sec-history>.admin-card-title>#office-history-toggle{margin-left:auto}
+  #dashboard-admin #admin-sec-history.office-history-mode>.admin-card-title>[data-i18n="access_history"]{color:#ffe17a;font-size:15px;font-weight:900;letter-spacing:.12em}
+  #dashboard-admin #office-visitor-history-panel{padding:0 15px 16px}
+  #dashboard-admin #office-visitor-history-panel .office-history-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:14px 0 12px;padding:13px 16px;border:1px solid rgba(255,199,0,.18);border-radius:11px;background:linear-gradient(110deg,rgba(255,199,0,.105),rgba(70,167,255,.055) 58%,rgba(255,255,255,.018));box-shadow:inset 0 1px rgba(255,255,255,.045)}
+  #dashboard-admin #office-visitor-history-panel .office-history-banner-title{display:flex;align-items:center;gap:11px;color:#f3f6fb;font-size:12px;font-weight:850;letter-spacing:.1em}
+  #dashboard-admin #office-visitor-history-panel .office-history-banner-title::before{content:"";width:9px;height:9px;flex:0 0 9px;border-radius:50%;background:#38d9a9;box-shadow:0 0 13px rgba(56,217,169,.65)}
+  #dashboard-admin #office-visitor-history-panel .office-history-banner-subtitle{margin-top:4px;color:#98a6b9;font-size:10px;letter-spacing:.025em}
+  #dashboard-admin #office-visitor-history-panel .office-history-banner-count{flex:0 0 auto;padding:6px 10px;border:1px solid rgba(56,217,169,.23);border-radius:999px;background:rgba(56,217,169,.08);color:#8de8c9;font-size:9px;font-weight:800;letter-spacing:.08em}
+  #dashboard-admin #office-visitor-history-panel .history-tools-footer{margin:0 0 10px;padding:8px 10px;border:1px solid rgba(148,163,184,.1);border-radius:9px;background:rgba(8,12,20,.44)}
+  #dashboard-admin #office-visitor-history-panel table{min-width:1180px;border-collapse:separate;border-spacing:0 4px}
+  #dashboard-admin #office-visitor-history-panel table thead{background:transparent}
+  #dashboard-admin #office-visitor-history-panel table th{height:38px;padding:10px 12px;border:0;color:#8795aa;font-size:8px;letter-spacing:.12em}
+  #dashboard-admin #office-visitor-history-panel table tbody tr{background:linear-gradient(100deg,rgba(28,37,52,.78),rgba(18,25,37,.74));box-shadow:inset 0 1px rgba(255,255,255,.025)}
+  #dashboard-admin #office-visitor-history-panel table tbody tr:hover{background:linear-gradient(100deg,rgba(36,50,68,.9),rgba(21,31,46,.88));filter:none}
+  #dashboard-admin #office-visitor-history-panel table tbody td{padding:12px;border-top:1px solid rgba(148,163,184,.09);border-bottom:1px solid rgba(148,163,184,.09);font-size:10px;white-space:nowrap}
+  #dashboard-admin #office-visitor-history-panel table tbody td:first-child{border-left:1px solid rgba(148,163,184,.09);border-radius:8px 0 0 8px;color:#f4f6fb;font-weight:800}
+  #dashboard-admin #office-visitor-history-panel table tbody td:last-child{border-right:1px solid rgba(148,163,184,.09);border-radius:0 8px 8px 0}
+  #dashboard-admin #office-visitor-history-panel .office-history-date{color:#bdc9da;font-weight:650}
+  #dashboard-admin #office-visitor-history-panel .office-history-timestamp{display:inline-flex;flex-direction:column;gap:3px;min-width:126px;padding:6px 8px;border:1px solid rgba(56,217,169,.15);border-radius:7px;background:rgba(56,217,169,.055)}
+  #dashboard-admin #office-visitor-history-panel .office-history-timestamp-date{color:#c3d4e8;font-size:9px;font-weight:650}
+  #dashboard-admin #office-visitor-history-panel .office-history-timestamp-time{color:#72e0bd;font-size:10px;font-weight:850;font-variant-numeric:tabular-nums;letter-spacing:.025em}
+  #dashboard-admin #office-visitor-history-panel .office-history-timestamp.checkout{border-color:rgba(255,168,92,.17);background:rgba(255,168,92,.055)}
+  #dashboard-admin #office-visitor-history-panel .office-history-timestamp.checkout .office-history-timestamp-time{color:#ffbd83}
+  #dashboard-admin #office-visitor-history-panel .office-history-still-inside{color:#ffe17a;font-size:9px;font-weight:800}
+  @media(max-width:700px){
+    #dashboard-admin #office-visitor-history-panel{padding:0 9px 11px}
+    #dashboard-admin #office-visitor-history-panel .office-history-banner{align-items:flex-start;padding:11px}
+    #dashboard-admin #admin-sec-history.office-history-mode>.admin-card-title>[data-i18n="access_history"]{font-size:12px}
+  }
+  @media(max-width:440px){
+    #dashboard-admin #admin-sec-history>.admin-card-title{flex-wrap:wrap}
+    #dashboard-admin #admin-sec-history.office-history-mode>.admin-card-title>[data-i18n="access_history"]{flex-basis:100%}
+  }
+  #dashboard-ops .office-visitor-card{display:grid!important;grid-template-columns:minmax(0,1fr) auto;align-items:center!important;gap:12px!important}
+  #dashboard-ops .office-visitor-details{min-width:0;overflow:hidden}
+  #dashboard-ops .office-visitor-checkin{display:flex!important;align-self:flex-start;max-width:100%;width:max-content;box-sizing:border-box;white-space:normal;line-height:1.45;overflow-wrap:anywhere}
+  #dashboard-ops .office-visitor-card>button{width:auto!important;max-width:150px;min-width:116px;white-space:normal;line-height:1.25}
+  @media(max-width:520px){
+    #dashboard-ops .office-visitor-card{grid-template-columns:minmax(0,1fr)}
+    #dashboard-ops .office-visitor-card>button{justify-self:start;max-width:none}
+  }
   #dashboard-admin #admin-table-active td:nth-child(2),#dashboard-admin #admin-table-active th:nth-child(2){width:13%}
   #dashboard-admin #admin-table-active td:nth-child(3),#dashboard-admin #admin-table-active th:nth-child(3){width:19%}
   #dashboard-admin #admin-table-active td:nth-child(4),#dashboard-admin #admin-table-active th:nth-child(4){width:8%}
@@ -5071,18 +5114,31 @@
     panel=document.createElement('div');
     panel.id='office-visitor-history-panel';
     panel.style.display='none';
-    const toolbar=document.createElement('div');
-    toolbar.className='history-tools-footer';
+    const banner=document.createElement('div');
+    banner.className='office-history-banner';
+    const bannerCopy=document.createElement('div');
+    const bannerTitle=document.createElement('div');
+    bannerTitle.className='office-history-banner-title';
+    bannerTitle.textContent='VISITOR ENTRY REGISTER';
+    const bannerSubtitle=document.createElement('div');
+    bannerSubtitle.className='office-history-banner-subtitle';
+    bannerSubtitle.textContent='Check-in and check-out records, organized by visit date.';
+    bannerCopy.append(bannerTitle,bannerSubtitle);
     const count=document.createElement('span');
     count.id='office-history-result-count';
+    count.className='office-history-banner-count';
     count.setAttribute('aria-live','polite');
+    banner.append(bannerCopy,count);
+    panel.appendChild(banner);
+
+    const toolbar=document.createElement('div');
+    toolbar.className='history-tools-footer';
     const refresh=document.createElement('button');
     refresh.type='button';
     refresh.id='office-history-refresh';
     refresh.className='btn-primary btn-warning';
     refresh.textContent='REFRESH';
     refresh.addEventListener('click',function(){loadOfficeVisitorHistory(true);});
-    toolbar.appendChild(count);
     toolbar.appendChild(refresh);
     panel.appendChild(toolbar);
 
@@ -5125,19 +5181,41 @@
         titleText.textContent=officeVisitorHistoryMode?'OFFICE VISITOR HISTORY':officeVisitorHistoryOriginalTitle;
       }
     }
+    card.classList.toggle('office-history-mode',officeVisitorHistoryMode);
+  }
+  function formatOfficeHistoryDate(value){
+    const raw=String(value==null?'':value).trim();
+    if(!raw)return '-';
+    const isoDate=raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(isoDate)return new Date(Number(isoDate[1]),Number(isoDate[2])-1,Number(isoDate[3])).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+    const date=parseFlexibleDate(raw);
+    if(!date)return raw;
+    return date.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'Asia/Riyadh'});
+  }
+  function formatOfficeHistoryTimestamp(value,checkout){
+    const date=parseFlexibleDate(value);
+    if(!date)return '<span class="office-history-timestamp-time">'+escapeHistoryText(value||'-')+'</span>';
+    const dateText=date.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'Asia/Riyadh'});
+    const timeText=date.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true,timeZone:'Asia/Riyadh'});
+    return '<span class="office-history-timestamp'+(checkout?' checkout':'')+'"><span class="office-history-timestamp-date">'+escapeHistoryText(dateText)+'</span><span class="office-history-timestamp-time">'+escapeHistoryText(timeText)+'</span></span>';
   }
   function renderOfficeVisitorHistory(rows){
     const body=document.getElementById('office-history-rows');
     const count=document.getElementById('office-history-result-count');
     if(!body||!count)return;
-    count.textContent=rows.length+' RECORDS';
+    count.textContent=rows.length+' '+(rows.length===1?'RECORD':'RECORDS');
     if(!rows.length){
       body.innerHTML='<tr><td colspan="11" class="text-center" style="padding:30px;">No office visitor history found.</td></tr>';
       return;
     }
     body.innerHTML=rows.map(function(row){
-      const values=[row.name,row.idNumber,row.visitDate,row.contact,row.meetingWith,row.country,row.facility,row.checkedInAt,row.checkedInBy,row.checkedOutAt||'Still inside',row.checkedOutBy];
-      return '<tr>'+values.map(function(value){return '<td>'+escapeHistoryText(value||'-')+'</td>';}).join('')+'</tr>';
+      return '<tr><td>'+escapeHistoryText(row.name||'-')+'</td><td>'+escapeHistoryText(row.idNumber||'-')+'</td>'+
+        '<td><span class="office-history-date">'+escapeHistoryText(formatOfficeHistoryDate(row.visitDate))+'</span></td>'+
+        '<td>'+escapeHistoryText(row.contact||'-')+'</td><td>'+escapeHistoryText(row.meetingWith||'-')+'</td>'+
+        '<td>'+escapeHistoryText(row.country||'-')+'</td><td>'+escapeHistoryText(row.facility||'-')+'</td>'+
+        '<td>'+formatOfficeHistoryTimestamp(row.checkedInAt,false)+'</td><td>'+escapeHistoryText(row.checkedInBy||'-')+'</td>'+
+        '<td>'+(row.checkedOutAt?formatOfficeHistoryTimestamp(row.checkedOutAt,true):'<span class="office-history-still-inside">STILL INSIDE</span>')+'</td>'+
+        '<td>'+escapeHistoryText(row.checkedOutBy||'-')+'</td></tr>';
     }).join('');
   }
   function loadOfficeVisitorHistory(force){
