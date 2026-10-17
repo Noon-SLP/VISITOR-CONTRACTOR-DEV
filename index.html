@@ -1696,6 +1696,9 @@
   var officeVisitorRequestPromise=null;
   var officeVisitors=[];
   var officeVisitorStatus='';
+  var officeVisitorCameraStream=null;
+  var officeVisitorCameraFacingMode='environment';
+  var officeVisitorCapturedIdCopy='';
   function officeLabel(english,arabic){return currentLang==='ar'?arabic:english;}
 
   function updateOfficeGuardLabel(){
@@ -1782,7 +1785,7 @@
       if(!document.getElementById('office-visitor-layout-style')){
         var layoutStyle=document.createElement('style');
         layoutStyle.id='office-visitor-layout-style';
-        layoutStyle.textContent='#ambient-right.office-visitor-mode> :not(#office-visitors-panel){display:none!important}#ambient-right.office-visitor-mode{max-height:calc(100vh - 270px);overflow-y:auto}#office-visitors-panel.office-visitor-compact{width:100%;max-width:none;margin:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none}#office-visitors-panel.office-visitor-compact #office-visitors-list>article{flex-direction:column;align-items:flex-start!important}#office-visitors-panel.office-visitor-compact #office-visitors-list>article button{align-self:flex-start}';
+        layoutStyle.textContent='#ambient-right.office-visitor-mode> :not(#office-visitors-panel){display:none!important}#ambient-right.office-visitor-mode{width:min(460px,calc(100vw - 40px))!important;max-height:calc(100vh - 160px);padding:20px!important;overflow-y:auto}#office-visitors-panel.office-visitor-compact{width:100%;max-width:none;margin:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none}#office-visitors-panel.office-visitor-compact h2{font-size:18px!important;line-height:1.35;letter-spacing:.02em}#office-visitors-panel.office-visitor-compact #office-visitors-list>article{flex-direction:row;align-items:center!important;padding:16px}#office-visitors-panel.office-visitor-compact #office-visitors-list>article strong{font-size:15px!important}#office-visitors-panel.office-visitor-compact #office-visitors-list>article span{font-size:13px!important;line-height:1.45}#office-visitors-panel.office-visitor-compact #office-visitors-list>article span:last-child{font-size:12px!important}#office-visitors-panel.office-visitor-compact #office-visitors-list>article button{align-self:center;flex:none}@media(max-width:700px){#office-visitors-panel.office-visitor-compact #office-visitors-list>article{flex-direction:column;align-items:flex-start!important}#office-visitors-panel.office-visitor-compact #office-visitors-list>article button{align-self:flex-start}}';
         document.head.appendChild(layoutStyle);
       }
     }
@@ -1853,9 +1856,56 @@
       photoInput.type='file';
       photoInput.accept='image/*';
       photoInput.capture='environment';
-      photoInput.required=true;
       photoInput.style.cssText='color:var(--text-muted);font-size:12px;';
-      photoGroup.append(photoLabel,photoInput);
+      photoInput.addEventListener('change',function(){
+        officeVisitorCapturedIdCopy='';
+        var preview=document.getElementById('office-visitor-camera-preview');
+        if(preview){preview.removeAttribute('src');preview.classList.add('hidden');}
+      });
+      var cameraButton=document.createElement('button');
+      cameraButton.id='office-visitor-camera-start';
+      cameraButton.type='button';
+      cameraButton.className='btn-primary btn-outline';
+      cameraButton.style.cssText='width:auto;padding:8px 12px;font-size:12px;margin-top:6px;';
+      cameraButton.addEventListener('click',startKsaOfficeVisitorCamera);
+      var cameraPanel=document.createElement('div');
+      cameraPanel.id='office-visitor-camera-panel';
+      cameraPanel.className='hidden';
+      cameraPanel.style.cssText='display:flex;flex-direction:column;gap:8px;margin-top:8px;';
+      var cameraVideo=document.createElement('video');
+      cameraVideo.id='office-visitor-camera-video';
+      cameraVideo.autoplay=true;
+      cameraVideo.playsInline=true;
+      cameraVideo.muted=true;
+      cameraVideo.style.cssText='width:100%;max-height:320px;background:#000;border-radius:8px;object-fit:contain;';
+      var cameraActions=document.createElement('div');
+      cameraActions.style.cssText='display:flex;flex-wrap:wrap;gap:8px;';
+      var switchCamera=document.createElement('button');
+      switchCamera.type='button';
+      switchCamera.id='office-visitor-camera-switch';
+      switchCamera.className='btn-primary btn-outline';
+      switchCamera.style.cssText='width:auto;padding:8px 12px;font-size:12px;';
+      switchCamera.addEventListener('click',switchKsaOfficeVisitorCamera);
+      var captureCamera=document.createElement('button');
+      captureCamera.type='button';
+      captureCamera.id='office-visitor-camera-capture';
+      captureCamera.className='btn-primary';
+      captureCamera.style.cssText='width:auto;padding:8px 12px;font-size:12px;';
+      captureCamera.addEventListener('click',captureKsaOfficeVisitorIdCopy);
+      var cancelCamera=document.createElement('button');
+      cancelCamera.type='button';
+      cancelCamera.id='office-visitor-camera-cancel';
+      cancelCamera.className='btn-primary btn-outline';
+      cancelCamera.style.cssText='width:auto;padding:8px 12px;font-size:12px;';
+      cancelCamera.addEventListener('click',stopKsaOfficeVisitorCamera);
+      cameraActions.append(switchCamera,captureCamera,cancelCamera);
+      cameraPanel.append(cameraVideo,cameraActions);
+      var preview=document.createElement('img');
+      preview.id='office-visitor-camera-preview';
+      preview.alt='Captured Iqama or ID copy';
+      preview.className='hidden';
+      preview.style.cssText='max-width:100%;max-height:180px;object-fit:contain;border:1px solid var(--border-color);border-radius:8px;margin-top:8px;';
+      photoGroup.append(photoLabel,photoInput,cameraButton,cameraPanel,preview);
       grid.appendChild(photoGroup);
       var error=document.createElement('p');
       error.id='office-visitor-form-error';
@@ -1872,6 +1922,14 @@
       save.type='submit';
       save.className='btn-primary';
       save.id='office-visitor-save';
+      cameraButton.dataset.officeEnglish='📷 USE LIVE CAMERA';
+      cameraButton.dataset.officeArabic='📷 استخدام الكاميرا';
+      switchCamera.dataset.officeEnglish='SWITCH CAMERA';
+      switchCamera.dataset.officeArabic='تبديل الكاميرا';
+      captureCamera.dataset.officeEnglish='CAPTURE ID';
+      captureCamera.dataset.officeArabic='التقاط صورة الهوية';
+      cancelCamera.dataset.officeEnglish='CANCEL CAMERA';
+      cancelCamera.dataset.officeArabic='إلغاء الكاميرا';
       actions.append(cancel,save);
       form.append(grid,error,actions);
       card.append(title,form);
@@ -1897,6 +1955,10 @@
     if(title)title.textContent=officeLabel('New Office Visitor','زائر مكتب جديد');
     if(cancel)cancel.textContent=officeLabel('CANCEL','إلغاء');
     if(save&&!save.disabled)save.textContent=officeLabel('SAVE & CHECK IN','حفظ وتسجيل الدخول');
+    ['office-visitor-camera-start','office-visitor-camera-switch','office-visitor-camera-capture','office-visitor-camera-cancel'].forEach(function(id){
+      var button=document.getElementById(id);
+      if(button)button.textContent=currentLang==='ar'?button.dataset.officeArabic:button.dataset.officeEnglish;
+    });
   }
 
   function openKsaOfficeVisitorForm(){
@@ -1904,6 +1966,10 @@
     var modal=document.getElementById('office-visitor-modal');
     var error=document.getElementById('office-visitor-form-error');
     if(form)form.reset();
+    officeVisitorCapturedIdCopy='';
+    stopKsaOfficeVisitorCamera();
+    var preview=document.getElementById('office-visitor-camera-preview');
+    if(preview){preview.removeAttribute('src');preview.classList.add('hidden');}
     if(error)error.textContent='';
     if(modal)modal.classList.remove('hidden');
     updateOfficeVisitorFormLabels();
@@ -1914,6 +1980,76 @@
   function closeKsaOfficeVisitorForm(){
     var modal=document.getElementById('office-visitor-modal');
     if(modal)modal.classList.add('hidden');
+    stopKsaOfficeVisitorCamera();
+  }
+
+  async function startKsaOfficeVisitorCamera(){
+    var error=document.getElementById('office-visitor-form-error');
+    var cameraPanel=document.getElementById('office-visitor-camera-panel');
+    var video=document.getElementById('office-visitor-camera-video');
+    if(!navigator.mediaDevices||typeof navigator.mediaDevices.getUserMedia!=='function'){
+      if(error)error.textContent=officeLabel('Live camera requires HTTPS and a supported browser. Use the file upload instead.','تتطلب الكاميرا المباشرة اتصال HTTPS ومتصفحاً مدعوماً. استخدم تحميل الملف بدلاً من ذلك.');
+      return;
+    }
+    stopKsaOfficeVisitorCamera();
+    if(error)error.textContent='';
+    try{
+      officeVisitorCameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:officeVisitorCameraFacingMode}},audio:false});
+      if(!video)throw new Error('Camera preview is unavailable.');
+      video.srcObject=officeVisitorCameraStream;
+      if(cameraPanel)cameraPanel.classList.remove('hidden');
+      await video.play();
+    }catch(cameraError){
+      stopKsaOfficeVisitorCamera();
+      console.error('[Office visitors] Unable to start the ID camera.',cameraError);
+      if(error){
+        if(cameraError&&cameraError.name==='NotAllowedError')error.textContent=officeLabel('Camera access was denied. Allow camera access in browser settings and try again.','تم رفض الوصول إلى الكاميرا. اسمح باستخدام الكاميرا من إعدادات المتصفح ثم حاول مجدداً.');
+        else error.textContent=officeLabel('Unable to start the camera. Check permissions or use the file upload instead.','تعذر تشغيل الكاميرا. تحقق من الأذونات أو استخدم تحميل الملف.');
+      }
+    }
+  }
+
+  function switchKsaOfficeVisitorCamera(){
+    officeVisitorCameraFacingMode=officeVisitorCameraFacingMode==='environment'?'user':'environment';
+    startKsaOfficeVisitorCamera();
+  }
+
+  function stopKsaOfficeVisitorCamera(){
+    if(officeVisitorCameraStream){
+      officeVisitorCameraStream.getTracks().forEach(function(track){track.stop();});
+      officeVisitorCameraStream=null;
+    }
+    var video=document.getElementById('office-visitor-camera-video');
+    if(video)video.srcObject=null;
+    var panel=document.getElementById('office-visitor-camera-panel');
+    if(panel)panel.classList.add('hidden');
+  }
+
+  function captureKsaOfficeVisitorIdCopy(){
+    var video=document.getElementById('office-visitor-camera-video');
+    var error=document.getElementById('office-visitor-form-error');
+    var preview=document.getElementById('office-visitor-camera-preview');
+    if(!video||!video.videoWidth||!video.videoHeight){
+      if(error)error.textContent=officeLabel('The camera is not ready. Wait for the preview and try again.','الكاميرا غير جاهزة. انتظر ظهور المعاينة ثم حاول مجدداً.');
+      return;
+    }
+    var canvas=document.createElement('canvas');
+    var width=video.videoWidth;
+    var height=video.videoHeight;
+    var maxWidth=1600;
+    if(width>maxWidth){height=Math.round(height*maxWidth/width);width=maxWidth;}
+    canvas.width=width;
+    canvas.height=height;
+    canvas.getContext('2d').drawImage(video,0,0,width,height);
+    officeVisitorCapturedIdCopy=canvas.toDataURL('image/jpeg',0.86);
+    var photo=document.getElementById('office-visitor-id-copy');
+    if(photo)photo.value='';
+    if(preview){
+      preview.src=officeVisitorCapturedIdCopy;
+      preview.classList.remove('hidden');
+    }
+    if(error)error.textContent=officeLabel('ID image captured and ready to save.','تم التقاط صورة الهوية وهي جاهزة للحفظ.');
+    stopKsaOfficeVisitorCamera();
   }
 
   function readOfficeVisitorIdCopy(file){
@@ -1931,20 +2067,20 @@
     var error=document.getElementById('office-visitor-form-error');
     var save=document.getElementById('office-visitor-save');
     var photo=document.getElementById('office-visitor-id-copy');
-    if(!form||!photo||!photo.files||!photo.files[0]){
+    var file=photo&&photo.files&&photo.files[0];
+    if(!form||!photo||(!file&&!officeVisitorCapturedIdCopy)){
       if(error)error.textContent='Upload an Iqama or ID copy.';
       return;
     }
     if(!form.reportValidity())return;
-    var file=photo.files[0];
-    if(!/^image\//i.test(file.type||'')){
+    if(file&&!/^image\//i.test(file.type||'')){
       if(error)error.textContent='The Iqama / ID attachment must be an image.';
       return;
     }
     if(save){save.disabled=true;save.textContent=officeLabel('SAVING...','جارٍ الحفظ...');}
     if(error)error.textContent='';
     try{
-      var idCopy=await readOfficeVisitorIdCopy(file);
+      var idCopy=officeVisitorCapturedIdCopy||await readOfficeVisitorIdCopy(file);
       await guardApiPost({
         action:'office_create_visitor',
         name:document.getElementById('office-visitor-name').value.trim(),
@@ -2688,7 +2824,7 @@
         if(status)status.textContent=result.message||'Your location change request was sent for admin approval. Your current access remains active until it is approved.';
         return;
       }
-      currentUser=result.user;
+      currentUser=Object.assign({},result.user,{guardToken:result.guardToken});
       saveSession();
       initApp();
     }).catch(function(error){
@@ -4237,7 +4373,11 @@
           const adminSessionValid=savedUser&&savedUser.role==='admin'&&savedUser.adminToken&&
             Number(savedUser.expiresAt)>Date.now()&&
             (savedUser.accessLevel==='superadmin'||(role!=='superadmin'&&savedUser.accessLevel==='facility'));
-          const savedRoleMatches=adminRoute?adminSessionValid:(!savedUser||savedUser.role!=='admin');
+          const guardSessionValid=savedUser&&savedUser.role==='guard'&&
+            typeof savedUser.guardToken==='string'&&savedUser.guardToken.length>0;
+          const savedRoleMatches=adminRoute
+            ?adminSessionValid
+            :(savedUser&&savedUser.role==='guard'?guardSessionValid:(!savedUser||savedUser.role!=='admin'));
           if (ageHours < 12 && savedRoleMatches) {
               currentUser = savedSession.user;
               initApp();
