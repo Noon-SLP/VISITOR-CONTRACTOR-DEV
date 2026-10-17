@@ -103,7 +103,11 @@
   @media(max-width:1000px){#dashboard-ops .ops-grid{grid-template-columns:minmax(0,1fr);gap:18px}}
   #ambient-right.ambient-panel:not(.hidden){top:300px}
   @media(min-width:1280px){#ambient-right.ambient-panel:not(.hidden){top:300px}}
-  @media(min-width:1280px){#ambient-right.office-visitor-mode:not(.hidden){top:clamp(190px,27vh,300px)!important;bottom:16px!important;height:auto!important;max-height:none!important;transform:none!important;overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:contain;scrollbar-gutter:stable}}
+  @media(min-width:1280px){#ambient-right.office-visitor-mode:not(.hidden){top:300px!important;bottom:16px!important;height:auto!important;max-height:none!important;transform:none!important;overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:contain;scrollbar-gutter:stable}}
+  #office-visitors-panel.office-visitor-compact .office-visitors-heading{justify-content:flex-start!important;text-align:left}
+  #office-visitors-panel.office-visitor-compact .office-visitors-heading h2{margin:0;text-align:left}
+  body[dir="rtl"] #office-visitors-panel.office-visitor-compact .office-visitors-heading{justify-content:flex-start!important;text-align:right}
+  body[dir="rtl"] #office-visitors-panel.office-visitor-compact .office-visitors-heading h2{text-align:right}
   html.low-performance body{transition:none!important}
   html.low-performance #login-view::before{filter:blur(2px)!important;transform:none!important;will-change:auto!important}
   html.low-performance .login-container,html.low-performance .ops-card,html.low-performance .admin-card,html.low-performance .analytics-box,html.low-performance #reader,html.low-performance .scan-result-card,html.low-performance .ambient-panel{box-shadow:none!important}
@@ -1863,7 +1867,15 @@
         input.type=field[3];
         input.className='input-field';
         input.required=field[4];
-        group.append(label,input);
+        if(input.id==='office-visitor-date'){
+          input.type='text';
+          input.readOnly=true;
+          input.setAttribute('aria-readonly','true');
+          input.tabIndex=-1;
+          group.append(label,input);
+        }else{
+          group.append(label,input);
+        }
         grid.appendChild(group);
       });
       var photoGroup=document.createElement('div');
@@ -1988,7 +2000,13 @@
     var error=document.getElementById('office-visitor-form-error');
     if(form)form.reset();
     var visitDate=document.getElementById('office-visitor-date');
-    if(visitDate)visitDate.value=ambientDateKey(new Date());
+    var today=new Date();
+    if(visitDate)visitDate.value=today.toLocaleDateString(currentLang==='ar'?'ar-SA':'en-GB',{
+      weekday:'long',
+      year:'numeric',
+      month:'long',
+      day:'numeric'
+    });
     officeVisitorCapturedIdCopy='';
     stopKsaOfficeVisitorCamera();
     var preview=document.getElementById('office-visitor-camera-preview');
@@ -2108,7 +2126,7 @@
         action:'office_create_visitor',
         name:document.getElementById('office-visitor-name').value.trim(),
         idNumber:document.getElementById('office-visitor-id').value.trim(),
-        visitDate:document.getElementById('office-visitor-date').value,
+        visitDate:ambientDateKey(new Date()),
         contact:document.getElementById('office-visitor-contact').value.trim(),
         meetingWith:document.getElementById('office-visitor-meeting').value.trim(),
         idCopy:idCopy
