@@ -450,10 +450,10 @@
   #dashboard-guard .office-visitor-checkin{display:flex!important;align-self:flex-start;max-width:100%;width:max-content;box-sizing:border-box;white-space:normal;line-height:1.45;overflow-wrap:anywhere}
   #dashboard-guard .office-visitor-actions{min-width:132px}
   #dashboard-guard .office-visitor-actions>button{width:100%!important;max-width:180px;min-width:132px;white-space:normal;line-height:1.25}
-  #dashboard-guard .office-visitor-actions>.btn-primary.office-visitor-checkin-button,
-  #dashboard-guard .office-visitor-actions>.btn-primary.btn-outline.office-visitor-checkin-button{background:#16a34a!important;border-color:#22c55e!important;color:#fff!important}
-  #dashboard-guard .office-visitor-actions>.btn-primary.office-visitor-checkout-button,
-  #dashboard-guard .office-visitor-actions>.btn-primary.btn-outline.office-visitor-checkout-button{background:#dc2626!important;border-color:#ef4444!important;color:#fff!important}
+  #office-visitors-list .office-visitor-actions>.btn-primary.office-visitor-checkin-button,
+  #office-visitors-list .office-visitor-actions>.btn-primary.btn-outline.office-visitor-checkin-button{background:#16a34a!important;border-color:#22c55e!important;color:#fff!important}
+  #office-visitors-list .office-visitor-actions>.btn-primary.office-visitor-checkout-button,
+  #office-visitors-list .office-visitor-actions>.btn-primary.btn-outline.office-visitor-checkout-button{background:#dc2626!important;border-color:#ef4444!important;color:#fff!important}
   #dashboard-guard .office-visitor-actions>button:disabled{opacity:.58;cursor:not-allowed}
   @media(max-width:520px){
     #dashboard-guard .office-visitor-card{grid-template-columns:minmax(0,1fr)}
@@ -1784,6 +1784,19 @@
   var officeVisitorCameraStream=null;
   var officeVisitorCameraFacingMode='environment';
   var officeVisitorCapturedIdCopy='';
+  function setCameraPreviewFacingMode(video,facingMode){
+    if(!video)return;
+    var isFrontCamera=facingMode==='user';
+    video.style.transform=isFrontCamera?'scaleX(-1)':'';
+    video.style.transformOrigin='center';
+  }
+  function drawCameraFrame(context,video,width,height,facingMode){
+    if(facingMode==='user'){
+      context.translate(width,0);
+      context.scale(-1,1);
+    }
+    context.drawImage(video,0,0,width,height);
+  }
   function officeLabel(english,arabic){return currentLang==='ar'?arabic:english;}
 
   function updateOfficeGuardLabel(){
@@ -2123,7 +2136,7 @@
       officeVisitorCameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:officeVisitorCameraFacingMode}},audio:false});
       if(!video)throw new Error('Camera preview is unavailable.');
       video.srcObject=officeVisitorCameraStream;
-      video.style.transform=officeVisitorCameraFacingMode==='user'?'scaleX(-1)':'';
+      setCameraPreviewFacingMode(video,officeVisitorCameraFacingMode);
       if(cameraPanel)cameraPanel.classList.remove('hidden');
       await video.play();
     }catch(cameraError){
@@ -2168,11 +2181,7 @@
     canvas.width=width;
     canvas.height=height;
     var context=canvas.getContext('2d');
-    if(officeVisitorCameraFacingMode==='user'){
-      context.translate(width,0);
-      context.scale(-1,1);
-    }
-    context.drawImage(video,0,0,width,height);
+    drawCameraFrame(context,video,width,height,officeVisitorCameraFacingMode);
     officeVisitorCapturedIdCopy=canvas.toDataURL('image/jpeg',0.7);
     var photo=document.getElementById('office-visitor-id-copy');
     if(photo)photo.value='';
@@ -4901,11 +4910,11 @@
 
   async function openLiveCamera(type){targetPhotoType=type;const m=document.getElementById('custom-camera-modal');if(m){m.classList.remove('hidden');await startStream('camera-video-stream');}}
   function switchLiveCamera(){currentFacingMode=currentFacingMode==='environment'?'user':'environment';startStream('camera-video-stream');}
-  function captureLivePhoto(){const v=document.getElementById('camera-video-stream'),c=document.getElementById('camera-hidden-canvas');if(!v||!c)return;let width=v.videoWidth,height=v.videoHeight;const MAX_WIDTH=400;if(width>MAX_WIDTH){height=Math.round((height*MAX_WIDTH)/width);width=MAX_WIDTH;}c.width=width;c.height=height;const context=c.getContext('2d');if(currentFacingMode==='user'){context.translate(width,0);context.scale(-1,1);}context.drawImage(v,0,0,width,height);const b64=c.toDataURL('image/jpeg',0.4);capturedImages[targetPhotoType]=b64;const p=document.getElementById('preview-'+targetPhotoType);if(p){p.src=b64;p.classList.remove('hidden');p.onclick=function(){openFullscreenImage(b64);};}let idStr='req-'+targetPhotoType;if(targetPhotoType==='team_iqama')idStr='req-team-iqama';if(targetPhotoType==='team_selfie')idStr='req-team-selfie';if(targetPhotoType==='team_imeiphoto')idStr='req-team-imeiphoto';if(targetPhotoType==='add_team_iqama')idStr='req-add-team-iqama';if(targetPhotoType==='add_team_selfie')idStr='req-add-team-selfie';if(targetPhotoType==='add_team_imeiphoto')idStr='req-add-team-imeiphoto';const fi=document.getElementById(idStr);if(fi){fi.value="";updateSelectedFileName(fi);}closeLiveCamera();}
+  function captureLivePhoto(){const v=document.getElementById('camera-video-stream'),c=document.getElementById('camera-hidden-canvas');if(!v||!c)return;let width=v.videoWidth,height=v.videoHeight;const MAX_WIDTH=400;if(width>MAX_WIDTH){height=Math.round((height*MAX_WIDTH)/width);width=MAX_WIDTH;}c.width=width;c.height=height;const context=c.getContext('2d');drawCameraFrame(context,v,width,height,currentFacingMode);const b64=c.toDataURL('image/jpeg',0.4);capturedImages[targetPhotoType]=b64;const p=document.getElementById('preview-'+targetPhotoType);if(p){p.src=b64;p.classList.remove('hidden');p.onclick=function(){openFullscreenImage(b64);};}let idStr='req-'+targetPhotoType;if(targetPhotoType==='team_iqama')idStr='req-team-iqama';if(targetPhotoType==='team_selfie')idStr='req-team-selfie';if(targetPhotoType==='team_imeiphoto')idStr='req-team-imeiphoto';if(targetPhotoType==='add_team_iqama')idStr='req-add-team-iqama';if(targetPhotoType==='add_team_selfie')idStr='req-add-team-selfie';if(targetPhotoType==='add_team_imeiphoto')idStr='req-add-team-imeiphoto';const fi=document.getElementById(idStr);if(fi){fi.value="";updateSelectedFileName(fi);}closeLiveCamera();}
   function closeLiveCamera(){if(liveStream){liveStream.getTracks().forEach(function(t2){t2.stop();});liveStream=null;}const m=document.getElementById('custom-camera-modal');if(m)m.classList.add('hidden');}
   function updateSelectedFileName(input){if(!input||input.type!=='file')return;const group=input.closest('.input-group');if(!group)return;let fileName=group.querySelector('.selected-file-name');if(input.files&&input.files.length){if(!fileName){fileName=document.createElement('span');fileName.className='selected-file-name';input.parentElement.insertAdjacentElement('afterend',fileName);}fileName.textContent=input.files[0].name;}else if(fileName)fileName.remove();}
   function clearCapturedData(type){capturedImages[type]=null;const p=document.getElementById('preview-'+type);if(p){p.classList.add('hidden');p.src="";}updateSelectedFileName(document.getElementById('req-'+type));}
-  async function startStream(vId){if(liveStream)liveStream.getTracks().forEach(function(t2){t2.stop();});if(!navigator.mediaDevices||typeof navigator.mediaDevices.getUserMedia!=='function'){alert("Live camera requires a supported browser and a secure HTTPS connection.");closeLiveCamera();return;}try{liveStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:currentFacingMode}});const ve=document.getElementById(vId);if(!ve)throw new Error("Camera preview is unavailable.");ve.muted=true;ve.playsInline=true;ve.srcObject=liveStream;ve.style.transform=currentFacingMode==='user'?'scaleX(-1)':'';await ve.play();}catch(e){console.error("Camera startup failed:",e);const message=e&&e.name==='NotAllowedError'?"Camera access was blocked. Allow camera access in your browser settings and try again.":"Unable to start the camera. Check camera permissions and try again.";alert(message);closeLiveCamera();}}
+  async function startStream(vId){if(liveStream)liveStream.getTracks().forEach(function(t2){t2.stop();});if(!navigator.mediaDevices||typeof navigator.mediaDevices.getUserMedia!=='function'){alert("Live camera requires a supported browser and a secure HTTPS connection.");closeLiveCamera();return;}try{liveStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:currentFacingMode}});const ve=document.getElementById(vId);if(!ve)throw new Error("Camera preview is unavailable.");ve.muted=true;ve.playsInline=true;ve.srcObject=liveStream;setCameraPreviewFacingMode(ve,currentFacingMode);await ve.play();}catch(e){console.error("Camera startup failed:",e);const message=e&&e.name==='NotAllowedError'?"Camera access was blocked. Allow camera access in your browser settings and try again.":"Unable to start the camera. Check camera permissions and try again.";alert(message);closeLiveCamera();}}
 
   function parseFlexibleDate(s){if(!s)return null;if(s instanceof Date)return isNaN(s.getTime())?null:s;let d=new Date(s);if(!isNaN(d.getTime()))return d;if(typeof s==='string'){const p=s.trim().split(/[\/\-\s]/);if(p.length>=3){let p0=parseInt(p[0],10),p1=parseInt(p[1],10),p2=parseInt(p[2],10);if(p2<100)p2+=2000;if(p0>12)d=new Date(p2,p1-1,p0);else if(p1>12)d=new Date(p2,p0-1,p1);else d=new Date(p2,p1-1,p0);if(!isNaN(d.getTime()))return d;}}return null;}
   function formatToDDMMYYYY(s){if(!s)return '-';const d=parseFlexibleDate(s);if(!d)return '-';return String(d.getDate()).padStart(2,'0')+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+d.getFullYear();}
