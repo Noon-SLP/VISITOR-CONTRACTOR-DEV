@@ -1804,10 +1804,49 @@
   }
   function officeLabel(english,arabic){return currentLang==='ar'?arabic:english;}
 
+  function officeVisitorApiPost(params){
+    if(currentUser&&currentUser.role==='admin'&&currentUser.accessLevel==='superadmin'){
+      return adminApiPost(params);
+    }
+    return guardApiPost(params);
+  }
+
+  function ensureOfficeVisitorFacilityField(globalAdminMode){
+    var grid=document.querySelector('#office-visitor-form .office-visitor-grid');
+    if(!grid)return;
+    var group=document.getElementById('office-visitor-facility-group');
+    if(!group){
+      group=document.createElement('div');
+      group.id='office-visitor-facility-group';
+      group.className='office-visitor-field full';
+      var label=document.createElement('label');
+      label.htmlFor='office-visitor-facility';
+      label.dataset.officeEnglish='Facility';
+      label.dataset.officeArabic='الموقع';
+      var select=document.createElement('select');
+      select.id='office-visitor-facility';
+      select.className='input-field';
+      select.required=true;
+      [['','Select facility'],['RUH01','RUH01'],['JED01','JED01']].forEach(function(optionData){
+        var option=document.createElement('option');
+        option.value=optionData[0];
+        option.textContent=optionData[1];
+        select.appendChild(option);
+      });
+      group.append(label,select);
+      grid.insertBefore(group,grid.firstChild);
+    }
+    group.classList.toggle('hidden',!globalAdminMode);
+    var selectField=document.getElementById('office-visitor-facility');
+    if(selectField)selectField.required=!!globalAdminMode;
+  }
+
   function updateOfficeGuardLabel(){
-    if(!currentUser||currentUser.role!=='guard'||String(currentUser.guardMode||'').toLowerCase()!=='office')return;
+    var officeGuard=!!(currentUser&&currentUser.role==='guard'&&String(currentUser.guardMode||'').toLowerCase()==='office');
+    var globalAdmin=!!(currentUser&&currentUser.role==='admin'&&currentUser.accessLevel==='superadmin');
+    if(!officeGuard&&!globalAdmin)return;
     var title=document.querySelector('#dashboard-guard .header [data-i18n="gate_scanner"]');
-    if(title)title.textContent=officeLabel('OFFICE VISITOR LOG','سجل زوار المكتب');
+    if(officeGuard&&title)title.textContent=officeLabel('OFFICE VISITOR LOG','سجل زوار المكتب');
     var visitorButton=document.getElementById('btn-office-visitor');
     if(visitorButton)visitorButton.textContent=officeLabel('+ OFFICE VISITOR','+ زائر المكتب');
     var activeTitle=document.querySelector('#office-visitors-panel h2');
@@ -1847,17 +1886,19 @@
     if(dashboard)dashboard.classList.remove('office-guard-mode');
   }
 
-  function ensureKsaOfficeVisitorUi(){
+  function ensureKsaOfficeVisitorUi(globalAdminMode){
     var dashboard=document.getElementById('dashboard-guard');
     var header=dashboard&&dashboard.querySelector(':scope > .header');
     var controls=header&&header.querySelector('.header-controls');
     if(!dashboard||!header||!controls)return;
-    dashboard.classList.add('office-guard-mode');
+    globalAdminMode=!!globalAdminMode&&!!(currentUser&&currentUser.role==='admin'&&currentUser.accessLevel==='superadmin');
+    if(globalAdminMode)dashboard.classList.remove('office-guard-mode');
+    else dashboard.classList.add('office-guard-mode');
     var scanner=header.nextElementSibling;
     if(scanner)scanner.style.display='';
     var scanResult=document.getElementById('scan-result');
     var scannerResult=scanResult&&scanResult.parentElement;
-    if(scannerResult)scannerResult.style.display='none';
+    if(scannerResult)scannerResult.style.display=globalAdminMode?'':'none';
     var visitorButton=document.getElementById('btn-office-visitor');
     if(!visitorButton){
       visitorButton=document.createElement('button');
@@ -1901,9 +1942,9 @@
     }
     panel.classList.add('office-visitors-panel');
     var sessionStrip=document.getElementById('guard-session-strip');
-    if(sessionStrip)sessionStrip.insertAdjacentElement('afterend',visitorButton);
     var right=document.getElementById('ambient-right');
-    if(right){
+    if(!globalAdminMode&&sessionStrip)sessionStrip.insertAdjacentElement('afterend',visitorButton);
+    if(!globalAdminMode&&right){
       right.classList.add('office-visitor-mode');
       if(window.matchMedia('(min-width: 1280px)').matches){
         right.style.setProperty('width','min(470px, calc(50vw - 270px))','important');
@@ -1918,16 +1959,20 @@
     }
     panel.style.cssText='width:100%;max-width:1100px;margin:22px auto;padding:22px;background:linear-gradient(155deg,rgba(17,23,34,.98),rgba(11,15,23,.98));border:1px solid rgba(56,217,169,.25);border-radius:14px;box-shadow:0 18px 46px rgba(0,0,0,.27);';
     panel.classList.remove('hidden');
-    if(window.matchMedia('(min-width: 1280px)').matches&&right){
+    if(!globalAdminMode&&window.matchMedia('(min-width: 1280px)').matches&&right){
       panel.classList.add('office-visitor-compact');
       panel.style.cssText='width:100%;max-width:none;margin:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;';
       right.appendChild(panel);
     }else{
       panel.classList.remove('office-visitor-compact');
-      if(scanner)scanner.insertAdjacentElement('afterend',panel);
+      if(globalAdminMode){
+        visitorButton.style.cssText='width:auto;padding:10px 16px;margin:12px 0;';
+        if(scanner)scanner.insertAdjacentElement('afterend',visitorButton);
+        if(visitorButton.parentElement)visitorButton.insertAdjacentElement('afterend',panel);
+      }else if(scanner)scanner.insertAdjacentElement('afterend',panel);
       else header.insertAdjacentElement('afterend',panel);
     }
-    if(sessionStrip&&visitorButton.parentElement!==sessionStrip.parentElement){
+    if(!globalAdminMode&&sessionStrip&&visitorButton.parentElement!==sessionStrip.parentElement){
       sessionStrip.insertAdjacentElement('afterend',visitorButton);
     }
     var modal=document.getElementById('office-visitor-modal');
@@ -2075,6 +2120,7 @@
         if(event.key==='Escape'&&modal&&!modal.classList.contains('hidden'))closeKsaOfficeVisitorForm();
       });
     }
+    ensureOfficeVisitorFacilityField(globalAdminMode);
     updateOfficeGuardLabel();
     updateOfficeVisitorFormLabels();
   }
@@ -2091,6 +2137,10 @@
     if(title)title.textContent=officeLabel('New Office Visitor','زائر مكتب جديد');
     if(cancel)cancel.textContent=officeLabel('CANCEL','إلغاء');
     if(save&&!save.disabled)save.textContent=officeLabel('SAVE VISITOR','حفظ بيانات الزائر');
+    var facilitySelect=document.getElementById('office-visitor-facility');
+    if(facilitySelect&&facilitySelect.options.length){
+      facilitySelect.options[0].textContent=officeLabel('Select facility','اختر الموقع');
+    }
     ['office-visitor-camera-start','office-visitor-camera-switch','office-visitor-camera-capture','office-visitor-camera-cancel'].forEach(function(id){
       var button=document.getElementById(id);
       if(button)button.textContent=currentLang==='ar'?button.dataset.officeArabic:button.dataset.officeEnglish;
@@ -2242,8 +2292,9 @@
     if(error)error.textContent='';
     try{
       var idCopy=officeVisitorCapturedIdCopy||await readOfficeVisitorIdCopy(file);
-      var result=await guardApiPost({
+      var result=await officeVisitorApiPost({
         action:'office_create_visitor',
+        facility:document.getElementById('office-visitor-facility')?document.getElementById('office-visitor-facility').value:'',
         name:document.getElementById('office-visitor-name').value.trim(),
         idNumber:document.getElementById('office-visitor-id').value.trim(),
         visitDate:ambientDateKey(new Date()),
@@ -2281,7 +2332,11 @@
     var panel=document.getElementById('office-visitors-panel');
     var status=document.getElementById('office-visitor-status');
     var list=document.getElementById('office-visitors-list');
-    if(!panel||!currentUser||currentUser.role!=='guard'||String(currentUser.guardMode||'').toLowerCase()!=='office')return Promise.resolve();
+    var authorizedUser=currentUser&&(
+      (currentUser.role==='guard'&&String(currentUser.guardMode||'').toLowerCase()==='office')||
+      (currentUser.role==='admin'&&currentUser.accessLevel==='superadmin')
+    );
+    if(!panel||!authorizedUser)return Promise.resolve();
     if(officeVisitorRequestPromise&&!force)return officeVisitorRequestPromise;
     var refresh=document.getElementById('btn-refresh-office-visitors');
     var requestVersion=++officeVisitorRequestVersion;
@@ -2292,7 +2347,7 @@
       refresh.textContent=officeLabel('REFRESHING...','جارٍ التحديث...');
     }
     var requestMutationVersion=officeVisitorMutationVersion;
-    var request=guardApiPost({action:'office_list_visitors'}).then(function(result){
+    var request=officeVisitorApiPost({action:'office_list_visitors'}).then(function(result){
       if(!Array.isArray(result.visitors))throw new Error('The server returned an invalid office visitor list.');
       if(requestVersion!==officeVisitorRequestVersion||requestMutationVersion!==officeVisitorMutationVersion)return;
       officeVisitors=result.visitors;
@@ -2350,7 +2405,9 @@
         :officeLabel('WAITING TO CHECK IN','بانتظار تسجيل الدخول');
       var meta=document.createElement('span');
       meta.style.cssText='color:#d0d9e4;font-size:13px;line-height:1.5;overflow-wrap:anywhere;';
-      meta.textContent=officeLabel('ID: ','الهوية: ')+(visitor.idNumber||'-')+' · '+officeLabel('Meeting: ','المقابلة: ')+(visitor.meetingWith||'-');
+      var isGlobalAdmin=currentUser&&currentUser.role==='admin'&&currentUser.accessLevel==='superadmin';
+      meta.textContent=(isGlobalAdmin?officeLabel('Facility: ','الموقع: ')+(visitor.facility||'-')+' · ':'')+
+        officeLabel('ID: ','الهوية: ')+(visitor.idNumber||'-')+' · '+officeLabel('Meeting: ','المقابلة: ')+(visitor.meetingWith||'-');
       var elapsed=document.createElement('span');
       elapsed.className='office-visitor-elapsed'+(visitor.checkedInAt?'':' hidden');
       elapsed.dataset.checkedInAt=visitor.checkedInAt||'';
@@ -2418,7 +2475,10 @@
       if(label)label.textContent=officeLabel('TIME INSIDE: ','الوقت داخل المكتب: ');
       if(value)value.textContent=formatOfficeVisitorElapsed(timer.dataset.checkedInAt||'');
     });
-    if(!officeVisitorElapsedTimer&&currentUser&&currentUser.role==='guard'&&String(currentUser.guardMode||'').toLowerCase()==='office'){
+    if(!officeVisitorElapsedTimer&&currentUser&&(
+      (currentUser.role==='guard'&&String(currentUser.guardMode||'').toLowerCase()==='office')||
+      (currentUser.role==='admin'&&currentUser.accessLevel==='superadmin')
+    )){
       officeVisitorElapsedTimer=setInterval(updateOfficeVisitorElapsedTimers,1000);
     }
   }
@@ -2431,7 +2491,7 @@
       button.dataset.officeCheckoutLabel=button.textContent||officeLabel('CHECK OUT','تسجيل الخروج');
       button.textContent=officeLabel('CHECKING OUT...','جارٍ تسجيل الخروج...');
     }
-    guardApiPost({action:'office_check_out_visitor',recordId:visitor.recordId}).then(function(result){
+    officeVisitorApiPost({action:'office_check_out_visitor',recordId:visitor.recordId}).then(function(result){
       officeVisitorMutationVersion++;
       officeVisitors=officeVisitors.filter(function(currentVisitor){return currentVisitor.recordId!==visitor.recordId;});
       officeVisitorStatus=officeLabel(visitor.name+' checked out','تم تسجيل خروج '+visitor.name)+
@@ -2458,7 +2518,7 @@
       button.dataset.officeCheckinLabel=button.textContent||officeLabel('CHECK IN','تسجيل الدخول');
       button.textContent=officeLabel('CHECKING IN...','جارٍ تسجيل الدخول...');
     }
-    guardApiPost({action:'office_check_in_visitor',recordId:visitor.recordId}).then(function(result){
+    officeVisitorApiPost({action:'office_check_in_visitor',recordId:visitor.recordId}).then(function(result){
       officeVisitorMutationVersion++;
       visitor.checkedInAt=result.checkedInAt;
       visitor.checkedInBy=result.checkedInBy||currentUser.name||'';
@@ -4853,7 +4913,33 @@
   function hardRefreshApp(){if(confirm("Reload the app with the latest data?")){window.location.reload();}}
   function toggleDateFields(){const te=document.getElementById('req-type');if(!te)return;const type=te.value,vf=document.getElementById('req-visitor-fields'),cf=document.getElementById('req-contractor-fields'),tms=document.getElementById('team-members-section');if(vf)vf.classList.toggle('hidden',type==='Contractor');if(cf)cf.classList.toggle('hidden',type==='Visitor');if(tms)tms.classList.remove('hidden');}
   function switchLoginTab(role){document.body.classList.toggle('blur-background',role!=='guard');document.querySelectorAll('.role-tab').forEach(function(t2){t2.classList.remove('active');});document.querySelectorAll('#login-guard, #login-ops, #login-admin').forEach(function(f){f.classList.add('hidden');});const te=document.getElementById('tab-'+role);if(te)te.classList.add('active');const le=document.getElementById('login-'+role);if(le)le.classList.remove('hidden');updateAdminPendingBadges(countPendingAccessRequests(globalAdminData),facilityAdminPendingCount);}
-  function switchMainView(vId){if(vId==='guard'&&currentUser&&currentUser.role==='admin'&&currentUser.accessLevel==='facility')return;const mc=document.getElementById('main-content');if(mc)mc.classList.toggle('ops-view',vId==='ops');document.body.classList.toggle('blur-background',vId!=='guard');document.querySelectorAll('.dashboard').forEach(function(e){e.classList.add('hidden');});const tv=document.getElementById('dashboard-'+vId);if(tv)tv.classList.remove('hidden');document.querySelectorAll('.sidebar-nav a').forEach(function(a){a.classList.remove('active');});const an=document.getElementById('nav-sidebar-'+vId);if(an)an.classList.add('active');const sb=document.getElementById('sidebar');if(window.innerWidth<=900&&sb&&!sb.classList.contains('minimized'))toggleSidebar();updateAdminPendingBadges(countPendingAccessRequests(globalAdminData),facilityAdminPendingCount);if(vId==='ops'&&currentUser&&currentUser.role==='admin')loadMyPasses(false,false);}
+  function switchMainView(vId){
+    if(vId==='guard'&&currentUser&&currentUser.role==='admin'&&currentUser.accessLevel==='facility')return;
+    const mc=document.getElementById('main-content');
+    if(mc)mc.classList.toggle('ops-view',vId==='ops');
+    document.body.classList.toggle('blur-background',vId!=='guard');
+    document.querySelectorAll('.dashboard').forEach(function(e){e.classList.add('hidden');});
+    const tv=document.getElementById('dashboard-'+vId);
+    if(tv)tv.classList.remove('hidden');
+    document.querySelectorAll('.sidebar-nav a').forEach(function(a){a.classList.remove('active');});
+    const an=document.getElementById('nav-sidebar-'+vId);
+    if(an)an.classList.add('active');
+    const sb=document.getElementById('sidebar');
+    if(window.innerWidth<=900&&sb&&!sb.classList.contains('minimized'))toggleSidebar();
+    updateAdminPendingBadges(countPendingAccessRequests(globalAdminData),facilityAdminPendingCount);
+    const isGlobalAdmin=!!(currentUser&&currentUser.role==='admin'&&currentUser.accessLevel==='superadmin');
+    if(isGlobalAdmin&&vId==='guard'){
+      ensureKsaOfficeVisitorUi(true);
+      updateOfficeGuardLabel();
+      refreshKsaOfficeVisitors();
+      if(officeVisitorRefreshTimer)clearInterval(officeVisitorRefreshTimer);
+      officeVisitorRefreshTimer=setInterval(function(){refreshKsaOfficeVisitors();},30000);
+    }else if(isGlobalAdmin&&officeVisitorRefreshTimer){
+      clearInterval(officeVisitorRefreshTimer);
+      officeVisitorRefreshTimer=null;
+    }
+    if(vId==='ops'&&currentUser&&currentUser.role==='admin')loadMyPasses(false,false);
+  }
 
   let imageGallery=[],imageGalleryIndex=0,imageZoom=1;
   function openFullscreenImage(src){if(!src)return;const images=[].slice.call(document.querySelectorAll('#view-record-content img[onclick*="openFullscreenImage"],#scan-result img[onclick*="openFullscreenImage"]'));imageGallery=images.map(function(img){const row=img.closest('.modal-team-row'),record=img.closest('.record-img-box'),rowText=row?row.innerText:'',nameNode=row&&row.querySelector('span[style*="noon-yellow"]');return{src:img.src||img.getAttribute('src'),name:nameNode?nameNode.textContent.trim():(rowText.match(/^[^\n]+/)||[])[0]||(record&&record.querySelector('strong')&&record.querySelector('strong').textContent.trim())||img.alt||'Photo',iqama:(rowText.match(/ID:\s*([^\n]+)/i)||[])[1]?(rowText.match(/ID:\s*([^\n]+)/i)||[])[1].trim():''};}).filter(function(x){return x.src;});imageGalleryIndex=Math.max(0,imageGallery.findIndex(function(x){return x.src===src;}));if(!imageGallery.length)imageGallery=[{src:src,name:'Photo',iqama:''}];renderFullscreenImage();}
