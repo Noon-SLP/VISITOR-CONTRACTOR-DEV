@@ -490,6 +490,44 @@
   #dashboard-admin #admin-table-active td:nth-child(8),#dashboard-admin #admin-table-active th:nth-child(8){width:40%}
   #dashboard-admin #admin-table-active .active-actions-grid{width:100%;max-width:none;min-width:0;margin-inline-start:0;justify-self:stretch;grid-template-columns:repeat(3,minmax(0,1fr));justify-items:stretch}
   #dashboard-admin #admin-table-active .active-actions-grid .btn-primary{width:100%;min-width:0;padding-inline:18px}
+  #dashboard-admin table.active-request-card-table{display:block;width:100%;height:auto!important;table-layout:auto;border-collapse:separate;border-spacing:0}
+  #dashboard-admin table.active-request-card-table>thead{display:none}
+  #dashboard-admin table.active-request-card-table>#admin-table-active{display:block;width:100%;height:auto!important}
+  #dashboard-admin table.active-request-card-table>#admin-table-active>tr{display:block;height:auto!important;background:transparent!important;box-shadow:none!important}
+  #dashboard-admin table.active-request-card-table>#admin-table-active>tr>td{display:block;width:100%!important;height:auto!important;padding:0!important;border:0!important}
+  #dashboard-admin .active-requests-toolbar{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:10px 12px;border:1px solid rgba(148,163,184,.13);border-radius:8px;background:rgba(8,12,20,.45);color:#9ca9bb;font-size:10px}
+  #dashboard-admin .active-requests-toolbar label{display:inline-flex;align-items:center;gap:7px;cursor:pointer}
+  #dashboard-admin .active-requests-toolbar input{accent-color:var(--noon-yellow)}
+  #dashboard-admin .active-requests-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+  #dashboard-admin .active-request-column{min-width:0;overflow:hidden;border:1px solid rgba(148,163,184,.2);border-radius:10px;background:linear-gradient(145deg,rgba(17,23,34,.96),rgba(11,15,23,.96))}
+  #dashboard-admin .active-request-column-title{display:flex;align-items:center;gap:7px;padding:13px 14px;border-bottom:1px solid rgba(255,199,0,.2);background:rgba(255,199,0,.075);color:#ffe17a;font-size:10px;font-weight:850;letter-spacing:.08em}
+  #dashboard-admin .active-request-count{padding:3px 7px;border-radius:999px;background:rgba(148,163,184,.14);color:#c8d0dd;font-size:9px;letter-spacing:0}
+  #dashboard-admin .active-request-card{min-width:0;padding:13px 12px;border-bottom:1px solid rgba(148,163,184,.1);border-left:3px solid rgba(129,111,255,.9);background:linear-gradient(110deg,rgba(112,91,221,.12),rgba(112,91,221,.055));transition:background .16s ease}
+  #dashboard-admin .active-request-card:last-child{border-bottom:0}
+  #dashboard-admin .active-request-card:hover{background:linear-gradient(110deg,rgba(112,91,221,.18),rgba(112,91,221,.08))}
+  #dashboard-admin .active-request-card-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+  #dashboard-admin .active-request-card-identity{min-width:0}
+  #dashboard-admin .active-request-card-name{display:block;color:#e0e5ee;font-size:11px;font-weight:800;line-height:1.45;overflow-wrap:anywhere}
+  #dashboard-admin .active-request-card-email{display:inline-block;margin-top:4px;color:#9eabbd;font-size:9px;line-height:1.4;overflow-wrap:anywhere}
+  #dashboard-admin .active-request-card .copy-email-button{display:inline-grid;place-items:center;width:22px;height:22px;margin:2px 0 0 4px;padding:0;border:1px solid rgba(255,199,0,.34);border-radius:5px;background:rgba(255,199,0,.07);color:#ffe17b;font-size:12px;cursor:pointer;vertical-align:middle}
+  #dashboard-admin .active-request-card-state{display:flex;align-items:center;gap:6px;flex:none}
+  #dashboard-admin .active-request-status{padding:4px 7px;border:1px solid rgba(56,217,169,.25);border-radius:999px;background:rgba(56,217,169,.09);color:#83e8c9;font-size:7px;font-weight:850;letter-spacing:.08em}
+  #dashboard-admin .active-request-select{width:14px;height:14px;margin:0;accent-color:var(--noon-yellow);cursor:pointer}
+  #dashboard-admin .active-request-card-meta{display:flex;flex-wrap:wrap;gap:5px 12px;margin-top:9px;color:#aeb9c9;font-size:8px;line-height:1.45}
+  #dashboard-admin .active-request-card-meta span{overflow-wrap:anywhere}
+  #dashboard-admin .active-request-card-dates{color:#c5cfde}
+  #dashboard-admin .active-request-card-checkin{display:flex;flex-wrap:wrap;gap:5px 13px;margin-top:6px;color:#929fb1;font-size:8px;line-height:1.4}
+  #dashboard-admin .active-request-card-duration{color:#ffe17a;font-weight:750}
+  #dashboard-admin #admin-table-active .active-request-card .active-actions-grid{display:flex;grid-template-columns:none;width:100%;gap:5px;margin-top:10px;overflow-x:auto;overflow-y:hidden;padding-bottom:3px;scrollbar-width:thin}
+  #dashboard-admin #admin-table-active .active-request-card .active-actions-grid .btn-primary{flex:1 0 76px;width:auto;min-width:76px;min-height:29px;padding:6px 4px;border-radius:5px;font-size:8px;font-weight:800;letter-spacing:.01em;line-height:1.2;white-space:nowrap}
+  #dashboard-admin .active-request-empty{padding:22px 12px;color:#8c9aaf;text-align:center;font-size:10px;line-height:1.5}
+  @media(max-width:760px){
+    #dashboard-admin .active-requests-columns{grid-template-columns:minmax(0,1fr)}
+  }
+  @media(max-width:480px){
+    #dashboard-admin .active-request-card{padding:11px 9px}
+    #dashboard-admin #admin-table-active .active-request-card .active-actions-grid .btn-primary{flex-basis:72px;min-width:72px}
+  }
   #dashboard-admin #admin-table-active td:nth-child(2),#dashboard-admin #admin-table-active th:nth-child(2){width:13%}
   #dashboard-admin #admin-table-active td:nth-child(3),#dashboard-admin #admin-table-active th:nth-child(3){width:22%}
   #dashboard-admin #admin-table-active td:nth-child(4),#dashboard-admin #admin-table-active th:nth-child(4){width:7%}
@@ -5920,7 +5958,7 @@
     let si=document.getElementById('filter-start'),ei=document.getElementById('filter-end');
     let fStart=(si&&si.value)?si.value:'';
     let fEnd=(ei&&ei.value)?ei.value:'';
-    let pendingCount=0,visitorActiveCount=0,contractorActiveCount=0;
+    let pendingCount=0,visitorActiveCount=0,contractorActiveCount=0,activeCheckedCount=0;
     let aDate={},aType={},aFacility={},aStatus={};
     data.forEach(function(row){
       if(!row||!row.UniqueID)return;
@@ -5979,7 +6017,7 @@
             const isChecked=checkedPrintIds.has(row.UniqueID)?'checked':'';
             const printNameForRow=String(rType).trim().toLowerCase()==='contractor' ? String(rVisitorName||'Lead') : rVisitorName;
             const companyNameForRow=String(row.CompanyName||row.Company||row['Company / Contractor Name']||row['Company / Contractor']||row.ProjectName||row['Project Name']||'').trim();
-            let cbHtml='<input type="checkbox" class="print-checkbox row-checkbox" value="'+row.UniqueID+'" data-name="'+String(printNameForRow).replace(/'/g,"\\'")+'" data-type="'+rType+'" data-location="'+rLocation+'" data-status="'+rStatus+'" data-date="'+dateStr+'" data-company="'+companyNameForRow.replace(/"/g,'&quot;').replace(/'/g,'&apos;')+'" '+isChecked+' onchange="handlePrintCheckbox(this)">';
+            let cbHtml='<input type="checkbox" class="print-checkbox row-checkbox active-request-select" value="'+row.UniqueID+'" data-name="'+String(printNameForRow).replace(/'/g,"\\'")+'" data-type="'+rType+'" data-location="'+rLocation+'" data-status="'+rStatus+'" data-date="'+dateStr+'" data-company="'+companyNameForRow.replace(/"/g,'&quot;').replace(/'/g,'&apos;')+'" '+isChecked+' onchange="handlePrintCheckbox(this)">';
             let actionBtns='<div class="active-actions-grid">'
               +'<button class="btn-primary btn-outline" onclick="openViewRecord(\''+row.UniqueID+'\')">'+t('btn_view')+'</button>'
               + '<button class="btn-primary btn-success" onclick="openQRView(\''+row.UniqueID+'\',\''+(String(rType).trim().toLowerCase()==='contractor' ? String(rVisitorName||'Lead') : String(rVisitorName||'Lead')).replace(/'/g,"\\'")+'\',\''+rType+'\',\''+rLocation+'\',\''+rStatus+'\',\''+dateStr+'\')">'+t('btn_show_qr')+'</button>'
@@ -5988,17 +6026,20 @@
               +'<button class="btn-primary btn-danger" onclick="adminRevokePass(\''+row.UniqueID+'\')">🚫 REVOKE PASS</button>'
               +'<button class="btn-primary btn-outline" onclick="openExtendPass(\''+row.UniqueID+'\',\''+rType+'\')">'+t('btn_extend')+'</button>'
               +'</div>';
-            let ciTime='-';let durHtml='-';
+            let ciTime='-';let durHtml='—';
             const isInside=!!row.CheckInTime&&!row.CheckOutTime;
-            if(isInside){let ciObj=new Date(row.CheckInTime);if(!isNaN(ciObj.getTime())){ciTime=formatTime(ciObj);let now=new Date().getTime();let diffMins=Math.floor((now-ciObj.getTime())/60000);if(diffMins<0)diffMins=0;let h=Math.floor(diffMins/60);let m=diffMins%60;durHtml='<span style="color:var(--noon-yellow); font-weight:bold;">'+h+'h '+m+'m</span>';}}
+            if(row.CheckInTime)ciTime=formatTime(row.CheckInTime);
+            if(isInside){let ciObj=new Date(row.CheckInTime);if(!isNaN(ciObj.getTime())){let now=new Date().getTime();let diffMins=Math.floor((now-ciObj.getTime())/60000);if(diffMins<0)diffMins=0;let h=Math.floor(diffMins/60);let m=diffMins%60;durHtml=h+'h '+m+'m';}}
             const emailText=escapeHistoryText(rHostEmail);
-            const emailCell=rHostEmail?'<br><span class="active-request-email">Email: '+emailText+'</span> <button type="button" class="copy-email-button" data-copy-email="'+emailText+'" onclick="copyRequestEmail(this)" title="Copy email" aria-label="Copy email address">⧉</button>':'';
-            const activeRow='<tr '+rowStyle+'><td>'+cbHtml+'</td><td style="color:var(--text-muted);">'+finalDateStr+'</td><td><strong>'+escapeHistoryText(rVisitorName)+'</strong>'+emailCell+'</td><td>'+t(rType.toLowerCase())+'</td><td>'+rLocation+'</td><td style="color:var(--text-muted);font-size:11px;">'+ciTime+'</td><td>'+durHtml+'</td><td>'+actionBtns+'</td></tr>';
+            const emailCell=rHostEmail?'<span class="active-request-card-email">Email: '+emailText+'</span> <button type="button" class="copy-email-button" data-copy-email="'+emailText+'" onclick="copyRequestEmail(this)" title="Copy email" aria-label="Copy email address">⧉</button>':'';
+            const badgeHtml=dateBadge.replace(/^<br>/,'');
+            const activeCard='<article class="active-request-card"><div class="active-request-card-heading"><div class="active-request-card-identity"><strong class="active-request-card-name">'+escapeHistoryText(rVisitorName)+'</strong>'+emailCell+'</div><div class="active-request-card-state">'+cbHtml+'<span class="active-request-status">ACTIVE</span></div></div><div class="active-request-card-meta"><span class="active-request-card-dates">📅 '+escapeHistoryText(dateStr)+'</span>'+(badgeHtml?'<span>'+badgeHtml+'</span>':'')+'<span>📍 '+escapeHistoryText(rLocation)+'</span></div><div class="active-request-card-checkin"><span>CHECK-IN: '+escapeHistoryText(ciTime)+'</span><span class="active-request-card-duration">DURATION: '+escapeHistoryText(durHtml)+'</span></div>'+actionBtns+'</article>';
+            if(isChecked)activeCheckedCount++;
             if(String(rType).trim().toLowerCase()==='contractor'){
-              hContractorActive+=activeRow;
+              hContractorActive+=activeCard;
               contractorActiveCount++;
             }else{
-              hVisitorActive+=activeRow;
+              hVisitorActive+=activeCard;
               visitorActiveCount++;
             }
           }
@@ -6007,10 +6048,16 @@
     });
     if(tPending){hPending=hActionPending+hPending;if(pendingCount===0)hPending='<tr><td colspan="5" class="text-center" style="padding:30px;">'+t("msg_no_pending")+'</td></tr>';tPending.innerHTML=hPending;}
     if(tActive){
-      var visitorRows=visitorActiveCount?hVisitorActive:'<tr><td colspan="8" class="text-center" style="padding:18px;">No active visitor requests.</td></tr>';
-      var contractorRows=contractorActiveCount?hContractorActive:'<tr><td colspan="8" class="text-center" style="padding:18px;">No active contractor requests.</td></tr>';
-      tActive.innerHTML='<tr class="active-request-section"><td colspan="8">VISITOR REQUESTS <span>('+visitorActiveCount+')</span></td></tr>'+visitorRows+
-        '<tr class="active-request-section"><td colspan="8">CONTRACTOR REQUESTS <span>('+contractorActiveCount+')</span></td></tr>'+contractorRows;
+      var activeCount=visitorActiveCount+contractorActiveCount;
+      var visitorRows=visitorActiveCount?hVisitorActive:'<div class="active-request-empty">No active visitor requests.</div>';
+      var contractorRows=contractorActiveCount?hContractorActive:'<div class="active-request-empty">No active contractor requests.</div>';
+      var activeTable=tActive.closest('table');
+      if(activeTable){
+        activeTable.classList.add('active-request-card-table');
+        var legacySelectAll=activeTable.querySelector('#selectAllCheckbox');
+        if(legacySelectAll)legacySelectAll.id='selectAllCheckboxHeader';
+      }
+      tActive.innerHTML='<tr><td colspan="8"><div class="active-requests-toolbar"><label><input type="checkbox" id="selectAllCheckbox" '+(activeCount>0&&activeCheckedCount===activeCount?'checked':'')+' '+(activeCount?'':'disabled')+' onclick="toggleSelectAll(this)"><span>Select all active passes for printing</span></label><span style="margin-left:auto;">'+activeCount+' active</span></div><div class="active-requests-columns"><section class="active-request-column"><div class="active-request-column-title">VISITOR REQUESTS <span class="active-request-count">'+visitorActiveCount+'</span></div>'+visitorRows+'</section><section class="active-request-column"><div class="active-request-column-title">CONTRACTOR REQUESTS <span class="active-request-count">'+contractorActiveCount+'</span></div>'+contractorRows+'</section></div></td></tr>';
     }
     updateAdminPendingBadges(countPendingAccessRequests(data),facilityAdminPendingCount);
     const st=document.getElementById('stat-type');if(st)st.innerHTML=Object.keys(aType).map(function(k){return '<div class="stat-row"><span>'+t(k.toLowerCase())+'</span><span class="stat-val">'+aType[k]+'</span></div>';}).join('')||'<div class="stat-row"><span>-</span></div>';
@@ -6028,8 +6075,8 @@
     const sd=document.getElementById('stat-date');if(sd)sd.innerHTML=topDates.map(function(kv){return '<div class="stat-row"><span>'+kv[0]+'</span><span class="stat-val" style="color:var(--noon-yellow);">'+kv[1]+'</span></div>';}).join('')||'<div class="stat-row"><span>-</span></div>';
   }
 
-  function handlePrintCheckbox(cb){if(cb.checked)checkedPrintIds.add(cb.value);else checkedPrintIds.delete(cb.value);}
-  function toggleSelectAll(src){const cbs=document.querySelectorAll('.print-checkbox.row-checkbox');cbs.forEach(function(cb){cb.checked=src.checked;handlePrintCheckbox(cb);});}
+  function handlePrintCheckbox(cb){if(cb.checked)checkedPrintIds.add(cb.value);else checkedPrintIds.delete(cb.value);var selectAll=document.getElementById('selectAllCheckbox');if(selectAll&&!selectAll.dataset.bulkUpdating){var rows=document.querySelectorAll('.print-checkbox.row-checkbox');selectAll.checked=rows.length>0&&Array.prototype.every.call(rows,function(row){return row.checked;});}}
+  function toggleSelectAll(src){const cbs=document.querySelectorAll('.print-checkbox.row-checkbox');const checked=src.checked;src.dataset.bulkUpdating='true';cbs.forEach(function(cb){cb.checked=checked;handlePrintCheckbox(cb);});delete src.dataset.bulkUpdating;src.checked=cbs.length>0&&Array.prototype.every.call(cbs,function(cb){return cb.checked;});}
 
   async function loadAdminData(isSilent){
     if(adminRefreshInProgress)return;
