@@ -3907,7 +3907,8 @@
     }
     var selectedCountry=isGlobal?(filter?filter.value:'all'):String(currentUser&&currentUser.country||'').toUpperCase();
     var history=guardApprovalHistoryData.filter(function(record){
-      return ((isGlobal&&selectedCountry==='all')||String(record.country||'').toUpperCase()===selectedCountry)&&
+      return String(record.status||'').toLowerCase()==='approved'&&
+        ((isGlobal&&selectedCountry==='all')||String(record.country||'').toUpperCase()===selectedCountry)&&
         isAdminApprovalRequestInDateRange(record);
     }).sort(function(a,b){
       var first=parseFlexibleDate(a.reviewedAt||a.requestedAt);
@@ -4566,6 +4567,10 @@
         const ng=document.getElementById('nav-sidebar-guard');if(ng)ng.classList.toggle('hidden',currentUser.accessLevel==='facility');
         if(msb)msb.classList.remove('hidden');
         document.querySelectorAll('.admin-tab').forEach(function(el){el.classList.remove('hidden');});
+        if(currentUser.accessLevel==='superadmin')refreshFacilityAdminRequests();
+        refreshGuardSignupRequests();
+        refreshGuardLocationChangeRequests();
+        loadGuardApprovalHistory();
 
         try{
           const c=localStorage.getItem('cached_admin_data');
