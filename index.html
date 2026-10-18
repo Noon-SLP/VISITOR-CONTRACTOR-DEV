@@ -6581,7 +6581,7 @@
     if(mc)mc.innerHTML=h;
     if(mc&&currentUser&&currentUser.role==='admin'){
       var conversionBar=document.createElement('div');
-      conversionBar.style.cssText='display:flex;justify-content:flex-end;margin:0 0 14px;';
+      conversionBar.style.cssText='grid-column:1 / -1;display:flex;justify-content:flex-end;margin:0 0 14px;';
       var conversionButton=document.createElement('button');
       conversionButton.type='button';
       conversionButton.className='btn-primary btn-outline';
