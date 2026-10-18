@@ -6450,22 +6450,20 @@
       return /^Open (?:Iqama|Selfie|device) photo$/i.test(String(r[field]||'').trim());
     });
     if(currentUser&&currentUser.role==='admin'&&unresolvedPhotoLink&&!passPhotoDetailsLoaded[id]){
-      if(passPhotoDetailsInFlight[id])return;
-      passPhotoDetailsInFlight[id]=true;
-      var viewModal=document.getElementById('view-record-modal');
-      var viewContent=document.getElementById('view-record-content');
-      if(viewContent)viewContent.textContent='Loading complete pass details and photo links...';
-      if(viewModal)viewModal.classList.remove('hidden');
-      appsScriptJsonp({action:'get_single',id:id},null,15000).then(function(details){
-        if(!details||details.error)throw new Error(details&&details.error?details.error:'The complete pass details could not be loaded.');
-        Object.assign(r,details);
-        passPhotoDetailsLoaded[id]=true;
-        openViewRecord(id,targetCategory);
-      }).catch(function(detailError){
-        console.error('[Pass details] Unable to load lead photo links.',detailError);
-        if(viewContent)viewContent.textContent='Unable to load the complete pass details: '+(detailError&&detailError.message?detailError.message:'Unknown error');
-      }).finally(function(){delete passPhotoDetailsInFlight[id];});
-      return;
+      if(!passPhotoDetailsInFlight[id]){
+        passPhotoDetailsInFlight[id]=true;
+        appsScriptJsonp({action:'get_single',id:id},null,15000).then(function(details){
+          if(!details||details.error)throw new Error(details&&details.error?details.error:'The complete pass details could not be loaded.');
+          Object.assign(r,details);
+          passPhotoDetailsLoaded[id]=true;
+          var viewModal=document.getElementById('view-record-modal');
+          if(viewModal&&viewModal.dataset.passId===String(id)&&!viewModal.classList.contains('hidden')){
+            openViewRecord(id,targetCategory);
+          }
+        }).catch(function(detailError){
+          console.error('[Pass details] Unable to load lead photo links.',detailError);
+        }).finally(function(){delete passPhotoDetailsInFlight[id];});
+      }
     }
     let rType=String(r.Type||'');
     const validityPeriod=formatToDDMMYYYY(r.StartDate)+' - '+formatToDDMMYYYY(r.EndDate||r.StartDate);
@@ -6594,7 +6592,7 @@
       conversionBar.appendChild(conversionButton);
       mc.insertBefore(conversionBar,mc.firstChild);
     }
-    if(modal)modal.classList.remove('hidden');
+    if(modal){modal.dataset.passId=String(id);modal.classList.remove('hidden');}
     if(currentUser&&currentUser.role!=='admin')setTimeout(function(){setupBulkRemovalSelection(r.UniqueID);},0);
     if(targetCategory){setTimeout(function(){let targetElem=document.getElementById('section-'+targetCategory);let memberElem=targetCategory==='remove'?document.querySelector('[id^=removal-member-]'):targetCategory==='revoke'?document.querySelector('[id^=revoke-member-]'):targetCategory==='device-add'?document.querySelector('[id^=device-add-member-]'):null;if(targetElem){let scrollTarget=memberElem||targetElem;scrollTarget.scrollIntoView({behavior:'smooth',block:'center'});let origBg=targetElem.style.backgroundColor;targetElem.style.transition='background-color 0.5s ease';targetElem.style.backgroundColor='rgba(255, 199, 0, 0.2)';targetElem.style.borderRadius='8px';targetElem.style.padding='10px';setTimeout(function(){targetElem.style.backgroundColor=origBg;},2000);}},300);}
   }
