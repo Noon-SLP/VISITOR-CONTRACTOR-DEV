@@ -113,9 +113,20 @@
   #dashboard-guard>.header{position:relative;justify-content:flex-end}
   #dashboard-guard>.header>h2{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);margin:0;color:#fff!important;-webkit-text-fill-color:#fff!important;font-family:"Avenir Next","Trebuchet MS",sans-serif!important;font-size:clamp(22px,2.2vw,32px)!important;font-weight:800!important;letter-spacing:.045em!important;line-height:1.15!important;text-align:center;text-transform:uppercase;white-space:nowrap;text-shadow:none}
   #dashboard-guard>.header>h2 #guard-loc-text{color:#fff!important;-webkit-text-fill-color:#fff!important;font:inherit!important}
+  #dashboard-guard.global-admin-scanner-mode>.header+div{width:min(1100px,100%)!important;max-width:1100px!important;margin:0 auto!important;justify-content:flex-start!important}
+  #dashboard-guard.global-admin-scanner-mode>.header+div>div:first-child{flex:0 1 340px!important;width:100%!important;min-width:min(320px,100%)!important;max-width:420px!important}
+  #dashboard-guard.global-admin-scanner-mode>.header+div>div:last-child{flex:1 1 0!important;min-width:0!important;max-width:none!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+  @media(max-width:700px){#dashboard-guard.global-admin-scanner-mode>.header+div>div:first-child{flex-basis:100%!important;min-width:0!important;max-width:100%!important}}
   @media(max-width:700px){#dashboard-guard>.header{justify-content:center;flex-wrap:wrap;gap:10px;padding-top:12px;padding-bottom:12px}#dashboard-guard>.header>h2{position:static;transform:none;width:100%;white-space:normal}.header-controls{width:100%;justify-content:center;flex-wrap:wrap}}
   #office-visitors-panel.office-visitor-compact .office-visitors-heading{justify-content:flex-start!important;text-align:left}
   #office-visitors-panel.office-visitor-compact .office-visitors-heading h2{margin:0;text-align:left}
+  #office-visitor-action-card{display:flex;align-items:center;justify-content:space-between;gap:16px;width:min(1100px,100%);margin:14px auto 0;padding:14px 18px;background:linear-gradient(120deg,rgba(49,51,57,.78),rgba(31,35,45,.84));border:1px solid rgba(255,199,0,.28);border-radius:14px;box-shadow:0 14px 36px rgba(0,0,0,.22),inset 0 1px rgba(255,255,255,.08);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+  #office-visitor-action-card .office-visitor-action-copy{display:flex;flex-direction:column;gap:5px;min-width:0}
+  #office-visitor-action-card .office-visitor-action-title{color:#ffc700;font-size:13px;font-weight:850;letter-spacing:.045em}
+  #office-visitor-action-card .office-visitor-action-hint{color:#aeb9c9;font-size:11px;line-height:1.45}
+  #office-visitor-action-card #btn-office-visitor{flex:none;width:auto!important;min-width:178px;padding:11px 18px!important;margin:0!important;border:1px solid rgba(255,255,255,.18);border-radius:9px;box-shadow:0 8px 20px rgba(255,199,0,.16);transition:transform .18s,box-shadow .18s}
+  #office-visitor-action-card #btn-office-visitor:hover{transform:translateY(-1px);box-shadow:0 11px 26px rgba(255,199,0,.24)}
+  @media(max-width:600px){#office-visitor-action-card{align-items:stretch;flex-direction:column;padding:14px}#office-visitor-action-card #btn-office-visitor{width:100%!important}}
   body[dir="rtl"] #office-visitors-panel.office-visitor-compact .office-visitors-heading{justify-content:flex-start!important;text-align:right}
   body[dir="rtl"] #office-visitors-panel.office-visitor-compact .office-visitors-heading h2{text-align:right}
   html.low-performance body{transition:none!important}
@@ -1931,6 +1942,10 @@
     if(visitorButton)visitorButton.textContent=officeLabel('+ OFFICE VISITOR','+ زائر المكتب');
     var activeTitle=document.querySelector('#office-visitors-panel h2');
     if(activeTitle)activeTitle.textContent=officeLabel('OFFICE VISITORS CURRENTLY INSIDE','زوار المكتب الموجودون حالياً');
+    var actionTitle=document.querySelector('#office-visitor-action-title');
+    if(actionTitle)actionTitle.textContent=officeLabel('OFFICE VISITOR CHECK-IN','تسجيل زائر المكتب');
+    var actionHint=document.querySelector('#office-visitor-action-hint');
+    if(actionHint)actionHint.textContent=officeLabel('Register a new office visitor','تسجيل زائر جديد للمكتب');
     var refreshButton=document.getElementById('btn-refresh-office-visitors');
     if(refreshButton)refreshButton.textContent=officeLabel('REFRESH','تحديث');
   }
@@ -1945,6 +1960,7 @@
     var button=document.getElementById('btn-office-visitor');
     var controls=dashboard&&dashboard.querySelector(':scope > .header .header-controls');
     if(right)right.classList.remove('office-visitor-mode');
+    if(scanner)scanner.style.display='flex';
     if(scannerResult){
       scannerResult.style.display='';
       scannerResult.style.setProperty('border','0','important');
@@ -1963,7 +1979,9 @@
       button.style.cssText='width:auto;padding:9px 14px;';
       if(controls)controls.insertBefore(button,controls.querySelector('button[onclick="logout()"]')||null);
     }
-    if(dashboard)dashboard.classList.remove('office-guard-mode');
+    var actionCard=document.getElementById('office-visitor-action-card');
+    if(actionCard)actionCard.remove();
+    if(dashboard)dashboard.classList.remove('office-guard-mode','global-admin-scanner-mode');
   }
 
   function ensureKsaOfficeVisitorUi(globalAdminMode){
@@ -1972,10 +1990,11 @@
     var controls=header&&header.querySelector('.header-controls');
     if(!dashboard||!header||!controls)return;
     globalAdminMode=!!globalAdminMode&&!!(currentUser&&currentUser.role==='admin'&&currentUser.accessLevel==='superadmin');
+    dashboard.classList.toggle('global-admin-scanner-mode',globalAdminMode);
     if(globalAdminMode)dashboard.classList.remove('office-guard-mode');
     else dashboard.classList.add('office-guard-mode');
     var scanner=header.nextElementSibling;
-    if(scanner)scanner.style.display='';
+    if(scanner)scanner.style.display='flex';
     var scanResult=document.getElementById('scan-result');
     var scannerResult=scanResult&&scanResult.parentElement;
     if(scannerResult)scannerResult.style.display=globalAdminMode?'':'none';
@@ -1989,6 +2008,15 @@
       visitorButton.addEventListener('click',openKsaOfficeVisitorForm);
     }
     visitorButton.classList.remove('hidden');
+    var actionCard=document.getElementById('office-visitor-action-card');
+    if(globalAdminMode&&!actionCard){
+      actionCard=document.createElement('div');
+      actionCard.id='office-visitor-action-card';
+      actionCard.innerHTML='<div class="office-visitor-action-copy"><strong id="office-visitor-action-title" class="office-visitor-action-title"></strong><span id="office-visitor-action-hint" class="office-visitor-action-hint"></span></div>';
+      actionCard.querySelector('#office-visitor-action-title').textContent=officeLabel('OFFICE VISITOR CHECK-IN','تسجيل زائر المكتب');
+      actionCard.querySelector('#office-visitor-action-hint').textContent=officeLabel('Register a new office visitor','تسجيل زائر جديد للمكتب');
+    }
+    if(globalAdminMode&&actionCard)actionCard.appendChild(visitorButton);
     var panel=document.getElementById('office-visitors-panel');
     if(!panel){
       panel=document.createElement('section');
@@ -2024,6 +2052,10 @@
     var sessionStrip=document.getElementById('guard-session-strip');
     var right=document.getElementById('ambient-right');
     if(!globalAdminMode&&sessionStrip)sessionStrip.insertAdjacentElement('afterend',visitorButton);
+    if(!globalAdminMode){
+      visitorButton.style.cssText='width:100%;padding:11px 14px;margin:0 0 16px;';
+      if(actionCard)actionCard.remove();
+    }
     if(!globalAdminMode&&right){
       right.classList.add('office-visitor-mode');
       if(window.matchMedia('(min-width: 1280px)').matches){
@@ -2047,8 +2079,8 @@
       panel.classList.remove('office-visitor-compact');
       if(globalAdminMode){
         visitorButton.style.cssText='width:auto;padding:10px 16px;margin:12px 0;';
-        if(scanner)scanner.insertAdjacentElement('afterend',visitorButton);
-        if(visitorButton.parentElement)visitorButton.insertAdjacentElement('afterend',panel);
+        if(scanner&&actionCard)scanner.insertAdjacentElement('afterend',actionCard);
+        if(actionCard)actionCard.insertAdjacentElement('afterend',panel);
       }else if(scanner)scanner.insertAdjacentElement('afterend',panel);
       else header.insertAdjacentElement('afterend',panel);
     }
