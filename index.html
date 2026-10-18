@@ -513,11 +513,17 @@
   #dashboard-admin .active-request-card-state{display:flex;align-items:center;gap:6px;flex:none}
   #dashboard-admin .active-request-status{padding:5px 8px;border:1px solid rgba(56,217,169,.25);border-radius:999px;background:rgba(56,217,169,.09);color:#83e8c9;font-size:9px;font-weight:850;letter-spacing:.08em}
   #dashboard-admin .active-request-select{width:16px;height:16px;margin:0;accent-color:var(--noon-yellow);cursor:pointer}
-  #dashboard-admin .active-request-card-meta{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 16px;margin-top:11px;color:#bdc7d6;font-size:11px;line-height:1.5;text-align:center}
+  #dashboard-admin .active-request-card-meta{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:6px 16px;margin-top:9px;color:#bdc7d6;font-size:11px;line-height:1.5;text-align:left}
   #dashboard-admin .active-request-card-meta span{min-width:0;max-width:100%;overflow-wrap:anywhere}
-  #dashboard-admin .active-request-card-dates{color:#c5cfde}
-  #dashboard-admin .active-request-card-checkin{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin-top:10px;color:#b0bccd;font-size:11px;line-height:1.45}
-  #dashboard-admin .active-request-card-checkin>span{min-width:0;max-width:100%;overflow-wrap:anywhere}
+  #dashboard-admin .active-request-card-dates{display:inline-flex;align-items:center;min-height:28px;padding:4px 9px;border:1px solid rgba(255,199,0,.35);border-left:3px solid var(--noon-yellow);border-radius:6px;background:rgba(255,199,0,.08);color:#f1e2ad;font-size:12px;font-weight:800;line-height:1.35}
+  #dashboard-admin .active-request-card-checkin{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px 10px;margin-top:10px;color:#b0bccd;font-size:11px;line-height:1.45}
+  #dashboard-admin .active-request-card-checkin-meta{display:flex;flex-wrap:wrap;align-items:center;gap:7px 10px;min-width:0}
+  #dashboard-admin .active-request-card-checkin-label{min-width:0;max-width:100%;font-size:10px;overflow-wrap:anywhere}
+  #dashboard-admin .active-request-card-checkin-details{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:6px;min-width:0}
+  #dashboard-admin .active-request-card-checkin-meta .active-request-card-duration{flex:none;padding:4px 7px;gap:5px}
+  #dashboard-admin .active-request-card-type-badge{display:inline-flex;flex:0 0 auto;align-items:center;min-width:0}
+  #dashboard-admin .active-request-card-type-badge>span{margin-top:0!important;padding:5px 8px!important;font-size:12px!important;line-height:1.25!important}
+  #dashboard-admin .active-request-card-location{max-width:100%;min-width:0;color:#d5deeb;font-size:13px;font-weight:750;line-height:1.35;overflow-wrap:anywhere}
   #dashboard-admin .active-request-card-duration{display:inline-flex;align-items:center;gap:7px;padding:6px 10px;border:1px solid rgba(255,199,0,.48);border-radius:7px;background:linear-gradient(110deg,rgba(255,199,0,.18),rgba(255,199,0,.08));color:#ffe17a;font-size:12px;font-weight:850;letter-spacing:.025em;box-shadow:inset 0 1px rgba(255,255,255,.08),0 0 12px rgba(255,199,0,.07)}
   #dashboard-admin .active-request-card-duration-label{font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
   #dashboard-admin .active-request-card-duration-value{font-size:15px;font-weight:900;font-variant-numeric:tabular-nums}
@@ -526,6 +532,7 @@
   #dashboard-admin .active-request-empty{padding:25px 14px;color:#a0acbd;text-align:center;font-size:12px;line-height:1.5}
   @media(max-width:760px){
     #dashboard-admin .active-requests-columns{grid-template-columns:minmax(0,1fr)}
+    #dashboard-admin .active-request-card-checkin{grid-template-columns:minmax(0,1fr)}
     #dashboard-admin #admin-table-active .active-request-card .active-actions-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
   }
   @media(max-width:480px){
@@ -6037,7 +6044,7 @@
             const emailText=escapeHistoryText(rHostEmail);
             const emailCell=rHostEmail?'<span class="active-request-card-email">Email: '+emailText+'</span> <button type="button" class="copy-email-button" data-copy-email="'+emailText+'" onclick="copyRequestEmail(this)" title="Copy email" aria-label="Copy email address">⧉</button>':'';
             const badgeHtml=dateBadge.replace(/^<br>/,'');
-            const activeCard='<article class="active-request-card"><div class="active-request-card-heading"><div class="active-request-card-identity"><strong class="active-request-card-name">'+escapeHistoryText(rVisitorName)+'</strong>'+emailCell+'</div><div class="active-request-card-state">'+cbHtml+'<span class="active-request-status">ACTIVE</span></div></div><div class="active-request-card-meta"><span class="active-request-card-dates">📅 '+escapeHistoryText(dateStr)+'</span>'+(badgeHtml?'<span>'+badgeHtml+'</span>':'')+'<span>📍 '+escapeHistoryText(rLocation)+'</span></div><div class="active-request-card-checkin"><span>CHECK-IN: '+escapeHistoryText(ciTime)+'</span><span class="active-request-card-duration"><span class="active-request-card-duration-label">Duration</span><strong class="active-request-card-duration-value">'+escapeHistoryText(durHtml)+'</strong></span></div>'+actionBtns+'</article>';
+            const activeCard='<article class="active-request-card"><div class="active-request-card-heading"><div class="active-request-card-identity"><strong class="active-request-card-name">'+escapeHistoryText(rVisitorName)+'</strong>'+emailCell+'</div><div class="active-request-card-state">'+cbHtml+'<span class="active-request-status">ACTIVE</span></div></div><div class="active-request-card-meta"><span class="active-request-card-dates">📅 VALIDITY: '+escapeHistoryText(dateStr)+'</span></div><div class="active-request-card-checkin"><div class="active-request-card-checkin-meta"><span class="active-request-card-checkin-label">CHECK-IN: '+escapeHistoryText(ciTime)+'</span><span class="active-request-card-duration"><span class="active-request-card-duration-label">Duration</span><strong class="active-request-card-duration-value">'+escapeHistoryText(durHtml)+'</strong></span></div><div class="active-request-card-checkin-details">'+(badgeHtml?'<span class="active-request-card-type-badge">'+badgeHtml+'</span>':'')+'<span class="active-request-card-location">📍 '+escapeHistoryText(rLocation)+'</span></div></div>'+actionBtns+'</article>';
             if(isChecked)activeCheckedCount++;
             if(String(rType).trim().toLowerCase()==='contractor'){
               hContractorActive+=activeCard;
