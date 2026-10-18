@@ -490,7 +490,7 @@
   #dashboard-admin #admin-table-active td:nth-child(8),#dashboard-admin #admin-table-active th:nth-child(8){width:40%}
   #dashboard-admin #admin-table-active .active-actions-grid{width:100%;max-width:none;min-width:0;margin-inline-start:0;justify-self:stretch;grid-template-columns:repeat(3,minmax(0,1fr));justify-items:stretch}
   #dashboard-admin #admin-table-active .active-actions-grid .btn-primary{width:100%;min-width:0;padding-inline:18px}
-  #dashboard-admin table.active-request-card-table{display:block;width:100%;height:auto!important;table-layout:auto;border-collapse:separate;border-spacing:0}
+  #dashboard-admin table.active-request-card-table{display:block;width:100%;min-width:0;height:auto!important;table-layout:auto;border-collapse:separate;border-spacing:0}
   #dashboard-admin table.active-request-card-table>thead{display:none}
   #dashboard-admin table.active-request-card-table>#admin-table-active{display:block;width:100%;height:auto!important}
   #dashboard-admin table.active-request-card-table>#admin-table-active>tr{display:block;height:auto!important;background:transparent!important;box-shadow:none!important}
@@ -500,33 +500,37 @@
   #dashboard-admin .active-requests-toolbar input{accent-color:var(--noon-yellow)}
   #dashboard-admin .active-requests-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
   #dashboard-admin .active-request-column{min-width:0;overflow:hidden;border:1px solid rgba(148,163,184,.2);border-radius:10px;background:linear-gradient(145deg,rgba(17,23,34,.96),rgba(11,15,23,.96))}
-  #dashboard-admin .active-request-column-title{display:flex;align-items:center;gap:7px;padding:13px 14px;border-bottom:1px solid rgba(255,199,0,.2);background:rgba(255,199,0,.075);color:#ffe17a;font-size:10px;font-weight:850;letter-spacing:.08em}
-  #dashboard-admin .active-request-count{padding:3px 7px;border-radius:999px;background:rgba(148,163,184,.14);color:#c8d0dd;font-size:9px;letter-spacing:0}
-  #dashboard-admin .active-request-card{min-width:0;padding:13px 12px;border-bottom:1px solid rgba(148,163,184,.1);border-left:3px solid rgba(129,111,255,.9);background:linear-gradient(110deg,rgba(112,91,221,.12),rgba(112,91,221,.055));transition:background .16s ease}
+  #dashboard-admin .active-request-column-title{display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid rgba(255,199,0,.2);background:rgba(255,199,0,.075);color:#ffe17a;font-size:12px;font-weight:850;letter-spacing:.08em}
+  #dashboard-admin .active-request-count{padding:4px 8px;border-radius:999px;background:rgba(148,163,184,.14);color:#c8d0dd;font-size:10px;letter-spacing:0}
+  #dashboard-admin .active-request-card{min-width:0;padding:16px 15px;border-bottom:1px solid rgba(148,163,184,.1);border-left:3px solid rgba(129,111,255,.9);background:linear-gradient(110deg,rgba(112,91,221,.12),rgba(112,91,221,.055));transition:background .16s ease}
   #dashboard-admin .active-request-card:last-child{border-bottom:0}
   #dashboard-admin .active-request-card:hover{background:linear-gradient(110deg,rgba(112,91,221,.18),rgba(112,91,221,.08))}
-  #dashboard-admin .active-request-card-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
-  #dashboard-admin .active-request-card-identity{min-width:0}
-  #dashboard-admin .active-request-card-name{display:block;color:#e0e5ee;font-size:11px;font-weight:800;line-height:1.45;overflow-wrap:anywhere}
-  #dashboard-admin .active-request-card-email{display:inline-block;margin-top:4px;color:#9eabbd;font-size:9px;line-height:1.4;overflow-wrap:anywhere}
-  #dashboard-admin .active-request-card .copy-email-button{display:inline-grid;place-items:center;width:22px;height:22px;margin:2px 0 0 4px;padding:0;border:1px solid rgba(255,199,0,.34);border-radius:5px;background:rgba(255,199,0,.07);color:#ffe17b;font-size:12px;cursor:pointer;vertical-align:middle}
+  #dashboard-admin .active-request-card-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;min-width:0}
+  #dashboard-admin .active-request-card-identity{flex:1 1 0;min-width:0}
+  #dashboard-admin .active-request-card-name{display:block;color:#e0e5ee;font-size:14px;font-weight:800;line-height:1.45;overflow-wrap:anywhere}
+  #dashboard-admin .active-request-card-email{display:inline-block;margin-top:5px;color:#aab6c7;font-size:11px;line-height:1.45;overflow-wrap:anywhere}
+  #dashboard-admin .active-request-card .copy-email-button{display:inline-grid;place-items:center;width:25px;height:25px;margin:2px 0 0 5px;padding:0;border:1px solid rgba(255,199,0,.34);border-radius:6px;background:rgba(255,199,0,.07);color:#ffe17b;font-size:14px;cursor:pointer;vertical-align:middle}
   #dashboard-admin .active-request-card-state{display:flex;align-items:center;gap:6px;flex:none}
-  #dashboard-admin .active-request-status{padding:4px 7px;border:1px solid rgba(56,217,169,.25);border-radius:999px;background:rgba(56,217,169,.09);color:#83e8c9;font-size:7px;font-weight:850;letter-spacing:.08em}
-  #dashboard-admin .active-request-select{width:14px;height:14px;margin:0;accent-color:var(--noon-yellow);cursor:pointer}
-  #dashboard-admin .active-request-card-meta{display:flex;flex-wrap:wrap;gap:5px 12px;margin-top:9px;color:#aeb9c9;font-size:8px;line-height:1.45}
-  #dashboard-admin .active-request-card-meta span{overflow-wrap:anywhere}
+  #dashboard-admin .active-request-status{padding:5px 8px;border:1px solid rgba(56,217,169,.25);border-radius:999px;background:rgba(56,217,169,.09);color:#83e8c9;font-size:9px;font-weight:850;letter-spacing:.08em}
+  #dashboard-admin .active-request-select{width:16px;height:16px;margin:0;accent-color:var(--noon-yellow);cursor:pointer}
+  #dashboard-admin .active-request-card-meta{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:11px;color:#bdc7d6;font-size:11px;line-height:1.5}
+  #dashboard-admin .active-request-card-meta span{min-width:0;max-width:100%;overflow-wrap:anywhere}
   #dashboard-admin .active-request-card-dates{color:#c5cfde}
-  #dashboard-admin .active-request-card-checkin{display:flex;flex-wrap:wrap;gap:5px 13px;margin-top:6px;color:#929fb1;font-size:8px;line-height:1.4}
-  #dashboard-admin .active-request-card-duration{color:#ffe17a;font-weight:750}
-  #dashboard-admin #admin-table-active .active-request-card .active-actions-grid{display:flex;grid-template-columns:none;width:100%;gap:5px;margin-top:10px;overflow-x:auto;overflow-y:hidden;padding-bottom:3px;scrollbar-width:thin}
-  #dashboard-admin #admin-table-active .active-request-card .active-actions-grid .btn-primary{flex:1 0 76px;width:auto;min-width:76px;min-height:29px;padding:6px 4px;border-radius:5px;font-size:8px;font-weight:800;letter-spacing:.01em;line-height:1.2;white-space:nowrap}
-  #dashboard-admin .active-request-empty{padding:22px 12px;color:#8c9aaf;text-align:center;font-size:10px;line-height:1.5}
+  #dashboard-admin .active-request-card-checkin{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin-top:10px;color:#b0bccd;font-size:11px;line-height:1.45}
+  #dashboard-admin .active-request-card-checkin>span{min-width:0;max-width:100%;overflow-wrap:anywhere}
+  #dashboard-admin .active-request-card-duration{display:inline-flex;align-items:center;gap:7px;padding:6px 10px;border:1px solid rgba(255,199,0,.48);border-radius:7px;background:linear-gradient(110deg,rgba(255,199,0,.18),rgba(255,199,0,.08));color:#ffe17a;font-size:12px;font-weight:850;letter-spacing:.025em;box-shadow:inset 0 1px rgba(255,255,255,.08),0 0 12px rgba(255,199,0,.07)}
+  #dashboard-admin .active-request-card-duration-label{font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+  #dashboard-admin .active-request-card-duration-value{font-size:15px;font-weight:900;font-variant-numeric:tabular-nums}
+  #dashboard-admin #admin-table-active .active-request-card .active-actions-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));width:100%;min-width:0;gap:5px;margin-top:11px;overflow:visible;padding:0}
+  #dashboard-admin #admin-table-active .active-request-card .active-actions-grid .btn-primary{flex:initial;width:100%;min-width:0;min-height:34px;padding:5px 3px;border-radius:6px;font-size:9px;font-weight:850;letter-spacing:0;line-height:1.15;text-align:center;white-space:normal;overflow-wrap:anywhere}
+  #dashboard-admin .active-request-empty{padding:25px 14px;color:#a0acbd;text-align:center;font-size:12px;line-height:1.5}
   @media(max-width:760px){
     #dashboard-admin .active-requests-columns{grid-template-columns:minmax(0,1fr)}
+    #dashboard-admin #admin-table-active .active-request-card .active-actions-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
   }
   @media(max-width:480px){
-    #dashboard-admin .active-request-card{padding:11px 9px}
-    #dashboard-admin #admin-table-active .active-request-card .active-actions-grid .btn-primary{flex-basis:72px;min-width:72px}
+    #dashboard-admin .active-request-card{padding:13px 11px}
+    #dashboard-admin #admin-table-active .active-request-card .active-actions-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
   }
   #dashboard-admin #admin-table-active td:nth-child(2),#dashboard-admin #admin-table-active th:nth-child(2){width:13%}
   #dashboard-admin #admin-table-active td:nth-child(3),#dashboard-admin #admin-table-active th:nth-child(3){width:22%}
@@ -615,7 +619,7 @@
     #dashboard-admin .analytics-grid{grid-template-columns:1fr}
     #dashboard-admin .analytics-box{min-height:126px;padding:18px}
     #dashboard-admin .admin-card-title:nth-of-type(3) span{font-size:13px!important}
-    #dashboard-admin table:has(>tbody#admin-table-active){min-width:1120px}
+    #dashboard-admin table:has(>tbody#admin-table-active){min-width:0}
     #dashboard-admin #admin-table-active td{font-size:13px}
     #dashboard-admin #admin-table-active .active-request-email{font-size:13px}
     #dashboard-admin #admin-table-active td:nth-child(2),#dashboard-admin #admin-table-active th:nth-child(2){width:13%}
@@ -6033,7 +6037,7 @@
             const emailText=escapeHistoryText(rHostEmail);
             const emailCell=rHostEmail?'<span class="active-request-card-email">Email: '+emailText+'</span> <button type="button" class="copy-email-button" data-copy-email="'+emailText+'" onclick="copyRequestEmail(this)" title="Copy email" aria-label="Copy email address">⧉</button>':'';
             const badgeHtml=dateBadge.replace(/^<br>/,'');
-            const activeCard='<article class="active-request-card"><div class="active-request-card-heading"><div class="active-request-card-identity"><strong class="active-request-card-name">'+escapeHistoryText(rVisitorName)+'</strong>'+emailCell+'</div><div class="active-request-card-state">'+cbHtml+'<span class="active-request-status">ACTIVE</span></div></div><div class="active-request-card-meta"><span class="active-request-card-dates">📅 '+escapeHistoryText(dateStr)+'</span>'+(badgeHtml?'<span>'+badgeHtml+'</span>':'')+'<span>📍 '+escapeHistoryText(rLocation)+'</span></div><div class="active-request-card-checkin"><span>CHECK-IN: '+escapeHistoryText(ciTime)+'</span><span class="active-request-card-duration">DURATION: '+escapeHistoryText(durHtml)+'</span></div>'+actionBtns+'</article>';
+            const activeCard='<article class="active-request-card"><div class="active-request-card-heading"><div class="active-request-card-identity"><strong class="active-request-card-name">'+escapeHistoryText(rVisitorName)+'</strong>'+emailCell+'</div><div class="active-request-card-state">'+cbHtml+'<span class="active-request-status">ACTIVE</span></div></div><div class="active-request-card-meta"><span class="active-request-card-dates">📅 '+escapeHistoryText(dateStr)+'</span>'+(badgeHtml?'<span>'+badgeHtml+'</span>':'')+'<span>📍 '+escapeHistoryText(rLocation)+'</span></div><div class="active-request-card-checkin"><span>CHECK-IN: '+escapeHistoryText(ciTime)+'</span><span class="active-request-card-duration"><span class="active-request-card-duration-label">Duration</span><strong class="active-request-card-duration-value">'+escapeHistoryText(durHtml)+'</strong></span></div>'+actionBtns+'</article>';
             if(isChecked)activeCheckedCount++;
             if(String(rType).trim().toLowerCase()==='contractor'){
               hContractorActive+=activeCard;
