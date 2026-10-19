@@ -57,9 +57,13 @@
   <style>
   #dashboard-ops .ops-grid>.ops-card:first-child.office-request-mode>:not(h3):not(#admin-email-group):not(#req-country-facility-row):not(#req-office-request-fields):not(#btn-submit-req){display:none!important}
   #dashboard-ops .ops-grid>.ops-card:first-child.office-request-mode>#req-country-facility-row{grid-column:1/-1;grid-row:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-  #dashboard-ops .ops-grid>.ops-card:first-child.office-request-mode>#req-office-request-fields{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}
-  #dashboard-ops .ops-grid>.ops-card:first-child.office-request-mode>#req-office-request-fields>.input-group{min-width:0;margin-bottom:9px}
+  #dashboard-ops .ops-grid>.ops-card:first-child.office-request-mode>#req-office-request-fields{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px}
+  #dashboard-ops .ops-grid>.ops-card:first-child.office-request-mode{row-gap:14px}
+  #dashboard-ops .ops-grid>.ops-card:first-child.office-request-mode>h3{align-self:center;margin:0!important;padding-bottom:10px;border-bottom:1px solid rgba(255,199,0,.25);text-align:center!important}
+  #dashboard-ops .ops-grid>.ops-card:first-child.office-request-mode>#req-office-request-fields{row-gap:12px;column-gap:16px}
+  #dashboard-ops .ops-grid>.ops-card:first-child.office-request-mode>#req-office-request-fields>.input-group{min-width:0;margin:0}
   #dashboard-ops .ops-grid>.ops-card:first-child.office-request-mode>#req-office-request-fields>.input-group:nth-child(3){grid-column:1/-1}
+  #dashboard-ops .ops-grid>.ops-card:first-child.office-request-mode>#req-office-request-fields>#req-office-members-group{grid-column:1/-1;width:100%;box-sizing:border-box}
   #dashboard-ops .ops-grid>.ops-card:first-child.office-request-mode>#btn-submit-req{grid-column:1/-1;width:100%;margin-top:8px!important}
   #req-office-request-fields .input-field,#req-office-request-fields .file-input{box-sizing:border-box}
   #req-office-request-fields input[type="file"]{font-size:11px}
@@ -539,9 +543,10 @@
   #dashboard-admin .active-request-column{min-width:0;overflow:hidden;border:1px solid rgba(148,163,184,.2);border-radius:10px;background:linear-gradient(145deg,rgba(17,23,34,.96),rgba(11,15,23,.96))}
   #dashboard-admin .active-request-column-title{display:flex;align-items:center;justify-content:center;gap:9px;min-height:58px;padding:13px 12px;border-bottom:1px solid rgba(56,189,248,.42);background:linear-gradient(110deg,rgba(37,99,235,.24),rgba(8,145,178,.2));color:#ffe17a;font-size:15px;font-weight:900;letter-spacing:.075em;text-align:center}
   #dashboard-admin .active-request-count{padding:4px 8px;border:1px solid rgba(125,211,252,.28);border-radius:999px;background:rgba(8,24,42,.7);color:#e0f2fe;font-size:11px;font-weight:800;letter-spacing:0}
-  #dashboard-admin .visitor-request-column .active-request-column-title{border-bottom-color:rgba(34,211,238,.48);background:linear-gradient(110deg,rgba(8,145,178,.28),rgba(37,99,235,.2));color:#a5f3fc}
+  #dashboard-admin .visitor-request-column .active-request-column-title{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);border-bottom-color:rgba(34,211,238,.48);background:linear-gradient(110deg,rgba(8,145,178,.28),rgba(37,99,235,.2));color:#a5f3fc}
+  #dashboard-admin .active-request-column-heading{grid-column:2;display:inline-flex;align-items:center;justify-content:center;gap:9px;white-space:nowrap}
   #dashboard-admin .visitor-request-column .active-request-count{border-color:rgba(103,232,249,.35);background:rgba(8,47,73,.78);color:#cffafe}
-  #dashboard-admin .admin-office-request-toggle{margin-left:auto;padding:6px 10px;border:1px solid rgba(103,232,249,.42);border-radius:999px;background:rgba(8,47,73,.65);color:#cffafe;font-size:9px;font-weight:900;letter-spacing:.06em;white-space:nowrap;cursor:pointer}
+  #dashboard-admin .admin-office-request-toggle{grid-column:3;justify-self:end;padding:6px 10px;border:1px solid rgba(103,232,249,.42);border-radius:999px;background:rgba(8,47,73,.65);color:#cffafe;font-size:9px;font-weight:900;letter-spacing:.06em;white-space:nowrap;cursor:pointer}
   #dashboard-admin .admin-office-request-toggle:hover{background:rgba(8,145,178,.35);border-color:rgba(103,232,249,.75)}
   #dashboard-admin .contractor-request-column .active-request-column-title{border-bottom-color:rgba(251,146,60,.48);background:linear-gradient(110deg,rgba(194,65,12,.26),rgba(180,83,9,.22));color:#fed7aa}
   #dashboard-admin .contractor-request-column .active-request-count{border-color:rgba(253,186,116,.38);background:rgba(67,32,13,.78);color:#ffedd5}
@@ -1020,7 +1025,7 @@
     #add-more-modal .record-modal-box{background:linear-gradient(145deg,rgba(49,51,57,.88),rgba(22,27,37,.9))!important;border:1px solid rgba(210,216,230,.48)!important;box-shadow:0 20px 55px rgba(0,0,0,.36),inset 0 1px rgba(255,255,255,.16)!important;backdrop-filter:blur(18px)}
     #add-more-modal #add-team-entry-box{background:linear-gradient(145deg,rgba(49,51,57,.83),rgba(31,35,45,.88))!important;border:1px solid rgba(210,216,230,.38)!important;box-shadow:0 20px 55px rgba(0,0,0,.22),inset 0 1px rgba(255,255,255,.14);backdrop-filter:blur(18px)}
     #dashboard-ops .ops-grid>.ops-card:first-child{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:12px;align-content:start;align-items:start;padding:18px 19px 20px}
-    #dashboard-ops .ops-grid>.ops-card:first-child>h3{grid-column:1/-1;margin-bottom:13px!important;font-size:18px!important}
+    #dashboard-ops .ops-grid>.ops-card:first-child>h3{grid-column:1/-1;margin-bottom:13px!important;font-size:18px!important;text-align:center!important}
     #dashboard-ops .ops-grid>.ops-card:first-child>.input-group,#dashboard-ops .ops-grid>.ops-card:first-child>#team-members-section,#dashboard-ops .ops-grid>.ops-card:first-child>#btn-submit-req{min-width:0;margin-bottom:8px}
     #dashboard-ops .ops-grid>.ops-card:first-child>#req-visitor-fields,#dashboard-ops .ops-grid>.ops-card:first-child>#req-contractor-fields{display:contents}
     #dashboard-ops .ops-grid>.ops-card:first-child>#req-type-group{grid-column:1}
@@ -4930,6 +4935,7 @@
       '<div class="input-group" id="req-office-members-group"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;"><label style="margin:0;" data-office-english="Members (optional)" data-office-arabic="الأعضاء (اختياري)">Members (optional)</label><button id="req-office-add-member" class="btn-primary btn-outline" type="button" style="width:auto;padding:7px 10px;font-size:11px;">+ ADD MEMBER</button></div><div id="req-office-members" style="display:flex;flex-direction:column;gap:8px;"></div></div>'+
       '<div class="input-group"><label for="req-office-vehicle-file" data-i18n="office_vehicle_photo"></label><div class="office-photo-actions"><button id="req-office-camera-start" class="btn-primary btn-outline" type="button" data-i18n="office_camera_start"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l1.5-2h7L17 7h3v12H4z"></path><circle cx="12" cy="13" r="3"></circle></svg><span>'+t('office_camera_start')+'</span></button><label class="file-picker" for="req-office-vehicle-file" data-i18n="office_choose_file"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7h6l2 2h9v9h-17z"></path></svg><span>'+t('office_choose_file')+'</span></label><input id="req-office-vehicle-file" class="file-input" type="file" accept="image/*"></div><div id="req-office-camera-panel" class="hidden" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;"><video id="req-office-camera-video" autoplay playsinline muted style="width:100%;max-height:240px;background:#000;border-radius:8px;object-fit:contain;"></video><div style="display:flex;flex-wrap:wrap;gap:8px;"><button id="req-office-camera-switch" class="btn-primary btn-outline" type="button" data-i18n="office_camera_switch" style="width:auto;padding:8px 10px;">'+t('office_camera_switch')+'</button><button id="req-office-camera-capture" class="btn-primary" type="button" data-i18n="office_camera_capture" style="width:auto;padding:8px 10px;">'+t('office_camera_capture')+'</button><button id="req-office-camera-cancel" class="btn-primary btn-outline" type="button" data-i18n="office_camera_cancel" style="width:auto;padding:8px 10px;">'+t('office_camera_cancel')+'</button></div></div><img id="req-office-vehicle-preview" class="hidden" alt="Vehicle picture preview" style="max-width:100%;max-height:180px;object-fit:contain;border:1px solid var(--border-color);border-radius:8px;margin-top:8px;"><p id="req-office-camera-status" role="status" style="min-height:16px;margin:6px 0 0;color:var(--text-muted);font-size:11px;"></p></div>'+
       '<div class="input-group"><label for="req-office-id-copy" data-i18n="office_id_copy"></label><div class="office-photo-actions"><button id="req-office-id-camera-start" class="btn-primary btn-outline" type="button" data-i18n="office_camera_start"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l1.5-2h7L17 7h3v12H4z"></path><circle cx="12" cy="13" r="3"></circle></svg><span>'+t('office_camera_start')+'</span></button><label class="file-picker" for="req-office-id-copy" data-i18n="office_choose_file"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7h6l2 2h9v9h-17z"></path></svg><span>'+t('office_choose_file')+'</span></label><input id="req-office-id-copy" class="file-input" type="file" accept="image/*"></div><div id="req-office-id-camera-panel" class="hidden" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;"><video id="req-office-id-camera-video" autoplay playsinline muted style="width:100%;max-height:240px;background:#000;border-radius:8px;object-fit:contain;"></video><div style="display:flex;flex-wrap:wrap;gap:8px;"><button id="req-office-id-camera-switch" class="btn-primary btn-outline" type="button" data-i18n="office_camera_switch" style="width:auto;padding:8px 10px;">'+t('office_camera_switch')+'</button><button id="req-office-id-camera-capture" class="btn-primary" type="button" data-i18n="office_camera_capture" style="width:auto;padding:8px 10px;">'+t('office_camera_capture')+'</button><button id="req-office-id-camera-cancel" class="btn-primary btn-outline" type="button" data-i18n="office_camera_cancel" style="width:auto;padding:8px 10px;">'+t('office_camera_cancel')+'</button></div></div><img id="req-office-id-preview" class="hidden" alt="Iqama or ID copy preview" style="max-width:100%;max-height:180px;object-fit:contain;border:1px solid var(--border-color);border-radius:8px;margin-top:8px;"><p id="req-office-id-camera-status" role="status" style="min-height:16px;margin:6px 0 0;color:var(--text-muted);font-size:11px;"></p></div>';
+    officeFields.appendChild(officeFields.querySelector('#req-office-members-group'));
     if(requestCard){
       const countryFacilityRow=document.getElementById('req-country-facility-row');
       if(countryFacilityRow)countryFacilityRow.insertAdjacentElement('afterend',officeFields);
@@ -4967,8 +4973,18 @@
     if(vehicleFile)vehicleFile.addEventListener('change',function(){loadOfficeRequestPhotoFromFile(vehicleFile,'vehicle');});
     if(idCopyFile)idCopyFile.addEventListener('change',function(){loadOfficeRequestPhotoFromFile(idCopyFile,'id-copy');});
     const submitButton=document.getElementById('btn-submit-req');
+    var officeModeIsActive=false;
     function updateOfficeRequestMode(){
       const isOffice=country.select.value==='KSA'&&requestLocation.value==='RUH01 OFFICE';
+      if(isOffice&&!officeModeIsActive){
+        var officeName=document.getElementById('req-office-name');
+        var officeIdNumber=document.getElementById('req-office-id-number');
+        var portalName=document.getElementById('req-vname');
+        var portalIdNumber=document.getElementById('req-iqamatext');
+        if(officeName&&!officeName.value&&portalName)officeName.value=portalName.value.trim();
+        if(officeIdNumber&&!officeIdNumber.value&&portalIdNumber)officeIdNumber.value=portalIdNumber.value.trim();
+      }
+      officeModeIsActive=isOffice;
       if(requestCard)requestCard.classList.toggle('office-request-mode',isOffice);
       officeFields.classList.toggle('hidden',!isOffice);
       if(!isOffice)clearOfficeRequestVehiclePicture();
@@ -6714,7 +6730,7 @@
         var legacySelectAll=activeTable.querySelector('#selectAllCheckbox');
         if(legacySelectAll)legacySelectAll.id='selectAllCheckboxHeader';
       }
-      tActive.innerHTML='<tr><td colspan="8"><div class="active-requests-toolbar"><label><input type="checkbox" id="selectAllCheckbox" '+(activeCount>0&&activeCheckedCount===activeCount?'checked':'')+' '+(activeCount?'':'disabled')+' onclick="toggleSelectAll(this)"><span>Select all active passes for printing</span></label><span style="margin-left:auto;">'+activeCount+' active</span></div><div class="active-requests-columns"><section class="active-request-column visitor-request-column"><div class="active-request-column-title">'+(showOfficeRequests?'OFFICE REQUESTS':'VISITOR REQUESTS')+' <span class="active-request-count">'+selectedVisitorCount+'</span><button type="button" class="admin-office-request-toggle" onclick="toggleAdminOfficeRequests()">'+(showOfficeRequests?'VISITOR REQUESTS':'OFFICE REQUEST')+'</button></div>'+visitorRows+'</section><section class="active-request-column contractor-request-column"><div class="active-request-column-title">CONTRACTOR REQUESTS <span class="active-request-count">'+contractorActiveCount+'</span></div>'+contractorRows+'</section></div></td></tr>';
+      tActive.innerHTML='<tr><td colspan="8"><div class="active-requests-toolbar"><label><input type="checkbox" id="selectAllCheckbox" '+(activeCount>0&&activeCheckedCount===activeCount?'checked':'')+' '+(activeCount?'':'disabled')+' onclick="toggleSelectAll(this)"><span>Select all active passes for printing</span></label><span style="margin-left:auto;">'+activeCount+' active</span></div><div class="active-requests-columns"><section class="active-request-column visitor-request-column"><div class="active-request-column-title"><span class="active-request-column-heading">'+(showOfficeRequests?'OFFICE REQUESTS':'VISITOR REQUESTS')+' <span class="active-request-count">'+selectedVisitorCount+'</span></span><button type="button" class="admin-office-request-toggle" onclick="toggleAdminOfficeRequests()">'+(showOfficeRequests?'VISITOR REQUESTS':'OFFICE REQUEST')+'</button></div>'+visitorRows+'</section><section class="active-request-column contractor-request-column"><div class="active-request-column-title">CONTRACTOR REQUESTS <span class="active-request-count">'+contractorActiveCount+'</span></div>'+contractorRows+'</section></div></td></tr>';
     }
     updateAdminPendingBadges(countPendingAccessRequests(data),facilityAdminPendingCount);
     const st=document.getElementById('stat-type');if(st)st.innerHTML=Object.keys(aType).map(function(k){return '<div class="stat-row"><span>'+t(k.toLowerCase())+'</span><span class="stat-val">'+aType[k]+'</span></div>';}).join('')||'<div class="stat-row"><span>-</span></div>';
@@ -8352,4 +8368,4 @@
   })();
   </script>
   </body></html>
-  
+    
