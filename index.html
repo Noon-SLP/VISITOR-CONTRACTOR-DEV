@@ -5393,7 +5393,7 @@
           typeof savedUser.guardToken==='string'&&savedUser.guardToken.length>0&&
           Number.isFinite(guardExpiry)&&guardExpiry>Date.now();
         const savedRoleMatches=savedUser&&savedUser.role==='guard'
-          ?(role==='guard'||!role)&&guardSessionValid
+          ?(role==='guard'||role==='staff'||!role)&&guardSessionValid
           :(savedUser&&savedUser.role==='admin'
             ?adminRoute&&adminSessionValid
             :!adminRoute&&role!=='guard'&&savedUser&&savedUser.role==='ops');
