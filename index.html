@@ -4150,7 +4150,7 @@
     refresh.className='btn-primary super-admin-approval-refresh';
     refresh.innerHTML='<span aria-hidden="true">↻</span><span>'+t('refresh')+'</span>';
     refresh.setAttribute('aria-label',t('refresh'));
-    refresh.addEventListener('click',function(){refreshGuardSignupRequests(true);});
+    refresh.addEventListener('click',function(){refreshGuardApprovalPanels(true);});
     heading.append(titleGroup,refresh);
     panel.appendChild(heading);
     var historyPanel=document.createElement('section');
@@ -4231,7 +4231,7 @@
     }
     guardSignupRequestPromise=adminApiPost({action:'guard_list_signup_requests'}).then(function(result){
       if(!Array.isArray(result.requests))throw new Error('The server returned an invalid guard request list. Existing requests were kept.');
-      var requests=mergePendingApprovalRequests(guardSignupPendingRequests,result.requests);
+      var requests=result.requests;
       guardSignupPendingRequests=requests;
       guardSignupLastLoadedAt=Date.now();
       guardSignupPendingCount=requests.length+guardLocationChangeRequests.length;
@@ -4293,7 +4293,6 @@
           content.appendChild(card);
         });
       }
-      return refreshGuardLocationChangeRequests();
     }).catch(function(error){
       var status=document.getElementById('guard-signup-approval-status');
       if(guardSignupLastLoadedAt){
@@ -4320,7 +4319,7 @@
     }
     guardLocationChangeRequestPromise=adminApiPost({action:'guard_list_location_change_requests'}).then(function(result){
       if(!Array.isArray(result.requests))throw new Error('The server returned an invalid guard location change request list. Existing requests were kept.');
-      guardLocationChangeRequests=mergePendingApprovalRequests(guardLocationChangeRequests,result.requests);
+      guardLocationChangeRequests=result.requests;
       guardLocationChangeLastLoadedAt=Date.now();
       guardSignupPendingCount=guardSignupPendingRequests.length+guardLocationChangeRequests.length;
       updateAdminPendingBadges(countPendingAccessRequests(globalAdminData),facilityAdminPendingCount);
@@ -4411,11 +4410,7 @@
       if(status)status.textContent=result.notificationError
         ?'Decision saved, but the email notification failed: '+result.notificationError
         :'Guard location change '+(approve?'approved. The new assignment replaces the previous one.':'rejected. The existing assignment remains active.');
-      return Promise.all([
-        refreshGuardSignupRequests(true),
-        refreshGuardLocationChangeRequests(),
-        loadGuardApprovalHistory(true)
-      ]);
+      return refreshGuardApprovalPanels(true);
     }).catch(function(error){
       if(status)status.textContent=error&&error.message?error.message:'Unable to process guard location change.';
     }).finally(function(){if(button)button.disabled=false;});
@@ -4438,11 +4433,7 @@
       if(status)status.textContent=result.notificationError
         ?'Decision saved, but the email notification failed: '+result.notificationError
         :'Guard signup '+(approve?'approved.':'rejected.');
-      return Promise.all([
-        refreshGuardSignupRequests(true),
-        refreshGuardLocationChangeRequests(),
-        loadGuardApprovalHistory(true)
-      ]);
+      return refreshGuardApprovalPanels(true);
     }).catch(function(error){
       if(status)status.textContent=error&&error.message?error.message:'Unable to process guard signup.';
     }).finally(function(){if(button)button.disabled=false;});
@@ -4562,18 +4553,6 @@
   var facilityAdminPendingRequests=[];
   var facilityAdminPendingResetRequests=[];
   var guardSignupPendingRequests=[];
-  function mergePendingApprovalRequests(previous,latest){
-    var merged=Object.create(null);
-    (Array.isArray(previous)?previous:[]).forEach(function(request){
-      var email=String(request&&request.email||'').trim().toLowerCase();
-      if(email)merged[email]=request;
-    });
-    latest.forEach(function(request){
-      var email=String(request&&request.email||'').trim().toLowerCase();
-      if(email)merged[email]=request;
-    });
-    return Object.keys(merged).map(function(email){return merged[email];});
-  }
   function isAdminApprovalRequestInDateRange(request){
     var startInput=document.getElementById('filter-start');
     var endInput=document.getElementById('filter-end');
@@ -4668,8 +4647,8 @@
       }
       facilityAdminLastLoadedAt=Date.now();
       content.textContent='';
-      var requests=mergePendingApprovalRequests(facilityAdminPendingRequests,result.requests);
-      var passwordResetRequests=mergePendingApprovalRequests(facilityAdminPendingResetRequests,result.passwordResetRequests);
+      var requests=result.requests;
+      var passwordResetRequests=result.passwordResetRequests;
       facilityAdminPendingRequests=requests;
       facilityAdminPendingResetRequests=passwordResetRequests;
       var history=Array.isArray(result.history)?result.history:[];
@@ -5288,6 +5267,7 @@
         }catch(e){}
 
         switchMainView('admin');
+        refreshAdminApprovalPanels(false);
         requestAnimationFrame(function(){
           setTimeout(function(){
             if(!currentUser||currentUser.role!=='admin')return;
@@ -5529,7 +5509,29 @@
       logout();
     },remaining);
   }
-  function startAutoRefresh(r){if(autoRefreshTimer)clearInterval(autoRefreshTimer);autoRefreshTimer=setInterval(function(){if(r==='ops')loadMyPasses(false,true);else if(r==='admin'){loadAdminData(true);var activeTab=document.querySelector('.admin-nav-horizontal li.active');if(activeTab&&activeTab.id==='nav-guard-requests'){refreshGuardSignupRequests();refreshGuardLocationChangeRequests();}else if(activeTab&&activeTab.id==='nav-facility-admin-requests'&&currentUser&&currentUser.accessLevel==='superadmin'){refreshFacilityAdminRequests();}}},r==='admin'?30000:15000);}
+  function refreshGuardApprovalPanels(forceHistory){
+    if(!currentUser||currentUser.role!=='admin')return Promise.resolve();
+    return refreshGuardSignupRequests()
+      .then(function(){return refreshGuardLocationChangeRequests();})
+      .then(function(){return loadGuardApprovalHistory(!!forceHistory);});
+  }
+  function refreshAdminApprovalPanels(){
+    if(!currentUser||currentUser.role!=='admin')return Promise.resolve();
+    var refreshes=[refreshGuardApprovalPanels(false)];
+    if(currentUser.accessLevel==='superadmin')refreshes.push(refreshFacilityAdminRequests());
+    return Promise.all(refreshes);
+  }
+  function startAutoRefresh(r){
+    if(autoRefreshTimer)clearInterval(autoRefreshTimer);
+    autoRefreshTimer=setInterval(function(){
+      if(document.visibilityState==='hidden')return;
+      if(r==='ops')loadMyPasses(false,true);
+      else if(r==='admin'){
+        loadAdminData(true);
+        refreshAdminApprovalPanels();
+      }
+    },r==='admin'?30000:15000);
+  }
   function toggleFullScreen(){const d=document,de=d.documentElement;const req=de.requestFullscreen||de.mozRequestFullScreen||de.webkitRequestFullScreen||de.msRequestFullscreen;const exit=d.exitFullscreen||d.mozCancelFullScreen||d.webkitExitFullscreen||d.msExitFullscreen;try{if(!d.fullscreenElement&&!d.mozFullScreenElement&&!d.webkitFullscreenElement&&!d.msFullscreenElement){if(req)Promise.resolve(req.call(de)).catch(function(e){console.warn('Fullscreen request failed:',e);});else alert("Fullscreen not supported");}else if(exit)Promise.resolve(exit.call(d)).catch(function(e){console.warn('Exiting fullscreen failed:',e);});}catch(e){console.warn('Fullscreen operation failed:',e);alert("Fullscreen is unavailable in this browser.");}}
   function toggleSidebar(){const sb=document.getElementById('sidebar');if(!sb)return;sb.classList.toggle('minimized');const isMinimized=sb.classList.contains('minimized');document.body.classList.toggle('sidebar-minimized',isMinimized);const button=sb.querySelector('.toggle-btn');if(button)button.setAttribute('aria-expanded',String(!isMinimized));}
   const appLayout=document.getElementById('app-layout');
@@ -6372,9 +6374,7 @@
     }
     if(tName==='history'||tName==='analytics')loadAdminHistory(false);
     if(tName==='guard-requests'&&currentUser&&(currentUser.role==='admin'||currentUser.role==='superadmin')){
-      refreshGuardSignupRequests(true);
-      refreshGuardLocationChangeRequests();
-      loadGuardApprovalHistory(true);
+      refreshGuardApprovalPanels(true);
     }
   }
   function applyAdminDateFilter(){
@@ -6386,7 +6386,7 @@
       refreshFacilityAdminRequests(true);
     }else if(activeTab.id==='nav-guard-requests'&&currentUser&&(currentUser.role==='admin'||currentUser.role==='superadmin')){
       renderGuardApprovalHistory();
-      refreshGuardSignupRequests();
+      refreshGuardApprovalPanels(false);
     }
   }
   function setAdminFilter(range,btnElement){document.querySelectorAll('.btn-filter').forEach(function(b){b.classList.remove('active');});if(btnElement){const text=btnElement.innerText;document.querySelectorAll('.btn-filter').forEach(function(b){if(b.innerText===text)b.classList.add('active');});}currentAdminFilter=range;let p1=document.getElementById('custom-date-picker');if(range==='custom'){if(p1)p1.classList.remove('hidden');}else{if(p1)p1.classList.add('hidden');applyAdminDateFilter();}}
@@ -8575,4 +8575,4 @@
   })();
   </script>
   </body></html>
-    
+  
