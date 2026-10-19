@@ -541,6 +541,8 @@
   #dashboard-admin .active-request-count{padding:4px 8px;border:1px solid rgba(125,211,252,.28);border-radius:999px;background:rgba(8,24,42,.7);color:#e0f2fe;font-size:11px;font-weight:800;letter-spacing:0}
   #dashboard-admin .visitor-request-column .active-request-column-title{border-bottom-color:rgba(34,211,238,.48);background:linear-gradient(110deg,rgba(8,145,178,.28),rgba(37,99,235,.2));color:#a5f3fc}
   #dashboard-admin .visitor-request-column .active-request-count{border-color:rgba(103,232,249,.35);background:rgba(8,47,73,.78);color:#cffafe}
+  #dashboard-admin .admin-office-request-toggle{margin-left:auto;padding:6px 10px;border:1px solid rgba(103,232,249,.42);border-radius:999px;background:rgba(8,47,73,.65);color:#cffafe;font-size:9px;font-weight:900;letter-spacing:.06em;white-space:nowrap;cursor:pointer}
+  #dashboard-admin .admin-office-request-toggle:hover{background:rgba(8,145,178,.35);border-color:rgba(103,232,249,.75)}
   #dashboard-admin .contractor-request-column .active-request-column-title{border-bottom-color:rgba(251,146,60,.48);background:linear-gradient(110deg,rgba(194,65,12,.26),rgba(180,83,9,.22));color:#fed7aa}
   #dashboard-admin .contractor-request-column .active-request-count{border-color:rgba(253,186,116,.38);background:rgba(67,32,13,.78);color:#ffedd5}
   #dashboard-admin .active-request-card{min-width:0;padding:16px 15px;border-bottom:1px solid rgba(148,163,184,.1);border-left:3px solid rgba(129,111,255,.9);background:linear-gradient(110deg,rgba(112,91,221,.12),rgba(112,91,221,.055));transition:background .16s ease}
@@ -1627,7 +1629,7 @@
   }
   function safeImg(u){return normalizeImageUrl(u)||'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'40\' height=\'40\'%3E%3Crect width=\'40\' height=\'40\' fill=\'%23333\'/%3E%3Ctext x=\'20\' y=\'24\' font-size=\'14\' text-anchor=\'middle\' fill=\'%23888\'%3E%3F%3C/text%3E%3C/svg%3E';}
 
-  const urlParams=new URLSearchParams(window.location.search);const currentRoleParam=urlParams.get('role')||'default';const SESSION_KEY='noon_session_'+currentRoleParam;const GUARD_SESSION_KEY='noon_session_guard';const SESSION_MAX_AGE_MS=12*60*60*1000;let adminSignupMode=false;let adminPasswordResetMode=false;let html5QrCode=null;let scannerFacingMode='environment';let scannerLibraryPromise=null;let scannerOperation=Promise.resolve();let currentUser=null;let currentScannedID=null;let currentScanAction='check_in';let currentAdminFilter='all';let autoRefreshTimer=null;let globalAdminData=[];let globalAdminHistory=[];let adminDataScopes={approvals:{country:'all',facility:'all'},history:{country:'all',facility:'all'},analytics:{country:'all',facility:'all'}};let myPassesData=[];let checkedPrintIds=new Set();let liveStream=null;let currentFacingMode='environment';let targetPhotoType='';let capturedImages={iqama:null,selfie:null,imeiphoto:null,vehicle:null,fmpoc:null};let teamList=[];let currentTeamCounter=1;let isProcessingScan=false;let userSecurityPin=null;let lockedPassesData=null;let pinCreateMode='submit';let currentBatchType='new';
+  const urlParams=new URLSearchParams(window.location.search);const currentRoleParam=urlParams.get('role')||'default';const SESSION_KEY='noon_session_'+currentRoleParam;const GUARD_SESSION_KEY='noon_session_guard';const SESSION_MAX_AGE_MS=12*60*60*1000;let adminSignupMode=false;let adminPasswordResetMode=false;let html5QrCode=null;let scannerFacingMode='environment';let scannerLibraryPromise=null;let scannerOperation=Promise.resolve();let currentUser=null;let currentScannedID=null;let currentScanAction='check_in';let currentAdminFilter='all';let autoRefreshTimer=null;let globalAdminData=[];let showOfficeRequests=false;let globalAdminHistory=[];let adminDataScopes={approvals:{country:'all',facility:'all'},history:{country:'all',facility:'all'},analytics:{country:'all',facility:'all'}};let myPassesData=[];let checkedPrintIds=new Set();let liveStream=null;let currentFacingMode='environment';let targetPhotoType='';let capturedImages={iqama:null,selfie:null,imeiphoto:null,vehicle:null,fmpoc:null};let teamList=[];let currentTeamCounter=1;let isProcessingScan=false;let userSecurityPin=null;let lockedPassesData=null;let pinCreateMode='submit';let currentBatchType='new';
   let guardSessionExpiryTimer=null;
   let historySortOrder='desc';
   let expandedHistoryGroups=new Set();
@@ -1938,7 +1940,7 @@
   var officeVisitorStatus='';
   var officeVisitorCameraStream=null;
   var officeVisitorCameraFacingMode='environment';
-  var officeVisitorCapturedIdCopy='';
+  var officeVisitorCameraTarget=null;
   var officeRequestCameraStream=null;
   var officeRequestVehiclePicture='';
   var officeRequestIdCopy='';
@@ -1959,8 +1961,82 @@
   }
   function officeLabel(english,arabic){return currentLang==='ar'?arabic:english;}
   function officeTodayDateKey(){return new Date(Date.now()+3*60*60*1000).toISOString().slice(0,10);}
-  function addOfficeVisitorMemberRow(){
-    var members=document.getElementById('office-visitor-members');
+  function createOfficeVisitorPhotoControls(key){
+    var photoGroup=document.createElement('div');
+    photoGroup.className='office-visitor-photo-group office-visitor-field full';
+    photoGroup.dataset.officePhotoKey=key;
+    var label=document.createElement('label');
+    label.dataset.officeEnglish='Upload Iqama / ID Copy';
+    label.dataset.officeArabic='تحميل صورة الهوية / الإقامة';
+    label.textContent=officeLabel(label.dataset.officeEnglish,label.dataset.officeArabic);
+    var input=document.createElement('input');
+    input.id=key+'-id-copy';
+    input.type='file';
+    input.accept='image/*';
+    input.className='file-input';
+    input.style.cssText='position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);clip-path:inset(50%);white-space:nowrap;';
+    var photoActions=document.createElement('div');
+    photoActions.className='office-visitor-photo-actions';
+    photoActions.style.position='relative';
+    var cameraButton=document.createElement('button');
+    cameraButton.type='button';
+    cameraButton.className='btn-primary btn-outline';
+    cameraButton.style.cssText='width:auto;margin:0;';
+    cameraButton.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l1.5-2h7L17 7h3v12H4z"></path><circle cx="12" cy="13" r="3"></circle></svg><span data-office-english="LIVE CAMERA" data-office-arabic="كاميرا مباشرة">'+officeLabel('LIVE CAMERA','كاميرا مباشرة')+'</span>';
+    cameraButton.addEventListener('click',function(){startKsaOfficeVisitorCamera(photoGroup);});
+    var picker=document.createElement('label');
+    picker.className='file-picker';
+    picker.htmlFor=input.id;
+    picker.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7h6l2 2h9v9h-17z"></path></svg><span data-office-english="CHOOSE FILE" data-office-arabic="اختر ملفاً">'+officeLabel('CHOOSE FILE','اختر ملفاً')+'</span>';
+    var cameraPanel=document.createElement('div');
+    cameraPanel.className='office-visitor-camera-panel hidden';
+    cameraPanel.style.cssText='display:flex;flex-direction:column;gap:8px;margin-top:8px;';
+    var video=document.createElement('video');
+    video.autoplay=true;
+    video.playsInline=true;
+    video.muted=true;
+    video.style.cssText='width:100%;max-height:320px;background:#000;border-radius:8px;object-fit:contain;';
+    var cameraActions=document.createElement('div');
+    cameraActions.style.cssText='display:flex;flex-wrap:wrap;gap:8px;';
+    [['SWITCH CAMERA','تبديل الكاميرا',switchKsaOfficeVisitorCamera],
+      ['CAPTURE ID','التقاط صورة الهوية',captureKsaOfficeVisitorIdCopy],
+      ['CANCEL CAMERA','إلغاء الكاميرا',stopKsaOfficeVisitorCamera]].forEach(function(buttonInfo){
+      var button=document.createElement('button');
+      button.type='button';
+      button.className='btn-primary btn-outline';
+      button.style.cssText='width:auto;padding:8px 12px;font-size:12px;';
+      button.dataset.officeEnglish=buttonInfo[0];
+      button.dataset.officeArabic=buttonInfo[1];
+      button.textContent=officeLabel(buttonInfo[0],buttonInfo[1]);
+      button.addEventListener('click',function(){buttonInfo[2](photoGroup);});
+      cameraActions.appendChild(button);
+    });
+    cameraPanel.append(video,cameraActions);
+    var preview=document.createElement('img');
+    preview.className='hidden';
+    preview.alt='Iqama or ID copy preview';
+    preview.style.cssText='max-width:100%;max-height:180px;object-fit:contain;border:1px solid var(--border-color);border-radius:8px;margin-top:8px;';
+    var status=document.createElement('p');
+    status.className='office-visitor-photo-status';
+    status.setAttribute('role','status');
+    status.style.cssText='min-height:16px;margin:4px 0 0;color:var(--text-muted);font-size:11px;';
+    input.addEventListener('change',function(){
+      if(officeVisitorCameraTarget===photoGroup)stopKsaOfficeVisitorCamera(photoGroup);
+      photoGroup.dataset.officeIdCopy='';
+      preview.removeAttribute('src');
+      preview.classList.add('hidden');
+      if(status)status.textContent='';
+    });
+    photoActions.append(cameraButton,picker,input);
+    photoGroup.append(label,photoActions,cameraPanel,preview,status);
+    return photoGroup;
+  }
+
+  function addOfficeVisitorMemberRow(members,isRequestMember){
+    if(!members||typeof members.querySelectorAll!=='function'){
+      members=document.getElementById('office-visitor-members');
+      isRequestMember=false;
+    }
     if(!members)return;
     if(members.querySelectorAll('.office-visitor-member-row').length>=10){
       alert(officeLabel('You can add up to 10 members.','يمكنك إضافة ما يصل إلى 10 أعضاء.'));
@@ -1968,6 +2044,8 @@
     }
     var row=document.createElement('div');
     row.className='office-visitor-member-row';
+    if(isRequestMember)row.classList.add('office-request-member-row');
+    row.dataset.officePhotoKey='office-member-'+Date.now()+'-'+Math.random().toString(36).slice(2);
     row.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-items:end;padding:10px;border:1px solid rgba(210,216,230,.2);border-radius:9px;background:rgba(255,255,255,.04);';
     [
       ['name','Full Name','الاسم الكامل','text'],
@@ -1980,6 +2058,7 @@
       var label=document.createElement('label');
       label.dataset.officeEnglish=field[1];
       label.dataset.officeArabic=field[2];
+      label.textContent=officeLabel(field[1],field[2]);
       var input=document.createElement('input');
       input.type=field[3];
       input.className='input-field';
@@ -1991,13 +2070,19 @@
       group.append(label,input);
       row.appendChild(group);
     });
+    var photoGroup=createOfficeVisitorPhotoControls(row.dataset.officePhotoKey);
+    row.appendChild(photoGroup);
     var remove=document.createElement('button');
     remove.type='button';
     remove.className='btn-primary btn-outline';
     remove.style.cssText='grid-column:1/-1;justify-self:end;width:auto;padding:8px 10px;font-size:11px;';
     remove.dataset.officeEnglish='REMOVE';
     remove.dataset.officeArabic='إزالة';
-    remove.addEventListener('click',function(){row.remove();});
+    remove.textContent=officeLabel('REMOVE','إزالة');
+    remove.addEventListener('click',function(){
+      if(officeVisitorCameraTarget===photoGroup)stopKsaOfficeVisitorCamera(photoGroup);
+      row.remove();
+    });
     row.appendChild(remove);
     members.appendChild(row);
     updateOfficeVisitorFormLabels();
@@ -2298,80 +2383,8 @@
       membersList.id='office-visitor-members';
       membersList.style.cssText='display:flex;flex-direction:column;gap:8px;';
       membersGroup.append(membersHeading,membersList);
+      grid.appendChild(createOfficeVisitorPhotoControls('office-visitor-lead'));
       grid.appendChild(membersGroup);
-      var photoGroup=document.createElement('div');
-      photoGroup.className='office-visitor-field full';
-      var photoLabel=document.createElement('label');
-      photoLabel.htmlFor='office-visitor-id-copy';
-      photoLabel.dataset.officeEnglish='Upload Iqama / ID Copy';
-      photoLabel.dataset.officeArabic='تحميل صورة الهوية / الإقامة';
-      var photoInput=document.createElement('input');
-      photoInput.id='office-visitor-id-copy';
-      photoInput.type='file';
-      photoInput.accept='image/*';
-      photoInput.className='file-input';
-      photoInput.style.cssText='position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);clip-path:inset(50%);white-space:nowrap;';
-      photoInput.addEventListener('change',function(){
-        officeVisitorCapturedIdCopy='';
-        var preview=document.getElementById('office-visitor-camera-preview');
-        if(preview){preview.removeAttribute('src');preview.classList.add('hidden');}
-      });
-      var photoActions=document.createElement('div');
-      photoActions.className='office-visitor-photo-actions';
-      photoActions.style.position='relative';
-      var cameraButton=document.createElement('button');
-      cameraButton.id='office-visitor-camera-start';
-      cameraButton.type='button';
-      cameraButton.className='btn-primary btn-outline';
-      cameraButton.style.cssText='width:auto;margin:0;';
-      cameraButton.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l1.5-2h7L17 7h3v12H4z"></path><circle cx="12" cy="13" r="3"></circle></svg><span data-office-english="LIVE CAMERA" data-office-arabic="كاميرا مباشرة">LIVE CAMERA</span>';
-      cameraButton.addEventListener('click',startKsaOfficeVisitorCamera);
-      var filePicker=document.createElement('label');
-      filePicker.className='file-picker';
-      filePicker.htmlFor='office-visitor-id-copy';
-      filePicker.dataset.officeEnglish='CHOOSE FILE';
-      filePicker.dataset.officeArabic='اختر ملفاً';
-      filePicker.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7h6l2 2h9v9h-17z"></path></svg><span data-office-english="CHOOSE FILE" data-office-arabic="اختر ملفاً">CHOOSE FILE</span>';
-      photoActions.append(cameraButton,filePicker,photoInput);
-      var cameraPanel=document.createElement('div');
-      cameraPanel.id='office-visitor-camera-panel';
-      cameraPanel.className='hidden';
-      cameraPanel.style.cssText='display:flex;flex-direction:column;gap:8px;margin-top:8px;';
-      var cameraVideo=document.createElement('video');
-      cameraVideo.id='office-visitor-camera-video';
-      cameraVideo.autoplay=true;
-      cameraVideo.playsInline=true;
-      cameraVideo.muted=true;
-      cameraVideo.style.cssText='width:100%;max-height:320px;background:#000;border-radius:8px;object-fit:contain;';
-      var cameraActions=document.createElement('div');
-      cameraActions.style.cssText='display:flex;flex-wrap:wrap;gap:8px;';
-      var switchCamera=document.createElement('button');
-      switchCamera.type='button';
-      switchCamera.id='office-visitor-camera-switch';
-      switchCamera.className='btn-primary btn-outline';
-      switchCamera.style.cssText='width:auto;padding:8px 12px;font-size:12px;';
-      switchCamera.addEventListener('click',switchKsaOfficeVisitorCamera);
-      var captureCamera=document.createElement('button');
-      captureCamera.type='button';
-      captureCamera.id='office-visitor-camera-capture';
-      captureCamera.className='btn-primary';
-      captureCamera.style.cssText='width:auto;padding:8px 12px;font-size:12px;';
-      captureCamera.addEventListener('click',captureKsaOfficeVisitorIdCopy);
-      var cancelCamera=document.createElement('button');
-      cancelCamera.type='button';
-      cancelCamera.id='office-visitor-camera-cancel';
-      cancelCamera.className='btn-primary btn-outline';
-      cancelCamera.style.cssText='width:auto;padding:8px 12px;font-size:12px;';
-      cancelCamera.addEventListener('click',stopKsaOfficeVisitorCamera);
-      cameraActions.append(switchCamera,captureCamera,cancelCamera);
-      cameraPanel.append(cameraVideo,cameraActions);
-      var preview=document.createElement('img');
-      preview.id='office-visitor-camera-preview';
-      preview.alt='Captured Iqama or ID copy';
-      preview.className='hidden';
-      preview.style.cssText='max-width:100%;max-height:180px;object-fit:contain;border:1px solid var(--border-color);border-radius:8px;margin-top:8px;';
-      photoGroup.append(photoLabel,photoActions,cameraPanel,preview);
-      grid.appendChild(photoGroup);
       var error=document.createElement('p');
       error.id='office-visitor-form-error';
       error.className='office-visitor-error';
@@ -2387,12 +2400,6 @@
       save.type='submit';
       save.className='btn-primary';
       save.id='office-visitor-save';
-      switchCamera.dataset.officeEnglish='SWITCH CAMERA';
-      switchCamera.dataset.officeArabic='تبديل الكاميرا';
-      captureCamera.dataset.officeEnglish='CAPTURE ID';
-      captureCamera.dataset.officeArabic='التقاط صورة الهوية';
-      cancelCamera.dataset.officeEnglish='CANCEL CAMERA';
-      cancelCamera.dataset.officeArabic='إلغاء الكاميرا';
       actions.append(cancel,save);
       form.append(grid,error,actions);
       card.append(title,form);
@@ -2409,11 +2416,13 @@
 
   function updateOfficeVisitorFormLabels(){
     var modal=document.getElementById('office-visitor-modal');
-    if(!modal)return;
-    modal.querySelectorAll('[data-office-english]').forEach(function(label){
-      var translated=currentLang==='ar'?label.dataset.officeArabic:label.dataset.officeEnglish;
-      var textNode=label.matches('button,.file-picker')&&label.querySelector('span')?label.querySelector('span'):label;
-      textNode.textContent=translated;
+    var requestFields=document.getElementById('req-office-request-fields');
+    [modal,requestFields].filter(Boolean).forEach(function(root){
+      root.querySelectorAll('[data-office-english]').forEach(function(label){
+        var translated=currentLang==='ar'?label.dataset.officeArabic:label.dataset.officeEnglish;
+        var textNode=label.matches('button,.file-picker')&&label.querySelector('span')?label.querySelector('span'):label;
+        textNode.textContent=translated;
+      });
     });
     var title=document.getElementById('office-visitor-form-title');
     var cancel=document.getElementById('office-visitor-cancel');
@@ -2425,14 +2434,6 @@
     if(facilitySelect&&facilitySelect.options.length){
       facilitySelect.options[0].textContent=officeLabel('Select facility','اختر الموقع');
     }
-    ['office-visitor-camera-start','office-visitor-camera-switch','office-visitor-camera-capture','office-visitor-camera-cancel'].forEach(function(id){
-      var button=document.getElementById(id);
-      if(button){
-        var cameraLabel=button.querySelector('span[data-office-english]');
-        if(cameraLabel)cameraLabel.textContent=currentLang==='ar'?cameraLabel.dataset.officeArabic:cameraLabel.dataset.officeEnglish;
-        else button.textContent=currentLang==='ar'?button.dataset.officeArabic:button.dataset.officeEnglish;
-      }
-    });
   }
 
   function openKsaOfficeVisitorForm(){
@@ -2448,10 +2449,16 @@
     }
     var members=document.getElementById('office-visitor-members');
     if(members)members.textContent='';
-    officeVisitorCapturedIdCopy='';
     stopKsaOfficeVisitorCamera();
-    var preview=document.getElementById('office-visitor-camera-preview');
-    if(preview){preview.removeAttribute('src');preview.classList.add('hidden');}
+    if(form)form.querySelectorAll('.office-visitor-photo-group').forEach(function(photoGroup){
+      photoGroup.dataset.officeIdCopy='';
+      var input=photoGroup.querySelector('input[type="file"]');
+      var preview=photoGroup.querySelector('img');
+      var status=photoGroup.querySelector('.office-visitor-photo-status');
+      if(input)input.value='';
+      if(preview){preview.removeAttribute('src');preview.classList.add('hidden');}
+      if(status)status.textContent='';
+    });
     if(error)error.textContent='';
     if(modal)modal.classList.remove('hidden');
     updateOfficeVisitorFormLabels();
@@ -2465,16 +2472,19 @@
     stopKsaOfficeVisitorCamera();
   }
 
-  async function startKsaOfficeVisitorCamera(){
-    var error=document.getElementById('office-visitor-form-error');
-    var cameraPanel=document.getElementById('office-visitor-camera-panel');
-    var video=document.getElementById('office-visitor-camera-video');
+  async function startKsaOfficeVisitorCamera(photoGroup){
+    if(!photoGroup)return;
     if(!navigator.mediaDevices||typeof navigator.mediaDevices.getUserMedia!=='function'){
-      if(error)error.textContent=officeLabel('Live camera requires HTTPS and a supported browser. Use the file upload instead.','تتطلب الكاميرا المباشرة اتصال HTTPS ومتصفحاً مدعوماً. استخدم تحميل الملف بدلاً من ذلك.');
+      var unsupportedStatus=photoGroup.querySelector('.office-visitor-photo-status');
+      if(unsupportedStatus)unsupportedStatus.textContent=officeLabel('Live camera requires HTTPS and a supported browser. Use the file upload instead.','تتطلب الكاميرا المباشرة اتصال HTTPS ومتصفحاً مدعوماً. استخدم تحميل الملف بدلاً من ذلك.');
       return;
     }
     stopKsaOfficeVisitorCamera();
-    if(error)error.textContent='';
+    officeVisitorCameraTarget=photoGroup;
+    var cameraPanel=photoGroup.querySelector('.office-visitor-camera-panel');
+    var video=photoGroup.querySelector('video');
+    var status=photoGroup.querySelector('.office-visitor-photo-status');
+    if(status)status.textContent='';
     try{
       officeVisitorCameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:officeVisitorCameraFacingMode}},audio:false});
       if(!video)throw new Error('Camera preview is unavailable.');
@@ -2485,35 +2495,39 @@
     }catch(cameraError){
       stopKsaOfficeVisitorCamera();
       console.error('[Office visitors] Unable to start the ID camera.',cameraError);
-      if(error){
-        if(cameraError&&cameraError.name==='NotAllowedError')error.textContent=officeLabel('Camera access was denied. Allow camera access in browser settings and try again.','تم رفض الوصول إلى الكاميرا. اسمح باستخدام الكاميرا من إعدادات المتصفح ثم حاول مجدداً.');
-        else error.textContent=officeLabel('Unable to start the camera. Check permissions or use the file upload instead.','تعذر تشغيل الكاميرا. تحقق من الأذونات أو استخدم تحميل الملف.');
+      if(status){
+        if(cameraError&&cameraError.name==='NotAllowedError')status.textContent=officeLabel('Camera access was denied. Allow camera access in browser settings and try again.','تم رفض الوصول إلى الكاميرا. اسمح باستخدام الكاميرا من إعدادات المتصفح ثم حاول مجدداً.');
+        else status.textContent=officeLabel('Unable to start the camera. Check permissions or use the file upload instead.','تعذر تشغيل الكاميرا. تحقق من الأذونات أو استخدم تحميل الملف.');
       }
     }
   }
 
-  function switchKsaOfficeVisitorCamera(){
+  function switchKsaOfficeVisitorCamera(photoGroup){
     officeVisitorCameraFacingMode=officeVisitorCameraFacingMode==='environment'?'user':'environment';
-    startKsaOfficeVisitorCamera();
+    startKsaOfficeVisitorCamera(photoGroup);
   }
 
-  function stopKsaOfficeVisitorCamera(){
+  function stopKsaOfficeVisitorCamera(photoGroup){
+    if(photoGroup&&officeVisitorCameraTarget!==photoGroup)return;
     if(officeVisitorCameraStream){
       officeVisitorCameraStream.getTracks().forEach(function(track){track.stop();});
       officeVisitorCameraStream=null;
     }
-    var video=document.getElementById('office-visitor-camera-video');
+    photoGroup=photoGroup||officeVisitorCameraTarget;
+    var video=photoGroup&&photoGroup.querySelector('video');
     if(video)video.srcObject=null;
-    var panel=document.getElementById('office-visitor-camera-panel');
+    var panel=photoGroup&&photoGroup.querySelector('.office-visitor-camera-panel');
     if(panel)panel.classList.add('hidden');
+    if(officeVisitorCameraTarget===photoGroup)officeVisitorCameraTarget=null;
   }
 
-  function captureKsaOfficeVisitorIdCopy(){
-    var video=document.getElementById('office-visitor-camera-video');
-    var error=document.getElementById('office-visitor-form-error');
-    var preview=document.getElementById('office-visitor-camera-preview');
+  function captureKsaOfficeVisitorIdCopy(photoGroup){
+    if(!photoGroup||photoGroup!==officeVisitorCameraTarget)return;
+    var video=photoGroup.querySelector('video');
+    var status=photoGroup.querySelector('.office-visitor-photo-status');
+    var preview=photoGroup.querySelector('img');
     if(!video||!video.videoWidth||!video.videoHeight){
-      if(error)error.textContent=officeLabel('The camera is not ready. Wait for the preview and try again.','الكاميرا غير جاهزة. انتظر ظهور المعاينة ثم حاول مجدداً.');
+      if(status)status.textContent=officeLabel('The camera is not ready. Wait for the preview and try again.','الكاميرا غير جاهزة. انتظر ظهور المعاينة ثم حاول مجدداً.');
       return;
     }
     var canvas=document.createElement('canvas');
@@ -2525,15 +2539,15 @@
     canvas.height=height;
     var context=canvas.getContext('2d');
     drawCameraFrame(context,video,width,height,officeVisitorCameraFacingMode);
-    officeVisitorCapturedIdCopy=canvas.toDataURL('image/jpeg',0.7);
-    var photo=document.getElementById('office-visitor-id-copy');
+    photoGroup.dataset.officeIdCopy=canvas.toDataURL('image/jpeg',0.7);
+    var photo=photoGroup.querySelector('input[type="file"]');
     if(photo)photo.value='';
     if(preview){
-      preview.src=officeVisitorCapturedIdCopy;
+      preview.src=photoGroup.dataset.officeIdCopy;
       preview.classList.remove('hidden');
     }
-    if(error)error.textContent=officeLabel('ID image captured and ready to save.','تم التقاط صورة الهوية وهي جاهزة للحفظ.');
-    stopKsaOfficeVisitorCamera();
+    if(status)status.textContent=officeLabel('ID image captured and ready to save.','تم التقاط صورة الهوية وهي جاهزة للحفظ.');
+    stopKsaOfficeVisitorCamera(photoGroup);
   }
 
   function readOfficeVisitorImage(file){
@@ -2560,33 +2574,44 @@
     });
   }
 
+  async function readOfficeVisitorPhoto(photoGroup){
+    if(!photoGroup)return '';
+    if(photoGroup.dataset.officeIdCopy)return photoGroup.dataset.officeIdCopy;
+    var input=photoGroup.querySelector('input[type="file"]');
+    var file=input&&input.files&&input.files[0];
+    return file?readOfficeVisitorImage(file):'';
+  }
+
   async function submitKsaOfficeVisitor(event){
     event.preventDefault();
     var form=document.getElementById('office-visitor-form');
     var error=document.getElementById('office-visitor-form-error');
     var save=document.getElementById('office-visitor-save');
-    var photo=document.getElementById('office-visitor-id-copy');
-    var file=photo&&photo.files&&photo.files[0];
-    if(!form||!photo){
+    if(!form){
       if(error)error.textContent='The visitor form is unavailable. Refresh and try again.';
       return;
     }
     if(!form.reportValidity())return;
-    if(file&&!/^image\//i.test(file.type||'')){
-      if(error)error.textContent='The Iqama / ID attachment must be an image.';
-      return;
+    var photoGroups=[].slice.call(form.querySelectorAll('.office-visitor-photo-group'));
+    for(var photoIndex=0;photoIndex<photoGroups.length;photoIndex++){
+      var selectedFile=photoGroups[photoIndex].querySelector('input[type="file"]').files[0];
+      if(selectedFile&&!/^image\//i.test(selectedFile.type||'')){
+        if(error)error.textContent=officeLabel('The Iqama / ID attachment must be an image.','يجب أن يكون مرفق الإقامة / الهوية صورة.');
+        return;
+      }
     }
     if(save){save.disabled=true;save.textContent=officeLabel('SAVING...','جارٍ الحفظ...');}
     if(error)error.textContent='';
     try{
-      var idCopy=officeVisitorCapturedIdCopy||(file?await readOfficeVisitorImage(file):'');
-      var members=[].slice.call(document.querySelectorAll('#office-visitor-members .office-visitor-member-row')).map(function(row){
+      var idCopy=await readOfficeVisitorPhoto(photoGroups[0]);
+      var members=await Promise.all([].slice.call(document.querySelectorAll('#office-visitor-members .office-visitor-member-row')).map(async function(row){
         var member={};
         row.querySelectorAll('[data-office-member-field]').forEach(function(input){
           member[input.dataset.officeMemberField]=input.value.trim();
         });
+        member.idCopy=await readOfficeVisitorPhoto(row.querySelector('.office-visitor-photo-group'));
         return member;
-      });
+      }));
       var result=await officeVisitorApiPost({
         action:'office_create_visitor',
         facility:document.getElementById('office-visitor-facility')?document.getElementById('office-visitor-facility').value:'',
@@ -2606,22 +2631,23 @@
       }
       closeKsaOfficeVisitorForm();
       officeVisitorStatus=officeLabel(
-        (savedVisitor&&savedVisitor.name?savedVisitor.name:'Visitor')+' is now checked in.',
-        'تم تسجيل دخول '+(savedVisitor&&savedVisitor.name?savedVisitor.name:'الزائر')+' الآن.'
+        (savedVisitor&&savedVisitor.name?savedVisitor.name:'Visitor')+' is saved and awaiting check-in.',
+        'تم حفظ بيانات '+(savedVisitor&&savedVisitor.name?savedVisitor.name:'الزائر')+' وبانتظار تسجيل الدخول.'
       );
       if(savedVisitor&&savedVisitor.recordId){
         renderKsaOfficeVisitors();
         var visitorStatus=document.getElementById('office-expected-visitor-status');
         var insideStatus=document.getElementById('office-visitor-status');
-        var expectedCount=officeVisitors.filter(function(visitor){return !visitor.checkedInAt;}).length;
-        var insideCount=officeVisitors.length-expectedCount;
+        var expectedCount=officeVisitors.filter(function(visitor){return !visitor.checkedInAt&&visitor.source!=='Manual';}).length;
+        var insideCount=officeVisitors.filter(function(visitor){return !!visitor.checkedInAt;}).length;
+        var manualAwaitingCount=officeVisitors.filter(function(visitor){return !visitor.checkedInAt&&visitor.source==='Manual';}).length;
         if(visitorStatus)visitorStatus.textContent=officeLabel(
           expectedCount+' expected visitor'+(expectedCount===1?'':'s')+' awaiting entry',
           'الزوار المتوقعون بانتظار الدخول: '+expectedCount
         );
         if(insideStatus)insideStatus.textContent=officeLabel(
-          insideCount+' visitor'+(insideCount===1?'':'s')+' currently inside',
-          'الزوار الموجودون حالياً: '+insideCount
+          insideCount+' visitor'+(insideCount===1?'':'s')+' currently inside'+(manualAwaitingCount?' · '+manualAwaitingCount+' awaiting check-in':''),
+          'الزوار الموجودون حالياً: '+insideCount+(manualAwaitingCount?' · بانتظار تسجيل الدخول: '+manualAwaitingCount:'')
         );
       }else{
         await refreshKsaOfficeVisitors(true);
@@ -2660,11 +2686,12 @@
       if(!Array.isArray(result.visitors))throw new Error('The server returned an invalid office visitor list.');
       if(requestVersion!==officeVisitorRequestVersion||requestMutationVersion!==officeVisitorMutationVersion)return;
       officeVisitors=result.visitors;
-      var expectedCount=officeVisitors.filter(function(visitor){return !visitor.checkedInAt;}).length;
-      var insideCount=officeVisitors.length-expectedCount;
+      var expectedCount=officeVisitors.filter(function(visitor){return !visitor.checkedInAt&&visitor.source!=='Manual';}).length;
+      var insideCount=officeVisitors.filter(function(visitor){return !!visitor.checkedInAt;}).length;
+      var manualAwaitingCount=officeVisitors.filter(function(visitor){return !visitor.checkedInAt&&visitor.source==='Manual';}).length;
       if(status)status.textContent=officeLabel(
-        insideCount+' visitor'+(insideCount===1?'':'s')+' currently inside',
-        'الزوار الموجودون حالياً: '+insideCount
+        insideCount+' visitor'+(insideCount===1?'':'s')+' currently inside'+(manualAwaitingCount?' · '+manualAwaitingCount+' awaiting check-in':''),
+        'الزوار الموجودون حالياً: '+insideCount+(manualAwaitingCount?' · بانتظار تسجيل الدخول: '+manualAwaitingCount:'')
       );
       if(expectedStatus)expectedStatus.textContent=officeLabel(
         expectedCount+' expected visitor'+(expectedCount===1?'':'s')+' awaiting entry',
@@ -2694,12 +2721,12 @@
   function renderKsaOfficeVisitors(){
     renderKsaOfficeVisitorList(
       'office-expected-visitors-list',
-      officeVisitors.filter(function(visitor){return !visitor.checkedInAt;}),
+      officeVisitors.filter(function(visitor){return !visitor.checkedInAt&&visitor.source!=='Manual';}),
       false
     );
     renderKsaOfficeVisitorList(
       'office-visitors-list',
-      officeVisitors.filter(function(visitor){return !!visitor.checkedInAt;}),
+      officeVisitors.filter(function(visitor){return !!visitor.checkedInAt||visitor.source==='Manual';}),
       true
     );
   }
@@ -2731,9 +2758,11 @@
       var checkin=document.createElement('span');
       checkin.className='office-visitor-checkin';
       checkin.style.cssText='display:inline-flex;align-self:flex-start;padding:4px 8px;border:1px solid rgba(56,217,169,.3);border-radius:999px;background:rgba(56,217,169,.12);color:#6ee7bd;font-size:9px;font-weight:800;letter-spacing:.1em;';
-      checkin.textContent=isInsideList
+      checkin.textContent=visitor.checkedInAt
         ?officeLabel('CHECKED IN: ','تسجيل الدخول: ')+formatOfficeVisitorDateTime(visitor.checkedInAt)
-        :officeLabel('EXPECTED VISITOR','زائر متوقع');
+        :visitor.source==='Manual'
+          ?officeLabel('AWAITING CHECK IN','بانتظار تسجيل الدخول')
+          :officeLabel('EXPECTED VISITOR','زائر متوقع');
       var meta=document.createElement('span');
       meta.style.cssText='display:flex;flex-direction:column;gap:3px;color:#d0d9e4;font-size:13px;line-height:1.45;overflow-wrap:anywhere;';
       var isGlobalAdmin=currentUser&&currentUser.role==='admin'&&currentUser.accessLevel==='superadmin';
@@ -2769,23 +2798,23 @@
       var actions=document.createElement('div');
       actions.className='office-visitor-actions';
       actions.style.cssText='display:flex;flex-direction:column;gap:8px;min-width:132px;';
-      if(isInsideList){
-        var checkout=document.createElement('button');
-        checkout.type='button';
-        checkout.className='btn-primary btn-outline office-visitor-checkout-button';
-        checkout.style.cssText='width:auto;min-width:132px;padding:10px 14px;border-radius:8px;font-weight:800;letter-spacing:.03em;';
-        checkout.textContent=officeLabel('CHECK OUT','تسجيل الخروج');
-        checkout.addEventListener('click',function(){checkOutKsaOfficeVisitor(visitor,checkout);});
-        actions.appendChild(checkout);
-      }else{
-        var checkInButton=document.createElement('button');
-        checkInButton.type='button';
-        checkInButton.className='btn-primary office-visitor-checkin-button';
-        checkInButton.style.cssText='width:auto;min-width:132px;padding:10px 14px;border-radius:8px;font-weight:800;letter-spacing:.03em;';
-        checkInButton.textContent=officeLabel('CHECK IN','تسجيل الدخول');
-        checkInButton.addEventListener('click',function(){checkInKsaOfficeVisitor(visitor,checkInButton);});
-        actions.appendChild(checkInButton);
-      }
+      var checkInButton=document.createElement('button');
+      checkInButton.type='button';
+      checkInButton.className='btn-primary office-visitor-checkin-button';
+      checkInButton.style.cssText='width:auto;min-width:132px;padding:10px 14px;border-radius:8px;font-weight:800;letter-spacing:.03em;';
+      checkInButton.textContent=officeLabel('CHECK IN','تسجيل الدخول');
+      checkInButton.disabled=!!visitor.checkedInAt;
+      if(checkInButton.disabled)checkInButton.style.cssText+=';opacity:.42;filter:grayscale(1);cursor:not-allowed;';
+      checkInButton.addEventListener('click',function(){checkInKsaOfficeVisitor(visitor,checkInButton);});
+      var checkout=document.createElement('button');
+      checkout.type='button';
+      checkout.className='btn-primary btn-outline office-visitor-checkout-button';
+      checkout.style.cssText='width:auto;min-width:132px;padding:10px 14px;border-radius:8px;font-weight:800;letter-spacing:.03em;';
+      checkout.textContent=officeLabel('CHECK OUT','تسجيل الخروج');
+      checkout.disabled=!visitor.checkedInAt;
+      if(checkout.disabled)checkout.style.cssText+=';opacity:.42;filter:grayscale(1);cursor:not-allowed;';
+      checkout.addEventListener('click',function(){checkOutKsaOfficeVisitor(visitor,checkout);});
+      actions.append(checkInButton,checkout);
       card.append(details,actions);
       list.appendChild(card);
     });
@@ -2839,7 +2868,7 @@
   }
 
   function checkOutKsaOfficeVisitor(visitor,button){
-    if(!visitor||!visitor.recordId)return;
+    if(!visitor||!visitor.recordId||!visitor.checkedInAt)return;
     if(button){
       if(button.disabled)return;
       button.disabled=true;
@@ -4898,6 +4927,7 @@
       '<div class="input-group"><label data-i18n="office_visit_from"></label><div style="display:flex;gap:10px;min-width:0;"><input id="req-office-date-from" class="input-field" style="min-width:0;flex:1;" type="date" required aria-label="Visit Date From"><input id="req-office-date-to" class="input-field" style="min-width:0;flex:1;" type="date" required aria-label="Visit Date To"></div></div>'+
       '<div class="input-group"><label for="req-office-contact" data-i18n="office_contact"></label><input id="req-office-contact" class="input-field" type="tel" maxlength="80" required></div>'+
       '<div class="input-group"><label for="req-office-invited-by" data-i18n="office_invited_by"></label><input id="req-office-invited-by" class="input-field" type="text" maxlength="160" required></div>'+
+      '<div class="input-group" id="req-office-members-group"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;"><label style="margin:0;" data-office-english="Members (optional)" data-office-arabic="الأعضاء (اختياري)">Members (optional)</label><button id="req-office-add-member" class="btn-primary btn-outline" type="button" style="width:auto;padding:7px 10px;font-size:11px;">+ ADD MEMBER</button></div><div id="req-office-members" style="display:flex;flex-direction:column;gap:8px;"></div></div>'+
       '<div class="input-group"><label for="req-office-vehicle-file" data-i18n="office_vehicle_photo"></label><div class="office-photo-actions"><button id="req-office-camera-start" class="btn-primary btn-outline" type="button" data-i18n="office_camera_start"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l1.5-2h7L17 7h3v12H4z"></path><circle cx="12" cy="13" r="3"></circle></svg><span>'+t('office_camera_start')+'</span></button><label class="file-picker" for="req-office-vehicle-file" data-i18n="office_choose_file"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7h6l2 2h9v9h-17z"></path></svg><span>'+t('office_choose_file')+'</span></label><input id="req-office-vehicle-file" class="file-input" type="file" accept="image/*"></div><div id="req-office-camera-panel" class="hidden" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;"><video id="req-office-camera-video" autoplay playsinline muted style="width:100%;max-height:240px;background:#000;border-radius:8px;object-fit:contain;"></video><div style="display:flex;flex-wrap:wrap;gap:8px;"><button id="req-office-camera-switch" class="btn-primary btn-outline" type="button" data-i18n="office_camera_switch" style="width:auto;padding:8px 10px;">'+t('office_camera_switch')+'</button><button id="req-office-camera-capture" class="btn-primary" type="button" data-i18n="office_camera_capture" style="width:auto;padding:8px 10px;">'+t('office_camera_capture')+'</button><button id="req-office-camera-cancel" class="btn-primary btn-outline" type="button" data-i18n="office_camera_cancel" style="width:auto;padding:8px 10px;">'+t('office_camera_cancel')+'</button></div></div><img id="req-office-vehicle-preview" class="hidden" alt="Vehicle picture preview" style="max-width:100%;max-height:180px;object-fit:contain;border:1px solid var(--border-color);border-radius:8px;margin-top:8px;"><p id="req-office-camera-status" role="status" style="min-height:16px;margin:6px 0 0;color:var(--text-muted);font-size:11px;"></p></div>'+
       '<div class="input-group"><label for="req-office-id-copy" data-i18n="office_id_copy"></label><div class="office-photo-actions"><button id="req-office-id-camera-start" class="btn-primary btn-outline" type="button" data-i18n="office_camera_start"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l1.5-2h7L17 7h3v12H4z"></path><circle cx="12" cy="13" r="3"></circle></svg><span>'+t('office_camera_start')+'</span></button><label class="file-picker" for="req-office-id-copy" data-i18n="office_choose_file"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7h6l2 2h9v9h-17z"></path></svg><span>'+t('office_choose_file')+'</span></label><input id="req-office-id-copy" class="file-input" type="file" accept="image/*"></div><div id="req-office-id-camera-panel" class="hidden" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;"><video id="req-office-id-camera-video" autoplay playsinline muted style="width:100%;max-height:240px;background:#000;border-radius:8px;object-fit:contain;"></video><div style="display:flex;flex-wrap:wrap;gap:8px;"><button id="req-office-id-camera-switch" class="btn-primary btn-outline" type="button" data-i18n="office_camera_switch" style="width:auto;padding:8px 10px;">'+t('office_camera_switch')+'</button><button id="req-office-id-camera-capture" class="btn-primary" type="button" data-i18n="office_camera_capture" style="width:auto;padding:8px 10px;">'+t('office_camera_capture')+'</button><button id="req-office-id-camera-cancel" class="btn-primary btn-outline" type="button" data-i18n="office_camera_cancel" style="width:auto;padding:8px 10px;">'+t('office_camera_cancel')+'</button></div></div><img id="req-office-id-preview" class="hidden" alt="Iqama or ID copy preview" style="max-width:100%;max-height:180px;object-fit:contain;border:1px solid var(--border-color);border-radius:8px;margin-top:8px;"><p id="req-office-id-camera-status" role="status" style="min-height:16px;margin:6px 0 0;color:var(--text-muted);font-size:11px;"></p></div>';
     if(requestCard){
@@ -4906,6 +4936,16 @@
       else requestCard.appendChild(officeFields);
       officeFields.querySelectorAll('[data-i18n]').forEach(function(label){setTranslatedContent(label,t(label.getAttribute('data-i18n')));});
     }
+    var requestMembers=document.getElementById('req-office-members');
+    var requestAddMember=document.getElementById('req-office-add-member');
+    if(requestAddMember){
+      requestAddMember.dataset.officeEnglish='+ ADD MEMBER';
+      requestAddMember.dataset.officeArabic='+ إضافة عضو';
+      requestAddMember.textContent=officeLabel(requestAddMember.dataset.officeEnglish,requestAddMember.dataset.officeArabic);
+      requestAddMember.addEventListener('click',function(){addOfficeVisitorMemberRow(requestMembers,true);});
+    }
+    var requestMembersLabel=officeFields.querySelector('#req-office-members-group [data-office-english]');
+    if(requestMembersLabel)requestMembersLabel.textContent=officeLabel(requestMembersLabel.dataset.officeEnglish,requestMembersLabel.dataset.officeArabic);
     var startVehicleCamera=document.getElementById('req-office-camera-start');
     var switchVehicleCamera=document.getElementById('req-office-camera-switch');
     var captureVehiclePicture=document.getElementById('req-office-camera-capture');
@@ -5639,6 +5679,15 @@
     if(!nameInput.value.trim()||!idInput.value.trim()||!startInput.value||!endInput.value||!contactInput.value.trim()||!invitedInput.value.trim())return alert('Complete all required Office Visitor details.');
     if(endInput.value<startInput.value)return alert('The visit end date cannot be before the start date.');
     if(!officeRequestIdCopy)return alert('Choose a file or capture a live Iqama / ID picture.');
+    var requestMemberRows=[].slice.call(document.querySelectorAll('#req-office-members .office-visitor-member-row'));
+    if(requestMemberRows.length>10)return alert('Add no more than 10 office visitor members.');
+    for(var memberIndex=0;memberIndex<requestMemberRows.length;memberIndex++){
+      var memberRow=requestMemberRows[memberIndex];
+      var missingMemberField=[].slice.call(memberRow.querySelectorAll('[data-office-member-field]')).some(function(input){return !input.value.trim();});
+      if(missingMemberField)return alert('Complete all required details for each Office Visitor member.');
+      var memberFile=memberRow.querySelector('.office-visitor-photo-group input[type="file"]');
+      if(memberFile&&memberFile.files&&memberFile.files[0]&&!/^image\//i.test(memberFile.files[0].type||''))return alert('Each Iqama / ID attachment must be an image.');
+    }
     if(!officeRequestVehiclePicture){
       var cameraStatus=document.getElementById('req-office-camera-status');
       if(cameraStatus)cameraStatus.textContent='Choose a file or capture a live Vehicle Picture before submitting.';
@@ -5670,6 +5719,14 @@
     try{
       var idCopy=officeRequestIdCopy;
       var vehiclePicture=officeRequestVehiclePicture;
+      var officeMembers=await Promise.all(requestMemberRows.map(async function(row){
+        var member={};
+        row.querySelectorAll('[data-office-member-field]').forEach(function(input){
+          member[input.dataset.officeMemberField]=input.value.trim();
+        });
+        member.idCopy=await readOfficeVisitorPhoto(row.querySelector('.office-visitor-photo-group'));
+        return member;
+      }));
       var payload={
         action:'office_submit_expected',
         requestId:passId,
@@ -5685,7 +5742,8 @@
         contact:contactInput.value.trim(),
         invitedBy:invitedInput.value.trim(),
         iqamaBase64:idCopy,
-        vehicleBase64:vehiclePicture
+        vehicleBase64:vehiclePicture,
+        members:officeMembers
       };
       await nativeFetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),mode:'no-cors',cache:'no-store'});
       var deadline=Date.now()+60000;
@@ -5700,6 +5758,8 @@
       clearOfficeRequestVehiclePicture();
       nameInput.value='';idInput.value='';startInput.value='';endInput.value='';
       contactInput.value='';invitedInput.value='';
+      var requestMembers=document.getElementById('req-office-members');
+      if(requestMembers)requestMembers.textContent='';
       await loadMyPasses(true,false);
       refreshKsaOfficeVisitors(true);
       alert('Office Visitor request saved. The QR pass is ready to use.');
@@ -5815,8 +5875,12 @@
     const listDiv=document.getElementById('my-passes-list');
     if(!listDiv)return;
     let h='';
-    if(!Array.isArray(data)||data.length===0){listDiv.innerHTML='<p style="color:var(--text-muted);font-size:13px;">'+t("msg_no_history")+'</p>';return;}
-    let displayData=[].concat(data).reverse();
+    let activeData=Array.isArray(data)?data.filter(function(pass){
+      var status=String(pass&&pass.Status||'Pending');
+      return status==='Approved'||status==='Pending';
+    }):[];
+    if(activeData.length===0){myPassesData=[];listDiv.innerHTML='<p style="color:var(--text-muted);font-size:13px;">'+t("msg_no_history")+'</p>';return;}
+    let displayData=activeData.reverse();
     myPassesData=displayData;
     displayData.forEach(function(pass){
       let safeId=String(pass.UniqueID).replace(/[^a-zA-Z0-9_-]/g,'');
@@ -6537,13 +6601,13 @@
     ensureAdminDataScopeControls('approvals',document.getElementById('admin-sec-approvals'));
     ensureAdminDataScopeControls('analytics',document.getElementById('admin-sec-analytics'));
     const tPending=document.getElementById('admin-table-pending'),tActive=document.getElementById('admin-table-active');
-    let hPending='',hActionPending='',hVisitorActive='',hContractorActive='';
+    let hPending='',hActionPending='',hVisitorActive='',hOfficeActive='',hContractorActive='';
     const today=new Date();today.setHours(0,0,0,0);
     const tomorrow=new Date(today.getTime());tomorrow.setDate(tomorrow.getDate()+1);
     let si=document.getElementById('filter-start'),ei=document.getElementById('filter-end');
     let fStart=(si&&si.value)?si.value:'';
     let fEnd=(ei&&ei.value)?ei.value:'';
-    let pendingCount=0,visitorActiveCount=0,contractorActiveCount=0,activeCheckedCount=0;
+    let pendingCount=0,visitorActiveCount=0,officeActiveCount=0,contractorActiveCount=0,activeCheckedCount=0;
     let aDate={},aType={},aFacility={},aStatus={};
     data.forEach(function(row){
       if(!row||!row.UniqueID)return;
@@ -6626,6 +6690,9 @@
             if(String(rType).trim().toLowerCase()==='contractor'){
               hContractorActive+=activeCard;
               contractorActiveCount++;
+            }else if(String(rType).trim().toLowerCase()==='office visitor'){
+              hOfficeActive+=activeCard;
+              officeActiveCount++;
             }else{
               hVisitorActive+=activeCard;
               visitorActiveCount++;
@@ -6636,8 +6703,10 @@
     });
     if(tPending){hPending=hActionPending+hPending;if(pendingCount===0)hPending='<tr><td colspan="5" class="text-center" style="padding:30px;">'+t("msg_no_pending")+'</td></tr>';tPending.innerHTML=hPending;}
     if(tActive){
-      var activeCount=visitorActiveCount+contractorActiveCount;
-      var visitorRows=visitorActiveCount?hVisitorActive:'<div class="active-request-empty">No active visitor requests.</div>';
+      var activeCount=visitorActiveCount+officeActiveCount+contractorActiveCount;
+      var selectedVisitorRows=showOfficeRequests?hOfficeActive:hVisitorActive;
+      var selectedVisitorCount=showOfficeRequests?officeActiveCount:visitorActiveCount;
+      var visitorRows=selectedVisitorCount?selectedVisitorRows:'<div class="active-request-empty">'+(showOfficeRequests?'No active office requests.':'No active visitor requests.')+'</div>';
       var contractorRows=contractorActiveCount?hContractorActive:'<div class="active-request-empty">No active contractor requests.</div>';
       var activeTable=tActive.closest('table');
       if(activeTable){
@@ -6645,7 +6714,7 @@
         var legacySelectAll=activeTable.querySelector('#selectAllCheckbox');
         if(legacySelectAll)legacySelectAll.id='selectAllCheckboxHeader';
       }
-      tActive.innerHTML='<tr><td colspan="8"><div class="active-requests-toolbar"><label><input type="checkbox" id="selectAllCheckbox" '+(activeCount>0&&activeCheckedCount===activeCount?'checked':'')+' '+(activeCount?'':'disabled')+' onclick="toggleSelectAll(this)"><span>Select all active passes for printing</span></label><span style="margin-left:auto;">'+activeCount+' active</span></div><div class="active-requests-columns"><section class="active-request-column visitor-request-column"><div class="active-request-column-title">VISITOR REQUESTS <span class="active-request-count">'+visitorActiveCount+'</span></div>'+visitorRows+'</section><section class="active-request-column contractor-request-column"><div class="active-request-column-title">CONTRACTOR REQUESTS <span class="active-request-count">'+contractorActiveCount+'</span></div>'+contractorRows+'</section></div></td></tr>';
+      tActive.innerHTML='<tr><td colspan="8"><div class="active-requests-toolbar"><label><input type="checkbox" id="selectAllCheckbox" '+(activeCount>0&&activeCheckedCount===activeCount?'checked':'')+' '+(activeCount?'':'disabled')+' onclick="toggleSelectAll(this)"><span>Select all active passes for printing</span></label><span style="margin-left:auto;">'+activeCount+' active</span></div><div class="active-requests-columns"><section class="active-request-column visitor-request-column"><div class="active-request-column-title">'+(showOfficeRequests?'OFFICE REQUESTS':'VISITOR REQUESTS')+' <span class="active-request-count">'+selectedVisitorCount+'</span><button type="button" class="admin-office-request-toggle" onclick="toggleAdminOfficeRequests()">'+(showOfficeRequests?'VISITOR REQUESTS':'OFFICE REQUEST')+'</button></div>'+visitorRows+'</section><section class="active-request-column contractor-request-column"><div class="active-request-column-title">CONTRACTOR REQUESTS <span class="active-request-count">'+contractorActiveCount+'</span></div>'+contractorRows+'</section></div></td></tr>';
     }
     updateAdminPendingBadges(countPendingAccessRequests(data),facilityAdminPendingCount);
     const st=document.getElementById('stat-type');if(st)st.innerHTML=Object.keys(aType).map(function(k){return '<div class="stat-row"><span>'+t(k.toLowerCase())+'</span><span class="stat-val">'+aType[k]+'</span></div>';}).join('')||'<div class="stat-row"><span>-</span></div>';
@@ -6661,6 +6730,11 @@
     const ss=document.getElementById('stat-status');if(ss)ss.innerHTML=sHtml||'<div class="stat-row"><span>-</span></div>';
     let topDates=Object.entries(aDate).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
     const sd=document.getElementById('stat-date');if(sd)sd.innerHTML=topDates.map(function(kv){return '<div class="stat-row"><span>'+kv[0]+'</span><span class="stat-val" style="color:var(--noon-yellow);">'+kv[1]+'</span></div>';}).join('')||'<div class="stat-row"><span>-</span></div>';
+  }
+
+  function toggleAdminOfficeRequests(){
+    showOfficeRequests=!showOfficeRequests;
+    renderAdminData(globalAdminData);
   }
 
   function handlePrintCheckbox(cb){if(cb.checked)checkedPrintIds.add(cb.value);else checkedPrintIds.delete(cb.value);var selectAll=document.getElementById('selectAllCheckbox');if(selectAll&&!selectAll.dataset.bulkUpdating){var rows=document.querySelectorAll('.print-checkbox.row-checkbox');selectAll.checked=rows.length>0&&Array.prototype.every.call(rows,function(row){return row.checked;});}}
