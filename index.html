@@ -1528,6 +1528,10 @@
   dict.ar.country_ksa="KSA (المملكة العربية السعودية)";
   dict.en.country_uae="UAE (United Arab Emirates)";
   dict.ar.country_uae="UAE (الإمارات العربية المتحدة)";
+  dict.en.slp_ticket="SLP Ticket No. (Optional)";
+  dict.ar.slp_ticket="رقم تذكرة SLP (اختياري)";
+  dict.en.work_permit_ref="Work Permit Ref";
+  dict.ar.work_permit_ref="مرجع تصريح العمل";
   dict.en.country_egy="EGY (Egypt)";
   dict.ar.country_egy="EGY (مصر)";
   dict.en.facility_label="Facility";
@@ -1800,7 +1804,11 @@
     return fresh;
   }
   const SESSION_LOGOUT_EVENT_KEY='noon_session_logout_event';
-  function clearPersistedSessions(){
+  function clearPersistedSessions(sessionKeys){
+    var keysToClear=new Set((Array.isArray(sessionKeys)?sessionKeys:[]).filter(function(key){
+      return typeof key==='string'&&key.indexOf('noon_session_')===0;
+    }));
+    if(!keysToClear.size)return;
     [
       {name:'localStorage',getStorage:function(){return window.localStorage;}},
       {name:'sessionStorage',getStorage:function(){return window.sessionStorage;}}
@@ -1808,7 +1816,7 @@
       try{
         var storage=storageSource.getStorage();
         Object.keys(storage).forEach(function(key){
-          if(key.indexOf('noon_session_')===0)storage.removeItem(key);
+          if(keysToClear.has(key))storage.removeItem(key);
         });
       }catch(storageError){
         console.warn('[Session] Unable to clear saved sessions from '+storageSource.name+'.',storageError);
@@ -1817,8 +1825,23 @@
   }
   window.addEventListener('storage',function(event){
     if(event.key!==SESSION_LOGOUT_EVENT_KEY||!event.newValue)return;
-    clearPersistedSessions();
-    if(!currentUser)return;
+    var logoutSessionKeys=[];
+    try{
+      var logoutEvent=JSON.parse(event.newValue);
+      if(Array.isArray(logoutEvent&&logoutEvent.sessionKeys)){
+        logoutSessionKeys=logoutEvent.sessionKeys.filter(function(key){
+          return typeof key==='string'&&key.indexOf('noon_session_')===0;
+        });
+      }
+    }catch(parseError){
+      console.warn('[Session] Ignoring an invalid cross-tab sign-out message.',parseError);
+      return;
+    }
+    if(!logoutSessionKeys.length)return;
+    clearPersistedSessions(logoutSessionKeys);
+    var currentSessionTargeted=logoutSessionKeys.indexOf(SESSION_KEY)!==-1||
+      !!(currentUser&&currentUser.role==='guard'&&logoutSessionKeys.indexOf(GUARD_SESSION_KEY)!==-1);
+    if(!currentSessionTargeted||!currentUser)return;
     stopGuardCacheRefresh();
     stopGuardInactivityMonitor();
     stopAmbientPanels();
@@ -4951,6 +4974,14 @@
     const requestLocationGroup=requestLocation&&requestLocation.parentElement;
     const requestForm=document.getElementById('dashboard-ops');
     if(!requestLocation||!requestLocationGroup||!requestForm||document.getElementById('req-country'))return;
+    ['req-vis-slp','req-con-slp'].forEach(function(id){
+      var ticketInput=document.getElementById(id);
+      if(ticketInput){
+        ticketInput.required=false;
+        ticketInput.removeAttribute('required');
+        ticketInput.setAttribute('aria-required','false');
+      }
+    });
     const requestCard=requestForm.querySelector('.ops-grid>.ops-card:first-child');
     if(requestCard)requestCard.id='request-form-card';
     const countries=[
@@ -4970,6 +5001,26 @@
     requestLocationGroup.parentNode.insertBefore(countryFacilityRow,country.group);
     countryFacilityRow.appendChild(country.group);
     countryFacilityRow.appendChild(requestLocationGroup);
+    const workPermitGroup=document.createElement('div');
+    workPermitGroup.id='req-work-permit-group';
+    workPermitGroup.className='input-group hidden';
+    const workPermitLabel=document.createElement('label');
+    workPermitLabel.htmlFor='req-work-permit-ref';
+    workPermitLabel.setAttribute('data-i18n','work_permit_ref');
+    workPermitLabel.textContent=t('work_permit_ref');
+    const workPermitInput=document.createElement('input');
+    workPermitInput.id='req-work-permit-ref';
+    workPermitInput.name='workPermitRef';
+    workPermitInput.type='text';
+    workPermitInput.className='input-field';
+    workPermitInput.maxLength=120;
+    workPermitInput.autocomplete='off';
+    workPermitInput.required=false;
+    workPermitInput.setAttribute('aria-required','false');
+    workPermitInput.setAttribute('aria-label',t('work_permit_ref'));
+    workPermitGroup.appendChild(workPermitLabel);
+    workPermitGroup.appendChild(workPermitInput);
+    countryFacilityRow.appendChild(workPermitGroup);
     const facilityLabel=document.createElement('label');
     facilityLabel.htmlFor='req-location';
     facilityLabel.setAttribute('data-i18n','facility_label');
@@ -5075,6 +5126,9 @@
       requestLocation.required=hasFacilities;
       requestLocation.value=availableFacilities.some(function(facility){return facility[0]===previous;})
         ?previous:'';
+      const showWorkPermitRef=selectedCountry==='UAE';
+      workPermitGroup.classList.toggle('hidden',!showWorkPermitRef);
+      if(!showWorkPermitRef)workPermitInput.value='';
       updateOfficeRequestMode();
     }
     country.select.addEventListener('change',updateRequestLocation);
@@ -5401,7 +5455,12 @@
     stopAmbientPanels();
     if(guardSessionExpiryTimer){clearTimeout(guardSessionExpiryTimer);guardSessionExpiryTimer=null;}
     clearShiftStart(); // <-- Reset shift timer on logout
-    clearPersistedSessions();
+    var logoutSessionKeys=[SESSION_KEY];
+    if(currentRoleParam==='default'||(currentUser&&currentUser.role==='guard')){
+      logoutSessionKeys.push(GUARD_SESSION_KEY);
+    }
+    logoutSessionKeys=Array.from(new Set(logoutSessionKeys));
+    clearPersistedSessions(logoutSessionKeys);
     [
       {name:'localStorage',getStorage:function(){return window.localStorage;}},
       {name:'sessionStorage',getStorage:function(){return window.sessionStorage;}}
@@ -5416,7 +5475,10 @@
       }
     });
     try{if(html5QrCode&&html5QrCode.isScanning)html5QrCode.stop();}catch(e){}
-    try{localStorage.setItem(SESSION_LOGOUT_EVENT_KEY,String(Date.now())+'-'+Math.random().toString(36).slice(2));}
+    try{localStorage.setItem(SESSION_LOGOUT_EVENT_KEY,JSON.stringify({
+      sessionKeys:logoutSessionKeys,
+      nonce:String(Date.now())+'-'+Math.random().toString(36).slice(2)
+    }));}
     catch(storageError){console.warn('[Session] Could not notify other tabs about sign-out.',storageError);}
     location.reload();
   }
@@ -5918,7 +5980,9 @@
     document.getElementById('req-lead-device-type').value="None";toggleLeadDeviceInput();
     clearCapturedData('iqama');clearCapturedData('selfie');clearCapturedData('imeiphoto');clearCapturedData('vehicle');
     teamList=[];currentTeamCounter=1;renderTeamRoster();hideTeamEntry();
-    const payload={action:'create',UniqueID:tempId,requestId:tempId,hostName:hName,hostEmail:hMail,accountPin:accountPin,visitorName:vName,type:type,location:selectedLocation,startDate:startDateVal,endDate:endDateVal,iqamaBase64:iB64,iqamaMimeType:iMime,selfieBase64:sB64,selfieMimeType:sMime,imeiNumber:leadImeiVal,imeiPhotoBase64:imB64,fmPoc:fmPocVal,vehicleBase64:vB64,vehicleMimeType:vMime,vehiclePlateNo:'',team:cleanTeam,slpTicketNo:type==='Visitor'?document.getElementById('req-vis-slp').value:document.getElementById('req-con-slp').value,contactNo:type==='Visitor'?document.getElementById('req-vis-contact').value:document.getElementById('req-con-contact').value,invitedBy:type==='Visitor'?document.getElementById('req-vis-invitedby').value:'',projectName:type==='Contractor'?document.getElementById('req-con-project').value:'',companyName:type==='Contractor'?document.getElementById('req-con-company').value:'',projectManager:type==='Contractor'?document.getElementById('req-con-pm').value:''};
+    const ticketInput=document.getElementById(type==='Visitor'?'req-vis-slp':'req-con-slp');
+    const workPermitInput=document.getElementById('req-work-permit-ref');
+    const payload={action:'create',UniqueID:tempId,requestId:tempId,hostName:hName,hostEmail:hMail,accountPin:accountPin,visitorName:vName,type:type,location:selectedLocation,startDate:startDateVal,endDate:endDateVal,iqamaBase64:iB64,iqamaMimeType:iMime,selfieBase64:sB64,selfieMimeType:sMime,imeiNumber:leadImeiVal,imeiPhotoBase64:imB64,fmPoc:fmPocVal,vehicleBase64:vB64,vehicleMimeType:vMime,vehiclePlateNo:'',team:cleanTeam,slpTicketNo:ticketInput?ticketInput.value.trim():'',workPermitRef:selectedCountry.value==='UAE'&&workPermitInput?workPermitInput.value.trim():'',contactNo:type==='Visitor'?document.getElementById('req-vis-contact').value:document.getElementById('req-con-contact').value,invitedBy:type==='Visitor'?document.getElementById('req-vis-invitedby').value:'',projectName:type==='Contractor'?document.getElementById('req-con-project').value:'',companyName:type==='Contractor'?document.getElementById('req-con-company').value:'',projectManager:type==='Contractor'?document.getElementById('req-con-pm').value:''};
     if(ka){
       btn.innerText="SUBMITTING...";btn.disabled=true;
       beginPleaseWait('PLEASE WAIT...');
