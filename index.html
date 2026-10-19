@@ -1799,7 +1799,33 @@
     try{ localStorage.setItem(key, String(fresh)); }catch(e){}
     return fresh;
   }
-
+  const SESSION_LOGOUT_EVENT_KEY='noon_session_logout_event';
+  function clearPersistedSessions(){
+    [
+      {name:'localStorage',getStorage:function(){return window.localStorage;}},
+      {name:'sessionStorage',getStorage:function(){return window.sessionStorage;}}
+    ].forEach(function(storageSource){
+      try{
+        var storage=storageSource.getStorage();
+        Object.keys(storage).forEach(function(key){
+          if(key.indexOf('noon_session_')===0)storage.removeItem(key);
+        });
+      }catch(storageError){
+        console.warn('[Session] Unable to clear saved sessions from '+storageSource.name+'.',storageError);
+      }
+    });
+  }
+  window.addEventListener('storage',function(event){
+    if(event.key!==SESSION_LOGOUT_EVENT_KEY||!event.newValue)return;
+    clearPersistedSessions();
+    if(!currentUser)return;
+    stopGuardCacheRefresh();
+    stopGuardInactivityMonitor();
+    stopAmbientPanels();
+    if(guardSessionExpiryTimer){clearTimeout(guardSessionExpiryTimer);guardSessionExpiryTimer=null;}
+    try{if(html5QrCode&&html5QrCode.isScanning)html5QrCode.stop();}catch(error){console.warn('[Session] Scanner could not be stopped after sign-out in another tab.',error);}
+    location.reload();
+  });
   function clearShiftStart(){
     const key = getShiftStorageKey();
     if(!key) return;
@@ -5375,18 +5401,7 @@
     stopAmbientPanels();
     if(guardSessionExpiryTimer){clearTimeout(guardSessionExpiryTimer);guardSessionExpiryTimer=null;}
     clearShiftStart(); // <-- Reset shift timer on logout
-    [
-      {name:'localStorage',getStorage:function(){return window.localStorage;}},
-      {name:'sessionStorage',getStorage:function(){return window.sessionStorage;}}
-    ].forEach(function(storageSource){
-      try{
-        var storage=storageSource.getStorage();
-        storage.removeItem(SESSION_KEY);
-        if(currentUser&&currentUser.role==='guard')storage.removeItem(GUARD_SESSION_KEY);
-      }catch(storageError){
-        console.warn('[Session] Unable to clear '+storageSource.name+' during sign-out.',storageError);
-      }
-    });
+    clearPersistedSessions();
     [
       {name:'localStorage',getStorage:function(){return window.localStorage;}},
       {name:'sessionStorage',getStorage:function(){return window.sessionStorage;}}
@@ -5401,6 +5416,8 @@
       }
     });
     try{if(html5QrCode&&html5QrCode.isScanning)html5QrCode.stop();}catch(e){}
+    try{localStorage.setItem(SESSION_LOGOUT_EVENT_KEY,String(Date.now())+'-'+Math.random().toString(36).slice(2));}
+    catch(storageError){console.warn('[Session] Could not notify other tabs about sign-out.',storageError);}
     location.reload();
   }
   function hardRefreshApp(){if(confirm("Reload the app with the latest data?")){window.location.reload();}}
