@@ -2295,7 +2295,7 @@
     panel.classList.remove('hidden');
     expectedPanel.classList.remove('hidden');
     expectedPanel.classList.remove('office-visitor-compact');
-    expectedPanel.style.cssText='width:100%;max-width:1100px;margin:14px auto 0;padding:16px;background:linear-gradient(155deg,rgba(17,23,34,.98),rgba(11,15,23,.98));border:1px solid rgba(56,217,169,.25);border-radius:14px;box-shadow:0 18px 46px rgba(0,0,0,.27);';
+    expectedPanel.style.cssText='width:100%;max-width:1440px;margin:14px auto 0;padding:18px;background:linear-gradient(155deg,rgba(17,23,34,.98),rgba(11,15,23,.98));border:1px solid rgba(56,217,169,.25);border-radius:14px;box-shadow:0 18px 46px rgba(0,0,0,.27);';
     if(!globalAdminMode&&window.matchMedia('(min-width: 1280px)').matches&&right){
       panel.classList.add('office-visitor-compact');
       panel.style.cssText='width:100%;max-width:none;margin:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;';
@@ -2753,7 +2753,7 @@
     visitors.forEach(function(visitor){
       var card=document.createElement('article');
       card.className='office-visitor-card';
-      card.style.cssText='display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:14px;padding:16px;background:linear-gradient(120deg,rgba(49,51,57,.72),rgba(31,35,45,.78));border:1px solid rgba(210,216,230,.3);border-radius:12px;box-shadow:inset 0 1px rgba(255,255,255,.08);';
+      card.style.cssText='display:grid;grid-template-columns:minmax(0,1fr)'+(isInsideList?' auto':'')+';align-items:center;gap:14px;padding:16px;background:linear-gradient(120deg,rgba(49,51,57,.72),rgba(31,35,45,.78));border:1px solid rgba(210,216,230,.3);border-radius:12px;box-shadow:inset 0 1px rgba(255,255,255,.08);';
       var details=document.createElement('div');
       details.className='office-visitor-details';
       details.style.cssText='min-width:0;flex:1;display:flex;flex-direction:column;gap:7px;';
@@ -2780,9 +2780,11 @@
       if(isGlobalAdmin)metaLines.push(officeLabel('Facility: ','الموقع: ')+(visitor.facility||'-'));
       metaLines.push(officeLabel('Expected visit: ','تاريخ الزيارة المتوقع: ')+expectedDateText);
       metaLines.push(officeLabel('Members: ','الأعضاء: ')+memberCount);
-      metaLines.push(officeLabel('ID: ','الهوية: ')+(visitor.idNumber||'-'));
-      metaLines.push(officeLabel('Meeting: ','المقابلة: ')+(visitor.meetingWith||'-'));
-      if(visitor.vehiclePlate)metaLines.push(officeLabel('Vehicle plate: ','لوحة المركبة: ')+visitor.vehiclePlate);
+      if(isInsideList){
+        metaLines.push(officeLabel('ID: ','الهوية: ')+(visitor.idNumber||'-'));
+        metaLines.push(officeLabel('Meeting: ','المقابلة: ')+(visitor.meetingWith||'-'));
+        if(visitor.vehiclePlate)metaLines.push(officeLabel('Vehicle plate: ','لوحة المركبة: ')+visitor.vehiclePlate);
+      }
       metaLines.forEach(function(line){
         var metaLine=document.createElement('span');
         metaLine.textContent=line;
@@ -2799,28 +2801,32 @@
       elapsedValue.className='office-visitor-elapsed-value';
       elapsedValue.style.cssText='color:var(--noon-yellow);font-weight:800;';
       elapsed.append(elapsedLabel,elapsedValue);
-      details.append(name,checkin,meta,elapsed);
-      var actions=document.createElement('div');
-      actions.className='office-visitor-actions';
-      actions.style.cssText='display:flex;flex-direction:column;gap:8px;min-width:132px;';
-      var checkInButton=document.createElement('button');
-      checkInButton.type='button';
-      checkInButton.className='btn-primary office-visitor-checkin-button';
-      checkInButton.style.cssText='width:auto;min-width:132px;padding:10px 14px;border-radius:8px;font-weight:800;letter-spacing:.03em;';
-      checkInButton.textContent=officeLabel('CHECK IN','تسجيل الدخول');
-      checkInButton.disabled=!!visitor.checkedInAt;
-      if(checkInButton.disabled)checkInButton.style.cssText+=';opacity:.42;filter:grayscale(1);cursor:not-allowed;';
-      checkInButton.addEventListener('click',function(){checkInKsaOfficeVisitor(visitor,checkInButton);});
-      var checkout=document.createElement('button');
-      checkout.type='button';
-      checkout.className='btn-primary btn-outline office-visitor-checkout-button';
-      checkout.style.cssText='width:auto;min-width:132px;padding:10px 14px;border-radius:8px;font-weight:800;letter-spacing:.03em;';
-      checkout.textContent=officeLabel('CHECK OUT','تسجيل الخروج');
-      checkout.disabled=!visitor.checkedInAt;
-      if(checkout.disabled)checkout.style.cssText+=';opacity:.42;filter:grayscale(1);cursor:not-allowed;';
-      checkout.addEventListener('click',function(){checkOutKsaOfficeVisitor(visitor,checkout);});
-      actions.append(checkInButton,checkout);
-      card.append(details,actions);
+      details.append(name,checkin,meta);
+      if(isInsideList)details.appendChild(elapsed);
+      card.appendChild(details);
+      if(isInsideList){
+        var actions=document.createElement('div');
+        actions.className='office-visitor-actions';
+        actions.style.cssText='display:flex;flex-direction:column;gap:8px;min-width:132px;';
+        var checkInButton=document.createElement('button');
+        checkInButton.type='button';
+        checkInButton.className='btn-primary office-visitor-checkin-button';
+        checkInButton.style.cssText='width:auto;min-width:132px;padding:10px 14px;border-radius:8px;font-weight:800;letter-spacing:.03em;';
+        checkInButton.textContent=officeLabel('CHECK IN','تسجيل الدخول');
+        checkInButton.disabled=!!visitor.checkedInAt;
+        if(checkInButton.disabled)checkInButton.style.cssText+=';opacity:.42;filter:grayscale(1);cursor:not-allowed;';
+        checkInButton.addEventListener('click',function(){checkInKsaOfficeVisitor(visitor,checkInButton);});
+        var checkout=document.createElement('button');
+        checkout.type='button';
+        checkout.className='btn-primary btn-outline office-visitor-checkout-button';
+        checkout.style.cssText='width:auto;min-width:132px;padding:10px 14px;border-radius:8px;font-weight:800;letter-spacing:.03em;';
+        checkout.textContent=officeLabel('CHECK OUT','تسجيل الخروج');
+        checkout.disabled=!visitor.checkedInAt;
+        if(checkout.disabled)checkout.style.cssText+=';opacity:.42;filter:grayscale(1);cursor:not-allowed;';
+        checkout.addEventListener('click',function(){checkOutKsaOfficeVisitor(visitor,checkout);});
+        actions.append(checkInButton,checkout);
+        card.appendChild(actions);
+      }
       list.appendChild(card);
     });
     updateOfficeVisitorElapsedTimers();
@@ -2847,13 +2853,16 @@
   }
   function formatOfficeVisitorExpectedDate(value){
     var text=String(value||'').trim();
-    var match=text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if(!match)return text||'--';
-    var date=new Date(Number(match[1]),Number(match[2])-1,Number(match[3]));
+    var match=text.match(/^(\d{4})-(\d{2})-(\d{2})(?:$|T)/);
+    var date=match
+      ?new Date(Number(match[1]),Number(match[2])-1,Number(match[3]))
+      :parseFlexibleDate(text);
+    if(!date)return '--';
     return date.toLocaleDateString(currentLang==='ar'?'ar-SA':'en-GB',{
       year:'numeric',
       month:'short',
-      day:'numeric'
+      day:'numeric',
+      timeZone:match?undefined:'Asia/Riyadh'
     });
   }
 
@@ -5576,6 +5585,7 @@
     if(!file)return;
     if(!/^image\//i.test(file.type||'')){
       input.value='';
+      setOfficeRequestPhoto(target,'');
       if(elements.status)elements.status.textContent=officeLabel('Choose an image file.','اختر ملف صورة.');
       return;
     }
@@ -5586,6 +5596,7 @@
       if(elements.status)elements.status.textContent=officeLabel('Image selected and ready to submit.','تم اختيار الصورة وهي جاهزة للإرسال.');
     }catch(error){
       input.value='';
+      setOfficeRequestPhoto(target,'');
       console.error('[Office request] Unable to read the selected image.',error);
       if(elements.status)elements.status.textContent=error&&error.message?error.message:officeLabel('Unable to read the selected image.','تعذر قراءة الصورة المحددة.');
     }
@@ -5607,18 +5618,22 @@
         video:{facingMode:{ideal:officeRequestCameraFacingMode}},
         audio:false
       });
-      if(!video)throw new Error('The vehicle camera preview is unavailable.');
+      if(!video)throw new Error(officeRequestCameraTarget==='id-copy'?'The Iqama / ID camera preview is unavailable.':'The vehicle camera preview is unavailable.');
       video.srcObject=officeRequestCameraStream;
       setCameraPreviewFacingMode(video,officeRequestCameraFacingMode);
       if(cameraPanel)cameraPanel.classList.remove('hidden');
       await video.play();
-      if(status)status.textContent=officeLabel('Camera is ready. Frame the vehicle and capture its picture.','الكاميرا جاهزة. وجّهها نحو المركبة والتقط الصورة.');
+      if(status)status.textContent=officeRequestCameraTarget==='id-copy'
+        ?officeLabel('Camera is ready. Frame the Iqama / ID and capture its picture.','الكاميرا جاهزة. وجّهها نحو الإقامة / الهوية والتقط الصورة.')
+        :officeLabel('Camera is ready. Frame the vehicle and capture its picture.','الكاميرا جاهزة. وجّهها نحو المركبة والتقط الصورة.');
     }catch(cameraError){
       stopOfficeRequestVehicleCamera();
-      console.error('[Office request] Unable to start the vehicle camera.',cameraError);
+      console.error('[Office request] Unable to start the '+(officeRequestCameraTarget==='id-copy'?'Iqama / ID':'vehicle')+' camera.',cameraError);
       if(status)status.textContent=cameraError&&cameraError.name==='NotAllowedError'
         ?officeLabel('Camera access was denied. Allow camera access and try again.','تم رفض الوصول إلى الكاميرا. اسمح بالوصول ثم حاول مجدداً.')
-        :officeLabel('Unable to start the vehicle camera. Check camera availability and permissions.','تعذر تشغيل كاميرا المركبة. تحقق من توفر الكاميرا وأذوناتها.');
+        :officeRequestCameraTarget==='id-copy'
+          ?officeLabel('Unable to start the Iqama / ID camera. Check camera availability and permissions.','تعذر تشغيل كاميرا الإقامة / الهوية. تحقق من توفر الكاميرا وأذوناتها.')
+          :officeLabel('Unable to start the vehicle camera. Check camera availability and permissions.','تعذر تشغيل كاميرا المركبة. تحقق من توفر الكاميرا وأذوناتها.');
     }
   }
   function switchOfficeRequestVehicleCamera(){
@@ -5665,7 +5680,9 @@
     canvas.height=height;
     var context=canvas.getContext('2d');
     if(!context){
-      if(status)status.textContent=officeLabel('Unable to process the vehicle picture. Please try again.','تعذر معالجة صورة المركبة. حاول مجدداً.');
+      if(status)status.textContent=target==='id-copy'
+        ?officeLabel('Unable to process the Iqama / ID picture. Please try again.','تعذر معالجة صورة الإقامة / الهوية. حاول مجدداً.')
+        :officeLabel('Unable to process the vehicle picture. Please try again.','تعذر معالجة صورة المركبة. حاول مجدداً.');
       return;
     }
     drawCameraFrame(context,video,width,height,officeRequestCameraFacingMode);
@@ -8368,4 +8385,4 @@
   })();
   </script>
   </body></html>
-    
+  
