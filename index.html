@@ -113,6 +113,10 @@
     #dashboard-guard>.header+div{width:100%!important;max-width:none!important;margin:0!important;justify-content:flex-start!important}
     #dashboard-guard>.header+div>div:first-child,#dashboard-guard>.header+div>div:last-child{min-width:0!important}
   }
+  @media(min-width:900px) and (max-width:1279px){
+    #dashboard-guard.office-guard-mode>.header+div>div:first-child{flex:0 0 clamp(280px,30vw,360px)!important;width:auto!important;max-width:360px!important}
+    #ambient-right.office-visitor-mode{width:min(340px,calc(34vw - 20px))!important}
+  }
   @media(max-width:700px){
     #dashboard-guard>.header+div{flex-direction:column!important}
     #dashboard-guard>.header+div>div:first-child,#dashboard-guard>.header+div>div:last-child{width:100%!important;flex-basis:auto!important;max-width:none!important}
@@ -1954,6 +1958,7 @@
     context.drawImage(video,0,0,width,height);
   }
   function officeLabel(english,arabic){return currentLang==='ar'?arabic:english;}
+  function officeTodayDateKey(){return new Date(Date.now()+3*60*60*1000).toISOString().slice(0,10);}
   function addOfficeVisitorMemberRow(){
     var members=document.getElementById('office-visitor-members');
     if(!members)return;
@@ -1963,7 +1968,7 @@
     }
     var row=document.createElement('div');
     row.className='office-visitor-member-row';
-    row.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr)) auto;gap:8px;align-items:end;padding:10px;border:1px solid rgba(210,216,230,.2);border-radius:9px;background:rgba(255,255,255,.04);';
+    row.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-items:end;padding:10px;border:1px solid rgba(210,216,230,.2);border-radius:9px;background:rgba(255,255,255,.04);';
     [
       ['name','Full Name','الاسم الكامل','text'],
       ['idNumber','ID Number / Iqama Number','رقم الهوية / الإقامة','text'],
@@ -1989,7 +1994,7 @@
     var remove=document.createElement('button');
     remove.type='button';
     remove.className='btn-primary btn-outline';
-    remove.style.cssText='width:auto;padding:8px 10px;font-size:11px;';
+    remove.style.cssText='grid-column:1/-1;justify-self:end;width:auto;padding:8px 10px;font-size:11px;';
     remove.dataset.officeEnglish='REMOVE';
     remove.dataset.officeArabic='إزالة';
     remove.addEventListener('click',function(){row.remove();});
@@ -2235,7 +2240,7 @@
     if(!modal){
       var style=document.createElement('style');
       style.id='office-visitor-modal-style';
-      style.textContent='#office-visitor-modal{position:fixed;inset:0;z-index:1000000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.62);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}#office-visitor-modal.hidden{display:none!important}#office-visitor-modal .office-visitor-card{width:min(620px,100%);max-height:92vh;overflow:auto;padding:22px;background:linear-gradient(145deg,rgba(49,51,57,.88),rgba(31,35,45,.92));border:1px solid rgba(210,216,230,.38);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.48),inset 0 1px rgba(255,255,255,.12);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}#office-visitor-modal .office-visitor-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}#office-visitor-modal .office-visitor-field{display:flex;flex-direction:column;gap:6px}#office-visitor-modal .office-visitor-field.full{grid-column:1/-1}#office-visitor-modal .office-visitor-field label{color:var(--text-muted);font-size:12px}#office-visitor-modal .office-visitor-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}#office-visitor-modal .office-visitor-error{min-height:18px;margin-top:12px;color:var(--danger,#ef4444);font-size:12px}@media(max-width:520px){#office-visitor-modal .office-visitor-grid{grid-template-columns:1fr}#office-visitor-modal .office-visitor-field.full{grid-column:auto}#office-visitor-modal .office-visitor-member-row{grid-template-columns:1fr!important}}';
+      style.textContent='#office-visitor-modal{position:fixed;inset:0;z-index:1000000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.62);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}#office-visitor-modal.hidden{display:none!important}#office-visitor-modal .office-visitor-card{width:min(620px,100%);max-height:92vh;overflow:auto;padding:22px;background:linear-gradient(145deg,rgba(49,51,57,.88),rgba(31,35,45,.92));border:1px solid rgba(210,216,230,.38);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.48),inset 0 1px rgba(255,255,255,.12);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}#office-visitor-modal .office-visitor-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}#office-visitor-modal .office-visitor-field{display:flex;flex-direction:column;gap:6px;min-width:0}#office-visitor-modal .office-visitor-field .input-field{box-sizing:border-box;width:100%;min-width:0}#office-visitor-modal .office-visitor-field.full{grid-column:1/-1}#office-visitor-modal .office-visitor-field label{color:var(--text-muted);font-size:12px}#office-visitor-modal .office-visitor-photo-actions{display:flex;align-items:stretch;gap:8px}#office-visitor-modal .office-visitor-photo-actions button,#office-visitor-modal .office-visitor-photo-actions .file-picker{display:flex;flex:1 1 0;align-items:center;justify-content:center;gap:7px;min-width:0;min-height:38px;box-sizing:border-box;padding:8px 10px;border:1px solid rgba(221,225,235,.31);border-radius:7px;background:rgba(255,255,255,.07);color:#f5f6fa;font-size:10px;font-weight:750;line-height:1.2;text-align:center;text-transform:uppercase;white-space:nowrap;cursor:pointer}#office-visitor-modal .office-visitor-photo-actions svg{flex:0 0 14px;width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}#office-visitor-modal .office-visitor-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}#office-visitor-modal .office-visitor-error{min-height:18px;margin-top:12px;color:var(--danger,#ef4444);font-size:12px}@media(max-width:520px){#office-visitor-modal .office-visitor-grid{grid-template-columns:1fr}#office-visitor-modal .office-visitor-field.full{grid-column:auto}#office-visitor-modal .office-visitor-member-row{grid-template-columns:1fr!important}}';
       document.head.appendChild(style);
       modal=document.createElement('div');
       modal.id='office-visitor-modal';
@@ -2270,6 +2275,7 @@
         input.type=field[3];
         input.className='input-field';
         input.required=field[4];
+        if(field[0]==='office-visitor-date')input.readOnly=true;
         group.append(label,input);
         grid.appendChild(group);
       });
@@ -2303,19 +2309,30 @@
       photoInput.id='office-visitor-id-copy';
       photoInput.type='file';
       photoInput.accept='image/*';
-      photoInput.capture='environment';
-      photoInput.style.cssText='color:var(--text-muted);font-size:12px;';
+      photoInput.className='file-input';
+      photoInput.style.cssText='position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);clip-path:inset(50%);white-space:nowrap;';
       photoInput.addEventListener('change',function(){
         officeVisitorCapturedIdCopy='';
         var preview=document.getElementById('office-visitor-camera-preview');
         if(preview){preview.removeAttribute('src');preview.classList.add('hidden');}
       });
+      var photoActions=document.createElement('div');
+      photoActions.className='office-visitor-photo-actions';
+      photoActions.style.position='relative';
       var cameraButton=document.createElement('button');
       cameraButton.id='office-visitor-camera-start';
       cameraButton.type='button';
       cameraButton.className='btn-primary btn-outline';
-      cameraButton.style.cssText='width:auto;padding:8px 12px;font-size:12px;margin-top:6px;';
+      cameraButton.style.cssText='width:auto;margin:0;';
+      cameraButton.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l1.5-2h7L17 7h3v12H4z"></path><circle cx="12" cy="13" r="3"></circle></svg><span data-office-english="LIVE CAMERA" data-office-arabic="كاميرا مباشرة">LIVE CAMERA</span>';
       cameraButton.addEventListener('click',startKsaOfficeVisitorCamera);
+      var filePicker=document.createElement('label');
+      filePicker.className='file-picker';
+      filePicker.htmlFor='office-visitor-id-copy';
+      filePicker.dataset.officeEnglish='CHOOSE FILE';
+      filePicker.dataset.officeArabic='اختر ملفاً';
+      filePicker.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7h6l2 2h9v9h-17z"></path></svg><span data-office-english="CHOOSE FILE" data-office-arabic="اختر ملفاً">CHOOSE FILE</span>';
+      photoActions.append(cameraButton,filePicker,photoInput);
       var cameraPanel=document.createElement('div');
       cameraPanel.id='office-visitor-camera-panel';
       cameraPanel.className='hidden';
@@ -2353,7 +2370,7 @@
       preview.alt='Captured Iqama or ID copy';
       preview.className='hidden';
       preview.style.cssText='max-width:100%;max-height:180px;object-fit:contain;border:1px solid var(--border-color);border-radius:8px;margin-top:8px;';
-      photoGroup.append(photoLabel,photoInput,cameraButton,cameraPanel,preview);
+      photoGroup.append(photoLabel,photoActions,cameraPanel,preview);
       grid.appendChild(photoGroup);
       var error=document.createElement('p');
       error.id='office-visitor-form-error';
@@ -2370,8 +2387,6 @@
       save.type='submit';
       save.className='btn-primary';
       save.id='office-visitor-save';
-      cameraButton.dataset.officeEnglish='📷 USE LIVE CAMERA';
-      cameraButton.dataset.officeArabic='📷 استخدام الكاميرا';
       switchCamera.dataset.officeEnglish='SWITCH CAMERA';
       switchCamera.dataset.officeArabic='تبديل الكاميرا';
       captureCamera.dataset.officeEnglish='CAPTURE ID';
@@ -2396,7 +2411,9 @@
     var modal=document.getElementById('office-visitor-modal');
     if(!modal)return;
     modal.querySelectorAll('[data-office-english]').forEach(function(label){
-      label.textContent=currentLang==='ar'?label.dataset.officeArabic:label.dataset.officeEnglish;
+      var translated=currentLang==='ar'?label.dataset.officeArabic:label.dataset.officeEnglish;
+      var textNode=label.matches('button,.file-picker')&&label.querySelector('span')?label.querySelector('span'):label;
+      textNode.textContent=translated;
     });
     var title=document.getElementById('office-visitor-form-title');
     var cancel=document.getElementById('office-visitor-cancel');
@@ -2410,7 +2427,11 @@
     }
     ['office-visitor-camera-start','office-visitor-camera-switch','office-visitor-camera-capture','office-visitor-camera-cancel'].forEach(function(id){
       var button=document.getElementById(id);
-      if(button)button.textContent=currentLang==='ar'?button.dataset.officeArabic:button.dataset.officeEnglish;
+      if(button){
+        var cameraLabel=button.querySelector('span[data-office-english]');
+        if(cameraLabel)cameraLabel.textContent=currentLang==='ar'?cameraLabel.dataset.officeArabic:cameraLabel.dataset.officeEnglish;
+        else button.textContent=currentLang==='ar'?button.dataset.officeArabic:button.dataset.officeEnglish;
+      }
     });
   }
 
@@ -2420,7 +2441,11 @@
     var error=document.getElementById('office-visitor-form-error');
     if(form)form.reset();
     var visitDate=document.getElementById('office-visitor-date');
-    if(visitDate)visitDate.value=ambientDateKey(new Date());
+    if(visitDate){
+      visitDate.value=officeTodayDateKey();
+      visitDate.min=visitDate.value;
+      visitDate.max=visitDate.value;
+    }
     var members=document.getElementById('office-visitor-members');
     if(members)members.textContent='';
     officeVisitorCapturedIdCopy='';
@@ -2581,13 +2606,23 @@
       }
       closeKsaOfficeVisitorForm();
       officeVisitorStatus=officeLabel(
-        (savedVisitor&&savedVisitor.name?savedVisitor.name:'Visitor')+' saved and waiting to check in.',
-        'تم حفظ بيانات الزائر وبانتظار تسجيل الدخول.'
+        (savedVisitor&&savedVisitor.name?savedVisitor.name:'Visitor')+' is now checked in.',
+        'تم تسجيل دخول '+(savedVisitor&&savedVisitor.name?savedVisitor.name:'الزائر')+' الآن.'
       );
       if(savedVisitor&&savedVisitor.recordId){
         renderKsaOfficeVisitors();
         var visitorStatus=document.getElementById('office-expected-visitor-status');
-        if(visitorStatus)visitorStatus.textContent=officeVisitorStatus;
+        var insideStatus=document.getElementById('office-visitor-status');
+        var expectedCount=officeVisitors.filter(function(visitor){return !visitor.checkedInAt;}).length;
+        var insideCount=officeVisitors.length-expectedCount;
+        if(visitorStatus)visitorStatus.textContent=officeLabel(
+          expectedCount+' expected visitor'+(expectedCount===1?'':'s')+' awaiting entry',
+          'الزوار المتوقعون بانتظار الدخول: '+expectedCount
+        );
+        if(insideStatus)insideStatus.textContent=officeLabel(
+          insideCount+' visitor'+(insideCount===1?'':'s')+' currently inside',
+          'الزوار الموجودون حالياً: '+insideCount
+        );
       }else{
         await refreshKsaOfficeVisitors(true);
       }
@@ -5586,10 +5621,7 @@
   }
 
   function createOfficePassId(){
-    var bytes=new Uint8Array(10);
-    if(window.crypto&&window.crypto.getRandomValues)window.crypto.getRandomValues(bytes);
-    else for(var i=0;i<bytes.length;i++)bytes[i]=Math.floor(Math.random()*256);
-    return 'OFFICE-'+Array.prototype.map.call(bytes,function(byte){return byte.toString(16).padStart(2,'0');}).join('').toUpperCase();
+    return 'NOON-'+Math.floor(100000+Math.random()*900000);
   }
   async function submitKsaOfficeRequest(){
     var nameInput=document.getElementById('req-office-name');
@@ -8246,4 +8278,4 @@
   })();
   </script>
   </body></html>
-    
+  
