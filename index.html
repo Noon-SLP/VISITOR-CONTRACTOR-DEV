@@ -1041,15 +1041,16 @@
     #dashboard-ops .ops-grid>.ops-card:first-child>#req-vname-group{grid-column:1}
     #dashboard-ops .ops-grid>.ops-card:first-child>#admin-email-group{grid-column:1/-1}
     #dashboard-ops .ops-grid>.ops-card:first-child>#req-iqamatext-group{grid-column:2}
-    #dashboard-ops .ops-grid>.ops-card:first-child>#req-country-facility-row{grid-column:1;grid-row:4;display:flex;flex-direction:column;gap:0;min-width:0}
-    #dashboard-ops .ops-grid>.ops-card:first-child>#req-country-facility-row:has(>#req-location-group:not(.hidden)){gap:8px}
+    #dashboard-ops .ops-grid>.ops-card:first-child>#req-country-facility-row{grid-column:1/-1;grid-row:4;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:end;gap:8px 12px;min-width:0}
     #dashboard-ops .ops-grid>.ops-card:first-child>#req-country-facility-row>.input-group{min-width:0;margin-bottom:0}
+    #dashboard-ops .ops-grid>.ops-card:first-child>#req-country-facility-row>#req-country{grid-column:1;grid-row:1}
+    #dashboard-ops .ops-grid>.ops-card:first-child>#req-country-facility-row>#req-vis-slp-group,#dashboard-ops .ops-grid>.ops-card:first-child>#req-country-facility-row>#req-con-slp-group{grid-column:2;grid-row:1}
+    #dashboard-ops .ops-grid>.ops-card:first-child>#req-country-facility-row>#req-location-group{grid-column:1;grid-row:2}
+    #dashboard-ops .ops-grid>.ops-card:first-child>#req-country-facility-row>#req-work-permit-group{grid-column:2;grid-row:2}
     #dashboard-ops .ops-grid>.ops-card:first-child>.input-group:has(#req-type){grid-column:1/-1;grid-row:2}
     #dashboard-ops .ops-grid>.ops-card:first-child>.input-group:has(#req-vname){grid-column:1;grid-row:3}
     #dashboard-ops .ops-grid>.ops-card:first-child>.input-group:has(#req-iqamatext){grid-column:2;grid-row:3}
     #dashboard-ops .ops-grid>.ops-card:first-child>.input-group:has(#req-date-start){grid-column:1/-1;grid-row:5}
-    #dashboard-ops .ops-grid>.ops-card:first-child>#req-visitor-fields>.input-group:nth-child(1){grid-column:2;grid-row:4}
-    #dashboard-ops .ops-grid>.ops-card:first-child>#req-contractor-fields>.input-group:has(#req-con-slp){grid-column:2;grid-row:4}
     #dashboard-ops .ops-grid>.ops-card:first-child>#req-visitor-fields>.input-group:nth-child(2){grid-column:1;grid-row:6}
     #dashboard-ops .ops-grid>.ops-card:first-child>#req-visitor-fields>.input-group:nth-child(3){grid-column:2;grid-row:6}
     #dashboard-ops .ops-grid>.ops-card:first-child>#req-visitor-fields>.input-group:nth-child(4){grid-column:1;grid-row:7}
@@ -1074,6 +1075,7 @@
     #dashboard-ops .ops-grid>.ops-card:first-child>#team-members-section{margin:0 0 8px!important;padding:0!important}
     #dashboard-ops .ops-grid>.ops-card:first-child .input-group{margin-bottom:8px}
     #dashboard-ops .ops-grid>.ops-card:first-child .input-group{margin-top:0!important}
+    #dashboard-ops .ops-grid>.ops-card:first-child .input-group:has(#req-date-start){margin-top:10px!important}
     #dashboard-ops .ops-grid>.ops-card:first-child .input-group label{margin-bottom:4px;color:#e2e5eb!important;font-size:12px}
     #dashboard-ops .ops-grid>.ops-card:first-child #req-vname::placeholder,#dashboard-ops .ops-grid>.ops-card:first-child #req-iqamatext::placeholder,#dashboard-ops .ops-grid>.ops-card:first-child #req-vis-slp::placeholder,#dashboard-ops .ops-grid>.ops-card:first-child #req-vis-contact::placeholder,#dashboard-ops .ops-grid>.ops-card:first-child #req-vis-invitedby::placeholder{color:transparent}
     #dashboard-ops .ops-grid>.ops-card:first-child .input-group:has(#req-lead-device-type)>label{font-size:10px!important;line-height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1116,7 +1118,15 @@
     #dashboard-ops .ops-grid>.ops-card:nth-child(2) .pass-item{border-color:rgba(215,220,232,.22);background:rgba(255,255,255,.07)}
     @media(max-width:1050px){#dashboard-ops .ops-grid{grid-template-columns:minmax(0,1fr) minmax(320px,.72fr);gap:16px}#dashboard-ops .ops-grid>.ops-card:first-child{grid-column:1;grid-row:1}#dashboard-ops .ops-grid>.ops-card:nth-child(2){grid-column:2;grid-row:1}#main-content::before,html.low-performance #main-content::before{background-size:min(42vw,420px)!important;opacity:.4!important}}
     @media(max-width:760px){#dashboard-ops{padding:18px 14px 36px}#dashboard-ops>.header{align-items:center;gap:10px;margin-bottom:18px}#dashboard-ops>.header::before{content:"";order:0;flex:0 0 46px;width:46px;height:46px;background:url("Logo-optimized.png") center/contain no-repeat;filter:drop-shadow(0 4px 12px rgba(255,199,0,.15))}#dashboard-ops>.header h2{order:1;flex:1;min-width:0;font-size:clamp(15px,4vw,18px);line-height:1.25}#dashboard-ops>.header .header-controls{order:2;flex:1 0 100%;justify-content:flex-end;gap:8px}#dashboard-ops>.header .header-controls .btn-primary{width:auto;min-height:36px;padding:7px 10px;font-size:10px}#dashboard-ops .ops-grid{grid-template-columns:minmax(0,1fr);gap:14px}#dashboard-ops .ops-grid>.ops-card:first-child,#dashboard-ops .ops-grid>.ops-card:nth-child(2){grid-column:1;grid-row:auto}#dashboard-ops .ops-grid>.ops-card:first-child{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}#dashboard-ops .ops-grid::after{display:none!important}#main-content::before,html.low-performance #main-content::before{background-size:180px!important;opacity:.4!important;filter:drop-shadow(0 0 14px rgba(255,199,0,.68)) drop-shadow(0 0 34px rgba(255,199,0,.42)) drop-shadow(0 0 56px rgba(255,173,0,.22)) drop-shadow(0 8px 16px rgba(0,0,0,.38))!important}body.blur-background #main-content::before{filter:drop-shadow(0 0 14px rgba(255,199,0,.68)) drop-shadow(0 0 34px rgba(255,199,0,.42)) drop-shadow(0 0 56px rgba(255,173,0,.22)) drop-shadow(0 8px 16px rgba(0,0,0,.38))!important}}
-    @media(max-width:480px){#dashboard-ops .ops-grid>.ops-card:first-child{grid-template-columns:minmax(0,1fr)}#dashboard-ops .ops-grid>.ops-card:first-child>#req-country-facility-row{grid-column:1;grid-row:auto}#dashboard-ops .ops-grid>.ops-card:first-child>.input-group:has(#req-type),#dashboard-ops .ops-grid>.ops-card:first-child>.input-group:has(#req-vname),#dashboard-ops .ops-grid>.ops-card:first-child>.input-group:has(#req-iqamatext),#dashboard-ops .ops-grid>.ops-card:first-child>.input-group:has(#req-country),#dashboard-ops .ops-grid>.ops-card:first-child>.input-group:has(#req-date-start){grid-column:1;grid-row:auto}#dashboard-ops .ops-grid>.ops-card:first-child>#req-visitor-fields>.input-group:nth-child(1),#dashboard-ops .ops-grid>.ops-card:first-child>#req-visitor-fields>.input-group:nth-child(2),#dashboard-ops .ops-grid>.ops-card:first-child>#req-visitor-fields>.input-group:nth-child(3),#dashboard-ops .ops-grid>.ops-card:first-child>#req-visitor-fields>.input-group:nth-child(4),#dashboard-ops .ops-grid>.ops-card:first-child>.input-group:has(#req-iqama),#dashboard-ops .ops-grid>.ops-card:first-child>.input-group:has(#req-selfie),#dashboard-ops .ops-grid>.ops-card:first-child>.input-group:has(#req-imeiphoto){grid-column:1;grid-row:auto}#dashboard-ops .ops-grid>.ops-card:first-child:not(:has(#req-type option[value="Contractor"]:checked))>.input-group:has(#req-lead-device-type),#dashboard-ops .ops-grid>.ops-card:first-child:has(#req-type option[value="Contractor"]:checked)>.input-group:has(#req-lead-device-type){grid-column:1;grid-row:auto;width:100%;justify-self:stretch}#dashboard-ops .ops-grid>.ops-card:first-child:has(#req-type option[value="Contractor"]:checked)>.input-group:has(#req-iqama),#dashboard-ops .ops-grid>.ops-card:first-child:has(#req-type option[value="Contractor"]:checked)>.input-group:has(#req-selfie),#dashboard-ops .ops-grid>.ops-card:first-child:has(#req-type option[value="Contractor"]:checked)>.input-group:has(#req-imeiphoto){grid-row:auto}}
+    @media(max-width:480px){#dashboard-ops .ops-grid>.ops-card:first-child{grid-template-columns:minmax(0,1fr)}#dashboard-ops .ops-grid>.ops-card:first-child>#req-country-facility-row{grid-column:1;grid-row:auto;grid-template-columns:minmax(0,1fr)}#dashboard-ops .ops-grid>.ops-card:first-child>#req-country-facility-row>#req-country,#dashboard-ops .ops-grid>.ops-card:first-child>#req-country-facility-row>#req-vis-slp-group,#dashboard-ops .ops-grid>.ops-card:first-child>#req-country-facility-row>#req-con-slp-group,#dashboard-ops .ops-grid>.ops-card:first-child>#req-country-facility-row>#req-location-group,#dashboard-ops .ops-grid>.ops-card:first-child>#req-country-facility-row>#req-work-permit-group{grid-column:1;grid-row:auto}#dashboard-ops .ops-grid>.ops-card:first-child>.input-group:has(#req-type),#dashboard-ops .ops-grid>.ops-card:first-child>.input-group:has(#req-vname),#dashboard-ops .ops-grid>.ops-card:first-child>.input-group:has(#req-iqamatext),#dashboard-ops .ops-grid>.ops-card:first-child>.input-group:has(#req-country),#dashboard-ops .ops-grid>.ops-card:first-child>.input-group:has(#req-date-start){grid-column:1;grid-row:auto}#dashboard-ops .ops-grid>.ops-card:first-child>#req-visitor-fields>.input-group:nth-child(2),#dashboard-ops .ops-grid>.ops-card:first-child>#req-visitor-fields>.input-group:nth-child(3),#dashboard-ops .ops-grid>.ops-card:first-child>#req-visitor-fields>.input-group:nth-child(4),#dashboard-ops .ops-grid>.ops-card:first-child>.input-group:has(#req-iqama),#dashboard-ops .ops-grid>.ops-card:first-child>.input-group:has(#req-selfie),#dashboard-ops .ops-grid>.ops-card:first-child>.input-group:has(#req-imeiphoto){grid-column:1;grid-row:auto}#dashboard-ops .ops-grid>.ops-card:first-child:not(:has(#req-type option[value="Contractor"]:checked))>.input-group:has(#req-lead-device-type),#dashboard-ops .ops-grid>.ops-card:first-child:has(#req-type option[value="Contractor"]:checked)>.input-group:has(#req-lead-device-type){grid-column:1;grid-row:auto;width:100%;justify-self:stretch}#dashboard-ops .ops-grid>.ops-card:first-child:has(#req-type option[value="Contractor"]:checked)>.input-group:has(#req-iqama),#dashboard-ops .ops-grid>.ops-card:first-child:has(#req-type option[value="Contractor"]:checked)>.input-group:has(#req-selfie),#dashboard-ops .ops-grid>.ops-card:first-child:has(#req-type option[value="Contractor"]:checked)>.input-group:has(#req-imeiphoto){grid-row:auto}}
+    @media(max-width:480px){
+      #dashboard-ops .ops-grid>.ops-card:first-child{grid-template-columns:minmax(0,1fr)!important;grid-auto-columns:minmax(0,1fr)}
+      #dashboard-ops .ops-grid>.ops-card:first-child>.input-group,
+      #dashboard-ops .ops-grid>.ops-card:first-child>#req-country-facility-row,
+      #dashboard-ops .ops-grid>.ops-card:first-child>#req-visitor-fields>.input-group,
+      #dashboard-ops .ops-grid>.ops-card:first-child>#req-contractor-fields>.input-group{grid-column:1/-1!important;grid-row:auto!important;width:100%;min-width:0;max-width:100%;box-sizing:border-box}
+      #dashboard-ops .ops-grid>.ops-card:first-child>#req-country-facility-row>.input-group{grid-column:1!important;width:100%;min-width:0;max-width:100%;box-sizing:border-box}
+    }
     #dashboard-ops>.header{position:relative;justify-content:center}
     #dashboard-ops>.header .header-controls{position:relative;z-index:3;margin-left:auto}
     #dashboard-ops>.header h2{position:absolute;left:50%;top:8px;z-index:2;width:max-content;max-width:calc(100% - 300px);transform:translateX(-50%);margin:0!important;color:#fff!important;background:none!important;-webkit-text-fill-color:#fff!important;font-family:"Avenir Next","Trebuchet MS",sans-serif!important;font-size:clamp(22px,2.2vw,32px)!important;font-weight:800!important;letter-spacing:.045em!important;line-height:1.15!important;text-align:center;text-transform:uppercase;text-shadow:none}
@@ -1444,12 +1454,12 @@
   function ensureOpsFormFieldLabels(){
     [['req-vname','full_name_ph'],['req-iqamatext','iqama_id_ph'],['req-vis-slp','slp_ticket'],['req-vis-contact','contact_no'],['req-vis-invitedby','invited_by'],['req-con-slp','slp_ticket'],['req-con-contact','contact_no'],['req-con-project','project_name'],['req-con-company','company_name'],['req-con-pm','project_manager'],['req-con-fmpoc','fm_poc']].forEach(function(item){
       const input=document.getElementById(item[0]),group=input&&input.closest('.input-group');
-      if(!input||!group||group.querySelector('label'))return;
-      const label=document.createElement('label');
+      if(!input||!group)return;
+      const label=Array.from(group.querySelectorAll('label')).find(function(existing){return existing.htmlFor===input.id||existing.parentElement===group;})||document.createElement('label');
       label.htmlFor=input.id;
       label.setAttribute('data-i18n',item[1]);
       label.textContent=t(item[1]);
-      group.insertBefore(label,input);
+      if(!label.parentElement)group.insertBefore(label,input);
     });
   }
   function ensureOpsFilePickerLabels(){
@@ -4947,6 +4957,7 @@
         ticketInput.required=false;
         ticketInput.removeAttribute('required');
         ticketInput.setAttribute('aria-required','false');
+        if(ticketInput.parentElement)ticketInput.parentElement.id=id+'-group';
       }
     });
     const requestCard=requestForm.querySelector('.ops-grid>.ops-card:first-child');
@@ -4967,6 +4978,8 @@
     requestLocationGroup.id='req-location-group';
     requestLocationGroup.parentNode.insertBefore(countryFacilityRow,country.group);
     countryFacilityRow.appendChild(country.group);
+    countryFacilityRow.appendChild(document.getElementById('req-vis-slp-group'));
+    countryFacilityRow.appendChild(document.getElementById('req-con-slp-group'));
     countryFacilityRow.appendChild(requestLocationGroup);
     const workPermitGroup=document.createElement('div');
     workPermitGroup.id='req-work-permit-group';
@@ -5100,6 +5113,9 @@
     }
     country.select.addEventListener('change',updateRequestLocation);
     requestLocation.addEventListener('change',updateOfficeRequestMode);
+    const requestType=document.getElementById('req-type');
+    if(requestType)requestType.addEventListener('change',toggleDateFields);
+    toggleDateFields();
     updateRequestLocation();
   }
 
@@ -5186,10 +5202,6 @@
         requestAnimationFrame(function(){
           setTimeout(function(){
             if(!currentUser||currentUser.role!=='admin')return;
-            if(currentUser.accessLevel==='superadmin')refreshFacilityAdminRequests();
-            refreshGuardSignupRequests();
-            refreshGuardLocationChangeRequests();
-            loadGuardApprovalHistory();
             loadAdminData(true);
           },0);
         });
@@ -5203,23 +5215,36 @@
 
         if(currentUser.role==='ops'){
           switchMainView('ops');
-          const hasCache=hasCachedPasses(currentUser.email);
-          if(!hasCache)beginPleaseWait('PLEASE WAIT...');
-          try{const c=localStorage.getItem('cached_passes_'+currentUser.email);if(c){const a=sanitizeCachedPassPins(JSON.parse(c));if(Array.isArray(a)){lockedPassesData=a;localStorage.setItem('cached_passes_'+currentUser.email,JSON.stringify(a));}}}catch(e){}
+          let cachedPasses=[];
+          lockedPassesData=[];
+          try{
+            const cached=localStorage.getItem('cached_passes_'+currentUser.email);
+            if(cached){
+              const parsed=sanitizeCachedPassPins(JSON.parse(cached));
+              if(Array.isArray(parsed)){
+                cachedPasses=parsed;
+                lockedPassesData=parsed;
+                localStorage.setItem('cached_passes_'+currentUser.email,JSON.stringify(parsed));
+              }
+            }
+          }catch(cacheError){
+            console.warn('[Pass cache] Unable to read saved passes during startup.',cacheError);
+          }
 
           let hasPinInCachedPasses=false;
-          if(Array.isArray(lockedPassesData)){
-            for(let i=0;i<lockedPassesData.length;i++){
-              const p=lockedPassesData[i];
-              if(p && (p.HasAccountPIN || (p.HostName && String(p.HostName).includes('||PIN:')))){hasPinInCachedPasses=true;break;}
+          for(let i=0;i<cachedPasses.length;i++){
+            const p=cachedPasses[i];
+            if(p&&(p.HasAccountPIN||(p.HostName&&String(p.HostName).includes('||PIN:')))){
+              hasPinInCachedPasses=true;
+              break;
             }
           }
 
           const ld=document.getElementById('my-passes-list');
-          if(ld)ld.innerHTML='';
           myPassesData=[];
-
-          if(hasPinInCachedPasses&&!isPinUnlocked(currentUser.email)){
+          const needsPinVerification=hasPinInCachedPasses&&!isPinUnlocked(currentUser.email);
+          let cachedPassRender=Promise.resolve();
+          if(needsPinVerification){
             const vm=document.getElementById('pin-verify-modal');
             if(vm){
               vm.classList.remove('hidden');
@@ -5227,8 +5252,19 @@
               const inp=document.getElementById('verify-pin-input');if(inp)inp.value='';
               setTimeout(function(){if(inp)inp.focus();},0);
             }
+            if(ld)ld.innerHTML='';
+          }else if(cachedPasses.length){
+            cachedPassRender=processAndRenderPasses(cachedPasses,currentUser.email,false).catch(function(cacheError){
+              console.warn('[Pass cache] Unable to render saved passes during startup.',cacheError);
+            });
+          }else if(ld){
+            ld.innerHTML='<p style="color:var(--text-muted);font-size:13px;">'+t('fetching')+'</p>';
           }
-          requestAnimationFrame(function(){setTimeout(function(){loadMyPasses(true,true).finally(function(){if(!hasCache)endPleaseWait();});},40);});
+          requestAnimationFrame(function(){
+            setTimeout(function(){
+              cachedPassRender.then(function(){return loadMyPasses(true,true);});
+            },0);
+          });
         }
         else if(currentUser.role==='guard'){
           const glt=document.getElementById('guard-loc-text'),ld=document.getElementById('guard-loc-display'),dg=document.getElementById('dashboard-guard');
@@ -5442,7 +5478,7 @@
     location.reload();
   }
   function hardRefreshApp(){if(confirm("Reload the app with the latest data?")){window.location.reload();}}
-  function toggleDateFields(){const te=document.getElementById('req-type');if(!te)return;const type=te.value,vf=document.getElementById('req-visitor-fields'),cf=document.getElementById('req-contractor-fields'),tms=document.getElementById('team-members-section');if(vf)vf.classList.toggle('hidden',type==='Contractor');if(cf)cf.classList.toggle('hidden',type==='Visitor');if(tms)tms.classList.remove('hidden');}
+  function toggleDateFields(){const te=document.getElementById('req-type');if(!te)return;const type=te.value,vf=document.getElementById('req-visitor-fields'),cf=document.getElementById('req-contractor-fields'),tms=document.getElementById('team-members-section'),visitorTicket=document.getElementById('req-vis-slp-group'),contractorTicket=document.getElementById('req-con-slp-group');if(vf)vf.classList.toggle('hidden',type==='Contractor');if(cf)cf.classList.toggle('hidden',type==='Visitor');if(visitorTicket)visitorTicket.classList.toggle('hidden',type!=='Visitor');if(contractorTicket)contractorTicket.classList.toggle('hidden',type!=='Contractor');if(tms)tms.classList.remove('hidden');}
   function switchLoginTab(role){document.body.classList.toggle('blur-background',role!=='guard');document.querySelectorAll('.role-tab').forEach(function(t2){t2.classList.remove('active');});document.querySelectorAll('#login-guard, #login-ops, #login-admin').forEach(function(f){f.classList.add('hidden');});const te=document.getElementById('tab-'+role);if(te)te.classList.add('active');const le=document.getElementById('login-'+role);if(le)le.classList.remove('hidden');updateAdminPendingBadges(countPendingAccessRequests(globalAdminData),facilityAdminPendingCount);}
   function switchMainView(vId){
     if(vId==='guard'&&currentUser&&currentUser.role==='admin'&&currentUser.accessLevel==='facility')return;
@@ -6067,7 +6103,7 @@
         }
       }
     }catch(e){
-      if(!hasCached&&!isSilent)listDiv.innerHTML='<p style="color:var(--danger);font-size:13px;">Error loading passes. Please refresh.</p>';
+      if(!hasCached)listDiv.innerHTML='<p style="color:var(--danger);font-size:13px;">Error loading passes. Please refresh.</p>';
     }
   }
 
@@ -7348,8 +7384,8 @@
     targetCategory=targetCategory||null;
     const r=globalAdminData.find(function(x){return String(x.UniqueID)===String(id);})||myPassesData.find(function(x){return String(x.UniqueID)===String(id);})||(guardPassCache&&guardPassCache.get(String(id).toUpperCase()));
     if(!r)return;
-    var unresolvedPhotoLink=['IqamaURL','SelfieURL','ImeiPhotoURL'].some(function(field){
-      return /^Open (?:Iqama|Selfie|device) photo$/i.test(String(r[field]||'').trim());
+    var unresolvedPhotoLink=['IqamaURL','SelfieURL','ImeiPhotoURL','VehiclePlateNo'].some(function(field){
+      return /^Open (?:Iqama|Selfie|device|vehicle) photo$/i.test(String(r[field]||'').trim());
     });
     if(currentUser&&currentUser.role==='admin'&&unresolvedPhotoLink&&!passPhotoDetailsLoaded[id]){
       if(!passPhotoDetailsInFlight[id]){
@@ -8449,4 +8485,4 @@
   })();
   </script>
   </body></html>
-    
+  
