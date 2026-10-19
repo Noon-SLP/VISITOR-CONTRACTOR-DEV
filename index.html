@@ -4214,6 +4214,7 @@
   }
 
   var guardSignupRequestPromise=null;
+  var guardApprovalDashboardRequestPromise=null;
   var guardSignupPendingCount=0;
   var guardSignupLastLoadedAt=0;
   var guardLocationChangeRequests=[];
@@ -4229,7 +4230,10 @@
       content.textContent='';
       content.appendChild(createFacilityAdminApprovalState('↻',t('loading_requests'),t('checking_requests')));
     }
-    guardSignupRequestPromise=adminApiPost({action:'guard_list_signup_requests'}).then(function(result){
+    var request=guardApprovalDashboardRequestPromise
+      ?guardApprovalDashboardRequestPromise.then(function(result){return {requests:result.requests};})
+      :adminApiPost({action:'guard_list_signup_requests'});
+    guardSignupRequestPromise=request.then(function(result){
       if(!Array.isArray(result.requests))throw new Error('The server returned an invalid guard request list. Existing requests were kept.');
       var requests=result.requests;
       guardSignupPendingRequests=requests;
@@ -4317,7 +4321,10 @@
       content.textContent='';
       content.appendChild(createFacilityAdminApprovalState('↻',t('loading_requests'),'Checking for guard location change requests...'));
     }
-    guardLocationChangeRequestPromise=adminApiPost({action:'guard_list_location_change_requests'}).then(function(result){
+    var request=guardApprovalDashboardRequestPromise
+      ?guardApprovalDashboardRequestPromise.then(function(result){return {requests:result.locationChangeRequests};})
+      :adminApiPost({action:'guard_list_location_change_requests'});
+    guardLocationChangeRequestPromise=request.then(function(result){
       if(!Array.isArray(result.requests))throw new Error('The server returned an invalid guard location change request list. Existing requests were kept.');
       guardLocationChangeRequests=result.requests;
       guardLocationChangeLastLoadedAt=Date.now();
@@ -4461,7 +4468,10 @@
       count.textContent='Loading reviewed guard requests...';
       list.textContent='';
     }
-    guardApprovalHistoryPromise=adminApiPost({action:'guard_list_signup_history'}).then(function(result){
+    var request=guardApprovalDashboardRequestPromise
+      ?guardApprovalDashboardRequestPromise.then(function(result){return {history:result.history};})
+      :adminApiPost({action:'guard_list_signup_history'});
+    guardApprovalHistoryPromise=request.then(function(result){
       if(!Array.isArray(result.history)){
         throw new Error('The server returned an invalid guard signup history response. Deploy the latest code.gs version and try again.');
       }
@@ -4538,7 +4548,7 @@
         }
       });
       renderGuardApprovalHistory();
-      return loadGuardApprovalHistory(true);
+      return refreshGuardApprovalPanels(true);
     }).catch(function(error){
       alert('Unable to remove this guard: '+(error&&error.message?error.message:'Unknown error'));
       if(button){button.disabled=false;button.removeAttribute('aria-busy');button.textContent=originalText;}
@@ -5511,9 +5521,31 @@
   }
   function refreshGuardApprovalPanels(forceHistory){
     if(!currentUser||currentUser.role!=='admin')return Promise.resolve();
-    return refreshGuardSignupRequests()
-      .then(function(){return refreshGuardLocationChangeRequests();})
-      .then(function(){return loadGuardApprovalHistory(!!forceHistory);});
+    if(guardApprovalDashboardRequestPromise)return guardApprovalDashboardRequestPromise;
+    guardApprovalDashboardRequestPromise=adminApiPost({action:'guard_get_approval_dashboard'}).then(function(result){
+      if(!Array.isArray(result.requests)||!Array.isArray(result.locationChangeRequests)||!Array.isArray(result.history)){
+        throw new Error('The server returned an invalid guard approval dashboard. Existing data was kept.');
+      }
+      var now=Date.now();
+      guardSignupPendingRequests=result.requests;
+      guardLocationChangeRequests=result.locationChangeRequests;
+      guardApprovalHistoryData=result.history;
+      guardSignupLastLoadedAt=now;
+      guardLocationChangeLastLoadedAt=now;
+      guardApprovalHistoryLastLoadedAt=now;
+      guardSignupPendingCount=result.requests.length+result.locationChangeRequests.length;
+      updateAdminPendingBadges(countPendingAccessRequests(globalAdminData),facilityAdminPendingCount);
+      return result;
+    });
+    var dashboardRequest=guardApprovalDashboardRequestPromise;
+    var refreshes=[
+      refreshGuardSignupRequests(),
+      refreshGuardLocationChangeRequests(),
+      loadGuardApprovalHistory(true)
+    ];
+    return Promise.all(refreshes).finally(function(){
+      if(guardApprovalDashboardRequestPromise===dashboardRequest)guardApprovalDashboardRequestPromise=null;
+    });
   }
   function refreshAdminApprovalPanels(){
     if(!currentUser||currentUser.role!=='admin')return Promise.resolve();
