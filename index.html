@@ -1475,8 +1475,16 @@
   dict.ar.office_invited_by="المدعو من قبل";
   dict.en.office_vehicle_plate="Vehicle Plate";
   dict.ar.office_vehicle_plate="رقم لوحة المركبة";
-  dict.en.office_vehicle_photo="Vehicle Picture (Optional)";
-  dict.ar.office_vehicle_photo="صورة المركبة (اختياري)";
+  dict.en.office_vehicle_photo="Vehicle Picture (Required - Live Camera)";
+  dict.ar.office_vehicle_photo="صورة المركبة (مطلوبة - كاميرا مباشرة)";
+  dict.en.office_camera_start="START LIVE CAMERA";
+  dict.ar.office_camera_start="تشغيل الكاميرا المباشرة";
+  dict.en.office_camera_switch="SWITCH CAMERA";
+  dict.ar.office_camera_switch="تبديل الكاميرا";
+  dict.en.office_camera_capture="CAPTURE VEHICLE PICTURE";
+  dict.ar.office_camera_capture="التقاط صورة المركبة";
+  dict.en.office_camera_cancel="CANCEL CAMERA";
+  dict.ar.office_camera_cancel="إلغاء الكاميرا";
   dict.en.office_id_copy="Upload Iqama / ID Copy";
   dict.ar.office_id_copy="تحميل صورة الإقامة / الهوية";
   dict.en.office_submit_request="SUBMIT OFFICE VISITOR";
@@ -1911,6 +1919,9 @@
   var officeVisitorCameraStream=null;
   var officeVisitorCameraFacingMode='environment';
   var officeVisitorCapturedIdCopy='';
+  var officeRequestCameraStream=null;
+  var officeRequestVehiclePicture='';
+  var officeRequestCameraFacingMode='environment';
   function setCameraPreviewFacingMode(video,facingMode){
     if(!video)return;
     var isFrontCamera=facingMode==='user';
@@ -2015,13 +2026,54 @@
     var visitorButton=document.getElementById('btn-office-visitor');
     if(visitorButton)visitorButton.textContent=officeLabel('+ OFFICE VISITOR','+ زائر المكتب');
     var activeTitle=document.querySelector('#office-visitors-panel h2');
-    if(activeTitle)activeTitle.textContent=officeLabel('EXPECTED VISITORS','الزوار المتوقعون');
+    if(activeTitle)activeTitle.textContent=officeLabel('OFFICE VISITORS CURRENTLY INSIDE','زوار المكتب الموجودون حالياً');
+    var expectedTitle=document.querySelector('#office-expected-visitors-panel h2');
+    if(expectedTitle)expectedTitle.textContent=officeLabel('EXPECTED VISITORS','الزوار المتوقعون');
     var actionTitle=document.querySelector('#office-visitor-action-title');
     if(actionTitle)actionTitle.textContent=officeLabel('OFFICE VISITOR CHECK-IN','تسجيل زائر المكتب');
     var actionHint=document.querySelector('#office-visitor-action-hint');
     if(actionHint)actionHint.textContent=officeLabel('Register a new office visitor','تسجيل زائر جديد للمكتب');
     var refreshButton=document.getElementById('btn-refresh-office-visitors');
     if(refreshButton)refreshButton.textContent=officeLabel('REFRESH','تحديث');
+    var expectedRefreshButton=document.getElementById('btn-refresh-office-expected');
+    if(expectedRefreshButton)expectedRefreshButton.textContent=officeLabel('REFRESH','تحديث');
+  }
+
+  function ensureKsaOfficeVisitorPanel(panelId,titleId,statusId,listId,refreshId,titleEnglish,titleArabic){
+    var panel=document.getElementById(panelId);
+    if(panel)return panel;
+    panel=document.createElement('section');
+    panel.id=panelId;
+    panel.className='office-visitors-panel';
+    panel.style.cssText='width:100%;max-width:1100px;margin:22px auto;padding:18px;background:linear-gradient(145deg,rgba(49,51,57,.72),rgba(31,35,45,.78));border:1px solid rgba(210,216,230,.36);border-radius:14px;box-shadow:0 18px 46px rgba(0,0,0,.27),inset 0 1px rgba(255,255,255,.14);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);';
+    var heading=document.createElement('div');
+    heading.className='office-visitors-heading';
+    heading.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(131,232,201,.24);';
+    var title=document.createElement('h2');
+    title.id=titleId;
+    title.className='office-visitors-title';
+    title.style.cssText='margin:0;color:#83e8c9;font-size:15px;font-weight:850;letter-spacing:.035em;';
+    title.textContent=officeLabel(titleEnglish,titleArabic);
+    var refresh=document.createElement('button');
+    refresh.id=refreshId;
+    refresh.type='button';
+    refresh.className='btn-primary btn-outline';
+    refresh.setAttribute('aria-label',officeLabel('Refresh office visitors','تحديث زوار المكتب'));
+    refresh.style.cssText='width:auto;padding:7px 11px;font-size:10px;';
+    refresh.textContent=officeLabel('REFRESH','تحديث');
+    refresh.addEventListener('click',function(){refreshKsaOfficeVisitors(true);});
+    heading.append(title,refresh);
+    var status=document.createElement('p');
+    status.id=statusId;
+    status.className='office-visitors-status';
+    status.setAttribute('aria-live','polite');
+    status.style.cssText='display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:8px 10px;border:1px solid rgba(131,232,201,.2);border-radius:8px;background:rgba(56,217,169,.08);color:#d5dee8;font-size:11px;line-height:1.45;';
+    var list=document.createElement('div');
+    list.id=listId;
+    list.className='office-visitors-list';
+    list.style.cssText='display:flex;flex-direction:column;gap:10px;';
+    panel.append(heading,status,list);
+    return panel;
   }
 
   function restoreKsaOfficeVisitorUi(){
@@ -2043,6 +2095,11 @@
       scannerResult.style.setProperty('padding','0','important');
       scannerResult.style.setProperty('min-height','0','important');
     }
+    var expectedPanel=document.getElementById('office-expected-visitors-panel');
+    if(expectedPanel){
+      expectedPanel.classList.add('hidden');
+      if(scanner)scanner.insertAdjacentElement('afterend',expectedPanel);
+    }
     if(panel){
       panel.style.cssText='width:100%;max-width:1100px;margin:22px auto;padding:22px;background:linear-gradient(145deg,rgba(49,51,57,.72),rgba(31,35,45,.78));border:1px solid rgba(210,216,230,.36);border-radius:17px;box-shadow:0 20px 55px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.14);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);';
       panel.classList.add('hidden');
@@ -2055,6 +2112,7 @@
     }
     var actionCard=document.getElementById('office-visitor-action-card');
     if(actionCard)actionCard.remove();
+    if(expectedPanel&&scanner)scanner.insertAdjacentElement('afterend',expectedPanel);
     if(dashboard)dashboard.classList.remove('office-guard-mode','global-admin-scanner-mode');
   }
 
@@ -2091,38 +2149,15 @@
       actionCard.querySelector('#office-visitor-action-hint').textContent=officeLabel('Register a new office visitor','تسجيل زائر جديد للمكتب');
     }
     if(globalAdminMode&&actionCard)actionCard.appendChild(visitorButton);
-    var panel=document.getElementById('office-visitors-panel');
-    if(!panel){
-      panel=document.createElement('section');
-      panel.id='office-visitors-panel';
-      panel.className='office-visitors-panel';
-      panel.style.cssText='width:100%;max-width:1100px;margin:22px auto;padding:22px;background:linear-gradient(145deg,rgba(49,51,57,.72),rgba(31,35,45,.78));border:1px solid rgba(210,216,230,.36);border-radius:17px;box-shadow:0 20px 55px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.14);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);';
-      var heading=document.createElement('div');
-      heading.className='office-visitors-heading';
-      heading.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:17px;padding-bottom:15px;border-bottom:1px solid rgba(131,232,201,.24);';
-      var title=document.createElement('h2');
-      title.className='office-visitors-title';
-      title.style.cssText='color:#83e8c9;font-size:16px;font-weight:850;letter-spacing:.04em;';
-      var refresh=document.createElement('button');
-      refresh.id='btn-refresh-office-visitors';
-      refresh.type='button';
-      refresh.className='btn-primary btn-outline';
-      refresh.setAttribute('aria-label','Refresh office visitors');
-      refresh.style.cssText='width:auto;padding:8px 13px;font-size:10px;';
-      refresh.addEventListener('click',function(){refreshKsaOfficeVisitors(true);});
-      heading.append(title,refresh);
-      var status=document.createElement('p');
-      status.id='office-visitor-status';
-      status.className='office-visitors-status';
-      status.setAttribute('aria-live','polite');
-      status.style.cssText='display:flex;align-items:center;gap:8px;margin:0 0 14px;padding:9px 11px;border:1px solid rgba(131,232,201,.2);border-radius:8px;background:rgba(56,217,169,.08);color:#d5dee8;font-size:12px;line-height:1.45;';
-      var list=document.createElement('div');
-      list.id='office-visitors-list';
-      list.className='office-visitors-list';
-      list.style.cssText='display:flex;flex-direction:column;gap:10px;';
-      panel.append(heading,status,list);
-    }
-    panel.classList.add('office-visitors-panel');
+    var panel=ensureKsaOfficeVisitorPanel(
+      'office-visitors-panel','office-visitors-title','office-visitor-status','office-visitors-list',
+      'btn-refresh-office-visitors','OFFICE VISITORS CURRENTLY INSIDE','زوار المكتب الموجودون حالياً'
+    );
+    var expectedPanel=ensureKsaOfficeVisitorPanel(
+      'office-expected-visitors-panel','office-expected-visitors-title','office-expected-visitor-status',
+      'office-expected-visitors-list','btn-refresh-office-expected','EXPECTED VISITORS','الزوار المتوقعون'
+    );
+    expectedPanel.classList.add('office-expected-panel');
     var sessionStrip=document.getElementById('guard-session-strip');
     var right=document.getElementById('ambient-right');
     if(!globalAdminMode&&sessionStrip)sessionStrip.insertAdjacentElement('afterend',visitorButton);
@@ -2145,10 +2180,14 @@
     }
     panel.style.cssText='width:100%;max-width:1100px;margin:22px auto;padding:22px;background:linear-gradient(155deg,rgba(17,23,34,.98),rgba(11,15,23,.98));border:1px solid rgba(56,217,169,.25);border-radius:14px;box-shadow:0 18px 46px rgba(0,0,0,.27);';
     panel.classList.remove('hidden');
+    expectedPanel.classList.remove('hidden');
+    expectedPanel.classList.remove('office-visitor-compact');
+    expectedPanel.style.cssText='width:100%;max-width:1100px;margin:14px auto 0;padding:16px;background:linear-gradient(155deg,rgba(17,23,34,.98),rgba(11,15,23,.98));border:1px solid rgba(56,217,169,.25);border-radius:14px;box-shadow:0 18px 46px rgba(0,0,0,.27);';
     if(!globalAdminMode&&window.matchMedia('(min-width: 1280px)').matches&&right){
       panel.classList.add('office-visitor-compact');
       panel.style.cssText='width:100%;max-width:none;margin:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;';
       right.appendChild(panel);
+      if(visitorButton.parentElement)visitorButton.insertAdjacentElement('afterend',expectedPanel);
     }else{
       panel.classList.remove('office-visitor-compact');
       if(globalAdminMode){
@@ -2158,12 +2197,17 @@
           actionCard.style.cssText='display:flex;flex-direction:column;align-items:stretch;gap:14px;width:100%;max-width:none;margin:14px 0 0;padding:14px;background:linear-gradient(120deg,rgba(49,51,57,.78),rgba(31,35,45,.84));border:1px solid rgba(255,199,0,.28);border-radius:14px;box-shadow:0 14px 36px rgba(0,0,0,.22),inset 0 1px rgba(255,255,255,.08);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);';
           var scannerColumn=scanner&&scanner.firstElementChild;
           if(scannerColumn)scannerColumn.appendChild(actionCard);
+          actionCard.appendChild(expectedPanel);
           if(panel){
+            var scannerResultColumn=scanner&&scanner.lastElementChild;
             panel.style.cssText='width:100%;max-width:none;margin:0;padding:16px;background:linear-gradient(145deg,rgba(49,51,57,.72),rgba(31,35,45,.78));border:1px solid rgba(210,216,230,.36);border-radius:12px;box-shadow:0 14px 32px rgba(0,0,0,.24),inset 0 1px rgba(255,255,255,.12);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);';
-            actionCard.appendChild(panel);
+            if(scannerResultColumn)scannerResultColumn.insertBefore(panel,scannerResultColumn.firstChild);
           }
         }
-      }else if(scanner)scanner.insertAdjacentElement('afterend',panel);
+      }else if(scanner){
+        visitorButton.insertAdjacentElement('afterend',expectedPanel);
+        scanner.insertAdjacentElement('afterend',panel);
+      }
       else header.insertAdjacentElement('afterend',panel);
     }
     if(!globalAdminMode&&sessionStrip&&visitorButton.parentElement!==sessionStrip.parentElement){
@@ -2524,7 +2568,7 @@
       );
       if(savedVisitor&&savedVisitor.recordId){
         renderKsaOfficeVisitors();
-        var visitorStatus=document.getElementById('office-visitor-status');
+        var visitorStatus=document.getElementById('office-expected-visitor-status');
         if(visitorStatus)visitorStatus.textContent=officeVisitorStatus;
       }else{
         await refreshKsaOfficeVisitors(true);
@@ -2540,43 +2584,53 @@
   function refreshKsaOfficeVisitors(force){
     var panel=document.getElementById('office-visitors-panel');
     var status=document.getElementById('office-visitor-status');
-    var list=document.getElementById('office-visitors-list');
+    var expectedStatus=document.getElementById('office-expected-visitor-status');
     var authorizedUser=currentUser&&(
       (currentUser.role==='guard'&&String(currentUser.guardMode||'').toLowerCase()==='office')||
       (currentUser.role==='admin'&&currentUser.accessLevel==='superadmin')
     );
     if(!panel||!authorizedUser)return Promise.resolve();
     if(officeVisitorRequestPromise&&!force)return officeVisitorRequestPromise;
-    var refresh=document.getElementById('btn-refresh-office-visitors');
+    var refreshButtons=[
+      document.getElementById('btn-refresh-office-visitors'),
+      document.getElementById('btn-refresh-office-expected')
+    ].filter(Boolean);
     var requestVersion=++officeVisitorRequestVersion;
-    var originalRefreshText=refresh?refresh.textContent:'';
-    if(refresh&&force){
-      refresh.disabled=true;
-      refresh.setAttribute('aria-busy','true');
-      refresh.textContent=officeLabel('REFRESHING...','جارٍ التحديث...');
-    }
+    var originalRefreshTexts=refreshButtons.map(function(button){return button.textContent;});
+    if(force)refreshButtons.forEach(function(button){
+      button.disabled=true;
+      button.setAttribute('aria-busy','true');
+      button.textContent=officeLabel('REFRESHING...','جارٍ التحديث...');
+    });
     var requestMutationVersion=officeVisitorMutationVersion;
     var request=officeVisitorApiPost({action:'office_list_visitors'}).then(function(result){
       if(!Array.isArray(result.visitors))throw new Error('The server returned an invalid office visitor list.');
       if(requestVersion!==officeVisitorRequestVersion||requestMutationVersion!==officeVisitorMutationVersion)return;
       officeVisitors=result.visitors;
-      if(status)status.textContent=officeVisitorStatus||officeLabel(
-        officeVisitors.length+' visitor'+(officeVisitors.length===1?'':'s')+' awaiting entry or currently inside',
-        'الزوار بانتظار الدخول أو الموجودون حالياً: '+officeVisitors.length
+      var expectedCount=officeVisitors.filter(function(visitor){return !visitor.checkedInAt;}).length;
+      var insideCount=officeVisitors.length-expectedCount;
+      if(status)status.textContent=officeLabel(
+        insideCount+' visitor'+(insideCount===1?'':'s')+' currently inside',
+        'الزوار الموجودون حالياً: '+insideCount
+      );
+      if(expectedStatus)expectedStatus.textContent=officeLabel(
+        expectedCount+' expected visitor'+(expectedCount===1?'':'s')+' awaiting entry',
+        'الزوار المتوقعون بانتظار الدخول: '+expectedCount
       );
       officeVisitorStatus='';
       renderKsaOfficeVisitors();
     }).catch(function(error){
       if(requestVersion!==officeVisitorRequestVersion)return;
       if(status)status.textContent='Unable to load office visitors: '+(error&&error.message?error.message:'Unknown error');
+      if(expectedStatus)expectedStatus.textContent='Unable to load expected visitors: '+(error&&error.message?error.message:'Unknown error');
       console.error('[Office visitors] Unable to load active visitors.',error);
     }).finally(function(){
       if(requestVersion===officeVisitorRequestVersion){
-        if(refresh&&force){
-          refresh.disabled=false;
-          refresh.removeAttribute('aria-busy');
-          refresh.textContent=originalRefreshText||officeLabel('REFRESH','تحديث');
-        }
+        if(force)refreshButtons.forEach(function(button,index){
+          button.disabled=false;
+          button.removeAttribute('aria-busy');
+          button.textContent=originalRefreshTexts[index]||officeLabel('REFRESH','تحديث');
+        });
         officeVisitorRequestPromise=null;
       }
     });
@@ -2585,18 +2639,33 @@
   }
 
   function renderKsaOfficeVisitors(){
-    var list=document.getElementById('office-visitors-list');
+    renderKsaOfficeVisitorList(
+      'office-expected-visitors-list',
+      officeVisitors.filter(function(visitor){return !visitor.checkedInAt;}),
+      false
+    );
+    renderKsaOfficeVisitorList(
+      'office-visitors-list',
+      officeVisitors.filter(function(visitor){return !!visitor.checkedInAt;}),
+      true
+    );
+  }
+
+  function renderKsaOfficeVisitorList(listId,visitors,isInsideList){
+    var list=document.getElementById(listId);
     if(!list)return;
     list.textContent='';
-    if(!officeVisitors.length){
+    if(!visitors.length){
       var empty=document.createElement('p');
       empty.style.cssText='padding:18px;color:var(--text-muted);text-align:center;';
-      empty.textContent=officeLabel('No expected office visitors are waiting or currently inside.','لا يوجد زوار متوقعون بانتظار الدخول أو موجودون حالياً.');
+      empty.textContent=isInsideList
+        ?officeLabel('No office visitors are currently inside.','لا يوجد زوار حالياً داخل المكتب.')
+        :officeLabel('No expected office visitors are waiting to check in.','لا يوجد زوار متوقعون بانتظار تسجيل الدخول.');
       list.appendChild(empty);
       updateOfficeVisitorElapsedTimers();
       return;
     }
-    officeVisitors.forEach(function(visitor){
+    visitors.forEach(function(visitor){
       var card=document.createElement('article');
       card.className='office-visitor-card';
       card.style.cssText='display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:14px;padding:16px;background:linear-gradient(120deg,rgba(49,51,57,.72),rgba(31,35,45,.78));border:1px solid rgba(210,216,230,.3);border-radius:12px;box-shadow:inset 0 1px rgba(255,255,255,.08);';
@@ -2609,9 +2678,9 @@
       var checkin=document.createElement('span');
       checkin.className='office-visitor-checkin';
       checkin.style.cssText='display:inline-flex;align-self:flex-start;padding:4px 8px;border:1px solid rgba(56,217,169,.3);border-radius:999px;background:rgba(56,217,169,.12);color:#6ee7bd;font-size:9px;font-weight:800;letter-spacing:.1em;';
-      checkin.textContent=visitor.checkedInAt
+      checkin.textContent=isInsideList
         ?officeLabel('CHECKED IN: ','تسجيل الدخول: ')+formatOfficeVisitorDateTime(visitor.checkedInAt)
-        :officeLabel('WAITING TO CHECK IN','بانتظار تسجيل الدخول');
+        :officeLabel('EXPECTED VISITOR','زائر متوقع');
       var meta=document.createElement('span');
       meta.style.cssText='color:#d0d9e4;font-size:13px;line-height:1.5;overflow-wrap:anywhere;';
       var isGlobalAdmin=currentUser&&currentUser.role==='admin'&&currentUser.accessLevel==='superadmin';
@@ -2640,25 +2709,23 @@
       var actions=document.createElement('div');
       actions.className='office-visitor-actions';
       actions.style.cssText='display:flex;flex-direction:column;gap:8px;min-width:132px;';
-      var checkInButton=document.createElement('button');
-      checkInButton.type='button';
-      checkInButton.className='btn-primary office-visitor-checkin-button';
-      checkInButton.style.cssText='width:auto;min-width:132px;padding:10px 14px;border-radius:8px;font-weight:800;letter-spacing:.03em;';
-      checkInButton.textContent=officeLabel('CHECK IN','تسجيل الدخول');
-      checkInButton.disabled=!!visitor.checkedInAt;
-      if(visitor.checkedInAt){
-        checkInButton.classList.add('btn-outline');
-        checkInButton.textContent=officeLabel('CHECKED IN','تم تسجيل الدخول');
+      if(isInsideList){
+        var checkout=document.createElement('button');
+        checkout.type='button';
+        checkout.className='btn-primary btn-outline office-visitor-checkout-button';
+        checkout.style.cssText='width:auto;min-width:132px;padding:10px 14px;border-radius:8px;font-weight:800;letter-spacing:.03em;';
+        checkout.textContent=officeLabel('CHECK OUT','تسجيل الخروج');
+        checkout.addEventListener('click',function(){checkOutKsaOfficeVisitor(visitor,checkout);});
+        actions.appendChild(checkout);
+      }else{
+        var checkInButton=document.createElement('button');
+        checkInButton.type='button';
+        checkInButton.className='btn-primary office-visitor-checkin-button';
+        checkInButton.style.cssText='width:auto;min-width:132px;padding:10px 14px;border-radius:8px;font-weight:800;letter-spacing:.03em;';
+        checkInButton.textContent=officeLabel('CHECK IN','تسجيل الدخول');
+        checkInButton.addEventListener('click',function(){checkInKsaOfficeVisitor(visitor,checkInButton);});
+        actions.appendChild(checkInButton);
       }
-      checkInButton.addEventListener('click',function(){checkInKsaOfficeVisitor(visitor,checkInButton);});
-      var checkout=document.createElement('button');
-      checkout.type='button';
-      checkout.className='btn-primary btn-outline office-visitor-checkout-button';
-      checkout.style.cssText='width:auto;min-width:132px;padding:10px 14px;border-radius:8px;font-weight:800;letter-spacing:.03em;';
-      checkout.textContent=officeLabel('CHECK OUT','تسجيل الخروج');
-      checkout.disabled=!visitor.checkedInAt;
-      checkout.addEventListener('click',function(){checkOutKsaOfficeVisitor(visitor,checkout);});
-      actions.append(checkInButton,checkout);
       card.append(details,actions);
       list.appendChild(card);
     });
@@ -4771,8 +4838,7 @@
       '<div class="input-group"><label data-i18n="office_visit_from"></label><div style="display:flex;gap:10px;min-width:0;"><input id="req-office-date-from" class="input-field" style="min-width:0;flex:1;" type="date" required aria-label="Visit Date From"><input id="req-office-date-to" class="input-field" style="min-width:0;flex:1;" type="date" required aria-label="Visit Date To"></div></div>'+
       '<div class="input-group"><label for="req-office-contact" data-i18n="office_contact"></label><input id="req-office-contact" class="input-field" type="tel" maxlength="80" required></div>'+
       '<div class="input-group"><label for="req-office-invited-by" data-i18n="office_invited_by"></label><input id="req-office-invited-by" class="input-field" type="text" maxlength="160" required></div>'+
-      '<div class="input-group"><label for="req-office-vehicle-plate" data-i18n="office_vehicle_plate"></label><input id="req-office-vehicle-plate" class="input-field" type="text" maxlength="120"></div>'+
-      '<div class="input-group"><label for="req-office-vehicle-photo" data-i18n="office_vehicle_photo"></label><input id="req-office-vehicle-photo" class="file-input" type="file" accept="image/*" capture="environment"></div>'+
+      '<div class="input-group"><label data-i18n="office_vehicle_photo"></label><button id="req-office-camera-start" class="btn-primary btn-outline" type="button" data-i18n="office_camera_start" style="width:auto;padding:8px 12px;">'+t('office_camera_start')+'</button><div id="req-office-camera-panel" class="hidden" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;"><video id="req-office-camera-video" autoplay playsinline muted style="width:100%;max-height:240px;background:#000;border-radius:8px;object-fit:contain;"></video><div style="display:flex;flex-wrap:wrap;gap:8px;"><button id="req-office-camera-switch" class="btn-primary btn-outline" type="button" data-i18n="office_camera_switch" style="width:auto;padding:8px 10px;">'+t('office_camera_switch')+'</button><button id="req-office-camera-capture" class="btn-primary" type="button" data-i18n="office_camera_capture" style="width:auto;padding:8px 10px;">'+t('office_camera_capture')+'</button><button id="req-office-camera-cancel" class="btn-primary btn-outline" type="button" data-i18n="office_camera_cancel" style="width:auto;padding:8px 10px;">'+t('office_camera_cancel')+'</button></div></div><img id="req-office-vehicle-preview" class="hidden" alt="Captured vehicle picture" style="max-width:100%;max-height:180px;object-fit:contain;border:1px solid var(--border-color);border-radius:8px;margin-top:8px;"><p id="req-office-camera-status" role="status" style="min-height:16px;margin:6px 0 0;color:var(--text-muted);font-size:11px;"></p></div>'+
       '<div class="input-group"><label for="req-office-id-copy" data-i18n="office_id_copy"></label><input id="req-office-id-copy" class="file-input" type="file" accept="image/*" capture="environment" required></div>';
     if(requestCard){
       const countryFacilityRow=document.getElementById('req-country-facility-row');
@@ -4780,11 +4846,20 @@
       else requestCard.appendChild(officeFields);
       officeFields.querySelectorAll('[data-i18n]').forEach(function(label){label.textContent=t(label.getAttribute('data-i18n'));});
     }
+    var startVehicleCamera=document.getElementById('req-office-camera-start');
+    var switchVehicleCamera=document.getElementById('req-office-camera-switch');
+    var captureVehiclePicture=document.getElementById('req-office-camera-capture');
+    var cancelVehicleCamera=document.getElementById('req-office-camera-cancel');
+    if(startVehicleCamera)startVehicleCamera.addEventListener('click',startOfficeRequestVehicleCamera);
+    if(switchVehicleCamera)switchVehicleCamera.addEventListener('click',switchOfficeRequestVehicleCamera);
+    if(captureVehiclePicture)captureVehiclePicture.addEventListener('click',captureOfficeRequestVehiclePicture);
+    if(cancelVehicleCamera)cancelVehicleCamera.addEventListener('click',stopOfficeRequestVehicleCamera);
     const submitButton=document.getElementById('btn-submit-req');
     function updateOfficeRequestMode(){
       const isOffice=country.select.value==='KSA'&&requestLocation.value==='RUH01 OFFICE';
       if(requestCard)requestCard.classList.toggle('office-request-mode',isOffice);
       officeFields.classList.toggle('hidden',!isOffice);
+      if(!isOffice)clearOfficeRequestVehiclePicture();
       if(submitButton)submitButton.textContent=isOffice?t('office_submit_request'):t('submit_approval');
     }
     function updateRequestLocation(){
@@ -5355,6 +5430,84 @@
     }
   }
 
+  async function startOfficeRequestVehicleCamera(){
+    var status=document.getElementById('req-office-camera-status');
+    var cameraPanel=document.getElementById('req-office-camera-panel');
+    var video=document.getElementById('req-office-camera-video');
+    if(!navigator.mediaDevices||typeof navigator.mediaDevices.getUserMedia!=='function'){
+      if(status)status.textContent=officeLabel('Live camera requires HTTPS and browser permission.','تتطلب الكاميرا المباشرة اتصال HTTPS وإذن المتصفح.');
+      return;
+    }
+    stopOfficeRequestVehicleCamera();
+    if(status)status.textContent='';
+    try{
+      officeRequestCameraStream=await navigator.mediaDevices.getUserMedia({
+        video:{facingMode:{ideal:officeRequestCameraFacingMode}},
+        audio:false
+      });
+      if(!video)throw new Error('The vehicle camera preview is unavailable.');
+      video.srcObject=officeRequestCameraStream;
+      setCameraPreviewFacingMode(video,officeRequestCameraFacingMode);
+      if(cameraPanel)cameraPanel.classList.remove('hidden');
+      await video.play();
+      if(status)status.textContent=officeLabel('Camera is ready. Frame the vehicle and capture its picture.','الكاميرا جاهزة. وجّهها نحو المركبة والتقط الصورة.');
+    }catch(cameraError){
+      stopOfficeRequestVehicleCamera();
+      console.error('[Office request] Unable to start the vehicle camera.',cameraError);
+      if(status)status.textContent=cameraError&&cameraError.name==='NotAllowedError'
+        ?officeLabel('Camera access was denied. Allow camera access and try again.','تم رفض الوصول إلى الكاميرا. اسمح بالوصول ثم حاول مجدداً.')
+        :officeLabel('Unable to start the vehicle camera. Check camera availability and permissions.','تعذر تشغيل كاميرا المركبة. تحقق من توفر الكاميرا وأذوناتها.');
+    }
+  }
+  function switchOfficeRequestVehicleCamera(){
+    officeRequestCameraFacingMode=officeRequestCameraFacingMode==='environment'?'user':'environment';
+    startOfficeRequestVehicleCamera();
+  }
+  function stopOfficeRequestVehicleCamera(){
+    if(officeRequestCameraStream){
+      officeRequestCameraStream.getTracks().forEach(function(track){track.stop();});
+      officeRequestCameraStream=null;
+    }
+    var video=document.getElementById('req-office-camera-video');
+    if(video)video.srcObject=null;
+    var panel=document.getElementById('req-office-camera-panel');
+    if(panel)panel.classList.add('hidden');
+  }
+  function clearOfficeRequestVehiclePicture(){
+    stopOfficeRequestVehicleCamera();
+    officeRequestVehiclePicture='';
+    var preview=document.getElementById('req-office-vehicle-preview');
+    var status=document.getElementById('req-office-camera-status');
+    if(preview){preview.removeAttribute('src');preview.classList.add('hidden');}
+    if(status)status.textContent='';
+  }
+  function captureOfficeRequestVehiclePicture(){
+    var video=document.getElementById('req-office-camera-video');
+    var preview=document.getElementById('req-office-vehicle-preview');
+    var status=document.getElementById('req-office-camera-status');
+    if(!video||!video.videoWidth||!video.videoHeight){
+      if(status)status.textContent=officeLabel('The camera is not ready yet. Wait for the preview and try again.','الكاميرا غير جاهزة. انتظر ظهور المعاينة ثم حاول مجدداً.');
+      return;
+    }
+    var width=video.videoWidth;
+    var height=video.videoHeight;
+    var maxWidth=1400;
+    if(width>maxWidth){height=Math.round(height*maxWidth/width);width=maxWidth;}
+    var canvas=document.createElement('canvas');
+    canvas.width=width;
+    canvas.height=height;
+    var context=canvas.getContext('2d');
+    if(!context){
+      if(status)status.textContent=officeLabel('Unable to process the vehicle picture. Please try again.','تعذر معالجة صورة المركبة. حاول مجدداً.');
+      return;
+    }
+    drawCameraFrame(context,video,width,height,officeRequestCameraFacingMode);
+    officeRequestVehiclePicture=canvas.toDataURL('image/jpeg',0.75);
+    if(preview){preview.src=officeRequestVehiclePicture;preview.classList.remove('hidden');}
+    if(status)status.textContent=officeLabel('Vehicle picture captured and ready to submit.','تم التقاط صورة المركبة وهي جاهزة للإرسال.');
+    stopOfficeRequestVehicleCamera();
+  }
+
   function createOfficePassId(){
     var bytes=new Uint8Array(18);
     if(window.crypto&&window.crypto.getRandomValues)window.crypto.getRandomValues(bytes);
@@ -5369,7 +5522,6 @@
     var contactInput=document.getElementById('req-office-contact');
     var invitedInput=document.getElementById('req-office-invited-by');
     var idPhotoInput=document.getElementById('req-office-id-copy');
-    var vehicleInput=document.getElementById('req-office-vehicle-photo');
     var button=document.getElementById('btn-submit-req');
     if(!nameInput||!idInput||!startInput||!endInput||!contactInput||!invitedInput||!idPhotoInput||!button)return;
     var country=document.getElementById('req-country');
@@ -5380,8 +5532,11 @@
     var idFile=idPhotoInput.files&&idPhotoInput.files[0];
     if(!idFile)return alert('Upload an Iqama or ID copy.');
     if(!/^image\//i.test(idFile.type||''))return alert('The Iqama / ID attachment must be an image.');
-    var vehicleFile=vehicleInput&&vehicleInput.files&&vehicleInput.files[0];
-    if(vehicleFile&&!/^image\//i.test(vehicleFile.type||''))return alert('The vehicle picture must be an image.');
+    if(!officeRequestVehiclePicture){
+      var cameraStatus=document.getElementById('req-office-camera-status');
+      if(cameraStatus)cameraStatus.textContent='Capture a Vehicle Picture before submitting.';
+      return alert('Capture a Vehicle Picture before submitting.');
+    }
     var email=currentUser&&currentUser.email;
     if(currentUser&&currentUser.role==='admin'){
       var adminEmail=document.getElementById('req-admin-email');
@@ -5407,11 +5562,12 @@
     renderMyPasses(cachedPasses);
     try{
       var idCopy=await readOfficeVisitorIdCopy(idFile);
-      var vehiclePicture=vehicleFile?await readOfficeVisitorIdCopy(vehicleFile):'';
+      var vehiclePicture=officeRequestVehiclePicture;
       var payload={
         action:'office_submit_expected',
         requestId:passId,
         UniqueID:passId,
+        location:facility.value,
         hostName:currentUser.name||'Visitor Portal',
         hostEmail:email,
         accountPin:pin,
@@ -5421,7 +5577,6 @@
         endDate:endInput.value,
         contact:contactInput.value.trim(),
         invitedBy:invitedInput.value.trim(),
-        vehiclePlateNo:(document.getElementById('req-office-vehicle-plate').value||'').trim(),
         iqamaBase64:idCopy,
         vehicleBase64:vehiclePicture
       };
@@ -5436,10 +5591,9 @@
       }
       if(!operationResult||operationResult.status!=='success')throw new Error('The server did not confirm the Office Visitor request. Refresh My Passes before retrying.');
       idFile.value='';
-      if(vehicleInput)vehicleInput.value='';
+      clearOfficeRequestVehiclePicture();
       nameInput.value='';idInput.value='';startInput.value='';endInput.value='';
       contactInput.value='';invitedInput.value='';
-      var plateInput=document.getElementById('req-office-vehicle-plate');if(plateInput)plateInput.value='';
       await loadMyPasses(true,false);
       refreshKsaOfficeVisitors(true);
       alert('Office Visitor request saved. The QR pass is ready to use.');
