@@ -55,6 +55,15 @@
   })();
   </script>
   <style>
+  #dashboard-ops .ops-grid>.ops-card:first-child.office-request-mode>:not(h3):not(#admin-email-group):not(#req-country-facility-row):not(#req-office-request-fields):not(#btn-submit-req){display:none!important}
+  #dashboard-ops .ops-grid>.ops-card:first-child.office-request-mode>#req-country-facility-row{grid-column:1/-1;grid-row:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  #dashboard-ops .ops-grid>.ops-card:first-child.office-request-mode>#req-office-request-fields{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}
+  #dashboard-ops .ops-grid>.ops-card:first-child.office-request-mode>#req-office-request-fields>.input-group{min-width:0;margin-bottom:9px}
+  #dashboard-ops .ops-grid>.ops-card:first-child.office-request-mode>#req-office-request-fields>.input-group:nth-child(3){grid-column:1/-1}
+  #dashboard-ops .ops-grid>.ops-card:first-child.office-request-mode>#btn-submit-req{grid-column:1/-1;width:100%;margin-top:8px!important}
+  #req-office-request-fields .input-field,#req-office-request-fields .file-input{box-sizing:border-box}
+  #req-office-request-fields input[type="file"]{font-size:11px}
+  @media(max-width:600px){#dashboard-ops .ops-grid>.ops-card:first-child.office-request-mode>#req-country-facility-row,#dashboard-ops .ops-grid>.ops-card:first-child.office-request-mode>#req-office-request-fields{grid-template-columns:minmax(0,1fr)}#dashboard-ops .ops-grid>.ops-card:first-child.office-request-mode>#req-office-request-fields>.input-group:nth-child(3){grid-column:auto}}
   #dashboard-guard>.header{background:transparent!important;border:0!important;border-bottom:0!important;border-radius:0!important;box-shadow:none!important}
   #dashboard-guard>.header+div>div:first-child>div:nth-child(2){flex-direction:column!important;gap:10px!important}
   #dashboard-guard #btn-mode-camera,#dashboard-guard #btn-mode-gun{width:100%!important;flex:none!important}
@@ -1003,15 +1012,15 @@
     #dashboard-ops .ops-grid>.ops-card:first-child>#req-vname-group{grid-column:1}
     #dashboard-ops .ops-grid>.ops-card:first-child>#admin-email-group{grid-column:1/-1}
     #dashboard-ops .ops-grid>.ops-card:first-child>#req-iqamatext-group{grid-column:2}
-    #dashboard-ops .ops-grid>.ops-card:first-child>#req-country-facility-row{grid-column:2;grid-row:4;display:flex;flex-direction:column;gap:0;min-width:0}
+    #dashboard-ops .ops-grid>.ops-card:first-child>#req-country-facility-row{grid-column:1;grid-row:4;display:flex;flex-direction:column;gap:0;min-width:0}
     #dashboard-ops .ops-grid>.ops-card:first-child>#req-country-facility-row:has(>#req-location-group:not(.hidden)){gap:8px}
     #dashboard-ops .ops-grid>.ops-card:first-child>#req-country-facility-row>.input-group{min-width:0;margin-bottom:0}
     #dashboard-ops .ops-grid>.ops-card:first-child>.input-group:has(#req-type){grid-column:1/-1;grid-row:2}
     #dashboard-ops .ops-grid>.ops-card:first-child>.input-group:has(#req-vname){grid-column:1;grid-row:3}
     #dashboard-ops .ops-grid>.ops-card:first-child>.input-group:has(#req-iqamatext){grid-column:2;grid-row:3}
     #dashboard-ops .ops-grid>.ops-card:first-child>.input-group:has(#req-date-start){grid-column:1/-1;grid-row:5}
-    #dashboard-ops .ops-grid>.ops-card:first-child>#req-visitor-fields>.input-group:nth-child(1){grid-column:1;grid-row:4}
-    #dashboard-ops .ops-grid>.ops-card:first-child>#req-contractor-fields>.input-group:has(#req-con-slp){grid-column:1;grid-row:4}
+    #dashboard-ops .ops-grid>.ops-card:first-child>#req-visitor-fields>.input-group:nth-child(1){grid-column:2;grid-row:4}
+    #dashboard-ops .ops-grid>.ops-card:first-child>#req-contractor-fields>.input-group:has(#req-con-slp){grid-column:2;grid-row:4}
     #dashboard-ops .ops-grid>.ops-card:first-child>#req-visitor-fields>.input-group:nth-child(2){grid-column:1;grid-row:6}
     #dashboard-ops .ops-grid>.ops-card:first-child>#req-visitor-fields>.input-group:nth-child(3){grid-column:2;grid-row:6}
     #dashboard-ops .ops-grid>.ops-card:first-child>#req-visitor-fields>.input-group:nth-child(4){grid-column:1;grid-row:7}
@@ -1452,6 +1461,28 @@
   dict.ar.gate_check_out_all="تسجيل خروج الجميع";
   dict.en.country_label="Country";
   dict.ar.country_label="الدولة";
+  dict.en.office_full_name="Full Name";
+  dict.ar.office_full_name="الاسم الكامل";
+  dict.en.office_id_number="Iqama / ID Number";
+  dict.ar.office_id_number="رقم الإقامة / الهوية";
+  dict.en.office_visit_from="Visit Date (From)";
+  dict.ar.office_visit_from="تاريخ الزيارة (من)";
+  dict.en.office_visit_to="Visit Date (To)";
+  dict.ar.office_visit_to="تاريخ الزيارة (إلى)";
+  dict.en.office_contact="Contact No.";
+  dict.ar.office_contact="رقم التواصل";
+  dict.en.office_invited_by="Invited by Whom";
+  dict.ar.office_invited_by="المدعو من قبل";
+  dict.en.office_vehicle_plate="Vehicle Plate";
+  dict.ar.office_vehicle_plate="رقم لوحة المركبة";
+  dict.en.office_vehicle_photo="Vehicle Picture (Optional)";
+  dict.ar.office_vehicle_photo="صورة المركبة (اختياري)";
+  dict.en.office_id_copy="Upload Iqama / ID Copy";
+  dict.ar.office_id_copy="تحميل صورة الإقامة / الهوية";
+  dict.en.office_submit_request="SUBMIT OFFICE VISITOR";
+  dict.ar.office_submit_request="إرسال طلب زائر المكتب";
+  dict.en.office_visitor="Office Visitor";
+  dict.ar.office_visitor="زائر المكتب";
   dict.en.country_select="Select Country...";
   dict.ar.country_select="اختر الدولة...";
   dict.en.country_ksa="KSA (Saudi Arabia)";
@@ -1894,6 +1925,49 @@
     context.drawImage(video,0,0,width,height);
   }
   function officeLabel(english,arabic){return currentLang==='ar'?arabic:english;}
+  function addOfficeVisitorMemberRow(){
+    var members=document.getElementById('office-visitor-members');
+    if(!members)return;
+    if(members.querySelectorAll('.office-visitor-member-row').length>=10){
+      alert(officeLabel('You can add up to 10 members.','يمكنك إضافة ما يصل إلى 10 أعضاء.'));
+      return;
+    }
+    var row=document.createElement('div');
+    row.className='office-visitor-member-row';
+    row.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr)) auto;gap:8px;align-items:end;padding:10px;border:1px solid rgba(210,216,230,.2);border-radius:9px;background:rgba(255,255,255,.04);';
+    [
+      ['name','Full Name','الاسم الكامل','text'],
+      ['idNumber','ID Number / Iqama Number','رقم الهوية / الإقامة','text'],
+      ['contact','Contact Number','رقم التواصل','tel'],
+      ['meetingWith','Invited By / Meeting With','المدعو من قبل / من سيقابل','text']
+    ].forEach(function(field){
+      var group=document.createElement('div');
+      group.className='office-visitor-field';
+      var label=document.createElement('label');
+      label.dataset.officeEnglish=field[1];
+      label.dataset.officeArabic=field[2];
+      var input=document.createElement('input');
+      input.type=field[3];
+      input.className='input-field';
+      input.maxLength=field[0]==='idNumber'||field[0]==='contact'?80:160;
+      input.required=true;
+      input.dataset.officeMemberField=field[0];
+      label.htmlFor='office-member-'+field[0]+'-'+Date.now()+'-'+Math.random().toString(36).slice(2);
+      input.id=label.htmlFor;
+      group.append(label,input);
+      row.appendChild(group);
+    });
+    var remove=document.createElement('button');
+    remove.type='button';
+    remove.className='btn-primary btn-outline';
+    remove.style.cssText='width:auto;padding:8px 10px;font-size:11px;';
+    remove.dataset.officeEnglish='REMOVE';
+    remove.dataset.officeArabic='إزالة';
+    remove.addEventListener('click',function(){row.remove();});
+    row.appendChild(remove);
+    members.appendChild(row);
+    updateOfficeVisitorFormLabels();
+  }
 
   function officeVisitorApiPost(params){
     if(currentUser&&currentUser.role==='admin'&&currentUser.accessLevel==='superadmin'){
@@ -1941,7 +2015,7 @@
     var visitorButton=document.getElementById('btn-office-visitor');
     if(visitorButton)visitorButton.textContent=officeLabel('+ OFFICE VISITOR','+ زائر المكتب');
     var activeTitle=document.querySelector('#office-visitors-panel h2');
-    if(activeTitle)activeTitle.textContent=officeLabel('OFFICE VISITORS CURRENTLY INSIDE','زوار المكتب الموجودون حالياً');
+    if(activeTitle)activeTitle.textContent=officeLabel('EXPECTED VISITORS','الزوار المتوقعون');
     var actionTitle=document.querySelector('#office-visitor-action-title');
     if(actionTitle)actionTitle.textContent=officeLabel('OFFICE VISITOR CHECK-IN','تسجيل زائر المكتب');
     var actionHint=document.querySelector('#office-visitor-action-hint');
@@ -2078,9 +2152,17 @@
     }else{
       panel.classList.remove('office-visitor-compact');
       if(globalAdminMode){
-        visitorButton.style.cssText='width:auto;padding:10px 16px;margin:12px 0;';
-        if(scanner&&actionCard)scanner.insertAdjacentElement('afterend',actionCard);
-        if(actionCard)actionCard.insertAdjacentElement('afterend',panel);
+        visitorButton.style.cssText='width:100%;padding:10px 16px;margin:0;';
+        visitorButton.style.setProperty('width','100%','important');
+        if(actionCard){
+          actionCard.style.cssText='display:flex;flex-direction:column;align-items:stretch;gap:14px;width:100%;max-width:none;margin:14px 0 0;padding:14px;background:linear-gradient(120deg,rgba(49,51,57,.78),rgba(31,35,45,.84));border:1px solid rgba(255,199,0,.28);border-radius:14px;box-shadow:0 14px 36px rgba(0,0,0,.22),inset 0 1px rgba(255,255,255,.08);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);';
+          var scannerColumn=scanner&&scanner.firstElementChild;
+          if(scannerColumn)scannerColumn.appendChild(actionCard);
+          if(panel){
+            panel.style.cssText='width:100%;max-width:none;margin:0;padding:16px;background:linear-gradient(145deg,rgba(49,51,57,.72),rgba(31,35,45,.78));border:1px solid rgba(210,216,230,.36);border-radius:12px;box-shadow:0 14px 32px rgba(0,0,0,.24),inset 0 1px rgba(255,255,255,.12);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);';
+            actionCard.appendChild(panel);
+          }
+        }
       }else if(scanner)scanner.insertAdjacentElement('afterend',panel);
       else header.insertAdjacentElement('afterend',panel);
     }
@@ -2091,7 +2173,7 @@
     if(!modal){
       var style=document.createElement('style');
       style.id='office-visitor-modal-style';
-      style.textContent='#office-visitor-modal{position:fixed;inset:0;z-index:1000000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.62);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}#office-visitor-modal.hidden{display:none!important}#office-visitor-modal .office-visitor-card{width:min(620px,100%);max-height:92vh;overflow:auto;padding:22px;background:linear-gradient(145deg,rgba(49,51,57,.88),rgba(31,35,45,.92));border:1px solid rgba(210,216,230,.38);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.48),inset 0 1px rgba(255,255,255,.12);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}#office-visitor-modal .office-visitor-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}#office-visitor-modal .office-visitor-field{display:flex;flex-direction:column;gap:6px}#office-visitor-modal .office-visitor-field.full{grid-column:1/-1}#office-visitor-modal .office-visitor-field label{color:var(--text-muted);font-size:12px}#office-visitor-modal .office-visitor-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}#office-visitor-modal .office-visitor-error{min-height:18px;margin-top:12px;color:var(--danger,#ef4444);font-size:12px}@media(max-width:520px){#office-visitor-modal .office-visitor-grid{grid-template-columns:1fr}#office-visitor-modal .office-visitor-field.full{grid-column:auto}}';
+      style.textContent='#office-visitor-modal{position:fixed;inset:0;z-index:1000000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.62);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}#office-visitor-modal.hidden{display:none!important}#office-visitor-modal .office-visitor-card{width:min(620px,100%);max-height:92vh;overflow:auto;padding:22px;background:linear-gradient(145deg,rgba(49,51,57,.88),rgba(31,35,45,.92));border:1px solid rgba(210,216,230,.38);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.48),inset 0 1px rgba(255,255,255,.12);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}#office-visitor-modal .office-visitor-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}#office-visitor-modal .office-visitor-field{display:flex;flex-direction:column;gap:6px}#office-visitor-modal .office-visitor-field.full{grid-column:1/-1}#office-visitor-modal .office-visitor-field label{color:var(--text-muted);font-size:12px}#office-visitor-modal .office-visitor-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}#office-visitor-modal .office-visitor-error{min-height:18px;margin-top:12px;color:var(--danger,#ef4444);font-size:12px}@media(max-width:520px){#office-visitor-modal .office-visitor-grid{grid-template-columns:1fr}#office-visitor-modal .office-visitor-field.full{grid-column:auto}#office-visitor-modal .office-visitor-member-row{grid-template-columns:1fr!important}}';
       document.head.appendChild(style);
       modal=document.createElement('div');
       modal.id='office-visitor-modal';
@@ -2126,18 +2208,29 @@
         input.type=field[3];
         input.className='input-field';
         input.required=field[4];
-        if(input.id==='office-visitor-date'){
-          input.type='text';
-          input.readOnly=true;
-          input.setAttribute('aria-readonly','true');
-          input.tabIndex=-1;
-          input.style.cssText='background:rgba(255,255,255,.08);border:1px dashed rgba(210,216,230,.42);color:#dce2eb;cursor:default;box-shadow:inset 0 1px rgba(255,255,255,.06);';
-          group.append(label,input);
-        }else{
-          group.append(label,input);
-        }
+        group.append(label,input);
         grid.appendChild(group);
       });
+      var membersGroup=document.createElement('div');
+      membersGroup.className='office-visitor-field full';
+      var membersHeading=document.createElement('div');
+      membersHeading.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;';
+      var membersLabel=document.createElement('label');
+      membersLabel.dataset.officeEnglish='Members (optional)';
+      membersLabel.dataset.officeArabic='الأعضاء (اختياري)';
+      var addMemberButton=document.createElement('button');
+      addMemberButton.type='button';
+      addMemberButton.className='btn-primary btn-outline';
+      addMemberButton.style.cssText='width:auto;padding:7px 10px;font-size:11px;';
+      addMemberButton.dataset.officeEnglish='+ ADD MEMBER';
+      addMemberButton.dataset.officeArabic='+ إضافة عضو';
+      addMemberButton.addEventListener('click',addOfficeVisitorMemberRow);
+      membersHeading.append(membersLabel,addMemberButton);
+      var membersList=document.createElement('div');
+      membersList.id='office-visitor-members';
+      membersList.style.cssText='display:flex;flex-direction:column;gap:8px;';
+      membersGroup.append(membersHeading,membersList);
+      grid.appendChild(membersGroup);
       var photoGroup=document.createElement('div');
       photoGroup.className='office-visitor-field full';
       var photoLabel=document.createElement('label');
@@ -2265,13 +2358,9 @@
     var error=document.getElementById('office-visitor-form-error');
     if(form)form.reset();
     var visitDate=document.getElementById('office-visitor-date');
-    var today=new Date();
-    if(visitDate)visitDate.value=today.toLocaleDateString(currentLang==='ar'?'ar-SA':'en-GB',{
-      weekday:'long',
-      year:'numeric',
-      month:'long',
-      day:'numeric'
-    });
+    if(visitDate)visitDate.value=ambientDateKey(new Date());
+    var members=document.getElementById('office-visitor-members');
+    if(members)members.textContent='';
     officeVisitorCapturedIdCopy='';
     stopKsaOfficeVisitorCamera();
     var preview=document.getElementById('office-visitor-camera-preview');
@@ -2391,8 +2480,8 @@
     var save=document.getElementById('office-visitor-save');
     var photo=document.getElementById('office-visitor-id-copy');
     var file=photo&&photo.files&&photo.files[0];
-    if(!form||!photo||(!file&&!officeVisitorCapturedIdCopy)){
-      if(error)error.textContent='Upload an Iqama or ID copy.';
+    if(!form||!photo){
+      if(error)error.textContent='The visitor form is unavailable. Refresh and try again.';
       return;
     }
     if(!form.reportValidity())return;
@@ -2403,16 +2492,24 @@
     if(save){save.disabled=true;save.textContent=officeLabel('SAVING...','جارٍ الحفظ...');}
     if(error)error.textContent='';
     try{
-      var idCopy=officeVisitorCapturedIdCopy||await readOfficeVisitorIdCopy(file);
+      var idCopy=officeVisitorCapturedIdCopy||(file?await readOfficeVisitorIdCopy(file):'');
+      var members=[].slice.call(document.querySelectorAll('#office-visitor-members .office-visitor-member-row')).map(function(row){
+        var member={};
+        row.querySelectorAll('[data-office-member-field]').forEach(function(input){
+          member[input.dataset.officeMemberField]=input.value.trim();
+        });
+        return member;
+      });
       var result=await officeVisitorApiPost({
         action:'office_create_visitor',
         facility:document.getElementById('office-visitor-facility')?document.getElementById('office-visitor-facility').value:'',
         name:document.getElementById('office-visitor-name').value.trim(),
         idNumber:document.getElementById('office-visitor-id').value.trim(),
-        visitDate:ambientDateKey(new Date()),
+        visitDate:document.getElementById('office-visitor-date').value,
         contact:document.getElementById('office-visitor-contact').value.trim(),
         meetingWith:document.getElementById('office-visitor-meeting').value.trim(),
-        idCopy:idCopy
+        idCopy:idCopy,
+        members:members
       });
       var savedVisitor=result&&result.visitor;
       if(savedVisitor&&savedVisitor.recordId){
@@ -2494,7 +2591,7 @@
     if(!officeVisitors.length){
       var empty=document.createElement('p');
       empty.style.cssText='padding:18px;color:var(--text-muted);text-align:center;';
-      empty.textContent=officeLabel('No saved office visitors are waiting or currently inside.','لا يوجد زوار محفوظون بانتظار الدخول أو موجودون حالياً.');
+      empty.textContent=officeLabel('No expected office visitors are waiting or currently inside.','لا يوجد زوار متوقعون بانتظار الدخول أو موجودون حالياً.');
       list.appendChild(empty);
       updateOfficeVisitorElapsedTimers();
       return;
@@ -2518,8 +2615,16 @@
       var meta=document.createElement('span');
       meta.style.cssText='color:#d0d9e4;font-size:13px;line-height:1.5;overflow-wrap:anywhere;';
       var isGlobalAdmin=currentUser&&currentUser.role==='admin'&&currentUser.accessLevel==='superadmin';
+      var memberCount=Number(visitor.memberCount)||(Array.isArray(visitor.members)?visitor.members.length:0)||1;
+      var expectedDateText=formatOfficeVisitorExpectedDate(visitor.visitDate);
+      if(visitor.visitDateTo&&visitor.visitDateTo!==visitor.visitDate){
+        expectedDateText+=' - '+formatOfficeVisitorExpectedDate(visitor.visitDateTo);
+      }
       meta.textContent=(isGlobalAdmin?officeLabel('Facility: ','الموقع: ')+(visitor.facility||'-')+' · ':'')+
-        officeLabel('ID: ','الهوية: ')+(visitor.idNumber||'-')+' · '+officeLabel('Meeting: ','المقابلة: ')+(visitor.meetingWith||'-');
+        officeLabel('Expected visit: ','تاريخ الزيارة المتوقع: ')+expectedDateText+' · '+
+        officeLabel('Members: ','الأعضاء: ')+memberCount+' · '+
+        officeLabel('ID: ','الهوية: ')+(visitor.idNumber||'-')+' · '+officeLabel('Meeting: ','المقابلة: ')+(visitor.meetingWith||'-')+
+        (visitor.vehiclePlate?' · '+officeLabel('Vehicle plate: ','لوحة المركبة: ')+visitor.vehiclePlate:'');
       var elapsed=document.createElement('span');
       elapsed.className='office-visitor-elapsed'+(visitor.checkedInAt?'':' hidden');
       elapsed.dataset.checkedInAt=visitor.checkedInAt||'';
@@ -2577,6 +2682,17 @@
       dateStyle:'medium',
       timeStyle:'medium',
       timeZone:'Asia/Riyadh'
+    });
+  }
+  function formatOfficeVisitorExpectedDate(value){
+    var text=String(value||'').trim();
+    var match=text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(!match)return text||'--';
+    var date=new Date(Number(match[1]),Number(match[2])-1,Number(match[3]));
+    return date.toLocaleDateString(currentLang==='ar'?'ar-SA':'en-GB',{
+      year:'numeric',
+      month:'short',
+      day:'numeric'
     });
   }
 
@@ -4615,13 +4731,15 @@
     const requestLocationGroup=requestLocation&&requestLocation.parentElement;
     const requestForm=document.getElementById('dashboard-ops');
     if(!requestLocation||!requestLocationGroup||!requestForm||document.getElementById('req-country'))return;
+    const requestCard=requestForm.querySelector('.ops-grid>.ops-card:first-child');
+    if(requestCard)requestCard.id='request-form-card';
     const countries=[
       ['KSA','country_ksa'],
       ['UAE','country_uae'],
       ['EGY','country_egy']
     ];
     const facilitiesByCountry={
-      KSA:[['RUH01','RUH01'],['JED01','JED01']],
+      KSA:[['RUH01','RUH01'],['JED01','JED01'],['RUH01 OFFICE','RUH01 OFFICE']],
       UAE:[['AUH01','Kezad FC - AUH01']]
     };
     const country=createLoginSelectGroup('req-country','country_label','country_select',countries);
@@ -4644,6 +4762,31 @@
     facilityPlaceholder.setAttribute('data-i18n','facility_select');
     facilityPlaceholder.textContent=t('facility_select');
     requestLocation.appendChild(facilityPlaceholder);
+    const officeFields=document.createElement('div');
+    officeFields.id='req-office-request-fields';
+    officeFields.className='hidden';
+    officeFields.innerHTML=
+      '<div class="input-group"><label for="req-office-name" data-i18n="office_full_name"></label><input id="req-office-name" class="input-field" type="text" maxlength="160" required></div>'+
+      '<div class="input-group"><label for="req-office-id-number" data-i18n="office_id_number"></label><input id="req-office-id-number" class="input-field" type="text" maxlength="80" required></div>'+
+      '<div class="input-group"><label data-i18n="office_visit_from"></label><div style="display:flex;gap:10px;min-width:0;"><input id="req-office-date-from" class="input-field" style="min-width:0;flex:1;" type="date" required aria-label="Visit Date From"><input id="req-office-date-to" class="input-field" style="min-width:0;flex:1;" type="date" required aria-label="Visit Date To"></div></div>'+
+      '<div class="input-group"><label for="req-office-contact" data-i18n="office_contact"></label><input id="req-office-contact" class="input-field" type="tel" maxlength="80" required></div>'+
+      '<div class="input-group"><label for="req-office-invited-by" data-i18n="office_invited_by"></label><input id="req-office-invited-by" class="input-field" type="text" maxlength="160" required></div>'+
+      '<div class="input-group"><label for="req-office-vehicle-plate" data-i18n="office_vehicle_plate"></label><input id="req-office-vehicle-plate" class="input-field" type="text" maxlength="120"></div>'+
+      '<div class="input-group"><label for="req-office-vehicle-photo" data-i18n="office_vehicle_photo"></label><input id="req-office-vehicle-photo" class="file-input" type="file" accept="image/*" capture="environment"></div>'+
+      '<div class="input-group"><label for="req-office-id-copy" data-i18n="office_id_copy"></label><input id="req-office-id-copy" class="file-input" type="file" accept="image/*" capture="environment" required></div>';
+    if(requestCard){
+      const countryFacilityRow=document.getElementById('req-country-facility-row');
+      if(countryFacilityRow)countryFacilityRow.insertAdjacentElement('afterend',officeFields);
+      else requestCard.appendChild(officeFields);
+      officeFields.querySelectorAll('[data-i18n]').forEach(function(label){label.textContent=t(label.getAttribute('data-i18n'));});
+    }
+    const submitButton=document.getElementById('btn-submit-req');
+    function updateOfficeRequestMode(){
+      const isOffice=country.select.value==='KSA'&&requestLocation.value==='RUH01 OFFICE';
+      if(requestCard)requestCard.classList.toggle('office-request-mode',isOffice);
+      officeFields.classList.toggle('hidden',!isOffice);
+      if(submitButton)submitButton.textContent=isOffice?t('office_submit_request'):t('submit_approval');
+    }
     function updateRequestLocation(){
       const selectedCountry=country.select.value;
       const availableFacilities=facilitiesByCountry[selectedCountry]||[];
@@ -4670,8 +4813,10 @@
       requestLocation.required=hasFacilities;
       requestLocation.value=availableFacilities.some(function(facility){return facility[0]===previous;})
         ?previous:'';
+      updateOfficeRequestMode();
     }
     country.select.addEventListener('change',updateRequestLocation);
+    requestLocation.addEventListener('change',updateOfficeRequestMode);
     updateRequestLocation();
   }
 
@@ -5210,7 +5355,112 @@
     }
   }
 
+  function createOfficePassId(){
+    var bytes=new Uint8Array(18);
+    if(window.crypto&&window.crypto.getRandomValues)window.crypto.getRandomValues(bytes);
+    else for(var i=0;i<bytes.length;i++)bytes[i]=Math.floor(Math.random()*256);
+    return 'OFFICE-'+Array.prototype.map.call(bytes,function(byte){return byte.toString(16).padStart(2,'0');}).join('').toUpperCase();
+  }
+  async function submitKsaOfficeRequest(){
+    var nameInput=document.getElementById('req-office-name');
+    var idInput=document.getElementById('req-office-id-number');
+    var startInput=document.getElementById('req-office-date-from');
+    var endInput=document.getElementById('req-office-date-to');
+    var contactInput=document.getElementById('req-office-contact');
+    var invitedInput=document.getElementById('req-office-invited-by');
+    var idPhotoInput=document.getElementById('req-office-id-copy');
+    var vehicleInput=document.getElementById('req-office-vehicle-photo');
+    var button=document.getElementById('btn-submit-req');
+    if(!nameInput||!idInput||!startInput||!endInput||!contactInput||!invitedInput||!idPhotoInput||!button)return;
+    var country=document.getElementById('req-country');
+    var facility=document.getElementById('req-location');
+    if(!country||country.value!=='KSA'||!facility||facility.value!=='RUH01 OFFICE')return alert('Choose KSA and RUH01 OFFICE to submit an Office Visitor request.');
+    if(!nameInput.value.trim()||!idInput.value.trim()||!startInput.value||!endInput.value||!contactInput.value.trim()||!invitedInput.value.trim())return alert('Complete all required Office Visitor details.');
+    if(endInput.value<startInput.value)return alert('The visit end date cannot be before the start date.');
+    var idFile=idPhotoInput.files&&idPhotoInput.files[0];
+    if(!idFile)return alert('Upload an Iqama or ID copy.');
+    if(!/^image\//i.test(idFile.type||''))return alert('The Iqama / ID attachment must be an image.');
+    var vehicleFile=vehicleInput&&vehicleInput.files&&vehicleInput.files[0];
+    if(vehicleFile&&!/^image\//i.test(vehicleFile.type||''))return alert('The vehicle picture must be an image.');
+    var email=currentUser&&currentUser.email;
+    if(currentUser&&currentUser.role==='admin'){
+      var adminEmail=document.getElementById('req-admin-email');
+      if(adminEmail&&adminEmail.value.trim())email=adminEmail.value.trim().toLowerCase();
+    }
+    if(!email)return alert('A request email is required.');
+    var pin=localStorage.getItem('user_pin_'+email)||userSecurityPin||'';
+    if(currentUser&&currentUser.role!=='admin'&&!pin){
+      pinCreateMode='submit';
+      document.getElementById('pin-create-modal').classList.remove('hidden');
+      return;
+    }
+    var passId=createOfficePassId();
+    button.disabled=true;
+    button.textContent='SUBMITTING...';
+    beginPleaseWait('PLEASE WAIT...');
+    var cacheKey='cached_passes_'+email;
+    var cachedPasses=[];
+    try{cachedPasses=JSON.parse(localStorage.getItem(cacheKey)||'[]');if(!Array.isArray(cachedPasses))cachedPasses=[];}catch(cacheError){cachedPasses=[];}
+    var optimisticPass={UniqueID:passId,VisitorName:nameInput.value.trim()+' (ID: '+idInput.value.trim()+')',Type:'Office Visitor',Location:'RUH01 OFFICE',StartDate:startInput.value,EndDate:endInput.value,Status:'Approved',HostEmail:email};
+    cachedPasses.push(optimisticPass);
+    localStorage.setItem(cacheKey,JSON.stringify(cachedPasses));
+    renderMyPasses(cachedPasses);
+    try{
+      var idCopy=await readOfficeVisitorIdCopy(idFile);
+      var vehiclePicture=vehicleFile?await readOfficeVisitorIdCopy(vehicleFile):'';
+      var payload={
+        action:'office_submit_expected',
+        requestId:passId,
+        UniqueID:passId,
+        hostName:currentUser.name||'Visitor Portal',
+        hostEmail:email,
+        accountPin:pin,
+        name:nameInput.value.trim(),
+        idNumber:idInput.value.trim(),
+        startDate:startInput.value,
+        endDate:endInput.value,
+        contact:contactInput.value.trim(),
+        invitedBy:invitedInput.value.trim(),
+        vehiclePlateNo:(document.getElementById('req-office-vehicle-plate').value||'').trim(),
+        iqamaBase64:idCopy,
+        vehicleBase64:vehiclePicture
+      };
+      await nativeFetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),mode:'no-cors',cache:'no-store'});
+      var deadline=Date.now()+60000;
+      var operationResult=null;
+      while(Date.now()<deadline){
+        await new Promise(function(resolve){setTimeout(resolve,750);});
+        operationResult=await appsScriptJsonp({action:'get_operation_result',requestId:passId},null,10000);
+        if(operationResult&&operationResult.status==='success')break;
+        if(operationResult&&operationResult.status==='error')throw new Error(operationResult.message||'The Office Visitor request could not be saved.');
+      }
+      if(!operationResult||operationResult.status!=='success')throw new Error('The server did not confirm the Office Visitor request. Refresh My Passes before retrying.');
+      idFile.value='';
+      if(vehicleInput)vehicleInput.value='';
+      nameInput.value='';idInput.value='';startInput.value='';endInput.value='';
+      contactInput.value='';invitedInput.value='';
+      var plateInput=document.getElementById('req-office-vehicle-plate');if(plateInput)plateInput.value='';
+      await loadMyPasses(true,false);
+      refreshKsaOfficeVisitors(true);
+      alert('Office Visitor request saved. The QR pass is ready to use.');
+    }catch(error){
+      var remaining=cachedPasses.filter(function(pass){return String(pass.UniqueID)!==passId;});
+      localStorage.setItem(cacheKey,JSON.stringify(remaining));
+      renderMyPasses(remaining);
+      console.error('[Office visitors] Request submission failed.',error);
+      alert('Office Visitor request failed: '+(error&&error.message?error.message:'Unknown error'));
+    }finally{
+      endPleaseWait();
+      button.disabled=false;
+      button.textContent=t('office_submit_request');
+    }
+  }
   async function submitRequest(ka){
+    var requestCountry=document.getElementById('req-country');
+    var requestFacility=document.getElementById('req-location');
+    if(requestCountry&&requestFacility&&requestCountry.value==='KSA'&&requestFacility.value==='RUH01 OFFICE'){
+      return submitKsaOfficeRequest();
+    }
     ka=!!ka;
     const ti=document.getElementById('req-type');if(!ti)return;
     if(teamList.length>10)return alert("Submit no more than 10 team members in one batch.");
@@ -5299,7 +5549,7 @@
     }
   }
 
-  function downloadQR(id){let safeId=String(id).replace(/[^a-zA-Z0-9_-]/g,'');const qrBox=document.getElementById('qr-'+safeId);if(!qrBox)return;let canvas=qrBox.querySelector('canvas');let img=qrBox.querySelector('img');let sourceImage=canvas&&canvas.style.display!=='none'?canvas:(img&&img.src?img:null);if(!sourceImage)return alert("QR Code not ready yet.");let size=150;let padding=20;let newCanvas=document.createElement('canvas');newCanvas.width=size+(padding*2);newCanvas.height=size+(padding*2);let ctx=newCanvas.getContext('2d');ctx.fillStyle="#ffffff";ctx.fillRect(0,0,newCanvas.width,newCanvas.height);ctx.drawImage(sourceImage,padding,padding,size,size);const link=document.createElement('a');link.href=newCanvas.toDataURL('image/png');link.download='Noon_Pass_QR_'+safeId+'.png';document.body.appendChild(link);link.click();document.body.removeChild(link);}
+  function downloadQR(id){let safeId=String(id).replace(/[^a-zA-Z0-9_-]/g,'');const qrBox=document.getElementById('qr-'+safeId);if(!qrBox)return;let canvas=qrBox.querySelector('canvas');let img=qrBox.querySelector('img');let sourceImage=canvas&&canvas.style.display!=='none'?canvas:(img&&img.src?img:null);if(!sourceImage)return alert("QR Code not ready yet.");const officePass=(myPassesData||[]).some(function(pass){return String(pass.UniqueID)===String(id)&&String(pass.Type||'').toLowerCase()==='office visitor';});let size=150;let padding=20;let labelHeight=officePass?30:0;let newCanvas=document.createElement('canvas');newCanvas.width=size+(padding*2);newCanvas.height=size+(padding*2)+labelHeight;let ctx=newCanvas.getContext('2d');ctx.fillStyle="#ffffff";ctx.fillRect(0,0,newCanvas.width,newCanvas.height);ctx.drawImage(sourceImage,padding,padding,size,size);if(officePass){ctx.fillStyle="#111827";ctx.font="bold 13px Arial";ctx.textAlign="center";ctx.fillText(t('office_visitor').toUpperCase(),newCanvas.width/2,size+padding+20);}const link=document.createElement('a');link.href=newCanvas.toDataURL('image/png');link.download=(officePass?'Office_Visitor_QR_':'Noon_Pass_QR_')+safeId+'.png';document.body.appendChild(link);link.click();document.body.removeChild(link);}
 
   function renderMyPasses(data){
     const listDiv=document.getElementById('my-passes-list');
@@ -5313,6 +5563,7 @@
       let safeType=String(pass.Type||'');
       let safeStatus=String(pass.Status||'Pending');
       let safeLoc=String(pass.Location||'');
+      const isOfficePass=safeType.toLowerCase()==='office visitor';
       const passName=String(pass.VisitorName||'');
       const passIdentityMatch=passName.match(/\s*\(ID:\s*([^)]*)\)\s*$/i);
       const passDisplayName=passIdentityMatch?passName.replace(/\s*\(ID:\s*[^)]*\)\s*$/i,'').trim():passName;
@@ -5325,9 +5576,9 @@
       let sc=(safeStatus==='Approved'?'var(--success)':safeStatus==='Rejected'?'var(--danger)':safeStatus==='Completed'?'var(--text-muted)':'var(--noon-yellow)');
       if(isExp&&safeStatus!=='Rejected'&&safeStatus!=='Completed'){st=t('status_expired');sc='var(--text-muted)';}
       const valText='('+formatToDDMMYYYY(pass.StartDate)+' - '+formatToDDMMYYYY(pass.EndDate||pass.StartDate)+')';
-      h+='<div class="pass-item" id="pass-card-'+safeId+'"><div class="pass-header"><div><strong style="color:white;font-size:14px;">'+escapeHistoryText(passDisplayName)+'</strong>'+(passIdentity?'<span class="pass-identity">ID: '+escapeHistoryText(passIdentity)+'</span>':'')+'<span style="display:block;margin-top:3px;font-size:11px;color:var(--text-muted);">'+escapeHistoryText(t(safeType.toLowerCase())+' • '+safeLoc)+'</span><span style="display:block;font-size:10px;color:var(--noon-yellow);">'+escapeHistoryText(valText)+'</span></div><div style="text-align:right;"><span style="font-size:11px;font-weight:bold;color:'+sc+';text-transform:uppercase;">'+escapeHistoryText(st)+'</span><br><span style="font-size:10px;color:var(--text-muted);">'+escapeHistoryText(pass.UniqueID)+'</span></div></div>';
+      h+='<div class="pass-item" id="pass-card-'+safeId+'"><div class="pass-header"><div>'+(isOfficePass?'<span style="display:inline-block;margin-bottom:5px;padding:3px 7px;border:1px solid rgba(56,217,169,.4);border-radius:999px;background:rgba(56,217,169,.12);color:#6ee7bd;font-size:9px;font-weight:800;letter-spacing:.08em;">'+escapeHistoryText(t('office_visitor').toUpperCase())+'</span><br>':'')+'<strong style="color:white;font-size:14px;">'+escapeHistoryText(passDisplayName)+'</strong>'+(passIdentity?'<span class="pass-identity">ID: '+escapeHistoryText(passIdentity)+'</span>':'')+'<span style="display:block;margin-top:3px;font-size:11px;color:var(--text-muted);">'+escapeHistoryText((isOfficePass?t('office_visitor'):t(safeType.toLowerCase()))+' • '+safeLoc)+'</span><span style="display:block;font-size:10px;color:var(--noon-yellow);">'+escapeHistoryText(valText)+'</span></div><div style="text-align:right;"><span style="font-size:11px;font-weight:bold;color:'+sc+';text-transform:uppercase;">'+escapeHistoryText(st)+'</span><br><span style="font-size:10px;color:var(--text-muted);">'+escapeHistoryText(pass.UniqueID)+'</span></div></div>';
       if(!isComp&&safeStatus!=='Rejected'){
-        h+='<div style="text-align:center;margin-top:10px;"><div class="qr-box" id="qr-'+safeId+'" style="background:white;padding:10px;border-radius:6px;display:inline-block;min-width:140px;min-height:140px;"></div><div style="margin-top:15px;" id="save-btn-container-'+safeId+'"><button class="btn-primary btn-outline btn-sm" style="margin-bottom:8px;" onclick="downloadQR(\''+pass.UniqueID+'\')" data-i18n="save_qr">'+t('save_qr')+'</button><br><button class="btn-primary btn-warning btn-sm btn-add-more-people" style="margin-bottom:8px;" onclick="openAddMoreModal(\''+pass.UniqueID+'\')">➕ '+t('add_more_people')+'</button><br><button class="btn-primary btn-outline btn-sm" style="color:var(--text-main);" onclick="openViewRecord(\''+pass.UniqueID+'\')">👁️ SEE MEMBERS</button></div></div>';
+        h+='<div style="text-align:center;margin-top:10px;"><div class="qr-box" id="qr-'+safeId+'" style="background:white;padding:10px;border-radius:6px;display:inline-block;min-width:140px;min-height:140px;"></div>'+(isOfficePass?'<strong style="display:block;margin-top:8px;color:#6ee7bd;font-size:11px;letter-spacing:.08em;">'+escapeHistoryText(t('office_visitor').toUpperCase())+'</strong>':'')+'<div style="margin-top:15px;" id="save-btn-container-'+safeId+'"><button class="btn-primary btn-outline btn-sm" style="margin-bottom:8px;" onclick="downloadQR(\''+pass.UniqueID+'\')" data-i18n="save_qr">'+t('save_qr')+'</button>'+(isOfficePass?'':'<br><button class="btn-primary btn-warning btn-sm btn-add-more-people" style="margin-bottom:8px;" onclick="openAddMoreModal(\''+pass.UniqueID+'\')">➕ '+t('add_more_people')+'</button><br><button class="btn-primary btn-outline btn-sm" style="color:var(--text-main);" onclick="openViewRecord(\''+pass.UniqueID+'\')">👁️ SEE MEMBERS</button>')+'</div></div>';
       }else if(safeStatus==='Rejected'){
         h+='<div style="text-align:center;margin-top:15px;font-size:12px;color:var(--danger);font-weight:bold;"><em>'+t("status_rejected")+' - Access Denied</em></div>';
       }else if(safeStatus==='Completed'){
@@ -6949,7 +7200,7 @@
     if(isProcessingScan)return;isProcessingScan=true;
     try{if(html5QrCode&&html5QrCode.isScanning)html5QrCode.pause();}catch(e){}
     let rawText=String(decodedText).toUpperCase();
-    let exactMatch=rawText.match(/NOON-\d+/);
+    let exactMatch=rawText.match(/(?:NOON-\d+|OFFICE-[A-Z0-9-]{20,50})/);
     decodedText=exactMatch?exactMatch[0]:rawText.replace(/\s+/g,'').trim();
     if(!decodedText){isProcessingScan=false;return;}
     const upperId=String(decodedText).toUpperCase();
@@ -7021,11 +7272,11 @@
     let scanState=t("allowed"),scanMsg=t("pass_validated"),scanColor="bg-green",allowAction=!!liveVerified;
     if(dStatus==='pending'){scanState=t("pending");scanMsg=t("awaiting_admin");scanColor="bg-yellow";allowAction=false;}
     else if(dStatus!=='approved'){scanState=t("denied");scanMsg=t("not_approved");scanColor="bg-red";allowAction=false;}
-    else if(currentUser.role==='guard'&&dLoc!==currentUser.location){scanState=t("wrong_facility");scanMsg=t("wrong_fac_msg")+" ("+dLoc+")";scanColor="bg-red";allowAction=false;}
+    else if(currentUser.role==='guard'&&dLoc!==currentUser.location&&!(dType.toLowerCase()==='office visitor'&&String(dLoc).toUpperCase().trim()==='RUH01 OFFICE'&&String(currentUser.location||'').toUpperCase().trim()==='RUH01')){scanState=t("wrong_facility");scanMsg=t("wrong_fac_msg")+" ("+dLoc+")";scanColor="bg-red";allowAction=false;}
     else if(todayNum<startNum||todayNum>endNum){scanState=todayNum>endNum?t("expired"):t("invalid_date");scanMsg=todayNum>endNum?t("expired"):t("not_valid_today");scanColor="bg-red";allowAction=false;}
     else if(!liveVerified&&!connectionFailed){scanMsg="Verifying live pass status...";}
     if(connectionFailed){scanState="CONNECTION";scanMsg="The latest pass status could not be verified. Entry actions are disabled.";scanColor="bg-red";allowAction=false;}
-    let isFullscreen=(dType==='Contractor'||dType==='Visitor');
+    let isFullscreen=(dType==='Contractor'||dType==='Visitor'||dType==='Office Visitor');
     if(allowAction){if(isInside){currentScanAction='check_out';scanState=t("check_out");scanMsg=t("scanning_out");scanColor="bg-blue";}else{currentScanAction='check_in';}}
     let teamData=[],maxWorkers=1;
     let tMembers=String(data.TeamMembers||'');
@@ -7054,10 +7305,10 @@
       let topInfo='<div style="background: rgba(0,0,0,0.5); padding: 20px; border-radius: 10px; text-align: start; font-size: 14px; line-height: 1.8; margin-bottom:15px; border: 1px solid rgba(255,255,255,0.1);">';
       topInfo+='<p><strong style="color:rgba(255,255,255,0.8); display:inline-block; width:130px;">'+t('total_people')+':</strong> <span style="color:var(--noon-yellow); font-weight:bold; font-size:16px;">'+maxWorkers+'</span></p>';
       if(dType==='Contractor'){topInfo+=row(t('project_name'),data.ProjectName||'N/A');topInfo+=row(t('project_manager'),data.ProjectManager||'N/A');topInfo+=row(t('location_label').replace(':',''),dLoc);topInfo+=row(t('fm_poc'),data.FmPoc||'N/A');topInfo+=row(t('type_label').replace(':',''),'<span style="color:var(--noon-yellow); font-weight:bold; font-size:15px;">'+t('contractor')+'</span>');}
-      else{topInfo+=row(t('name_label').replace(':',''),data.VisitorName);topInfo+=row(t('type_label').replace(':',''),'<span style="color:var(--noon-yellow); font-weight:bold; font-size:15px;">'+t('visitor')+'</span>');topInfo+=row(t('location_label').replace(':',''),dLoc);}
+      else{topInfo+=row(t('name_label').replace(':',''),data.VisitorName);topInfo+=row(t('type_label').replace(':',''),'<span style="color:var(--noon-yellow); font-weight:bold; font-size:15px;">'+(dType==='Office Visitor'?t('office_visitor'):t('visitor'))+'</span>');topInfo+=row(t('location_label').replace(':',''),dLoc);}
       topInfo+='</div>';topInfoBox.innerHTML=topInfo;
     }
-    if(dType==='Contractor'||dType==='Visitor'){
+    if(dType==='Contractor'||dType==='Visitor'||dType==='Office Visitor'){
       if(searchFilterBox)searchFilterBox.classList.remove('hidden');
       if(teamSec){
         teamSec.classList.remove('hidden');
