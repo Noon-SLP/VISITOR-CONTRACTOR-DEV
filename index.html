@@ -1984,6 +1984,9 @@
   var officeVisitorRequestVersion=0;
   var officeVisitorMutationVersion=0;
   var officeVisitors=[];
+  var officeVisitorsLoaded=false;
+  var officeVisitorDataIsStale=false;
+  var officeVisitorCacheScopeKey='';
   var officeVisitorStatus='';
   var officeVisitorCameraStream=null;
   var officeVisitorCameraFacingMode='environment';
@@ -2675,6 +2678,9 @@
         officeVisitorMutationVersion++;
         officeVisitors=officeVisitors.filter(function(visitor){return visitor.recordId!==savedVisitor.recordId;});
         officeVisitors.push(savedVisitor);
+        officeVisitorsLoaded=true;
+        officeVisitorDataIsStale=false;
+        cacheKsaOfficeVisitors();
       }
       closeKsaOfficeVisitorForm();
       officeVisitorStatus=officeLabel(
@@ -2707,6 +2713,43 @@
     }
   }
 
+  function getKsaOfficeVisitorCacheKey(){
+    if(currentUser&&currentUser.role==='admin'&&currentUser.accessLevel==='superadmin'){
+      return 'cached_office_visitors_v1_superadmin';
+    }
+    if(currentUser&&currentUser.role==='guard'&&String(currentUser.guardMode||'').toLowerCase()==='office'){
+      var location=String(currentUser.location||'').toUpperCase().trim().replace(/[^A-Z0-9_-]/g,'_');
+      return location?'cached_office_visitors_v1_'+location:'';
+    }
+    return '';
+  }
+
+  function cacheKsaOfficeVisitors(){
+    var cacheKey=getKsaOfficeVisitorCacheKey();
+    if(!cacheKey)return;
+    try{
+      localStorage.setItem(cacheKey,JSON.stringify({savedAt:Date.now(),visitors:officeVisitors}));
+    }catch(cacheError){
+      console.warn('[Office visitors] Unable to save the recent visitor list locally.',cacheError);
+    }
+  }
+
+  function updateKsaOfficeVisitorCounts(isRefreshing){
+    var status=document.getElementById('office-visitor-status');
+    var expectedStatus=document.getElementById('office-expected-visitor-status');
+    var expectedCount=officeVisitors.filter(function(visitor){return !visitor.checkedInAt&&visitor.source!=='Manual';}).length;
+    var insideCount=officeVisitors.filter(function(visitor){return !!visitor.checkedInAt;}).length;
+    var manualAwaitingCount=officeVisitors.filter(function(visitor){return !visitor.checkedInAt&&visitor.source==='Manual';}).length;
+    if(status)status.textContent=officeLabel(
+      insideCount+' visitor'+(insideCount===1?'':'s')+' currently inside'+(manualAwaitingCount?' · '+manualAwaitingCount+' awaiting check-in':'')+(isRefreshing?' · Updating...':''),
+      'الزوار الموجودون حالياً: '+insideCount+(manualAwaitingCount?' · بانتظار تسجيل الدخول: '+manualAwaitingCount:'')+(isRefreshing?' · جارٍ التحديث...':'')
+    );
+    if(expectedStatus)expectedStatus.textContent=officeLabel(
+      expectedCount+' expected visitor'+(expectedCount===1?'':'s')+' awaiting entry'+(isRefreshing?' · Updating...':''),
+      'الزوار المتوقعون بانتظار الدخول: '+expectedCount+(isRefreshing?' · جارٍ التحديث...':'')
+    );
+  }
+
   function refreshKsaOfficeVisitors(force){
     var panel=document.getElementById('office-visitors-panel');
     var status=document.getElementById('office-visitor-status');
@@ -2716,7 +2759,41 @@
       (currentUser.role==='admin'&&currentUser.accessLevel==='superadmin')
     );
     if(!panel||!authorizedUser)return Promise.resolve();
+    var cacheKey=getKsaOfficeVisitorCacheKey();
+    if(cacheKey!==officeVisitorCacheScopeKey){
+      officeVisitorCacheScopeKey=cacheKey;
+      officeVisitorRequestVersion++;
+      officeVisitorRequestPromise=null;
+      officeVisitors=[];
+      officeVisitorsLoaded=false;
+      officeVisitorDataIsStale=false;
+      renderKsaOfficeVisitors();
+    }
+    if(!officeVisitorsLoaded&&cacheKey){
+      try{
+        var cachedRaw=localStorage.getItem(cacheKey);
+        if(cachedRaw){
+          var cached=JSON.parse(cachedRaw);
+          var cacheAge=Date.now()-Number(cached&&cached.savedAt);
+          if(cached&&Array.isArray(cached.visitors)&&Number.isFinite(cacheAge)&&cacheAge>=0&&cacheAge<=300000){
+            officeVisitors=cached.visitors;
+            officeVisitorsLoaded=true;
+            officeVisitorDataIsStale=true;
+            updateKsaOfficeVisitorCounts(true);
+            renderKsaOfficeVisitors();
+          }else{
+            localStorage.removeItem(cacheKey);
+          }
+        }
+      }catch(cacheError){
+        console.warn('[Office visitors] Unable to read the recent visitor list from local storage.',cacheError);
+      }
+    }
     if(officeVisitorRequestPromise&&!force)return officeVisitorRequestPromise;
+    if(!officeVisitorsLoaded){
+      if(status)status.textContent=officeLabel('Loading office visitors...','جارٍ تحميل زوار المكتب...');
+      if(expectedStatus)expectedStatus.textContent=officeLabel('Loading expected visitors...','جارٍ تحميل الزوار المتوقعين...');
+    }
     var refreshButtons=[
       document.getElementById('btn-refresh-office-visitors'),
       document.getElementById('btn-refresh-office-expected')
@@ -2733,19 +2810,12 @@
       if(!Array.isArray(result.visitors))throw new Error('The server returned an invalid office visitor list.');
       if(requestVersion!==officeVisitorRequestVersion||requestMutationVersion!==officeVisitorMutationVersion)return;
       officeVisitors=result.visitors;
-      var expectedCount=officeVisitors.filter(function(visitor){return !visitor.checkedInAt&&visitor.source!=='Manual';}).length;
-      var insideCount=officeVisitors.filter(function(visitor){return !!visitor.checkedInAt;}).length;
-      var manualAwaitingCount=officeVisitors.filter(function(visitor){return !visitor.checkedInAt&&visitor.source==='Manual';}).length;
-      if(status)status.textContent=officeLabel(
-        insideCount+' visitor'+(insideCount===1?'':'s')+' currently inside'+(manualAwaitingCount?' · '+manualAwaitingCount+' awaiting check-in':''),
-        'الزوار الموجودون حالياً: '+insideCount+(manualAwaitingCount?' · بانتظار تسجيل الدخول: '+manualAwaitingCount:'')
-      );
-      if(expectedStatus)expectedStatus.textContent=officeLabel(
-        expectedCount+' expected visitor'+(expectedCount===1?'':'s')+' awaiting entry',
-        'الزوار المتوقعون بانتظار الدخول: '+expectedCount
-      );
+      officeVisitorsLoaded=true;
+      officeVisitorDataIsStale=false;
+      updateKsaOfficeVisitorCounts(false);
       officeVisitorStatus='';
       renderKsaOfficeVisitors();
+      cacheKsaOfficeVisitors();
     }).catch(function(error){
       if(requestVersion!==officeVisitorRequestVersion)return;
       if(status)status.textContent='Unable to load office visitors: '+(error&&error.message?error.message:'Unknown error');
@@ -2782,13 +2852,15 @@
     var list=document.getElementById(listId);
     if(!list)return;
     list.textContent='';
+    var fragment=document.createDocumentFragment();
     if(!visitors.length){
       var empty=document.createElement('p');
       empty.style.cssText='padding:18px;color:var(--text-muted);text-align:center;';
       empty.textContent=isInsideList
         ?officeLabel('No office visitors are currently inside.','لا يوجد زوار حالياً داخل المكتب.')
         :officeLabel('No expected office visitors are waiting to check in.','لا يوجد زوار متوقعون بانتظار تسجيل الدخول.');
-      list.appendChild(empty);
+      fragment.appendChild(empty);
+      list.appendChild(fragment);
       updateOfficeVisitorElapsedTimers();
       return;
     }
@@ -2855,7 +2927,7 @@
         checkInButton.className='btn-primary office-visitor-checkin-button';
         checkInButton.style.cssText='width:auto;min-width:132px;padding:10px 14px;border-radius:8px;font-weight:800;letter-spacing:.03em;';
         checkInButton.textContent=officeLabel('CHECK IN','تسجيل الدخول');
-        checkInButton.disabled=!!visitor.checkedInAt;
+        checkInButton.disabled=officeVisitorDataIsStale||!!visitor.checkedInAt;
         if(checkInButton.disabled)checkInButton.style.cssText+=';opacity:.42;filter:grayscale(1);cursor:not-allowed;';
         checkInButton.addEventListener('click',function(){checkInKsaOfficeVisitor(visitor,checkInButton);});
         var checkout=document.createElement('button');
@@ -2863,14 +2935,15 @@
         checkout.className='btn-primary btn-outline office-visitor-checkout-button';
         checkout.style.cssText='width:auto;min-width:132px;padding:10px 14px;border-radius:8px;font-weight:800;letter-spacing:.03em;';
         checkout.textContent=officeLabel('CHECK OUT','تسجيل الخروج');
-        checkout.disabled=!visitor.checkedInAt;
+        checkout.disabled=officeVisitorDataIsStale||!visitor.checkedInAt;
         if(checkout.disabled)checkout.style.cssText+=';opacity:.42;filter:grayscale(1);cursor:not-allowed;';
         checkout.addEventListener('click',function(){checkOutKsaOfficeVisitor(visitor,checkout);});
         actions.append(checkInButton,checkout);
         card.appendChild(actions);
       }
-      list.appendChild(card);
+      fragment.appendChild(card);
     });
+    list.appendChild(fragment);
     updateOfficeVisitorElapsedTimers();
   }
 
@@ -2924,7 +2997,7 @@
   }
 
   function checkOutKsaOfficeVisitor(visitor,button){
-    if(!visitor||!visitor.recordId||!visitor.checkedInAt)return;
+    if(officeVisitorDataIsStale||!visitor||!visitor.recordId||!visitor.checkedInAt)return;
     if(button){
       if(button.disabled)return;
       button.disabled=true;
@@ -2934,6 +3007,9 @@
     officeVisitorApiPost({action:'office_check_out_visitor',recordId:visitor.recordId}).then(function(result){
       officeVisitorMutationVersion++;
       officeVisitors=officeVisitors.filter(function(currentVisitor){return currentVisitor.recordId!==visitor.recordId;});
+      officeVisitorsLoaded=true;
+      officeVisitorDataIsStale=false;
+      cacheKsaOfficeVisitors();
       officeVisitorStatus=officeLabel(visitor.name+' checked out','تم تسجيل خروج '+visitor.name)+
         (result&&result.checkedOutAt?': '+formatOfficeVisitorDateTime(result.checkedOutAt):'.');
       renderKsaOfficeVisitors();
@@ -2951,7 +3027,7 @@
   }
 
   function checkInKsaOfficeVisitor(visitor,button){
-    if(!visitor||!visitor.recordId||visitor.checkedInAt)return;
+    if(officeVisitorDataIsStale||!visitor||!visitor.recordId||visitor.checkedInAt)return;
     if(button){
       if(button.disabled)return;
       button.disabled=true;
@@ -2962,6 +3038,9 @@
       officeVisitorMutationVersion++;
       visitor.checkedInAt=result.checkedInAt;
       visitor.checkedInBy=result.checkedInBy||currentUser.name||'';
+      officeVisitorsLoaded=true;
+      officeVisitorDataIsStale=false;
+      cacheKsaOfficeVisitors();
       officeVisitorStatus=officeLabel(visitor.name+' checked in','تم تسجيل دخول '+visitor.name)+
         (result.checkedInAt?': '+formatOfficeVisitorDateTime(result.checkedInAt):'.');
       renderKsaOfficeVisitors();
@@ -8496,4 +8575,4 @@
   })();
   </script>
   </body></html>
-  
+    
