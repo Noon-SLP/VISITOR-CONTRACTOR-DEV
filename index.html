@@ -7825,13 +7825,12 @@
   function setScannerSidebarHidden(hidden){if(!currentUser)return;const sb=document.getElementById('sidebar');if(!sb)return;if(hidden){if(scannerPreviousSidebarDisplay===null)scannerPreviousSidebarDisplay=sb.style.display;sb.style.display='none';}else if(scannerPreviousSidebarDisplay!==null){sb.style.display=scannerPreviousSidebarDisplay;scannerPreviousSidebarDisplay=null;}}
   function mountScanResultOverlay(result){if(!result)return;if(!scanResultPlaceholder&&result.parentNode){scanResultPlaceholder=document.createComment('scan-result-placeholder');result.parentNode.insertBefore(scanResultPlaceholder,result);}if(result.parentNode!==document.body)document.body.appendChild(result);if(scannerPreviousBodyOverflow===null){scannerPreviousBodyOverflow=document.body.style.overflow;document.body.style.overflow='hidden';}}
   function restoreScanResultOverlay(result){if(result&&scanResultPlaceholder&&scanResultPlaceholder.parentNode){scanResultPlaceholder.parentNode.insertBefore(result,scanResultPlaceholder);scanResultPlaceholder.remove();}scanResultPlaceholder=null;if(scannerPreviousBodyOverflow!==null){document.body.style.overflow=scannerPreviousBodyOverflow;scannerPreviousBodyOverflow=null;}}
-  function showScanResult(d,rHtml,cClass,isContractor,autoDismiss){const sr=document.getElementById('scan-result');sr.className='scan-result-card '+cClass+' fullscreen-scan';mountScanResultOverlay(sr);document.getElementById('r-decision').innerText=d;document.getElementById('r-reason').innerHTML=rHtml;setScannerSidebarHidden(true);if(cClass==="bg-red"&&autoDismiss!==false){setTimeout(function(){if(document.getElementById('r-decision').innerText===d){sr.className='scan-result-card hidden';restoreScanResultOverlay(sr);setScannerSidebarHidden(false);isProcessingScan=false;try{if(html5QrCode)html5QrCode.resume();}catch(e){}}},3500);}}
+  function showScanResult(d,rHtml,cClass,isContractor,autoDismiss){const sr=document.getElementById('scan-result');sr.className='scan-result-card '+cClass+' fullscreen-scan';mountScanResultOverlay(sr);try{if(html5QrCode&&html5QrCode.isScanning)html5QrCode.pause();}catch(error){console.warn('[QR scanner] Camera could not pause for the result screen.',error);}document.getElementById('r-decision').innerText=d;document.getElementById('r-reason').innerHTML=rHtml;setScannerSidebarHidden(true);if(cClass==="bg-red"&&autoDismiss!==false){setTimeout(function(){if(document.getElementById('r-decision').innerText===d){sr.className='scan-result-card hidden';restoreScanResultOverlay(sr);setScannerSidebarHidden(false);isProcessingScan=false;try{if(html5QrCode)html5QrCode.resume();}catch(e){}}},3500);}}
   window.closeScanResult=function(){isProcessingScan=false;const sr=document.getElementById('scan-result');if(sr)sr.className='scan-result-card hidden';restoreScanResultOverlay(sr);setScannerSidebarHidden(false);try{if(html5QrCode)html5QrCode.resume();}catch(e){}const gunInput=document.getElementById('gun-scan-input');if(gunInput&&!document.getElementById('gun-scanner-container').classList.contains('hidden')){gunInput.focus();gunInput.value="";}};
   function filterTeamMembers(query){let q=query.toLowerCase();let rows=document.querySelectorAll('.team-member-scan-row');rows.forEach(function(row){if(row.innerText.toLowerCase().includes(q)){row.style.display='flex';}else{row.style.display='none';}});let deviceCards=document.querySelectorAll('.device-photo-card');deviceCards.forEach(function(card){if(card.getAttribute('data-search').includes(q)){card.style.display='block';}else{card.style.display='none';}});}
 
   async function onScanSuccess(decodedText){
     if(isProcessingScan)return;isProcessingScan=true;
-    try{if(html5QrCode&&html5QrCode.isScanning)html5QrCode.pause();}catch(e){}
     let rawText=String(decodedText).toUpperCase();
     let exactMatch=rawText.match(/(?:NOON-\d+|OFFICE-[A-Z0-9-]{20,50})/);
     decodedText=exactMatch?exactMatch[0]:rawText.replace(/\s+/g,'').trim();
@@ -7849,20 +7848,12 @@
     const searchFilterBox=document.getElementById('guard-search-filter-container');
     if(searchFilterBox){searchFilterBox.classList.add('hidden');document.getElementById('team-search-filter').value="";}
     currentScannedID=decodedText;
-    if(cachedData)renderScannedPass(cachedData,false);
-    else if(resultCard){
-      resultCard.className='scan-result-card bg-yellow';
-      rDecision.innerText='CHECKING PASS...';
-    }
-
     let data=null;
     let networkFailed=false;
     gateStatusVerificationInProgress=true;
     cancelGuardCacheRefresh();
     try{
-      const verifyRequest=cachedData
-        ?{action:'get_gate_verification',id:decodedText,passType:cachedData.Type}
-        :{action:'get_single',id:decodedText};
+      const verifyRequest={action:'get_gate_verification',id:decodedText,passType:cachedData?cachedData.Type:''};
       const resData=await appsScriptReadOnly(verifyRequest,15000);
       if(resData&&!resData.error){
         data=cachedData?Object.assign({},cachedData,resData):convertDriveUrls(resData);
@@ -8293,9 +8284,8 @@
   <script>
   (function(){
     var scanResult=document.getElementById('scan-result');
-    var readerContainer=document.getElementById('reader-container');
     var style=document.createElement('style');
-    style.textContent='body.guard-scan-active #ambient-right{display:none!important}body.guard-scan-active #ambient-left{display:flex!important;position:fixed!important;top:12px!important;right:auto!important;bottom:auto!important;left:12px!important;transform:none!important;z-index:10000000!important;width:auto!important;height:auto!important;min-height:0!important;max-width:calc(100vw - 60px)!important;margin:0!important;padding:8px 12px!important;flex-direction:row!important;align-items:center!important;gap:12px!important;background:rgba(10,12,18,.92)!important;border:1px solid rgba(255,255,255,.2)!important;border-radius:10px!important;box-shadow:0 8px 24px rgba(0,0,0,.35)!important}body.guard-scan-active #ambient-left .ambient-clock{width:auto!important;max-width:100%!important;margin:0!important;font-size:clamp(18px,3vw,26px)!important;line-height:1.15!important;text-align:left!important}body.guard-scan-active #ambient-left .ambient-date{margin:0!important;font-size:clamp(9px,1.5vw,13px)!important;line-height:1.3!important;text-align:left!important}.scan-member-gate-controls{display:flex;align-items:center;gap:8px}.scan-member-gate-status{font-size:10px;font-weight:700;letter-spacing:.4px;white-space:nowrap;color:rgba(255,255,255,.75)}.scan-member-gate-button{border:0;border-radius:7px;padding:9px 11px;font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer;background:var(--noon-yellow);color:#111}.scan-member-gate-button[data-gate-status=IN],#scan-checkout-all-button{background:#dc2626!important;color:#fff!important}.scan-member-gate-button:disabled{opacity:.6;cursor:wait}';
+    style.textContent='body.guard-scan-active #ambient-left,body.guard-scan-active #ambient-right{display:none!important}.scan-member-gate-controls{display:flex;align-items:center;gap:8px}.scan-member-gate-status{font-size:10px;font-weight:700;letter-spacing:.4px;white-space:nowrap;color:rgba(255,255,255,.75)}.scan-member-gate-button{border:0;border-radius:7px;padding:9px 11px;font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer;background:var(--noon-yellow);color:#111}.scan-member-gate-button[data-gate-status=IN],#scan-checkout-all-button{background:#dc2626!important;color:#fff!important}.scan-member-gate-button:disabled{opacity:.6;cursor:wait}';
     document.head.appendChild(style);
     var clockStyle=document.createElement('style');
     clockStyle.textContent='.ambient-panel{box-sizing:border-box;max-width:calc(100vw - 32px)}.ambient-clock{display:block;width:100%;max-width:100%;box-sizing:border-box;font-size:clamp(20px,2vw,26px)!important;letter-spacing:0!important;line-height:1.15;white-space:nowrap;overflow:hidden;text-align:center;font-variant-numeric:tabular-nums}.ambient-date{font-size:15px!important;letter-spacing:1px!important;line-height:1.4;font-weight:700!important}';
@@ -8303,15 +8293,12 @@
 
     function updateGuardScanPanels(){
       var resultOpen=!!(scanResult&&!scanResult.classList.contains('hidden'));
-      var readerOpen=!!(readerContainer&&!readerContainer.classList.contains('hidden'));
-      var active=resultOpen||readerOpen;
-      document.body.classList.toggle('guard-scan-active',active);
+      document.body.classList.toggle('guard-scan-active',resultOpen);
     }
 
     if(window.MutationObserver){
       var observer=new MutationObserver(updateGuardScanPanels);
       if(scanResult)observer.observe(scanResult,{attributes:true,attributeFilter:['class']});
-      if(readerContainer)observer.observe(readerContainer,{attributes:true,attributeFilter:['class']});
     }
     updateGuardScanPanels();
 
@@ -8638,7 +8625,6 @@
     var originalScanSuccess=window.onScanSuccess;
     if(typeof originalScanSuccess==='function'){
       window.onScanSuccess=async function(){
-        document.body.classList.add('guard-scan-active');
         var result=await originalScanSuccess.apply(this,arguments);
         updateGuardScanPanels();
         try{
