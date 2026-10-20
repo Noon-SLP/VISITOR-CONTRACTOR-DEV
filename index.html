@@ -2097,12 +2097,11 @@
     if(isRequestMember)row.classList.add('office-request-member-row');
     row.dataset.officePhotoKey='office-member-'+Date.now()+'-'+Math.random().toString(36).slice(2);
     row.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-items:end;padding:10px;border:1px solid rgba(210,216,230,.2);border-radius:9px;background:rgba(255,255,255,.04);';
-    [
+    var memberFields=[
       ['name','Full Name','الاسم الكامل','text'],
-      ['idNumber','ID Number / Iqama Number','رقم الهوية / الإقامة','text'],
-      ['contact','Contact Number','رقم التواصل','tel'],
-      ['meetingWith','Invited By / Meeting With','المدعو من قبل / من سيقابل','text']
-    ].forEach(function(field){
+      ['idNumber','ID Number / Iqama Number','رقم الهوية / الإقامة','text']
+    ];
+    memberFields.forEach(function(field){
       var group=document.createElement('div');
       group.className='office-visitor-field';
       var label=document.createElement('label');
@@ -2112,7 +2111,7 @@
       var input=document.createElement('input');
       input.type=field[3];
       input.className='input-field';
-      input.maxLength=field[0]==='idNumber'||field[0]==='contact'?80:160;
+      input.maxLength=field[0]==='idNumber'?80:160;
       input.required=true;
       input.dataset.officeMemberField=field[0];
       label.htmlFor='office-member-'+field[0]+'-'+Date.now()+'-'+Math.random().toString(36).slice(2);
@@ -2715,11 +2714,11 @@
 
   function getKsaOfficeVisitorCacheKey(){
     if(currentUser&&currentUser.role==='admin'&&currentUser.accessLevel==='superadmin'){
-      return 'cached_office_visitors_v1_superadmin';
+      return 'cached_office_visitors_v2_superadmin';
     }
     if(currentUser&&currentUser.role==='guard'&&String(currentUser.guardMode||'').toLowerCase()==='office'){
       var location=String(currentUser.location||'').toUpperCase().trim().replace(/[^A-Z0-9_-]/g,'_');
-      return location?'cached_office_visitors_v1_'+location:'';
+      return location?'cached_office_visitors_v2_'+location:'';
     }
     return '';
   }
@@ -2737,7 +2736,7 @@
   function updateKsaOfficeVisitorCounts(isRefreshing){
     var status=document.getElementById('office-visitor-status');
     var expectedStatus=document.getElementById('office-expected-visitor-status');
-    var expectedCount=officeVisitors.filter(function(visitor){return !visitor.checkedInAt&&visitor.source!=='Manual';}).length;
+    var expectedCount=officeVisitors.filter(function(visitor){return !visitor.checkedInAt&&visitor.source!=='Manual'&&visitor.expectedValid!==false;}).length;
     var insideCount=officeVisitors.filter(function(visitor){return !!visitor.checkedInAt;}).length;
     var manualAwaitingCount=officeVisitors.filter(function(visitor){return !visitor.checkedInAt&&visitor.source==='Manual';}).length;
     if(status)status.textContent=officeLabel(
@@ -2838,7 +2837,7 @@
   function renderKsaOfficeVisitors(){
     renderKsaOfficeVisitorList(
       'office-expected-visitors-list',
-      officeVisitors.filter(function(visitor){return !visitor.checkedInAt&&visitor.source!=='Manual';}),
+      officeVisitors.filter(function(visitor){return !visitor.checkedInAt&&visitor.source!=='Manual'&&visitor.expectedValid!==false;}),
       false
     );
     renderKsaOfficeVisitorList(
@@ -8050,6 +8049,7 @@
     const decision=document.getElementById('r-decision'),reason=document.getElementById('r-reason');
     if(decision)decision.innerText="Saved successfully.";if(reason)reason.innerHTML="";
     updateControlRoomStats();
+    if(currentUser&&currentUser.role==='guard'&&String(currentUser.guardMode||'').toLowerCase()==='office'&&String(pass.Type||'').toLowerCase()==='office visitor')refreshKsaOfficeVisitors(true);
     setTimeout(function(){if(typeof window.closeScanResult==="function")window.closeScanResult();},1200);
     if(currentUser&&currentUser.role!=='guard')loadMyPasses(true,true).catch(function(){});
     setTimeout(preloadGuardCache,1500);
@@ -8250,7 +8250,7 @@
     var scanResult=document.getElementById('scan-result');
     var readerContainer=document.getElementById('reader-container');
     var style=document.createElement('style');
-    style.textContent='body.guard-scan-active #ambient-left,body.guard-scan-active #ambient-right{display:none!important}.scan-member-gate-controls{display:flex;align-items:center;gap:8px}.scan-member-gate-status{font-size:10px;font-weight:700;letter-spacing:.4px;white-space:nowrap;color:rgba(255,255,255,.75)}.scan-member-gate-button{border:0;border-radius:7px;padding:9px 11px;font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer;background:var(--noon-yellow);color:#111}.scan-member-gate-button[data-gate-status=IN],#scan-checkout-all-button{background:#dc2626!important;color:#fff!important}.scan-member-gate-button:disabled{opacity:.6;cursor:wait}';
+    style.textContent='body.guard-scan-active #ambient-left{display:none!important}body.guard-scan-active #ambient-right{z-index:10000000!important}.scan-member-gate-controls{display:flex;align-items:center;gap:8px}.scan-member-gate-status{font-size:10px;font-weight:700;letter-spacing:.4px;white-space:nowrap;color:rgba(255,255,255,.75)}.scan-member-gate-button{border:0;border-radius:7px;padding:9px 11px;font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer;background:var(--noon-yellow);color:#111}.scan-member-gate-button[data-gate-status=IN],#scan-checkout-all-button{background:#dc2626!important;color:#fff!important}.scan-member-gate-button:disabled{opacity:.6;cursor:wait}';
     document.head.appendChild(style);
     var clockStyle=document.createElement('style');
     clockStyle.textContent='.ambient-panel{box-sizing:border-box;max-width:calc(100vw - 32px)}.ambient-clock{display:block;width:100%;max-width:100%;box-sizing:border-box;font-size:clamp(20px,2vw,26px)!important;letter-spacing:0!important;line-height:1.15;white-space:nowrap;overflow:hidden;text-align:center;font-variant-numeric:tabular-nums}.ambient-date{font-size:15px!important;letter-spacing:1px!important;line-height:1.4;font-weight:700!important}';
@@ -8441,13 +8441,14 @@
         guardPassCache.set(String(currentScannedID).toUpperCase(),pass);
         refreshMemberGateRows(pass,result.memberStates||null);
         updateControlRoomStats();
+        if(currentUser&&currentUser.role==='guard'&&String(currentUser.guardMode||'').toLowerCase()==='office'&&String(pass.Type||'').toLowerCase()==='office visitor')refreshKsaOfficeVisitors(true);
         var completed=Number(result.completed)||0;
         var failed=Array.isArray(result.results)?result.results.filter(function(item){return !item||item.status!=='success';}):[];
         if(failed.length){
           var failureReasons=failed.map(function(item){return item&&item.message?item.message:'Unknown error';});
           alert('Checked '+actionLabel+' '+completed+' of '+actionButtons.length+' people. The remaining actions failed: '+failureReasons.join('; '));
         }else if(Array.isArray(result.warnings)&&result.warnings.length){
-          alert('Successfully checked '+actionLabel+' all '+completed+' people, but some history rows could not be saved: '+result.warnings.join('; '));
+          alert('Successfully checked '+actionLabel+' all '+completed+' people, but some related updates could not be saved: '+result.warnings.join('; '));
         }else{
           alert('Successfully checked '+actionLabel+' all '+completed+' people.');
         }
@@ -8486,8 +8487,9 @@
         guardPassCache.set(String(currentScannedID).toUpperCase(),pass);
         refreshMemberGateRows(pass,result.memberStates||null);
         updateControlRoomStats();
+        if(currentUser&&currentUser.role==='guard'&&String(currentUser.guardMode||'').toLowerCase()==='office'&&String(pass.Type||'').toLowerCase()==='office visitor')refreshKsaOfficeVisitors(true);
         if(Array.isArray(result.warnings)&&result.warnings.length){
-          alert('Gate action saved, but the history row could not be saved. Please notify an administrator.');
+          alert('Gate action saved with warnings: '+result.warnings.join(' '));
         }
       }catch(error){
         alert(error&&error.message?error.message:'Unable to save this member gate action. Please try again.');
