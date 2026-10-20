@@ -1392,6 +1392,14 @@
           return new Promise(function(resolve){setTimeout(resolve,delay);}).then(poll);
         }
         return result;
+      }).catch(function(error){
+        var message=String(error&&error.message||'');
+        var transient=message.indexOf('The Apps Script API did not respond after ')===0||
+          message.indexOf('The Apps Script API could not be reached.')===0;
+        if(!transient||Date.now()-pollStartedAt>=pollTimeout)throw error;
+        var retryDelay=Math.min(pollDelay,1000);
+        pollDelay=Math.min(1500,Math.round(pollDelay*1.6));
+        return new Promise(function(resolve){setTimeout(resolve,retryDelay);}).then(poll);
       });
     }
     return poll().then(function(result){
@@ -8640,4 +8648,3 @@
   })();
   </script>
   </body></html>
-  
