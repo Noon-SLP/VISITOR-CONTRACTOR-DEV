@@ -1332,30 +1332,75 @@
   function fetchAdminRequestResult(requestId){
     return appsScriptJsonpAttempt({action:'admin_auth_result',requestId:requestId},null,0,10000);
   }
+  function submitAdminRequest(payload){
+    var frameName='admin-request-'+Date.now()+'-'+Math.random().toString(36).slice(2);
+    var frame=document.createElement('iframe');
+    frame.name=frameName;
+    frame.title='Secure Apps Script request';
+    frame.setAttribute('aria-hidden','true');
+    frame.style.cssText='display:none!important;width:0;height:0;border:0;';
+    var form=document.createElement('form');
+    form.method='POST';
+    form.action=freshScriptUrl();
+    form.target=frameName;
+    form.enctype='application/x-www-form-urlencoded';
+    form.acceptCharset='UTF-8';
+    form.style.display='none';
+    var payloadInput=document.createElement('input');
+    payloadInput.type='hidden';
+    payloadInput.name='payload';
+    payloadInput.value=JSON.stringify(payload);
+    form.appendChild(payloadInput);
+    document.body.append(frame,form);
+    try{
+      form.submit();
+    }catch(error){
+      form.remove();
+      frame.remove();
+      throw error;
+    }
+    var cleaned=false;
+    var cleanupTimer=setTimeout(cleanup,45000);
+    function cleanup(){
+      if(cleaned)return;
+      cleaned=true;
+      clearTimeout(cleanupTimer);
+      form.remove();
+      frame.remove();
+    }
+    return cleanup;
+  }
   function postAdminRequest(payload){
     var requestId=payload.adminRequestId;
     var pollStartedAt=Date.now();
     var pollTimeout=30000;
+    var pollDelay=300;
+    var cleanupPost;
+    try{
+      cleanupPost=submitAdminRequest(payload);
+    }catch(postError){
+      return Promise.reject(new Error('The secure Apps Script request could not be submitted: '+(postError&&postError.message?postError.message:'Unknown error')));
+    }
     function poll(){
       if(Date.now()-pollStartedAt>=pollTimeout){
-        throw new Error('The Apps Script backend did not save the admin request result. Deploy the latest code.gs version and try again.');
+        throw new Error('The Apps Script backend did not confirm this request. Verify that the latest Code.gs is deployed as a web app and try again.');
       }
       return fetchAdminRequestResult(requestId).then(function(result){
         if(result&&result.status==='pending'){
-          return new Promise(function(resolve){setTimeout(resolve,150);}).then(poll);
+          var delay=pollDelay;
+          pollDelay=Math.min(1500,Math.round(pollDelay*1.6));
+          return new Promise(function(resolve){setTimeout(resolve,delay);}).then(poll);
         }
         return result;
       });
     }
-    return nativeFetch(freshScriptUrl(),{
-      method:'POST',
-      headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify(payload),
-      mode:'no-cors',
-      cache:'no-store'
-    }).catch(function(error){
-      console.warn('[Admin API] The credential-bearing POST response could not be read; checking its one-time result.',error);
-    }).then(function(){return poll();});
+    return poll().then(function(result){
+      cleanupPost();
+      return result;
+    },function(error){
+      cleanupPost();
+      throw error;
+    });
   }
   function appsScriptJsonp(params,signal,timeoutMs){
     if(currentUser&&currentUser.role==='admin'&&currentUser.adminToken){
@@ -8250,7 +8295,7 @@
     var scanResult=document.getElementById('scan-result');
     var readerContainer=document.getElementById('reader-container');
     var style=document.createElement('style');
-    style.textContent='body.guard-scan-active #ambient-left{display:none!important}body.guard-scan-active #ambient-right{z-index:10000000!important}.scan-member-gate-controls{display:flex;align-items:center;gap:8px}.scan-member-gate-status{font-size:10px;font-weight:700;letter-spacing:.4px;white-space:nowrap;color:rgba(255,255,255,.75)}.scan-member-gate-button{border:0;border-radius:7px;padding:9px 11px;font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer;background:var(--noon-yellow);color:#111}.scan-member-gate-button[data-gate-status=IN],#scan-checkout-all-button{background:#dc2626!important;color:#fff!important}.scan-member-gate-button:disabled{opacity:.6;cursor:wait}';
+    style.textContent='body.guard-scan-active #ambient-right{display:none!important}body.guard-scan-active #ambient-left{display:flex!important;position:fixed!important;top:12px!important;right:auto!important;bottom:auto!important;left:12px!important;transform:none!important;z-index:10000000!important;width:auto!important;height:auto!important;min-height:0!important;max-width:calc(100vw - 60px)!important;margin:0!important;padding:8px 12px!important;flex-direction:row!important;align-items:center!important;gap:12px!important;background:rgba(10,12,18,.92)!important;border:1px solid rgba(255,255,255,.2)!important;border-radius:10px!important;box-shadow:0 8px 24px rgba(0,0,0,.35)!important}body.guard-scan-active #ambient-left .ambient-clock{width:auto!important;max-width:100%!important;margin:0!important;font-size:clamp(18px,3vw,26px)!important;line-height:1.15!important;text-align:left!important}body.guard-scan-active #ambient-left .ambient-date{margin:0!important;font-size:clamp(9px,1.5vw,13px)!important;line-height:1.3!important;text-align:left!important}.scan-member-gate-controls{display:flex;align-items:center;gap:8px}.scan-member-gate-status{font-size:10px;font-weight:700;letter-spacing:.4px;white-space:nowrap;color:rgba(255,255,255,.75)}.scan-member-gate-button{border:0;border-radius:7px;padding:9px 11px;font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer;background:var(--noon-yellow);color:#111}.scan-member-gate-button[data-gate-status=IN],#scan-checkout-all-button{background:#dc2626!important;color:#fff!important}.scan-member-gate-button:disabled{opacity:.6;cursor:wait}';
     document.head.appendChild(style);
     var clockStyle=document.createElement('style');
     clockStyle.textContent='.ambient-panel{box-sizing:border-box;max-width:calc(100vw - 32px)}.ambient-clock{display:block;width:100%;max-width:100%;box-sizing:border-box;font-size:clamp(20px,2vw,26px)!important;letter-spacing:0!important;line-height:1.15;white-space:nowrap;overflow:hidden;text-align:center;font-variant-numeric:tabular-nums}.ambient-date{font-size:15px!important;letter-spacing:1px!important;line-height:1.4;font-weight:700!important}';
