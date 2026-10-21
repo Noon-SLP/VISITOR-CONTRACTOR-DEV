@@ -1567,6 +1567,8 @@
   dict.ar.office_contact="رقم التواصل";
   dict.en.office_invited_by="Invited by Whom";
   dict.ar.office_invited_by="المدعو من قبل";
+  dict.en.office_host_email="Host email (@noon.com)";
+  dict.ar.office_host_email="البريد الإلكتروني للمضيف (@noon.com)";
   dict.en.office_vehicle_plate="Vehicle Plate";
   dict.ar.office_vehicle_plate="رقم لوحة المركبة";
   dict.en.office_vehicle_photo="Vehicle Picture (Required)";
@@ -5204,6 +5206,7 @@
       '<div class="input-group"><label data-i18n="office_visit_from"></label><div style="display:flex;gap:10px;min-width:0;"><input id="req-office-date-from" class="input-field" style="min-width:0;flex:1;" type="date" required aria-label="Visit Date From"><input id="req-office-date-to" class="input-field" style="min-width:0;flex:1;" type="date" required aria-label="Visit Date To"></div></div>'+
       '<div class="input-group"><label for="req-office-contact" data-i18n="office_contact"></label><input id="req-office-contact" class="input-field" type="tel" maxlength="80" required></div>'+
       '<div class="input-group"><label for="req-office-invited-by" data-i18n="office_invited_by"></label><input id="req-office-invited-by" class="input-field" type="text" maxlength="160" required></div>'+
+      '<div class="input-group"><label for="req-office-host-email" data-i18n="office_host_email"></label><input id="req-office-host-email" class="input-field" type="email" maxlength="254" autocomplete="email" required></div>'+
       '<div class="input-group" id="req-office-members-group"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;"><label style="margin:0;" data-office-english="Members (optional)" data-office-arabic="الأعضاء (اختياري)">Members (optional)</label><button id="req-office-add-member" class="btn-primary btn-outline" type="button" style="width:auto;padding:7px 10px;font-size:11px;">+ ADD MEMBER</button></div><div id="req-office-members" style="display:flex;flex-direction:column;gap:8px;"></div></div>'+
       '<div class="input-group"><label for="req-office-vehicle-file" data-i18n="office_vehicle_photo"></label><div class="office-photo-actions"><button id="req-office-camera-start" class="btn-primary btn-outline" type="button" data-i18n="office_camera_start"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l1.5-2h7L17 7h3v12H4z"></path><circle cx="12" cy="13" r="3"></circle></svg><span>'+t('office_camera_start')+'</span></button><label class="file-picker" for="req-office-vehicle-file" data-i18n="office_choose_file"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7h6l2 2h9v9h-17z"></path></svg><span>'+t('office_choose_file')+'</span></label><input id="req-office-vehicle-file" class="file-input" type="file" accept="image/*"></div><div id="req-office-camera-panel" class="hidden" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;"><video id="req-office-camera-video" autoplay playsinline muted style="width:100%;max-height:240px;background:#000;border-radius:8px;object-fit:contain;"></video><div style="display:flex;flex-wrap:wrap;gap:8px;"><button id="req-office-camera-switch" class="btn-primary btn-outline" type="button" data-i18n="office_camera_switch" style="width:auto;padding:8px 10px;">'+t('office_camera_switch')+'</button><button id="req-office-camera-capture" class="btn-primary" type="button" data-i18n="office_camera_capture" style="width:auto;padding:8px 10px;">'+t('office_camera_capture')+'</button><button id="req-office-camera-cancel" class="btn-primary btn-outline" type="button" data-i18n="office_camera_cancel" style="width:auto;padding:8px 10px;">'+t('office_camera_cancel')+'</button></div></div><img id="req-office-vehicle-preview" class="hidden" alt="Vehicle picture preview" style="max-width:100%;max-height:180px;object-fit:contain;border:1px solid var(--border-color);border-radius:8px;margin-top:8px;"><p id="req-office-camera-status" role="status" style="min-height:16px;margin:6px 0 0;color:var(--text-muted);font-size:11px;"></p></div>'+
       '<div class="input-group"><label for="req-office-id-copy" data-i18n="office_id_copy"></label><div class="office-photo-actions"><button id="req-office-id-camera-start" class="btn-primary btn-outline" type="button" data-i18n="office_camera_start"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l1.5-2h7L17 7h3v12H4z"></path><circle cx="12" cy="13" r="3"></circle></svg><span>'+t('office_camera_start')+'</span></button><label class="file-picker" for="req-office-id-copy" data-i18n="office_choose_file"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7h6l2 2h9v9h-17z"></path></svg><span>'+t('office_choose_file')+'</span></label><input id="req-office-id-copy" class="file-input" type="file" accept="image/*"></div><div id="req-office-id-camera-panel" class="hidden" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;"><video id="req-office-id-camera-video" autoplay playsinline muted style="width:100%;max-height:240px;background:#000;border-radius:8px;object-fit:contain;"></video><div style="display:flex;flex-wrap:wrap;gap:8px;"><button id="req-office-id-camera-switch" class="btn-primary btn-outline" type="button" data-i18n="office_camera_switch" style="width:auto;padding:8px 10px;">'+t('office_camera_switch')+'</button><button id="req-office-id-camera-capture" class="btn-primary" type="button" data-i18n="office_camera_capture" style="width:auto;padding:8px 10px;">'+t('office_camera_capture')+'</button><button id="req-office-id-camera-cancel" class="btn-primary btn-outline" type="button" data-i18n="office_camera_cancel" style="width:auto;padding:8px 10px;">'+t('office_camera_cancel')+'</button></div></div><img id="req-office-id-preview" class="hidden" alt="Iqama or ID copy preview" style="max-width:100%;max-height:180px;object-fit:contain;border:1px solid var(--border-color);border-radius:8px;margin-top:8px;"><p id="req-office-id-camera-status" role="status" style="min-height:16px;margin:6px 0 0;color:var(--text-muted);font-size:11px;"></p></div>';
@@ -6033,13 +6036,16 @@
     var endInput=document.getElementById('req-office-date-to');
     var contactInput=document.getElementById('req-office-contact');
     var invitedInput=document.getElementById('req-office-invited-by');
+    var officeHostEmailInput=document.getElementById('req-office-host-email');
     var idPhotoInput=document.getElementById('req-office-id-copy');
     var button=document.getElementById('btn-submit-req');
-    if(!nameInput||!idInput||!startInput||!endInput||!contactInput||!invitedInput||!idPhotoInput||!button)return;
+    if(!nameInput||!idInput||!startInput||!endInput||!contactInput||!invitedInput||!officeHostEmailInput||!idPhotoInput||!button)return;
     var country=document.getElementById('req-country');
     var facility=document.getElementById('req-location');
     if(!country||country.value!=='KSA'||!facility||facility.value!=='RUH01 OFFICE')return alert('Choose KSA and RUH01 OFFICE to submit an Office Visitor request.');
-    if(!nameInput.value.trim()||!idInput.value.trim()||!startInput.value||!endInput.value||!contactInput.value.trim()||!invitedInput.value.trim())return alert('Complete all required Office Visitor details.');
+    if(!nameInput.value.trim()||!idInput.value.trim()||!startInput.value||!endInput.value||!contactInput.value.trim()||!invitedInput.value.trim()||!officeHostEmailInput.value.trim())return alert('Complete all required Office Visitor details.');
+    var officeHostEmail=officeHostEmailInput.value.trim().toLowerCase();
+    if(!/^[^\s@]+@noon\.com$/i.test(officeHostEmail))return alert('Enter the host email using a @noon.com address.');
     if(endInput.value<startInput.value)return alert('The visit end date cannot be before the start date.');
     if(!officeRequestIdCopy)return alert('Choose a file or capture a live Iqama / ID picture.');
     var requestMemberRows=[].slice.call(document.querySelectorAll('#req-office-members .office-visitor-member-row'));
@@ -6075,7 +6081,7 @@
     var cacheKey='cached_passes_'+email;
     var cachedPasses=[];
     try{cachedPasses=JSON.parse(localStorage.getItem(cacheKey)||'[]');if(!Array.isArray(cachedPasses))cachedPasses=[];}catch(cacheError){cachedPasses=[];}
-    var optimisticPass={UniqueID:passId,VisitorName:nameInput.value.trim()+' (ID: '+idInput.value.trim()+')',Type:'Office Visitor',Location:'RUH01 OFFICE',StartDate:startInput.value,EndDate:endInput.value,Status:'Approved',HostEmail:email};
+    var optimisticPass={UniqueID:passId,VisitorName:nameInput.value.trim()+' (ID: '+idInput.value.trim()+')',Type:'Office Visitor',Location:'RUH01 OFFICE',StartDate:startInput.value,EndDate:endInput.value,Status:'Pending',HostEmail:email,OfficeHostEmail:officeHostEmail,OfficeHostApprovalStatus:'Pending'};
     cachedPasses.push(optimisticPass);
     localStorage.setItem(cacheKey,JSON.stringify(cachedPasses));
     renderMyPasses(cachedPasses);
@@ -6097,6 +6103,7 @@
         location:facility.value,
         hostName:currentUser.name||'Visitor Portal',
         hostEmail:email,
+        officeHostEmail:officeHostEmail,
         accountPin:pin,
         name:nameInput.value.trim(),
         idNumber:idInput.value.trim(),
@@ -6120,12 +6127,12 @@
       if(!operationResult||operationResult.status!=='success')throw new Error('The server did not confirm the Office Visitor request. Refresh My Passes before retrying.');
       clearOfficeRequestVehiclePicture();
       nameInput.value='';idInput.value='';startInput.value='';endInput.value='';
-      contactInput.value='';invitedInput.value='';
+      contactInput.value='';invitedInput.value='';officeHostEmailInput.value='';
       var requestMembers=document.getElementById('req-office-members');
       if(requestMembers)requestMembers.textContent='';
       await loadMyPasses(true,false);
       refreshKsaOfficeVisitors(true);
-      alert('Office Visitor request saved. The QR pass is ready to use.');
+      alert('Office Visitor request sent to '+officeHostEmail+' for approval. The QR pass will be valid after the host approves it.');
     }catch(error){
       var remaining=cachedPasses.filter(function(pass){return String(pass.UniqueID)!==passId;});
       localStorage.setItem(cacheKey,JSON.stringify(remaining));
