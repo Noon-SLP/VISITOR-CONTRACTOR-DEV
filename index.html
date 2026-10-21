@@ -1571,8 +1571,6 @@
   dict.ar.office_invited_by="المدعو من قبل";
   dict.en.office_host_email="Host email (@noon.com)";
   dict.ar.office_host_email="البريد الإلكتروني للمضيف (@noon.com)";
-  dict.en.office_vehicle_plate="Vehicle Plate";
-  dict.ar.office_vehicle_plate="رقم لوحة المركبة";
   dict.en.office_vehicle_photo="Vehicle Picture (Required)";
   dict.ar.office_vehicle_photo="صورة المركبة (مطلوبة)";
   dict.en.office_camera_start="Live Camera";
@@ -2965,7 +2963,6 @@
       if(isInsideList){
         metaLines.push(officeLabel('ID: ','الهوية: ')+(visitor.idNumber||'-'));
         metaLines.push(officeLabel('Meeting: ','المقابلة: ')+(visitor.meetingWith||'-'));
-        if(visitor.vehiclePlate)metaLines.push(officeLabel('Vehicle plate: ','لوحة المركبة: ')+visitor.vehiclePlate);
       }
       metaLines.forEach(function(line){
         var metaLine=document.createElement('span');
