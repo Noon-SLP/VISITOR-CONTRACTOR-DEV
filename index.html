@@ -1243,12 +1243,7 @@
   <script>
     async function adminApproveLeadDeviceAdd(passId,button){if(!confirm('Approve the lead additional device?'))return;if(button)button.disabled=true;try{await appsScriptAction({action:'approve_lead_device_add',id:passId});localStorage.removeItem('cached_admin_data');refreshMemberView(passId,'device-add');}catch(error){alert('Lead device approval failed: '+error.message);if(button)button.disabled=false;}}
     async function adminRejectLeadDeviceAdd(passId,button){if(!confirm('Reject the lead additional device request?'))return;if(button)button.disabled=true;try{await appsScriptAction({action:'reject_lead_device_add',id:passId});localStorage.removeItem('cached_admin_data');refreshMemberView(passId,'device-add');}catch(error){alert('Lead device rejection failed: '+error.message);if(button)button.disabled=false;}}
-  const DEV_SCRIPT_URL='https://script.google.com/macros/s/AKfycby6SBhfL178bNFOQbOeMldvLGfjcf5uP2eB4_MvgZhVhRGS8E5h6EKcA04r8ngrGi9E/exec';
-  const APP_HOST=(window.location&&window.location.hostname||'').toLowerCase();
-  const APP_PATH=(window.location&&window.location.pathname||'').toLowerCase();
-  const APP_QUERY=(window.location&&window.location.search||'').toLowerCase();
-  const IS_DEV_ENV = APP_QUERY.indexOf('env=dev') !== -1 || (APP_HOST.indexOf('github.io')!==-1 && APP_PATH.indexOf('visitor-contractor-dev')!==-1);
-  const SCRIPT_URL = IS_DEV_ENV ? DEV_SCRIPT_URL : LIVE_SCRIPT_URL;
+  const SCRIPT_URL='https://script.google.com/macros/s/AKfycby6SBhfL178bNFOQbOeMldvLGfjcf5uP2eB4_MvgZhVhRGS8E5h6EKcA04r8ngrGi9E/exec';
   function clearCachesForBackendChange(){
     [
       {name:'localStorage',getStorage:function(){return window.localStorage;}},
@@ -6636,6 +6631,7 @@
     });
   }
   function switchAdminTab(tName){
+    if(tName==='all-passes'&&(!currentUser||currentUser.role!=='admin'||currentUser.accessLevel!=='superadmin'))return;
     if(tName==='all-passes')ensureAdminPassArchiveUi();
     if(tName==='guard-requests')ensureGuardSignupApprovalPanel();
     if(tName==='history'){
@@ -6649,7 +6645,7 @@
     var archiveSideNav=document.getElementById('nav-sidebar-all-passes');
     var adminSideNav=document.getElementById('nav-sidebar-admin');
     if(archiveSideNav)archiveSideNav.classList.toggle('active',tName==='all-passes');
-    if(adminSideNav&&tName!=='all-passes')adminSideNav.classList.add('active');
+    if(adminSideNav)adminSideNav.classList.toggle('active',tName!=='all-passes');
     document.querySelectorAll('.admin-section').forEach(function(section){section.classList.add('hidden');});
     var section=document.getElementById('admin-sec-'+tName);
     if(section)section.classList.remove('hidden');
@@ -7264,6 +7260,7 @@
   }
 
   function ensureAdminPassArchiveUi(){
+    var canUseArchive=!!(currentUser&&currentUser.role==='admin'&&currentUser.accessLevel==='superadmin');
     var sidebar=document.querySelector('.sidebar-nav');
     var adminNav=document.getElementById('nav-sidebar-admin');
     var archiveNav=document.getElementById('nav-sidebar-all-passes');
@@ -7279,7 +7276,7 @@
       });
       adminNav.insertAdjacentElement('afterend',archiveNav);
     }
-    if(archiveNav)archiveNav.classList.toggle('hidden',!(currentUser&&currentUser.role==='admin'));
+    if(archiveNav)archiveNav.classList.toggle('hidden',!canUseArchive);
 
     var dashboard=document.getElementById('dashboard-admin');
     var section=document.getElementById('admin-sec-all-passes');
@@ -7341,6 +7338,7 @@
       search.addEventListener('input',renderAdminPassArchive);
       statusFilter.addEventListener('change',renderAdminPassArchive);
     }
+    if(section&&!canUseArchive)section.classList.add('hidden');
     if(!document.getElementById('admin-pass-archive-styles')){
       var archiveStyles=document.createElement('style');
       archiveStyles.id='admin-pass-archive-styles';
@@ -7379,6 +7377,7 @@
   }
 
   function renderAdminPassArchive(){
+    if(!currentUser||currentUser.role!=='admin'||currentUser.accessLevel!=='superadmin')return;
     var section=ensureAdminPassArchiveUi();
     var list=document.getElementById('all-passes-list');
     var count=document.getElementById('all-passes-count');
@@ -7456,12 +7455,11 @@
   }
 
   function openAdminPassArchive(){
-    if(!currentUser||currentUser.role!=='admin')return;
+    if(!currentUser||currentUser.role!=='admin'||currentUser.accessLevel!=='superadmin')return;
     ensureAdminPassArchiveUi();
-    switchMainView('admin');
+    var dashboard=document.getElementById('dashboard-admin');
+    if(dashboard&&dashboard.classList.contains('hidden'))switchMainView('admin');
     switchAdminTab('all-passes');
-    var nav=document.getElementById('nav-sidebar-all-passes');
-    if(nav)nav.classList.add('active');
   }
 
   function getAdminPassCompletionStateKey(){
