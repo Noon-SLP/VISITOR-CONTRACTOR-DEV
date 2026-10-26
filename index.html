@@ -1244,6 +1244,7 @@
     async function adminApproveLeadDeviceAdd(passId,button){if(!confirm('Approve the lead additional device?'))return;if(button)button.disabled=true;try{await appsScriptAction({action:'approve_lead_device_add',id:passId});localStorage.removeItem('cached_admin_data');refreshMemberView(passId,'device-add');}catch(error){alert('Lead device approval failed: '+error.message);if(button)button.disabled=false;}}
     async function adminRejectLeadDeviceAdd(passId,button){if(!confirm('Reject the lead additional device request?'))return;if(button)button.disabled=true;try{await appsScriptAction({action:'reject_lead_device_add',id:passId});localStorage.removeItem('cached_admin_data');refreshMemberView(passId,'device-add');}catch(error){alert('Lead device rejection failed: '+error.message);if(button)button.disabled=false;}}
   const SCRIPT_URL='https://script.google.com/macros/s/AKfycby6SBhfL178bNFOQbOeMldvLGfjcf5uP2eB4_MvgZhVhRGS8E5h6EKcA04r8ngrGi9E/exec';
+  const BACKEND_CACHE_SCOPE=JSON.stringify([SCRIPT_URL,'1fsn1GBiEiI6WD97lxXPodQRWt6A9D8CPfsFRYSoSKmg']);
   function clearCachesForBackendChange(){
     [
       {name:'localStorage',getStorage:function(){return window.localStorage;}},
@@ -1251,14 +1252,14 @@
     ].forEach(function(storageSource){
       try{
         var storage=storageSource.getStorage();
-        if(storage.getItem('noon_backend_url')===SCRIPT_URL)return;
+        if(storage.getItem('noon_backend_url')===BACKEND_CACHE_SCOPE)return;
         var keys=[];
         for(var i=0;i<storage.length;i++){
           var key=storage.key(i);
           if(key&&(key.indexOf('cached_')===0||key.indexOf('noon_session_')===0||key==='noon_session_guard'||key.indexOf('noon_shift_start_')===0))keys.push(key);
         }
         keys.forEach(function(key){storage.removeItem(key);});
-        storage.setItem('noon_backend_url',SCRIPT_URL);
+        storage.setItem('noon_backend_url',BACKEND_CACHE_SCOPE);
       }catch(storageError){
         console.error('[Environment] Unable to isolate saved data for this backend in '+storageSource.name+'.',storageError);
       }
@@ -5455,7 +5456,7 @@
       if(currentUser&&currentUser.role==='admin'){
         const vn=document.getElementById('req-vname'),ae=document.getElementById('req-admin-email'),ag=document.getElementById('admin-email-group'),sb=document.getElementById('sidebar'),han=document.getElementById('header-admin-name'),na=document.getElementById('nav-sidebar-admin');
         const msb=document.getElementById('admin-manual-search-box');
-        const cacheOwner=JSON.stringify([SCRIPT_URL,currentUser.email||'',currentUser.accessLevel||'',currentUser.location||'ALL']);
+        const cacheOwner=JSON.stringify([BACKEND_CACHE_SCOPE,currentUser.email||'',currentUser.accessLevel||'',currentUser.location||'ALL']);
         if(localStorage.getItem('cached_admin_data_owner')!==cacheOwner){
           localStorage.removeItem('cached_admin_data');
           localStorage.removeItem('cached_admin_history');
