@@ -838,6 +838,9 @@
   *::-webkit-scrollbar-corner{background:#12151c}
   </style>
   <style id="reference-background-colors">
+  .team-search-filter-hidden,
+  #scan-result.fullscreen-scan .team-member-scan-row.team-search-filter-hidden,
+  #scan-result.fullscreen-scan .device-photo-card.team-search-filter-hidden{display:none!important}
   body{background-color:#0b1019!important}
   #login-view{
     background-color:#0b1019!important;
@@ -1240,7 +1243,7 @@
   <script>
     async function adminApproveLeadDeviceAdd(passId,button){if(!confirm('Approve the lead additional device?'))return;if(button)button.disabled=true;try{await appsScriptAction({action:'approve_lead_device_add',id:passId});localStorage.removeItem('cached_admin_data');refreshMemberView(passId,'device-add');}catch(error){alert('Lead device approval failed: '+error.message);if(button)button.disabled=false;}}
     async function adminRejectLeadDeviceAdd(passId,button){if(!confirm('Reject the lead additional device request?'))return;if(button)button.disabled=true;try{await appsScriptAction({action:'reject_lead_device_add',id:passId});localStorage.removeItem('cached_admin_data');refreshMemberView(passId,'device-add');}catch(error){alert('Lead device rejection failed: '+error.message);if(button)button.disabled=false;}}
-  const SCRIPT_URL='https://script.google.com/macros/s/AKfycby6SBhfL178bNFOQbOeMldvLGfjcf5uP2eB4_MvgZhVhRGS8E5h6EKcA04r8ngrGi9E/exec';
+  const SCRIPT_URL='https://script.google.com/macros/s/AKfycbxyQ4kGKgsNS076UvKCk0ezCVSzp2DlqYobiprd8Qrvt5oJBWrVlszD7-jm2mOYtsTUvg/exec';
   function freshScriptUrl(){return SCRIPT_URL+'?cacheBust='+Date.now()+'-'+Math.random().toString(36).slice(2);}
   function showRequestEmailFailure(result){
     if(result&&result.notificationSent===true)return;
@@ -1335,57 +1338,28 @@
     return appsScriptJsonpAttempt({action:'admin_auth_result',requestId:requestId},null,0,10000);
   }
   function submitAdminRequest(payload){
-    var frameName='admin-request-'+Date.now()+'-'+Math.random().toString(36).slice(2);
-    var frame=document.createElement('iframe');
-    frame.name=frameName;
-    frame.title='Secure Apps Script request';
-    frame.setAttribute('aria-hidden','true');
-    frame.style.cssText='display:none!important;width:0;height:0;border:0;';
-    var form=document.createElement('form');
-    form.method='POST';
-    form.action=freshScriptUrl();
-    form.target=frameName;
-    form.enctype='application/x-www-form-urlencoded';
-    form.acceptCharset='UTF-8';
-    form.style.display='none';
-    var payloadInput=document.createElement('input');
-    payloadInput.type='hidden';
-    payloadInput.name='payload';
-    payloadInput.value=JSON.stringify(payload);
-    form.appendChild(payloadInput);
-    document.body.append(frame,form);
-    try{
-      form.submit();
-    }catch(error){
-      form.remove();
-      frame.remove();
-      throw error;
-    }
-    var cleaned=false;
-    var cleanupTimer=setTimeout(cleanup,45000);
-    function cleanup(){
-      if(cleaned)return;
-      cleaned=true;
-      clearTimeout(cleanupTimer);
-      form.remove();
-      frame.remove();
-    }
-    return cleanup;
+    return fetch(freshScriptUrl(),{
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},
+      body:'payload='+encodeURIComponent(JSON.stringify(payload)),
+      cache:'no-store'
+    });
   }
   function postAdminRequest(payload){
     var requestId=payload.adminRequestId;
     var pollStartedAt=Date.now();
-    var pollTimeout=30000;
+    var pollTimeout=90000;
     var pollDelay=150;
-    var cleanupPost;
+    var submission;
     try{
-      cleanupPost=submitAdminRequest(payload);
+      submission=submitAdminRequest(payload);
     }catch(postError){
       return Promise.reject(new Error('The secure Apps Script request could not be submitted: '+(postError&&postError.message?postError.message:'Unknown error')));
     }
     function poll(){
       if(Date.now()-pollStartedAt>=pollTimeout){
-        throw new Error('The Apps Script backend did not confirm this request. Verify that the latest Code.gs is deployed as a web app and try again.');
+        throw new Error('The Apps Script request was not confirmed within 90 seconds. Check Apps Script > Executions for a failed request. If it may have completed, refresh the portal before retrying to avoid a duplicate action.');
       }
       return fetchAdminRequestResult(requestId).then(function(result){
         if(result&&result.status==='pending'){
@@ -1404,12 +1378,10 @@
         return new Promise(function(resolve){setTimeout(resolve,retryDelay);}).then(poll);
       });
     }
-    return poll().then(function(result){
-      cleanupPost();
-      return result;
-    },function(error){
-      cleanupPost();
-      throw error;
+    return Promise.resolve(submission).then(function(){
+      return poll();
+    },function(postError){
+      throw new Error('The secure Apps Script request could not be submitted: '+(postError&&postError.message?postError.message:'Unknown error'));
     });
   }
   function appsScriptJsonp(params,signal,timeoutMs){
@@ -1617,13 +1589,83 @@
   dict.ar.office_mode="المكتب (السعودية فقط)";
   dict.en.country_not_set="Country not set";
   dict.ar.country_not_set="لم يتم تحديد الدولة";
-  function addMemberNotice(count){
-    if(currentLang==='ar'){
-      if(count===1)return "تنبيه: تمت إضافة عضو جديد إلى هذا التصريح. يظل التصريح معتمدًا، ويجب أن يوافق المسؤول على العضو الجديد.";
-      if(count===2)return "تنبيه: تمت إضافة عضوين جديدين إلى هذا التصريح. يظل التصريح معتمدًا، ويجب أن يوافق المسؤول على كل عضو جديد.";
-      return "تنبيه: تمت إضافة "+count+" أعضاء جدد إلى هذا التصريح. يظل التصريح معتمدًا، ويجب أن يوافق المسؤول على كل عضو جديد.";
+  dict.en.all_passes="All Passes";
+  dict.ar.all_passes="كل التصاريح";
+  dict.en.all_passes_description="Review every pass, including completed and rejected passes. Approving a pass starts a new visit with new dates.";
+  dict.ar.all_passes_description="راجع جميع التصاريح، بما فيها المكتملة والمرفوضة. الموافقة على التصريح تبدأ زيارة جديدة بتواريخ جديدة.";
+  dict.en.all_passes_search="Search name, pass ID, email, type, or location";
+  dict.ar.all_passes_search="ابحث بالاسم أو رقم التصريح أو البريد الإلكتروني أو النوع أو الموقع";
+  dict.en.all_statuses="All statuses";
+  dict.ar.all_statuses="كل الحالات";
+  dict.en.status_active="Active";
+  dict.ar.status_active="نشط";
+  dict.en.pass_id="Pass ID";
+  dict.ar.pass_id="رقم التصريح";
+  dict.en.host_email="Host Email";
+  dict.ar.host_email="بريد المضيف";
+  dict.en.archive_type="Type";
+  dict.ar.archive_type="النوع";
+  dict.en.archive_location="Location";
+  dict.ar.archive_location="الموقع";
+  dict.en.visit_dates="Visit Dates";
+  dict.ar.visit_dates="تواريخ الزيارة";
+  dict.en.archive_contact="Contact";
+  dict.ar.archive_contact="رقم التواصل";
+  dict.en.btn_ok="OK";
+  dict.ar.btn_ok="حسنًا";
+  dict.en.no_pass_matches="No passes match the selected search or status.";
+  dict.ar.no_pass_matches="لا توجد تصاريح تطابق البحث أو الحالة المحددة.";
+  dict.en.no_passes_available="No passes are available.";
+  dict.ar.no_passes_available="لا توجد تصاريح متاحة.";
+  dict.en.pass_count_one="pass";
+  dict.ar.pass_count_one="تصريح";
+  dict.en.pass_count_many="passes";
+  dict.ar.pass_count_many="تصاريح";
+  dict.en.view_pass_details="VIEW DETAILS";
+  dict.ar.view_pass_details="عرض التفاصيل";
+  dict.en.approve_new_visit="APPROVE / NEW VISIT";
+  dict.ar.approve_new_visit="موافقة / زيارة جديدة";
+  dict.en.set_pending="SET PENDING";
+  dict.ar.set_pending="إعادة إلى قيد الانتظار";
+  dict.en.pass_completed_title="PASS COMPLETED";
+  dict.ar.pass_completed_title="اكتمل التصريح";
+  dict.en.passes_completed_title="PASSES COMPLETED";
+  dict.ar.passes_completed_title="اكتملت التصاريح";
+  dict.en.pass_completed_summary="This pass has reached its end date:";
+  dict.ar.pass_completed_summary="انتهت صلاحية هذا التصريح:";
+  dict.en.passes_completed_summary="These passes have reached their end dates:";
+  dict.ar.passes_completed_summary="انتهت صلاحية هذه التصاريح:";
+  dict.en.restore_pass_title="APPROVE PASS / NEW VISIT";
+  dict.ar.restore_pass_title="الموافقة على التصريح / زيارة جديدة";
+  dict.en.restore_pass_button="APPROVE WITH NEW DATES";
+  dict.ar.restore_pass_button="الموافقة بالتواريخ الجديدة";
+  dict.en.confirm_restore_pass="Approve and restore pass";
+  dict.ar.confirm_restore_pass="هل تريد الموافقة على التصريح وإعادته";
+  dict.en.confirm_extend_pass="Extend pass";
+  dict.ar.confirm_extend_pass="هل تريد تمديد التصريح";
+  dict.en.end_before_start="The end date cannot be before the start date.";
+  dict.ar.end_before_start="لا يمكن أن يكون تاريخ الانتهاء قبل تاريخ البدء.";
+  dict.en.select_both_dates="Please select both Start and End dates.";
+  dict.ar.select_both_dates="يرجى تحديد تاريخي البدء والانتهاء.";
+  dict.en.close_completed_notice="Close completed pass notice";
+  dict.ar.close_completed_notice="إغلاق إشعار اكتمال التصريح";
+  function addMemberNotice(count,duplicates){
+    duplicates=Number(duplicates)||0;
+    if(count<=0){
+      if(currentLang==='ar')return "لم تتم إضافة أعضاء جدد لأن جميع الأعضاء المرسلين موجودون بالفعل في هذا التصريح.";
+      return "No new team members were added because all submitted members are already on this pass.";
     }
-    return "NOTICE: "+count+" new member"+(count===1?" has":"s have")+" been added to this pass. The pass remains approved; an admin must approve each new member.";
+    let notice;
+    if(currentLang==='ar'){
+      if(count===1)notice="تنبيه: تمت إضافة عضو جديد إلى هذا التصريح. يظل التصريح معتمدًا، ويجب أن يوافق المسؤول على العضو الجديد.";
+      else if(count===2)notice="تنبيه: تمت إضافة عضوين جديدين إلى هذا التصريح. يظل التصريح معتمدًا، ويجب أن يوافق المسؤول على كل عضو جديد.";
+      else notice="تنبيه: تمت إضافة "+count+" أعضاء جدد إلى هذا التصريح. يظل التصريح معتمدًا، ويجب أن يوافق المسؤول على كل عضو جديد.";
+      if(duplicates>0)notice+="\n\nتم تجاهل "+duplicates+" عضو مكرر لأن بياناته موجودة بالفعل في هذا التصريح.";
+      return notice;
+    }
+    notice="NOTICE: "+count+" new member"+(count===1?" has":"s have")+" been added to this pass. The pass remains approved; an admin must approve each new member.";
+    if(duplicates>0)notice+="\n\n"+duplicates+" duplicate team member"+(duplicates===1?" was":"s were")+" already on this pass and skipped.";
+    return notice;
   }
   function addMemberText(key){
     const messages={
@@ -1642,7 +1684,20 @@
     };
     return messages[currentLang][key];
   }
-  function toggleLang(){currentLang=currentLang==='en'?'ar':'en';document.documentElement.dir=currentLang==='ar'?'rtl':'ltr';updateUI();updateAdminAuthForm();if(currentUser&&currentUser.accessLevel==='superadmin'&&!facilityAdminRequestActionInProgress)refreshFacilityAdminRequests(true);}
+  function toggleLang(){
+    currentLang=currentLang==='en'?'ar':'en';
+    document.documentElement.dir=currentLang==='ar'?'rtl':'ltr';
+    updateUI();
+    updateAdminAuthForm();
+    if(document.getElementById('admin-sec-all-passes'))renderAdminPassArchive();
+    if(document.getElementById('extend-type')&&document.getElementById('extend-type').value==='restore'){
+      const restoreTitle=document.querySelector('#extend-pass-modal .record-modal-header h3');
+      const restoreButton=document.getElementById('btn-submit-extend');
+      if(restoreTitle)restoreTitle.textContent=t('restore_pass_title');
+      if(restoreButton)restoreButton.textContent=t('restore_pass_button');
+    }
+    if(currentUser&&currentUser.accessLevel==='superadmin'&&!facilityAdminRequestActionInProgress)refreshFacilityAdminRequests(true);
+  }
   function setTranslatedContent(el,value){
     const textContainer=el.matches('.office-photo-actions button, .office-photo-actions .file-picker')&&el.querySelector('svg')?el.querySelector('span'):null;
     if(textContainer)textContainer.textContent=value;
@@ -5392,6 +5447,7 @@
         setupAdminHeaderIdentity();
         ensureSuperAdminApprovalPanel();
         ensureGuardSignupApprovalPanel();
+        ensureAdminPassArchiveUi();
         if(na)na.classList.remove('hidden');
         const ng=document.getElementById('nav-sidebar-guard');if(ng)ng.classList.toggle('hidden',currentUser.accessLevel==='facility');
         if(msb)msb.classList.remove('hidden');
@@ -5692,11 +5748,15 @@
       if(document.visibilityState==='hidden')return;
       if(r==='ops')loadMyPasses(false,true);
       else if(r==='admin'){
+        updateActiveRequestDurations();
         loadAdminData(true);
         refreshAdminApprovalPanels();
       }
     },r==='admin'?30000:15000);
   }
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState!=='hidden')updateActiveRequestDurations();
+  });
   function toggleFullScreen(){const d=document,de=d.documentElement;const req=de.requestFullscreen||de.mozRequestFullScreen||de.webkitRequestFullScreen||de.msRequestFullscreen;const exit=d.exitFullscreen||d.mozCancelFullScreen||d.webkitExitFullscreen||d.msExitFullscreen;try{if(!d.fullscreenElement&&!d.mozFullScreenElement&&!d.webkitFullscreenElement&&!d.msFullscreenElement){if(req)Promise.resolve(req.call(de)).catch(function(e){console.warn('Fullscreen request failed:',e);});else alert("Fullscreen not supported");}else if(exit)Promise.resolve(exit.call(d)).catch(function(e){console.warn('Exiting fullscreen failed:',e);});}catch(e){console.warn('Fullscreen operation failed:',e);alert("Fullscreen is unavailable in this browser.");}}
   function toggleSidebar(){const sb=document.getElementById('sidebar');if(!sb)return;sb.classList.toggle('minimized');const isMinimized=sb.classList.contains('minimized');document.body.classList.toggle('sidebar-minimized',isMinimized);const button=sb.querySelector('.toggle-btn');if(button)button.setAttribute('aria-expanded',String(!isMinimized));}
   const appLayout=document.getElementById('app-layout');
@@ -6549,6 +6609,7 @@
     });
   }
   function switchAdminTab(tName){
+    if(tName==='all-passes')ensureAdminPassArchiveUi();
     if(tName==='guard-requests')ensureGuardSignupApprovalPanel();
     if(tName==='history'){
       ensureOfficeVisitorHistoryUi();
@@ -6558,6 +6619,10 @@
     document.querySelectorAll('.admin-nav-horizontal li').forEach(function(tab){tab.classList.remove('active');});
     var navItem=document.getElementById('nav-'+tName);
     if(navItem)navItem.classList.add('active');
+    var archiveSideNav=document.getElementById('nav-sidebar-all-passes');
+    var adminSideNav=document.getElementById('nav-sidebar-admin');
+    if(archiveSideNav)archiveSideNav.classList.toggle('active',tName==='all-passes');
+    if(adminSideNav&&tName!=='all-passes')adminSideNav.classList.add('active');
     document.querySelectorAll('.admin-section').forEach(function(section){section.classList.add('hidden');});
     var section=document.getElementById('admin-sec-'+tName);
     if(section)section.classList.remove('hidden');
@@ -6577,6 +6642,7 @@
     if(tName==='guard-requests'&&currentUser&&(currentUser.role==='admin'||currentUser.role==='superadmin')){
       refreshGuardApprovalPanels(true);
     }
+    if(tName==='all-passes')renderAdminPassArchive();
   }
   function applyAdminDateFilter(){
     renderAdminData(globalAdminData);
@@ -6614,6 +6680,18 @@
   }
   function formatHistoryDurationValue(startValue,endValue,storedValue){
     return formatHistoryDuration(startValue,endValue,storedValue).replace(/^DURATION:\s*/,'');
+  }
+  function formatElapsedDuration(startTimestamp,now){
+    const start=Number(startTimestamp);
+    if(!Number.isFinite(start)||start<=0)return '—';
+    const minutes=Math.max(0,Math.floor(((now||Date.now())-start)/60000));
+    return Math.floor(minutes/60)+'h '+(minutes%60)+'m';
+  }
+  function updateActiveRequestDurations(){
+    const now=Date.now();
+    document.querySelectorAll('.active-request-card-duration-value[data-check-in-ms]').forEach(function(element){
+      element.textContent=formatElapsedDuration(element.dataset.checkInMs,now);
+    });
   }
 
   async function copyRequestEmail(button){
@@ -7022,6 +7100,7 @@
   function renderAdminData(data){
     if(!Array.isArray(data)){data=[];}
     globalAdminData=data;
+    ensureAdminPassArchiveUi();
     ensureAdminDataScopeControls('approvals',document.getElementById('admin-sec-approvals'));
     ensureAdminDataScopeControls('analytics',document.getElementById('admin-sec-analytics'));
     const tPending=document.getElementById('admin-table-pending'),tActive=document.getElementById('admin-table-active');
@@ -7102,14 +7181,14 @@
               +'<button class="btn-primary btn-danger" onclick="adminRevokePass(\''+row.UniqueID+'\')">🚫 REVOKE PASS</button>'
               +'<button class="btn-primary btn-outline" onclick="openExtendPass(\''+row.UniqueID+'\',\''+rType+'\')">'+t('btn_extend')+'</button>'
               +'</div>';
-            let ciTime='-';let durHtml='—';
+            let ciTime='-';let durHtml='—';let checkInTimestamp=0;
             const isInside=!!row.CheckInTime&&!row.CheckOutTime;
             if(row.CheckInTime)ciTime=formatTime(row.CheckInTime);
-            if(isInside){let ciObj=new Date(row.CheckInTime);if(!isNaN(ciObj.getTime())){let now=new Date().getTime();let diffMins=Math.floor((now-ciObj.getTime())/60000);if(diffMins<0)diffMins=0;let h=Math.floor(diffMins/60);let m=diffMins%60;durHtml=h+'h '+m+'m';}}
+            if(isInside){const ciDate=parseFlexibleDate(row.CheckInTime);if(ciDate){checkInTimestamp=ciDate.getTime();durHtml=formatElapsedDuration(checkInTimestamp);}}
             const emailText=escapeHistoryText(rHostEmail);
             const emailCell=rHostEmail?'<span class="active-request-card-email">Email: '+emailText+'</span> <button type="button" class="copy-email-button" data-copy-email="'+emailText+'" onclick="copyRequestEmail(this)" title="Copy email" aria-label="Copy email address">⧉</button>':'';
             const badgeHtml=dateBadge.replace(/^<br>/,'');
-            const activeCard='<article class="active-request-card"><div class="active-request-card-heading"><div class="active-request-card-identity"><strong class="active-request-card-name">'+escapeHistoryText(rVisitorName)+'</strong>'+emailCell+'</div><div class="active-request-card-state">'+cbHtml+'<span class="active-request-status">ACTIVE</span></div></div><div class="active-request-card-meta"><span class="active-request-card-dates">📅 VALIDITY: '+escapeHistoryText(dateStr)+'</span></div><div class="active-request-card-checkin"><div class="active-request-card-checkin-meta"><span class="active-request-card-checkin-label">CHECK-IN: '+escapeHistoryText(ciTime)+'</span><span class="active-request-card-duration"><span class="active-request-card-duration-label">Duration</span><strong class="active-request-card-duration-value">'+escapeHistoryText(durHtml)+'</strong></span></div><div class="active-request-card-checkin-details">'+(badgeHtml?'<span class="active-request-card-type-badge">'+badgeHtml+'</span>':'')+'<span class="active-request-card-location">📍 '+escapeHistoryText(rLocation)+'</span></div></div>'+actionBtns+'</article>';
+            const activeCard='<article class="active-request-card"><div class="active-request-card-heading"><div class="active-request-card-identity"><strong class="active-request-card-name">'+escapeHistoryText(rVisitorName)+'</strong>'+emailCell+'</div><div class="active-request-card-state">'+cbHtml+'<span class="active-request-status">ACTIVE</span></div></div><div class="active-request-card-meta"><span class="active-request-card-dates">📅 VALIDITY: '+escapeHistoryText(dateStr)+'</span></div><div class="active-request-card-checkin"><div class="active-request-card-checkin-meta"><span class="active-request-card-checkin-label">CHECK-IN: '+escapeHistoryText(ciTime)+'</span><span class="active-request-card-duration"><span class="active-request-card-duration-label">Duration</span><strong class="active-request-card-duration-value"'+(checkInTimestamp?' data-check-in-ms="'+checkInTimestamp+'"':'')+'>'+escapeHistoryText(durHtml)+'</strong></span></div><div class="active-request-card-checkin-details">'+(badgeHtml?'<span class="active-request-card-type-badge">'+badgeHtml+'</span>':'')+'<span class="active-request-card-location">📍 '+escapeHistoryText(rLocation)+'</span></div></div>'+actionBtns+'</article>';
             if(isChecked)activeCheckedCount++;
             if(String(rType).trim().toLowerCase()==='contractor'){
               hContractorActive+=activeCard;
@@ -7154,6 +7233,358 @@
     const ss=document.getElementById('stat-status');if(ss)ss.innerHTML=sHtml||'<div class="stat-row"><span>-</span></div>';
     let topDates=Object.entries(aDate).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
     const sd=document.getElementById('stat-date');if(sd)sd.innerHTML=topDates.map(function(kv){return '<div class="stat-row"><span>'+kv[0]+'</span><span class="stat-val" style="color:var(--noon-yellow);">'+kv[1]+'</span></div>';}).join('')||'<div class="stat-row"><span>-</span></div>';
+    renderAdminPassArchive();
+  }
+
+  function ensureAdminPassArchiveUi(){
+    var sidebar=document.querySelector('.sidebar-nav');
+    var adminNav=document.getElementById('nav-sidebar-admin');
+    var archiveNav=document.getElementById('nav-sidebar-all-passes');
+    if(!archiveNav&&sidebar&&adminNav){
+      archiveNav=document.createElement('a');
+      archiveNav.href='#';
+      archiveNav.id='nav-sidebar-all-passes';
+      archiveNav.className='admin-tab hidden';
+      archiveNav.innerHTML='<span class="icon">📂</span><span class="nav-text" data-i18n="all_passes">'+t('all_passes')+'</span>';
+      archiveNav.addEventListener('click',function(event){
+        event.preventDefault();
+        openAdminPassArchive();
+      });
+      adminNav.insertAdjacentElement('afterend',archiveNav);
+    }
+    if(archiveNav)archiveNav.classList.toggle('hidden',!(currentUser&&currentUser.role==='admin'));
+
+    var dashboard=document.getElementById('dashboard-admin');
+    var section=document.getElementById('admin-sec-all-passes');
+    if(!section&&dashboard){
+      section=document.createElement('section');
+      section.id='admin-sec-all-passes';
+      section.className='admin-card admin-section hidden';
+      section.style.cssText='padding:20px;min-width:0;';
+      var heading=document.createElement('h2');
+      heading.textContent=t('all_passes');
+      heading.setAttribute('data-i18n','all_passes');
+      heading.className='admin-card-title';
+      var description=document.createElement('p');
+      description.textContent=t('all_passes_description');
+      description.setAttribute('data-i18n','all_passes_description');
+      description.style.cssText='color:var(--text-muted);font-size:13px;margin:0 0 16px;';
+      var toolbar=document.createElement('div');
+      toolbar.style.cssText='display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;';
+      var search=document.createElement('input');
+      search.id='all-passes-search';
+      search.type='search';
+      search.className='input-field t-ph';
+      search.setAttribute('data-i18n','all_passes_search');
+      search.placeholder=t('all_passes_search');
+      search.setAttribute('aria-label','Search all passes');
+      search.style.cssText='flex:1 1 260px;min-width:0;';
+      var statusFilter=document.createElement('select');
+      statusFilter.id='all-passes-status-filter';
+      statusFilter.className='input-field';
+      statusFilter.setAttribute('aria-label','Filter passes by status');
+      statusFilter.style.cssText='flex:0 1 190px;min-width:160px;';
+      [
+        ['all','all_statuses'],
+        ['active','status_active'],
+        ['pending','status_pending'],
+        ['completed','status_completed'],
+        ['rejected','status_rejected']
+      ].forEach(function(optionData){
+        var option=document.createElement('option');
+        option.value=optionData[0];
+        option.textContent=t(optionData[1]);
+        option.setAttribute('data-i18n',optionData[1]);
+        statusFilter.appendChild(option);
+      });
+      toolbar.appendChild(search);
+      toolbar.appendChild(statusFilter);
+      var count=document.createElement('p');
+      count.id='all-passes-count';
+      count.style.cssText='color:var(--text-muted);font-size:12px;margin:0 0 12px;';
+      var list=document.createElement('div');
+      list.id='all-passes-list';
+      list.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:12px;';
+      section.appendChild(heading);
+      section.appendChild(description);
+      section.appendChild(toolbar);
+      section.appendChild(count);
+      section.appendChild(list);
+      dashboard.appendChild(section);
+      search.addEventListener('input',renderAdminPassArchive);
+      statusFilter.addEventListener('change',renderAdminPassArchive);
+    }
+    if(!document.getElementById('admin-pass-archive-styles')){
+      var archiveStyles=document.createElement('style');
+      archiveStyles.id='admin-pass-archive-styles';
+      archiveStyles.textContent='.all-pass-card{min-width:0;padding:15px;border:1px solid rgba(148,166,190,.2);border-radius:12px;background:rgba(13,20,32,.78)}.all-pass-card-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}.all-pass-card-heading strong{overflow-wrap:anywhere;color:#fff}.all-pass-card-status{flex:0 0 auto;padding:4px 8px;border-radius:999px;background:rgba(148,166,190,.16);font-size:10px;font-weight:800;text-transform:uppercase}.all-pass-card-status[data-status="active"]{color:#34d399}.all-pass-card-status[data-status="pending"]{color:#ffd54a}.all-pass-card-status[data-status="completed"]{color:#c4b5fd}.all-pass-card-status[data-status="rejected"]{color:#fca5a5}.all-pass-card-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:8px 12px;margin-bottom:14px}.all-pass-card-field{min-width:0;font-size:12px;overflow-wrap:anywhere}.all-pass-card-field span{display:block;color:var(--text-muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em}.all-pass-card-actions{display:flex;flex-wrap:wrap;gap:7px}.all-pass-card-actions button{flex:1 1 100px}.pass-completed-popup-list{display:grid;gap:10px;margin:15px 0;max-height:55vh;overflow:auto}.pass-completed-popup-item{padding:12px;border:1px solid rgba(148,166,190,.2);border-radius:9px;background:rgba(255,255,255,.035)}.pass-completed-popup-item h4{margin:0 0 8px;color:#fff;font-size:14px}.pass-completed-popup-item p{margin:4px 0;color:var(--text-muted);font-size:12px;overflow-wrap:anywhere}';
+      document.head.appendChild(archiveStyles);
+    }
+    return section;
+  }
+
+  function getAdminArchiveStatus(pass){
+    var status=String(pass&&pass.Status||'Pending').trim().toLowerCase();
+    if(status==='rejected')return 'Rejected';
+    if(status==='pending')return 'Pending';
+    if(status==='completed')return 'Completed';
+    var endDate=parseFlexibleDate(pass&&(pass.EndDate||pass.StartDate));
+    if(endDate){
+      endDate.setHours(23,59,59,999);
+      var today=new Date();
+      today.setHours(0,0,0,0);
+      if(endDate.getTime()<today.getTime())return 'Completed';
+    }
+    return status==='approved'?'Active':String(pass&&pass.Status||'Pending');
+  }
+
+  function appendAdminPassField(container,labelKey,value){
+    var field=document.createElement('div');
+    field.className='all-pass-card-field';
+    var fieldLabel=document.createElement('span');
+    fieldLabel.textContent=t(labelKey);
+    fieldLabel.setAttribute('data-i18n',labelKey);
+    var fieldValue=document.createElement('div');
+    fieldValue.textContent=String(value||'-');
+    field.appendChild(fieldLabel);
+    field.appendChild(fieldValue);
+    container.appendChild(field);
+  }
+
+  function renderAdminPassArchive(){
+    var section=ensureAdminPassArchiveUi();
+    var list=document.getElementById('all-passes-list');
+    var count=document.getElementById('all-passes-count');
+    var search=document.getElementById('all-passes-search');
+    var statusFilter=document.getElementById('all-passes-status-filter');
+    if(!section||!list||!count)return;
+    var query=String(search&&search.value||'').trim().toLowerCase();
+    var filter=String(statusFilter&&statusFilter.value||'all').toLowerCase();
+    var passes=(Array.isArray(globalAdminData)?globalAdminData:[]).filter(function(pass){
+      if(!pass||!pass.UniqueID)return false;
+      var status=getAdminArchiveStatus(pass).toLowerCase();
+      if(filter!=='all'&&status!==filter)return false;
+      var haystack=[
+        pass.UniqueID,pass.VisitorName,pass.CompanyName,pass.Company,pass.ProjectName,
+        pass.HostEmail,pass.Type,pass.Location
+      ].join(' ').toLowerCase();
+      return !query||haystack.indexOf(query)!==-1;
+    });
+    count.textContent=passes.length+' '+t(passes.length===1?'pass_count_one':'pass_count_many');
+    list.replaceChildren();
+    if(!passes.length){
+      var empty=document.createElement('div');
+      empty.className='active-request-empty';
+      empty.textContent=t(globalAdminData.length?'no_pass_matches':'no_passes_available');
+      empty.setAttribute('data-i18n',globalAdminData.length?'no_pass_matches':'no_passes_available');
+      list.appendChild(empty);
+      return;
+    }
+    passes.forEach(function(pass){
+      var card=document.createElement('article');
+      card.className='all-pass-card';
+      var cardHeading=document.createElement('div');
+      cardHeading.className='all-pass-card-heading';
+      var name=document.createElement('strong');
+      var isContractor=String(pass.Type||'').toLowerCase()==='contractor';
+      name.textContent=String(isContractor?(pass.CompanyName||pass.Company||pass.ProjectName):pass.VisitorName||pass.CompanyName||pass.ProjectName||'Pass holder');
+      var badge=document.createElement('span');
+      var status=getAdminArchiveStatus(pass);
+      badge.className='all-pass-card-status';
+      badge.dataset.status=status.toLowerCase();
+      var statusKey='status_'+status.toLowerCase();
+      badge.textContent=t(statusKey);
+      badge.setAttribute('data-i18n',statusKey);
+      cardHeading.appendChild(name);
+      cardHeading.appendChild(badge);
+      var fields=document.createElement('div');
+      fields.className='all-pass-card-fields';
+      appendAdminPassField(fields,'pass_id',pass.UniqueID);
+      appendAdminPassField(fields,'type_label',pass.Type);
+      appendAdminPassField(fields,'host_email',pass.HostEmail);
+      appendAdminPassField(fields,'archive_location',pass.Location);
+      appendAdminPassField(fields,'visit_dates',formatToDDMMYYYY(pass.StartDate)+' - '+formatToDDMMYYYY(pass.EndDate||pass.StartDate));
+      var actions=document.createElement('div');
+      actions.className='all-pass-card-actions';
+      function addAction(labelKey,className,handler,disabled){
+        var button=document.createElement('button');
+        button.type='button';
+        button.className=className;
+        button.textContent=t(labelKey);
+        button.setAttribute('data-i18n',labelKey);
+        button.disabled=!!disabled;
+        button.addEventListener('click',handler);
+        actions.appendChild(button);
+      }
+      var passId=String(pass.UniqueID);
+      addAction('view_pass_details','btn-primary btn-outline btn-sm',function(){openViewRecord(passId);},false);
+      addAction('approve_new_visit','btn-primary btn-success btn-sm',function(){openExtendPass(passId,'restore');},false);
+      addAction('set_pending','btn-primary btn-outline btn-sm',function(){updateStatus(passId,'Pending');},status==='Pending');
+      addAction('btn_reject','btn-primary btn-danger btn-sm',function(){updateStatus(passId,'Rejected');},status==='Rejected');
+      card.appendChild(cardHeading);
+      card.appendChild(fields);
+      card.appendChild(actions);
+      list.appendChild(card);
+    });
+  }
+
+  function openAdminPassArchive(){
+    if(!currentUser||currentUser.role!=='admin')return;
+    ensureAdminPassArchiveUi();
+    switchMainView('admin');
+    switchAdminTab('all-passes');
+    var nav=document.getElementById('nav-sidebar-all-passes');
+    if(nav)nav.classList.add('active');
+  }
+
+  function getAdminPassCompletionStateKey(){
+    var email=String(currentUser&&currentUser.email||'admin').toLowerCase().trim();
+    var access=String(currentUser&&(currentUser.accessLevel||currentUser.location)||'all').toLowerCase().trim();
+    return 'admin_completed_pass_state_'+encodeURIComponent(email+'|'+access);
+  }
+
+  function getPassEndOfDayTimestamp(pass){
+    var endDate=parseFlexibleDate(pass&&(pass.EndDate||pass.StartDate));
+    if(!endDate)return 0;
+    endDate.setHours(23,59,59,999);
+    return endDate.getTime();
+  }
+
+  function trackAdminPassCompletions(passes){
+    if(!currentUser||currentUser.role!=='admin'||!Array.isArray(passes))return;
+    var storageKey=getAdminPassCompletionStateKey();
+    var previousState=null;
+    try{
+      previousState=JSON.parse(localStorage.getItem(storageKey)||'null');
+    }catch(error){
+      console.warn('[Completed passes] Saved completion state could not be read.',error);
+    }
+    var previousPasses=previousState&&previousState.passes&&typeof previousState.passes==='object'
+      ?previousState.passes:{};
+    var today=new Date();
+    today.setHours(0,0,0,0);
+    var todayStart=today.getTime();
+    var currentPasses=Object.create(null);
+    var newlyCompleted=[];
+    passes.forEach(function(pass){
+      if(!pass||!pass.UniqueID)return;
+      var id=String(pass.UniqueID);
+      var status=String(pass.Status||'Pending').trim().toLowerCase();
+      var endTimestamp=getPassEndOfDayTimestamp(pass);
+      var endedByDate=status==='approved'&&endTimestamp>0&&endTimestamp<todayStart;
+      var isCompleted=status==='completed'||endedByDate;
+      var previous=previousPasses[id];
+      var justCompleted=!!(previous&&isCompleted&&
+        (status==='completed'?String(previous.status||'').toLowerCase()!=='completed':!previous.endedByDate));
+      if(!previousState&&isCompleted){
+        var completedAt=parseFlexibleDate(pass.CheckOutTime);
+        justCompleted=(endedByDate&&endTimestamp>=todayStart-24*60*60*1000)||
+          (status==='completed'&&completedAt&&completedAt.getTime()>=Date.now()-24*60*60*1000);
+      }
+      if(justCompleted){
+        newlyCompleted.push(pass);
+      }
+      currentPasses[id]={
+        status:status,
+        endedByDate:endedByDate,
+        endDate:endTimestamp
+      };
+    });
+    try{
+      localStorage.setItem(storageKey,JSON.stringify({passes:currentPasses,checkedAt:Date.now()}));
+    }catch(error){
+      console.warn('[Completed passes] Completion state could not be saved.',error);
+    }
+    if(newlyCompleted.length)showPassCompletedPopup(newlyCompleted);
+  }
+
+  function showPassCompletedPopup(passes){
+    var modal=document.getElementById('admin-pass-completed-modal');
+    if(!modal){
+      modal=document.createElement('div');
+      modal.id='admin-pass-completed-modal';
+      modal.className='popup-modal hidden';
+      modal.setAttribute('role','dialog');
+      modal.setAttribute('aria-modal','true');
+      modal.setAttribute('aria-labelledby','admin-pass-completed-title');
+      var box=document.createElement('div');
+      box.className='record-modal-box';
+      box.style.cssText='width:min(620px,94vw);max-height:88vh;overflow:auto;';
+      var header=document.createElement('div');
+      header.className='record-modal-header';
+      var title=document.createElement('h3');
+      title.id='admin-pass-completed-title';
+      title.style.cssText='color:var(--noon-yellow);margin:0;font-size:16px;text-transform:uppercase;';
+      var close=document.createElement('button');
+      close.type='button';
+      close.textContent='×';
+      close.setAttribute('aria-label','Close completed pass notice');
+      close.style.cssText='background:transparent;border:0;color:#fff;font-size:24px;cursor:pointer;';
+      close.addEventListener('click',function(){modal.classList.add('hidden');});
+      header.appendChild(title);
+      header.appendChild(close);
+      var content=document.createElement('div');
+      content.id='admin-pass-completed-content';
+      content.style.cssText='padding:18px;';
+      var dismiss=document.createElement('button');
+      dismiss.type='button';
+      dismiss.className='btn-primary btn-success';
+      dismiss.textContent='OK';
+      dismiss.style.width='100%';
+      dismiss.addEventListener('click',function(){modal.classList.add('hidden');});
+      content.appendChild(dismiss);
+      box.appendChild(header);
+      box.appendChild(content);
+      modal.appendChild(box);
+      modal.addEventListener('click',function(event){
+        if(event.target===modal)modal.classList.add('hidden');
+      });
+      document.body.appendChild(modal);
+    }
+    var title=modal.querySelector('#admin-pass-completed-title');
+    var content=modal.querySelector('#admin-pass-completed-content');
+    var dismiss=content.querySelector('button');
+    var titleKey=passes.length===1?'pass_completed_title':'passes_completed_title';
+    title.textContent=t(titleKey);
+    title.setAttribute('data-i18n',titleKey);
+    content.replaceChildren();
+    var summary=document.createElement('p');
+    var summaryKey=passes.length===1?'pass_completed_summary':'passes_completed_summary';
+    summary.textContent=t(summaryKey);
+    summary.setAttribute('data-i18n',summaryKey);
+    summary.style.cssText='color:var(--text-muted);font-size:13px;margin:0;';
+    var details=document.createElement('div');
+    details.className='pass-completed-popup-list';
+    passes.forEach(function(pass){
+      var item=document.createElement('article');
+      item.className='pass-completed-popup-item';
+      var heading=document.createElement('h4');
+      var isContractor=String(pass.Type||'').toLowerCase()==='contractor';
+      heading.textContent=String(isContractor?(pass.CompanyName||pass.Company||pass.ProjectName):pass.VisitorName||pass.CompanyName||pass.ProjectName||'Pass holder')+' · '+String(pass.UniqueID);
+      item.appendChild(heading);
+      [
+        ['archive_type',pass.Type],
+        ['archive_location',pass.Location],
+        ['visit_dates',formatToDDMMYYYY(pass.StartDate)+' - '+formatToDDMMYYYY(pass.EndDate||pass.StartDate)],
+        ['host_email',pass.HostEmail],
+        ['archive_contact',pass.ContactNo]
+      ].forEach(function(field){
+        var line=document.createElement('p');
+        var label=document.createElement('span');
+        label.textContent=t(field[0])+': ';
+        label.setAttribute('data-i18n',field[0]);
+        var value=document.createElement('span');
+        value.textContent=String(field[1]||'-');
+        line.appendChild(label);
+        line.appendChild(value);
+        item.appendChild(line);
+      });
+      details.appendChild(item);
+    });
+    content.replaceChildren(summary,details,dismiss);
+    dismiss.textContent=t('btn_ok');
+    dismiss.setAttribute('data-i18n','btn_ok');
+    modal.classList.remove('hidden');
   }
 
   function toggleAdminOfficeRequests(){
@@ -7163,6 +7594,36 @@
 
   function handlePrintCheckbox(cb){if(cb.checked)checkedPrintIds.add(cb.value);else checkedPrintIds.delete(cb.value);var selectAll=document.getElementById('selectAllCheckbox');if(selectAll&&!selectAll.dataset.bulkUpdating){var rows=document.querySelectorAll('.print-checkbox.row-checkbox');selectAll.checked=rows.length>0&&Array.prototype.every.call(rows,function(row){return row.checked;});}}
   function toggleSelectAll(src){const cbs=document.querySelectorAll('.print-checkbox.row-checkbox');const checked=src.checked;src.dataset.bulkUpdating='true';cbs.forEach(function(cb){cb.checked=checked;handlePrintCheckbox(cb);});delete src.dataset.bulkUpdating;src.checked=cbs.length>0&&Array.prototype.every.call(cbs,function(cb){return cb.checked;});}
+
+  function showAdminDataLoadError(error){
+    var message=String(error&&error.message||'');
+    var expiredSession=/admin session expired/i.test(message);
+    var statusText=expiredSession
+      ?'Your admin session expired. Sign in again to load requests.'
+      :'Could not refresh requests from the Apps Script backend. Saved requests, if available, are still shown.';
+    function appendStatus(tableId,columnCount){
+      var table=document.getElementById(tableId);
+      if(!table)return;
+      var row=document.createElement('tr');
+      var cell=document.createElement('td');
+      cell.colSpan=columnCount;
+      cell.className='text-center';
+      cell.style.padding='12px';
+      cell.textContent=statusText+' ';
+      if(!expiredSession){
+        var retry=document.createElement('button');
+        retry.type='button';
+        retry.className='btn-primary btn-outline btn-sm';
+        retry.textContent='RETRY';
+        retry.addEventListener('click',function(){loadAdminData(true);});
+        cell.appendChild(retry);
+      }
+      row.appendChild(cell);
+      table.appendChild(row);
+    }
+    appendStatus('admin-table-pending',5);
+    appendStatus('admin-table-active',8);
+  }
 
   async function loadAdminData(isSilent){
     if(adminRefreshInProgress)return;
@@ -7182,15 +7643,20 @@
       const dataMain=convertDriveUrls(await appsScriptJsonp({action:'get_admin_passes'},null,30000));
       if(Array.isArray(dataMain)){
         const newMStr=JSON.stringify(dataMain);
-        if(isSilent&&cachedM===newMStr)return;
+        if(isSilent&&cachedM===newMStr){
+          trackAdminPassCompletions(dataMain);
+          return;
+        }
         localStorage.setItem('cached_admin_data',newMStr);
         renderAdminData(dataMain.slice().reverse());
+        trackAdminPassCompletions(dataMain);
       }else{
         throw new Error('The admin pass list response was invalid.');
       }
     }catch(e){
       renderAdminData(globalAdminData||[]);
-      if(!isSilent)console.error('[Admin data] Refresh failed; preserving the last rendered data.',e);
+      console.error('[Admin data] Refresh failed; preserving the last rendered data.',e);
+      showAdminDataLoadError(e);
     }finally{
       adminRefreshInProgress=false;
     }
@@ -7369,7 +7835,8 @@
       startAutoRefresh(currentUser.role);
       return;
     }
-    var actionButton=markPortalActionBusy(null,newStatus==='Approved'?'ACCEPTING...':'REJECTING...');
+    var busyText=newStatus==='Approved'?'ACCEPTING...':newStatus==='Rejected'?'REJECTING...':'SETTING PENDING...';
+    var actionButton=markPortalActionBusy(null,busyText);
     if(actionButton===false)return;
     beginPleaseWait('PLEASE WAIT...');
     if(Array.isArray(globalAdminData)){
@@ -7481,7 +7948,25 @@
     }
   }
 
-  function openExtendPass(id,type){const ei=document.getElementById('extend-id'),et=document.getElementById('extend-type'),eg=document.getElementById('extend-end-group'),em=document.getElementById('extend-pass-modal');if(ei)ei.value=id;if(et)et.value=type;if(eg)eg.classList.remove('hidden');if(em)em.classList.remove('hidden');}
+  function openExtendPass(id,type){
+    const ei=document.getElementById('extend-id'),et=document.getElementById('extend-type'),eg=document.getElementById('extend-end-group'),em=document.getElementById('extend-pass-modal');
+    const start=document.getElementById('extend-start'),end=document.getElementById('extend-end');
+    const title=document.querySelector('#extend-pass-modal .record-modal-header h3'),button=document.getElementById('btn-submit-extend');
+    const restoring=type==='restore';
+    if(ei)ei.value=id;
+    if(et)et.value=type||'';
+    if(eg)eg.classList.remove('hidden');
+    if(restoring){
+      if(start)start.value='';
+      if(end)end.value='';
+      if(title)title.textContent=t('restore_pass_title');
+      if(button)button.textContent=t('restore_pass_button');
+    }else{
+      if(title)title.textContent=t('extend_pass');
+      if(button)button.textContent=t('save_extension');
+    }
+    if(em)em.classList.remove('hidden');
+  }
   function closeExtendPass(){const em=document.getElementById('extend-pass-modal');if(em)em.classList.add('hidden');}
 
   const nativeFetch=window.fetch.bind(window);
@@ -7507,7 +7992,41 @@
     finally{if(isSubmission){pleaseWaitRequestCount--;hidePleaseWait();}}
   };
 
-  async function submitExtendPass(){const id=document.getElementById('extend-id').value,type=document.getElementById('extend-type').value,ns=document.getElementById('extend-start').value,ei=document.getElementById('extend-end');const ne=ei?ei.value:'';const btn=document.getElementById('btn-submit-extend');if(!ns||!ne)return alert('Please select both Start and End dates.');if(!confirm('Extend pass '+id+'?'))return;btn.innerText='SAVING...';btn.disabled=true;try{await appsScriptAction({action:'extend_pass',id:id,newStartDate:ns,newEndDate:ne});closeExtendPass();loadAdminData(false);}catch(e){alert('Error: '+(e&&e.message?e.message:'Unable to extend this pass.'));}finally{btn.innerText=t("save_extension");btn.disabled=false;}}
+  async function submitExtendPass(){
+    const id=document.getElementById('extend-id').value;
+    const type=document.getElementById('extend-type').value;
+    const start=document.getElementById('extend-start').value;
+    const end=document.getElementById('extend-end').value;
+    const button=document.getElementById('btn-submit-extend');
+    const restoring=type==='restore';
+    if(!start||!end)return alert(t('select_both_dates'));
+    if(end<start)return alert(t('end_before_start'));
+    if(!confirm((restoring?t('confirm_restore_pass'):t('confirm_extend_pass'))+' '+id+'?'))return;
+    button.textContent='SAVING...';
+    button.disabled=true;
+    try{
+      await appsScriptAction({
+        action:restoring?'restore_pass':'extend_pass',
+        id:id,
+        newStartDate:start,
+        newEndDate:end
+      });
+      if(restoring){
+        var restoredPass=globalAdminData.find(function(pass){return String(pass.UniqueID)===String(id);});
+        if(restoredPass&&restoredPass.HostEmail){
+          localStorage.removeItem('cached_passes_'+String(restoredPass.HostEmail).toLowerCase().trim());
+        }
+      }
+      closeExtendPass();
+      localStorage.removeItem('cached_admin_data');
+      await loadAdminData(true);
+    }catch(error){
+      alert('Error: '+(error&&error.message?error.message:'Unable to save the pass dates.'));
+    }finally{
+      button.textContent=restoring?t('restore_pass_button'):t('save_extension');
+      button.disabled=false;
+    }
+  }
 
   async function adminResetPin(email){if(!confirm('Reset PIN for '+email+'? They will be prompted to create a new one next time.'))return;try{const response=await fetch(freshScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'reset_pin',email:email}),redirect:'follow'});const result=await response.json();if(!result||result.status!=='success')throw new Error(result&&result.message?result.message:'The reset was not confirmed.');clearStoredPin(email);localStorage.removeItem('cached_admin_data');localStorage.removeItem('cached_passes_'+email);alert("PIN Reset Successful.");closeViewRecord();loadAdminData(true);}catch(e){alert('Error resetting PIN: '+(e&&e.message?e.message:'Unknown error'));}}
 
@@ -7612,9 +8131,13 @@
     btn.textContent='REMOVING...';btn.disabled=true;
     try{
       await runTeamMemberAction('remove_team_member',passId,memberIndex,memberIqama);
-      updateCachedTeamMemberAction(passId,[memberIqama],'remove');
+      localStorage.removeItem('cached_admin_data');
+      await refreshMemberView(passId);
       alert('Team member removed successfully.');
-    }catch(error){alert('Failed to remove: '+error.message);if(btn.isConnected)btn.disabled=false;}
+    }catch(error){
+      alert('Failed to remove: '+error.message);
+      if(btn.isConnected){btn.textContent='REMOVE';btn.disabled=false;}
+    }
   }
 
   async function adminApproveTeamMember(passId,memberIndex,memberIqama,btn){
@@ -7921,13 +8444,13 @@
       let td=[];
       let lines=tMembers.split(/\n\s*\n/).filter(function(b){return b.trim()!=='';});
       lines.forEach(function(block,idx){
-        let nameMatch=block.match(/Name:\s*([^\|]+)/);
-        let iqamaMatch=block.match(/Iqama:\s*(.*?)(?:\s*\||\n)/);
-        let deviceMatch=block.match(/Device:\s*(.*?)(?:\n|$)/);
+        let nameMatch=block.match(/^Name:[ \t]*([^|\r\n]*)/mi);
+        let iqamaMatch=block.match(/^[^\r\n]*\|[ \t]*Iqama:[ \t]*([^|\r\n]*)/mi);
+        let deviceMatch=block.match(/^Device:[ \t]*([^\r\n]*)/mi);
         let extractedUrls=block.match(/(?:https?:\/\/|data:image\/)[^\s\|]+/g)||[];
         if(extractedUrls.length<2){extractedUrls=block.split(/\r?\n/).slice(2).map(function(line){return normalizeImageUrl(line);}).filter(function(url){return !!url;});}
         if(extractedUrls.length>=1 || nameMatch || iqamaMatch){
-          let nameRaw=nameMatch?nameMatch[1].trim():'Team Member '+(idx+1);
+          let nameRaw=nameMatch&&nameMatch[1].trim()?nameMatch[1].trim():'Team Member '+(idx+1);
           let blockUpper=block.toUpperCase();
           let nameUpper=nameRaw.toUpperCase();
           let isNew=nameUpper.includes('*NEW_MEMBER*')||blockUpper.includes('*NEW_MEMBER*')||nameUpper.includes('[NEW]')||blockUpper.includes('[NEW]');
@@ -7938,7 +8461,7 @@
           let isDeviceAddReq=!!pendingDeviceMatch;
           let cleanName=nameRaw.replace(/\*NEW_MEMBER\*|\[NEW\]|\*NEW\*|\(NEW\)|\[REMOVE_REQUESTED\]|\*\[REMOVE_REQUESTED\]\*/gi,'').replace(/\s*\[REQUESTED_AT:[^\]]*\]/gi,'').trim();
           let cleanDevice=deviceMatch?deviceMatch[1].replace(/\[DEVICE_REVOKE_REQUESTED\]|\*\[DEVICE_REVOKE_REQUESTED\]\*/gi,'').trim():'None';
-          td.push({originalIndex:idx,person:idx+1,name:cleanName,isNew:isNew,requestedAt:requestedAtMatch?requestedAtMatch[1].trim():'',isRemoveRequested:isRemoveRequested,isDeviceRevokeReq:isDeviceRevokeReq,isDeviceAddReq:isDeviceAddReq,pendingDevice:pendingDeviceMatch?pendingDeviceMatch[1].trim():'',iqamaText:iqamaMatch?normalizeTeamMemberIqama(iqamaMatch[1]):'N/A',device:cleanDevice,iqama:normalizeImageUrl(extractedUrls[0]||''),selfie:normalizeImageUrl(extractedUrls[1]||extractedUrls[0]||''),devicePhotos:extractedUrls.slice(2).map(function(url){return normalizeImageUrl(url);}).filter(Boolean)});
+          td.push({originalIndex:idx,person:idx+1,name:cleanName,isNew:isNew,requestedAt:requestedAtMatch?requestedAtMatch[1].trim():'',isRemoveRequested:isRemoveRequested,isDeviceRevokeReq:isDeviceRevokeReq,isDeviceAddReq:isDeviceAddReq,pendingDevice:pendingDeviceMatch?pendingDeviceMatch[1].trim():'',iqamaText:iqamaMatch?normalizeTeamMemberIqama(iqamaMatch[1])||'N/A':'N/A',device:cleanDevice,iqama:normalizeImageUrl(extractedUrls[0]||''),selfie:normalizeImageUrl(extractedUrls[1]||extractedUrls[0]||''),devicePhotos:extractedUrls.slice(2).map(function(url){return normalizeImageUrl(url);}).filter(Boolean)});
         }
       });
       let leadNameRaw=String(r.VisitorName||'').trim();
@@ -8207,7 +8730,25 @@
   function restoreScanResultOverlay(result){if(result&&scanResultPlaceholder&&scanResultPlaceholder.parentNode){scanResultPlaceholder.parentNode.insertBefore(result,scanResultPlaceholder);scanResultPlaceholder.remove();}scanResultPlaceholder=null;if(scannerPreviousBodyOverflow!==null){document.body.style.overflow=scannerPreviousBodyOverflow;scannerPreviousBodyOverflow=null;}}
   function showScanResult(d,rHtml,cClass,isContractor,autoDismiss){const sr=document.getElementById('scan-result');sr.className='scan-result-card '+cClass+' fullscreen-scan';mountScanResultOverlay(sr);try{if(html5QrCode&&html5QrCode.isScanning)html5QrCode.pause();}catch(error){console.warn('[QR scanner] Camera could not pause for the result screen.',error);}document.getElementById('r-decision').innerText=d;document.getElementById('r-reason').innerHTML=rHtml;setScannerSidebarHidden(true);if(cClass==="bg-red"&&autoDismiss!==false){setTimeout(function(){if(document.getElementById('r-decision').innerText===d){sr.className='scan-result-card hidden';restoreScanResultOverlay(sr);setScannerSidebarHidden(false);isProcessingScan=false;try{if(html5QrCode)html5QrCode.resume();}catch(e){}}},3500);}}
   window.closeScanResult=function(){isProcessingScan=false;const sr=document.getElementById('scan-result');if(sr)sr.className='scan-result-card hidden';restoreScanResultOverlay(sr);setScannerSidebarHidden(false);try{if(html5QrCode)html5QrCode.resume();}catch(e){}const gunInput=document.getElementById('gun-scan-input');if(gunInput&&!document.getElementById('gun-scanner-container').classList.contains('hidden')){gunInput.focus();gunInput.value="";}};
-  function filterTeamMembers(query){let q=query.toLowerCase();let rows=document.querySelectorAll('.team-member-scan-row');rows.forEach(function(row){if(row.innerText.toLowerCase().includes(q)){row.style.display='flex';}else{row.style.display='none';}});let deviceCards=document.querySelectorAll('.device-photo-card');deviceCards.forEach(function(card){if(card.getAttribute('data-search').includes(q)){card.style.display='block';}else{card.style.display='none';}});}
+  function filterTeamMembers(query){
+    let q=String(query||'').toLowerCase().replace(/\s+/g,' ').trim();
+    function matchesSearch(element){
+      let searchableText=(element.getAttribute('data-search')||'')+' '+(element.textContent||'');
+      searchableText=searchableText.toLowerCase().replace(/\s+/g,' ').trim();
+      return !q||searchableText.includes(q);
+    }
+    document.querySelectorAll('.team-member-scan-row').forEach(function(row){
+      row.classList.toggle('team-search-filter-hidden',!matchesSearch(row));
+    });
+    document.querySelectorAll('.device-photo-card').forEach(function(card){
+      card.classList.toggle('team-search-filter-hidden',!matchesSearch(card));
+    });
+  }
+  var teamSearchInput=document.getElementById('team-search-filter');
+  if(teamSearchInput){
+    teamSearchInput.removeAttribute('onkeyup');
+    teamSearchInput.addEventListener('input',function(){filterTeamMembers(this.value);});
+  }
 
   async function onScanSuccess(decodedText){
     if(isProcessingScan)return;isProcessingScan=true;
@@ -8269,6 +8810,49 @@
     renderScannedPass(data,true);
   }
 
+  function normalizeScannedMemberIdentity(value){
+    return String(value||'').toLowerCase().replace(/[\s\u0021-\u002F\u003A-\u0040\u005B-\u0060\u007B-\u007E]/g,'');
+  }
+  function getScannedMemberIdentityKey(member){
+    var identity=normalizeScannedMemberIdentity(member&&member.iqamaText);
+    if(!identity||identity==='na'||identity==='none'||identity==='unknown'){
+      identity=normalizeScannedMemberIdentity(member&&member.name);
+    }
+    return identity?'member:'+identity:'';
+  }
+  function deduplicateScannedTeamMembers(members){
+    var uniqueMembers=[],membersByKey=Object.create(null);
+    members.forEach(function(member){
+      var key=getScannedMemberIdentityKey(member);
+      if(!key){uniqueMembers.push(member);return;}
+      if(!membersByKey[key]){
+        membersByKey[key]=member;
+        uniqueMembers.push(member);
+        return;
+      }
+      var existing=membersByKey[key];
+      if(/^Team Member \d+$/i.test(existing.name)&&!/^Team Member \d+$/i.test(member.name))existing.name=member.name;
+      existing.isNew=!!existing.isNew&&!!member.isNew;
+      existing.isRemoveRequested=!!existing.isRemoveRequested||!!member.isRemoveRequested;
+      existing.isDeviceRevokeReq=!!existing.isDeviceRevokeReq||!!member.isDeviceRevokeReq;
+      existing.isDeviceAddReq=!!existing.isDeviceAddReq||!!member.isDeviceAddReq;
+      if(!existing.pendingDevice)existing.pendingDevice=member.pendingDevice||'';
+      if(!existing.iqama)existing.iqama=member.iqama||'';
+      if(!existing.selfie)existing.selfie=member.selfie||'';
+      existing.devicePhotos=(existing.devicePhotos||[]).concat(member.devicePhotos||[]).filter(function(photo,index,photos){
+        return !!photo&&photos.indexOf(photo)===index;
+      });
+      var devices=[];
+      [existing.device,member.device].forEach(function(value){
+        String(value||'').split(/\s*\|\s*/).forEach(function(device){
+          var clean=device.trim();
+          if(clean&&clean.toLowerCase()!=='none'&&!devices.some(function(saved){return saved.toLowerCase()===clean.toLowerCase();}))devices.push(clean);
+        });
+      });
+      existing.device=devices.length?devices.join(' | '):'None';
+    });
+    return uniqueMembers;
+  }
   function renderScannedPass(data,liveVerified,connectionFailed){
     const resultCard=document.getElementById('scan-result');
     const selfieImg=document.getElementById('r-selfie');
@@ -8298,21 +8882,22 @@
     if(tMembers.trim()!==""){
       let lines=tMembers.split('\n\n');
       lines.forEach(function(block,idx){
-        let nameMatch=block.match(/Name:\s*([^\|]+)/);
-        let iqamaMatch=block.match(/Iqama:\s*(.*?)(?:\s*\||\n)/);
-        let deviceMatch=block.match(/Device:\s*(.*?)(?:\n|$)/);
+        let nameMatch=block.match(/^Name:[ \t]*([^|\r\n]*)/mi);
+        let iqamaMatch=block.match(/^[^\r\n]*\|[ \t]*Iqama:[ \t]*([^|\r\n]*)/mi);
+        let deviceMatch=block.match(/^Device:[ \t]*([^\r\n]*)/mi);
         let extractedUrls=block.match(/(?:https?:\/\/|data:image\/)[^\s\|]+/g)||[];
         if(extractedUrls.length<2){extractedUrls=block.split(/\r?\n/).slice(2).map(function(line){return normalizeImageUrl(line);}).filter(function(url){return !!url;});}
         if(extractedUrls.length>=1 || nameMatch || iqamaMatch){
-          let nameRaw=nameMatch?nameMatch[1].trim():'Team Member '+(idx+1);
+          let nameRaw=nameMatch&&nameMatch[1].trim()?nameMatch[1].trim():'Team Member '+(idx+1);
           let blockUpper=block.toUpperCase();let nameUpper=nameRaw.toUpperCase();
           let isNew=nameUpper.includes('*NEW_MEMBER*')||blockUpper.includes('*NEW_MEMBER*')||nameUpper.includes('[NEW]')||blockUpper.includes('[NEW]');
           let isRemoveRequested=nameUpper.includes('[REMOVE_REQUESTED]');
           let pendingDeviceMatch=block.match(/^Pending Device:\s*(.*?)\s*\[DEVICE_ADD_REQUESTED\]\s*$/mi);
           let cleanName=nameRaw.replace(/\*NEW_MEMBER\*|\[NEW\]|\*NEW\*|\(NEW\)|\[REMOVE_REQUESTED\]|\*\[REMOVE_REQUESTED\]\*/gi,'').replace(/\s*\[REQUESTED_AT:[^\]]*\]/gi,'').trim();
-          teamData.push({person:idx+1,name:cleanName,isNew:isNew,isRemoveRequested:isRemoveRequested,isDeviceAddReq:!!pendingDeviceMatch,pendingDevice:pendingDeviceMatch?pendingDeviceMatch[1].trim():'',iqamaText:iqamaMatch?normalizeTeamMemberIqama(iqamaMatch[1]):'N/A',device:deviceMatch?deviceMatch[1].trim():'None',iqama:extractedUrls[0]||'',selfie:extractedUrls[1]||extractedUrls[0]||'',devicePhotos:extractedUrls.slice(2),devicePhoto:extractedUrls.length>2?extractedUrls[2]:'No File'});
+          teamData.push({person:idx+1,name:cleanName,isNew:isNew,isRemoveRequested:isRemoveRequested,isDeviceAddReq:!!pendingDeviceMatch,pendingDevice:pendingDeviceMatch?pendingDeviceMatch[1].trim():'',iqamaText:iqamaMatch?normalizeTeamMemberIqama(iqamaMatch[1])||'N/A':'N/A',device:deviceMatch?deviceMatch[1].trim():'None',iqama:extractedUrls[0]||'',selfie:extractedUrls[1]||extractedUrls[0]||'',devicePhotos:extractedUrls.slice(2),devicePhoto:extractedUrls.length>2?extractedUrls[2]:'No File'});
         }
       });
+      teamData=deduplicateScannedTeamMembers(teamData);
       maxWorkers=teamData.length+1;
     }
     if(topInfoBox){
@@ -8639,15 +9224,27 @@
     let payload={action:"add_team_members",id:addMorePassId,team:JSON.stringify(cleanTeam)};
     beginPleaseWait('PLEASE WAIT...');
     try{
-      await submitAppsScriptForm(payload);
-      notifyRequestAsync(payload.action,payload);
+      let submissionResult=await submitAppsScriptForm(payload);
+      let addedCount=submissionResult&&typeof submissionResult.added==='number'&&isFinite(submissionResult.added)
+        ?Math.max(0,Math.min(memberCount,submissionResult.added))
+        :memberCount;
+      let duplicateCount=submissionResult&&typeof submissionResult.duplicates==='number'&&isFinite(submissionResult.duplicates)
+        ?Math.max(0,submissionResult.duplicates)
+        :Math.max(0,memberCount-addedCount);
+      if(addedCount>0){
+        let notificationPayload=payload;
+        if(Array.isArray(submissionResult.addedMembers)){
+          notificationPayload=Object.assign({},payload,{team:JSON.stringify(submissionResult.addedMembers)});
+        }
+        notifyRequestAsync(payload.action,notificationPayload);
+      }
       loadMyPasses(true,true);
       addMoreTeamList=[];
       renderAddTeamRoster();
       if(!keepAdding)closeAddMoreModal();
       else startAddMoreTimer();
       endPleaseWait();
-      alert(addMemberNotice(memberCount));
+      alert(addMemberNotice(addedCount,duplicateCount));
     }catch(e){
       endPleaseWait();
       console.error("[Add members] Submission failed.",e);
