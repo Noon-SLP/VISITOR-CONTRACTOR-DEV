@@ -1654,6 +1654,8 @@
   dict.ar.rejected_by="تم الرفض بواسطة";
   dict.en.revoked_by="Revoked by";
   dict.ar.revoked_by="تم إلغاء التصريح بواسطة";
+  dict.en.new_pass_badge="NEW";
+  dict.ar.new_pass_badge="جديد";
   dict.en.pass_decisions="PASS DECISION RECORD";
   dict.ar.pass_decisions="سجل قرارات التصريح";
   dict.en.pass_decision_history="DECISION HISTORY";
@@ -1682,10 +1684,18 @@
   dict.ar.pass_completed_title="اكتمل التصريح";
   dict.en.passes_completed_title="PASSES COMPLETED";
   dict.ar.passes_completed_title="اكتملت التصاريح";
-  dict.en.pass_completed_summary="This pass has reached its end date:";
-  dict.ar.pass_completed_summary="انتهت صلاحية هذا التصريح:";
-  dict.en.passes_completed_summary="These passes have reached their end dates:";
-  dict.ar.passes_completed_summary="انتهت صلاحية هذه التصاريح:";
+  dict.en.pass_completed_summary="This pass is now complete:";
+  dict.ar.pass_completed_summary="اكتمل هذا التصريح:";
+  dict.en.passes_completed_summary="These passes are now complete:";
+  dict.ar.passes_completed_summary="اكتملت هذه التصاريح:";
+  dict.en.pass_revoked_title="PASS REVOKED";
+  dict.ar.pass_revoked_title="تم إلغاء التصريح";
+  dict.en.passes_revoked_title="PASSES REVOKED";
+  dict.ar.passes_revoked_title="تم إلغاء التصاريح";
+  dict.en.pass_revoked_summary="This pass was revoked by";
+  dict.ar.pass_revoked_summary="تم إلغاء هذا التصريح بواسطة";
+  dict.en.passes_revoked_summary="These passes were revoked. The person who revoked each pass is listed below.";
+  dict.ar.passes_revoked_summary="تم إلغاء هذه التصاريح. يظهر أدناه اسم الشخص الذي ألغى كل تصريح.";
   dict.en.restore_pass_title="APPROVE PASS / NEW VISIT";
   dict.ar.restore_pass_title="الموافقة على التصريح / زيارة جديدة";
   dict.en.restore_pass_button="APPROVE WITH NEW DATES";
@@ -7153,6 +7163,7 @@
 
   function renderAdminData(data){
     if(!Array.isArray(data)){data=[];}
+    data=data.slice().sort(function(a,b){return getPassDecisionSortTime(b)-getPassDecisionSortTime(a);});
     globalAdminData=data;
     ensureAdminPassArchiveUi();
     ensureAdminDataScopeControls('approvals',document.getElementById('admin-sec-approvals'));
@@ -7242,7 +7253,8 @@
             const emailText=escapeHistoryText(rHostEmail);
             const emailCell=rHostEmail?'<span class="active-request-card-email">Email: '+emailText+'</span> <button type="button" class="copy-email-button" data-copy-email="'+emailText+'" onclick="copyRequestEmail(this)" title="Copy email" aria-label="Copy email address">⧉</button>':'';
             const badgeHtml=dateBadge.replace(/^<br>/,'');
-            const activeCard='<article class="active-request-card"><div class="active-request-card-heading"><div class="active-request-card-identity"><strong class="active-request-card-name">'+escapeHistoryText(rVisitorName)+'</strong>'+emailCell+'</div><div class="active-request-card-state">'+cbHtml+'<span class="active-request-status">ACTIVE</span></div></div><div class="active-request-card-meta"><span class="active-request-card-dates">📅 VALIDITY: '+escapeHistoryText(dateStr)+'</span></div><div class="active-request-card-checkin"><div class="active-request-card-checkin-meta"><span class="active-request-card-checkin-label">CHECK-IN: '+escapeHistoryText(ciTime)+'</span><span class="active-request-card-duration"><span class="active-request-card-duration-label">Duration</span><strong class="active-request-card-duration-value"'+(checkInTimestamp?' data-check-in-ms="'+checkInTimestamp+'"':'')+'>'+escapeHistoryText(durHtml)+'</strong></span></div><div class="active-request-card-checkin-details">'+(badgeHtml?'<span class="active-request-card-type-badge">'+badgeHtml+'</span>':'')+'<span class="active-request-card-location">📍 '+escapeHistoryText(rLocation)+'</span></div></div>'+actionBtns+'</article>';
+            const newApprovalBadge=isRecentlyApprovedPass(row)?'<span class="active-request-new-badge" title="Recently approved or reapproved">'+t('new_pass_badge')+'</span>':'';
+            const activeCard='<article class="active-request-card"><div class="active-request-card-heading"><div class="active-request-card-identity"><strong class="active-request-card-name">'+escapeHistoryText(rVisitorName)+'</strong>'+emailCell+'</div><div class="active-request-card-state">'+cbHtml+newApprovalBadge+'<span class="active-request-status">ACTIVE</span></div></div><div class="active-request-card-meta"><span class="active-request-card-dates">📅 VALIDITY: '+escapeHistoryText(dateStr)+'</span></div><div class="active-request-card-checkin"><div class="active-request-card-checkin-meta"><span class="active-request-card-checkin-label">CHECK-IN: '+escapeHistoryText(ciTime)+'</span><span class="active-request-card-duration"><span class="active-request-card-duration-label">Duration</span><strong class="active-request-card-duration-value"'+(checkInTimestamp?' data-check-in-ms="'+checkInTimestamp+'"':'')+'>'+escapeHistoryText(durHtml)+'</strong></span></div><div class="active-request-card-checkin-details">'+(badgeHtml?'<span class="active-request-card-type-badge">'+badgeHtml+'</span>':'')+'<span class="active-request-card-location">📍 '+escapeHistoryText(rLocation)+'</span></div></div>'+actionBtns+'</article>';
             if(isChecked)activeCheckedCount++;
             if(String(rType).trim().toLowerCase()==='contractor'){
               hContractorActive+=activeCard;
@@ -7404,6 +7416,12 @@
       cardColorStyles.textContent='.all-pass-card{background:linear-gradient(145deg,#172b43 0%,#12243a 52%,#101d30 100%)!important;border-color:rgba(111,157,207,.28)!important}.all-pass-card-fields .all-pass-card-field{background:linear-gradient(145deg,rgba(37,62,91,.76),rgba(24,43,66,.82));border-color:rgba(131,171,214,.17)}.all-pass-card[data-status="completed"]{background:linear-gradient(145deg,#252647 0%,#1d2140 52%,#171c35 100%)!important;border-color:rgba(167,139,250,.32)!important}.all-pass-card[data-status="rejected"]{background:linear-gradient(145deg,#432738 0%,#321f30 52%,#241a2b 100%)!important;border-color:rgba(251,113,133,.32)!important}.all-pass-card[data-status="completed"] .all-pass-card-field{background:linear-gradient(145deg,rgba(69,64,112,.58),rgba(42,40,76,.72));border-color:rgba(167,139,250,.19)}.all-pass-card[data-status="rejected"] .all-pass-card-field{background:linear-gradient(145deg,rgba(105,54,76,.56),rgba(68,39,58,.72));border-color:rgba(251,113,133,.18)}';
       document.head.appendChild(cardColorStyles);
     }
+    if(!document.getElementById('pass-decision-new-badge-styles')){
+      var decisionBadgeStyles=document.createElement('style');
+      decisionBadgeStyles.id='pass-decision-new-badge-styles';
+      decisionBadgeStyles.textContent='.all-pass-card-heading .all-pass-new-badge,.active-request-new-badge{display:inline-flex;flex:0 0 auto;align-items:center;justify-content:center;padding:5px 8px;border:1px solid rgba(52,211,153,.32);border-radius:999px;background:linear-gradient(120deg,rgba(16,185,129,.2),rgba(16,185,129,.08));color:#8df2ca;font-size:8px;font-weight:950;letter-spacing:.13em;line-height:1;text-transform:uppercase;box-shadow:0 3px 12px rgba(16,185,129,.08)}.active-request-new-badge{margin:0 4px}';
+      document.head.appendChild(decisionBadgeStyles);
+    }
     return section;
   }
 
@@ -7420,6 +7438,45 @@
       if(endDate.getTime()<today.getTime())return 'Completed';
     }
     return status==='approved'?'Active':String(pass&&pass.Status||'Pending');
+  }
+
+  function getLatestPassDecision(pass){
+    var latest=null;
+    function consider(decision,timestamp){
+      var date=parseFlexibleDate(timestamp);
+      if(!decision||!date)return;
+      if(!latest||date.getTime()>latest.timestamp.getTime()){
+        latest={decision:String(decision),timestamp:date};
+      }
+    }
+    (Array.isArray(pass&&pass.DecisionHistory)?pass.DecisionHistory:[]).forEach(function(entry){
+      consider(entry&&entry.decision,entry&&entry.timestamp);
+    });
+    consider('Approved',pass&&pass.ApprovedAt);
+    consider('Rejected',pass&&pass.RejectedAt);
+    consider('Revoked',pass&&pass.RevokedAt);
+    if(!pass.RevokedAt&&/^Admin:/i.test(String(pass&&pass.ScannedByGuard||''))){
+      consider('Revoked',pass.CheckOutTime);
+    }
+    return latest;
+  }
+
+  function isRecentlyApprovedPass(pass){
+    var latest=getLatestPassDecision(pass);
+    return !!(latest&&String(latest.decision).toLowerCase()==='approved'&&
+      Date.now()-latest.timestamp.getTime()<24*60*60*1000&&
+      latest.timestamp.getTime()<=Date.now());
+  }
+
+  function isPassRevoked(pass){
+    if(String(pass&&pass.Status||'').trim().toLowerCase()!=='completed')return false;
+    var latest=getLatestPassDecision(pass);
+    return !!(latest&&String(latest.decision).toLowerCase()==='revoked');
+  }
+
+  function getPassDecisionSortTime(pass){
+    var latest=getLatestPassDecision(pass);
+    return latest?latest.timestamp.getTime():0;
   }
 
   function appendAdminPassField(container,labelKey,value){
@@ -7472,6 +7529,7 @@
       ].join(' ').toLowerCase();
       return !query||haystack.indexOf(query)!==-1;
     });
+    passes.sort(function(a,b){return getPassDecisionSortTime(b)-getPassDecisionSortTime(a);});
     count.textContent=passes.length+' '+t(passes.length===1?'pass_count_one':'pass_count_many');
     list.replaceChildren();
     if(!passes.length){
@@ -7499,6 +7557,13 @@
       badge.textContent=t(statusKey);
       badge.setAttribute('data-i18n',statusKey);
       cardHeading.appendChild(name);
+      if(isRecentlyApprovedPass(pass)){
+        var newBadge=document.createElement('span');
+        newBadge.className='all-pass-new-badge';
+        newBadge.textContent=t('new_pass_badge');
+        newBadge.setAttribute('data-i18n','new_pass_badge');
+        cardHeading.appendChild(newBadge);
+      }
       cardHeading.appendChild(badge);
       var fields=document.createElement('div');
       fields.className='all-pass-card-fields';
@@ -7605,6 +7670,7 @@
     var todayStart=today.getTime();
     var currentPasses=Object.create(null);
     var newlyCompleted=[];
+    var newlyRevoked=[];
     passes.forEach(function(pass){
       if(!pass||!pass.UniqueID)return;
       var id=String(pass.UniqueID);
@@ -7612,10 +7678,18 @@
       var endTimestamp=getPassEndOfDayTimestamp(pass);
       var endedByDate=status==='approved'&&endTimestamp>0&&endTimestamp<todayStart;
       var isCompleted=status==='completed'||endedByDate;
+      var isRevoked=isPassRevoked(pass);
       var previous=previousPasses[id];
-      var justCompleted=!!(previous&&isCompleted&&
+      var justCompleted=!!(previous&&isCompleted&&!isRevoked&&
         (status==='completed'?String(previous.status||'').toLowerCase()!=='completed':!previous.endedByDate));
-      if(!previousState&&isCompleted){
+      var previousDecisionTime=previous&&Number(previous.decisionTime||0);
+      var decisionTime=getPassDecisionSortTime(pass);
+      var justRevoked=isRevoked&&(
+        previous
+          ?(!previous.revoked||(decisionTime>0&&decisionTime>previousDecisionTime))
+          :(decisionTime>0&&Date.now()-decisionTime<24*60*60*1000&&decisionTime<=Date.now())
+      );
+      if(!previousState&&isCompleted&&!isRevoked){
         var completedAt=parseFlexibleDate(pass.CheckOutTime);
         justCompleted=(endedByDate&&endTimestamp>=todayStart-24*60*60*1000)||
           (status==='completed'&&completedAt&&completedAt.getTime()>=Date.now()-24*60*60*1000);
@@ -7623,9 +7697,14 @@
       if(justCompleted){
         newlyCompleted.push(pass);
       }
+      if(justRevoked){
+        newlyRevoked.push(pass);
+      }
       currentPasses[id]={
         status:status,
         endedByDate:endedByDate,
+        revoked:isRevoked,
+        decisionTime:decisionTime,
         endDate:endTimestamp
       };
     });
@@ -7634,16 +7713,28 @@
     }catch(error){
       console.warn('[Completed passes] Completion state could not be saved.',error);
     }
-    if(newlyCompleted.length)showPassCompletedPopup(newlyCompleted);
+    if(newlyRevoked.length)showPassDecisionPopup(newlyRevoked,'revoked');
+    else if(newlyCompleted.length)showPassDecisionPopup(newlyCompleted,'completed');
   }
 
   function showPassCompletedPopup(passes){
+    showPassDecisionPopup(passes,'completed');
+  }
+
+  function showPassDecisionPopup(passes,decisionType){
+    decisionType=decisionType==='revoked'?'revoked':'completed';
     var modal=document.getElementById('admin-pass-completed-modal');
     if(!document.getElementById('admin-pass-completed-styles')){
       var style=document.createElement('style');
       style.id='admin-pass-completed-styles';
       style.textContent='.popup-modal.pass-completed-modal{z-index:1000000;background:rgba(2,6,15,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:22px}.pass-completed-modal .record-modal-box{width:min(720px,96vw)!important;max-height:90vh!important;overflow:hidden!important;border:1px solid rgba(255,255,255,.16)!important;border-radius:22px!important;background:linear-gradient(155deg,#17263b 0%,#101a2b 48%,#0b1321 100%)!important;box-shadow:0 32px 100px rgba(0,0,0,.72),0 0 0 1px rgba(255,199,0,.16),0 0 55px rgba(255,199,0,.13)!important;animation:passCompleteEnter .24s cubic-bezier(.2,.8,.2,1)}.pass-completed-modal .record-modal-header{display:flex;align-items:center;gap:14px;padding:20px 23px!important;border-bottom:1px solid rgba(255,255,255,.11)!important;background:linear-gradient(110deg,rgba(255,199,0,.13),rgba(255,199,0,.025) 65%,transparent)}.pass-completed-modal .pass-completed-emblem{display:grid;flex:0 0 48px;width:48px;height:48px;place-items:center;border:1px solid rgba(255,199,0,.48);border-radius:16px;background:linear-gradient(145deg,#ffe47a,#ffbd18);color:#182033;font-size:26px;font-weight:1000;box-shadow:0 8px 25px rgba(255,199,0,.22)}.pass-completed-modal .pass-completed-title-copy{flex:1;min-width:0}.pass-completed-modal .pass-completed-eyebrow{display:block;margin-bottom:4px;color:#ffe17a;font-size:9px;font-weight:900;letter-spacing:.18em;text-transform:uppercase}.pass-completed-modal #admin-pass-completed-title{color:#fff!important;font-size:clamp(17px,3vw,23px)!important;font-weight:900;letter-spacing:.045em;line-height:1.2}.pass-completed-modal .pass-completed-close{display:grid;flex:0 0 38px;width:38px;height:38px;place-items:center;border:1px solid rgba(255,255,255,.16)!important;border-radius:12px!important;background:rgba(255,255,255,.07)!important;color:#f8fafc!important;font-size:25px!important;transition:background .15s ease,transform .15s ease}.pass-completed-modal .pass-completed-close:hover{transform:rotate(90deg);background:rgba(255,255,255,.16)!important}.pass-completed-modal #admin-pass-completed-content{padding:21px 23px 23px!important;overflow:auto;max-height:calc(90vh - 92px)}.pass-completed-modal .pass-completed-summary{display:flex;align-items:center;gap:12px;margin:0;padding:14px 16px;border:1px solid rgba(52,211,153,.22);border-radius:14px;background:linear-gradient(110deg,rgba(16,185,129,.13),rgba(16,185,129,.045));color:#e5fff5!important;font-size:14px!important;font-weight:750;line-height:1.5}.pass-completed-modal .pass-completed-summary:before{display:grid;flex:0 0 27px;width:27px;height:27px;place-items:center;border-radius:50%;background:#20c997;color:#06251d;content:\"✓\";font-size:15px;font-weight:1000}.pass-completed-modal .pass-completed-popup-list{display:grid;gap:11px;margin:15px 0 18px;max-height:48vh;overflow:auto;padding:2px 3px 4px}.pass-completed-modal .pass-completed-popup-item{position:relative;padding:16px 17px 14px 20px;border:1px solid rgba(164,184,212,.19);border-radius:15px;background:linear-gradient(135deg,rgba(35,51,73,.8),rgba(15,25,40,.88));box-shadow:inset 0 1px rgba(255,255,255,.045)}.pass-completed-modal .pass-completed-popup-item:before{position:absolute;inset:13px auto 13px 0;width:3px;border-radius:0 4px 4px 0;background:linear-gradient(#35ddb0,#118e72);content:\"\"}.pass-completed-modal .pass-completed-popup-item h4{margin:0 0 12px;color:#fff;font-size:15px;font-weight:850;line-height:1.45;overflow-wrap:anywhere}.pass-completed-modal .pass-completed-popup-item p{display:grid;grid-template-columns:minmax(95px,.55fr) minmax(0,1.45fr);gap:8px;margin:0;padding:6px 0;border-top:1px solid rgba(255,255,255,.055);color:#e1e9f4!important;font-size:12px!important;line-height:1.45;overflow-wrap:anywhere}.pass-completed-modal .pass-completed-popup-item p span:first-child{color:#98a9bf;font-size:10px;font-weight:800;letter-spacing:.045em;text-transform:uppercase}.pass-completed-modal .pass-completed-ok{min-height:46px;border:1px solid rgba(255,255,255,.17)!important;border-radius:12px!important;background:linear-gradient(110deg,#ffd448,#f2b900)!important;color:#142033!important;font-size:12px!important;font-weight:950!important;letter-spacing:.1em;box-shadow:0 8px 24px rgba(255,199,0,.2);transition:transform .15s ease,filter .15s ease}.pass-completed-modal .pass-completed-ok:hover{transform:translateY(-1px);filter:brightness(1.08)}@keyframes passCompleteEnter{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}@media(max-width:520px){.popup-modal.pass-completed-modal{padding:10px}.pass-completed-modal .record-modal-header{padding:15px!important;gap:11px}.pass-completed-modal .pass-completed-emblem{flex-basis:42px;width:42px;height:42px;border-radius:13px}.pass-completed-modal #admin-pass-completed-content{padding:15px!important}.pass-completed-modal .pass-completed-popup-item{padding:13px 12px 12px 16px}.pass-completed-modal .pass-completed-popup-item p{grid-template-columns:1fr;gap:2px}}@media(prefers-reduced-motion:reduce){.pass-completed-modal .record-modal-box{animation:none!important;transition:none!important}}';
       document.head.appendChild(style);
+    }
+    if(!document.getElementById('admin-pass-revoked-styles')){
+      var revokedStyle=document.createElement('style');
+      revokedStyle.id='admin-pass-revoked-styles';
+      revokedStyle.textContent='.pass-completed-modal.pass-revoked-modal .record-modal-header{background:linear-gradient(110deg,rgba(239,68,68,.22),rgba(127,29,29,.07) 68%,transparent)!important;border-bottom-color:rgba(248,113,113,.25)!important}.pass-completed-modal.pass-revoked-modal .pass-completed-eyebrow{color:#fca5a5!important}.pass-completed-modal.pass-revoked-modal .pass-completed-emblem{border-color:rgba(252,165,165,.65)!important;background:linear-gradient(145deg,#fecaca,#ef4444)!important;color:#450a0a!important;box-shadow:0 8px 25px rgba(239,68,68,.3)!important}.pass-completed-modal.pass-revoked-modal .pass-completed-summary{border-color:rgba(248,113,113,.4)!important;background:linear-gradient(110deg,rgba(185,28,28,.32),rgba(127,29,29,.17))!important;color:#fff1f2!important}.pass-completed-modal.pass-revoked-modal .pass-completed-summary:before{background:#ef4444!important;color:#fff!important;content:\"!\"!important}.pass-completed-modal.pass-revoked-modal .pass-completed-popup-item{border-color:rgba(248,113,113,.28)!important;background:linear-gradient(135deg,rgba(69,26,26,.76),rgba(31,20,28,.94))!important}.pass-completed-modal.pass-revoked-modal .pass-completed-popup-item:before{background:linear-gradient(#f87171,#b91c1c)!important}.pass-completed-modal.pass-revoked-modal #admin-pass-completed-title{color:#fee2e2!important}';
+      document.head.appendChild(revokedStyle);
     }
     if(!modal){
       modal=document.createElement('div');
@@ -7701,14 +7792,22 @@
     var title=modal.querySelector('#admin-pass-completed-title');
     var content=modal.querySelector('#admin-pass-completed-content');
     var dismiss=content.querySelector('button');
-    var titleKey=passes.length===1?'pass_completed_title':'passes_completed_title';
+    modal.classList.toggle('pass-revoked-modal',decisionType==='revoked');
+    var statusEmblem=modal.querySelector('.pass-completed-emblem');
+    if(statusEmblem)statusEmblem.textContent=decisionType==='revoked'?'!':'✓';
+    var titleKey=decisionType==='revoked'
+      ?(passes.length===1?'pass_revoked_title':'passes_revoked_title')
+      :(passes.length===1?'pass_completed_title':'passes_completed_title');
     title.textContent=t(titleKey);
     title.setAttribute('data-i18n',titleKey);
     content.replaceChildren();
     var summary=document.createElement('p');
     summary.className='pass-completed-summary';
-    var summaryKey=passes.length===1?'pass_completed_summary':'passes_completed_summary';
-    summary.textContent=t(summaryKey);
+    var summaryKey=decisionType==='revoked'
+      ?(passes.length===1?'pass_revoked_summary':'passes_revoked_summary')
+      :(passes.length===1?'pass_completed_summary':'passes_completed_summary');
+    var revokedBy=passes.length===1?formatPassDecisionAudit(passes[0],'Revoked'):'';
+    summary.textContent=t(summaryKey)+(decisionType==='revoked'&&passes.length===1?': '+revokedBy:'');
     summary.setAttribute('data-i18n',summaryKey);
     summary.style.cssText='margin:0;';
     var details=document.createElement('div');
@@ -7720,13 +7819,17 @@
       var isContractor=String(pass.Type||'').toLowerCase()==='contractor';
       heading.textContent=String(isContractor?(pass.CompanyName||pass.Company||pass.ProjectName):pass.VisitorName||pass.CompanyName||pass.ProjectName||'Pass holder')+' · '+String(pass.UniqueID);
       item.appendChild(heading);
-      [
+      var popupFields=[
         ['archive_type',pass.Type],
         ['archive_location',pass.Location],
         ['visit_dates',formatToDDMMYYYY(pass.StartDate)+' - '+formatToDDMMYYYY(pass.EndDate||pass.StartDate)],
         ['host_email',pass.HostEmail],
         ['archive_contact',pass.ContactNo]
-      ].forEach(function(field){
+      ];
+      if(decisionType==='revoked'&&passes.length>1){
+        popupFields.push(['revoked_by',formatPassDecisionAudit(pass,'Revoked')]);
+      }
+      popupFields.forEach(function(field){
         var line=document.createElement('p');
         var label=document.createElement('span');
         label.textContent=t(field[0])+': ';
@@ -7792,7 +7895,7 @@
       try{
         if(cachedM.trim().charAt(0)==='['){
           const parsedM=JSON.parse(cachedM);
-          if(Array.isArray(parsedM))renderAdminData(parsedM.slice().reverse());
+          if(Array.isArray(parsedM))          renderAdminData(parsedM);
           else localStorage.removeItem('cached_admin_data');
         }else localStorage.removeItem('cached_admin_data');
       }catch(e){localStorage.removeItem('cached_admin_data');}
@@ -7806,7 +7909,7 @@
           return;
         }
         localStorage.setItem('cached_admin_data',newMStr);
-        renderAdminData(dataMain.slice().reverse());
+        renderAdminData(dataMain);
         trackAdminPassCompletions(dataMain);
       }else{
         throw new Error('The admin pass list response was invalid.');
