@@ -1317,6 +1317,11 @@
     if(!currentUser||currentUser.role!=='admin'||!currentUser.adminToken){
       return Promise.reject(new Error('Your admin session expired. Please sign in again.'));
     }
+    var sessionExpiresAt=Number(currentUser.expiresAt);
+    if(sessionExpiresAt>Date.now()&&sessionExpiresAt-Date.now()<CLIENT_ADMIN_SESSION_TTL_MS/3){
+      currentUser.expiresAt=Date.now()+CLIENT_ADMIN_SESSION_TTL_MS;
+      saveSession();
+    }
     var payload=Object.assign({},params,{
       adminToken:currentUser.adminToken,
       adminRequestId:createAdminRequestId('admin-api')
@@ -1611,10 +1616,14 @@
   dict.ar.office_mode="المكتب (السعودية فقط)";
   dict.en.country_not_set="Country not set";
   dict.ar.country_not_set="لم يتم تحديد الدولة";
-  dict.en.all_passes="Rejected & Completed";
-  dict.ar.all_passes="المرفوضة والمكتملة";
-  dict.en.all_passes_description="Review rejected and completed passes. Reapproving a pass starts a new visit with new dates.";
-  dict.ar.all_passes_description="راجع التصاريح المرفوضة والمكتملة. إعادة الموافقة على التصريح تبدأ زيارة جديدة بتواريخ جديدة.";
+  dict.en.all_passes="Pass History";
+  dict.ar.all_passes="سجل التصاريح";
+  dict.en.pass_history_eyebrow="GLOBAL ADMIN ARCHIVE";
+  dict.ar.pass_history_eyebrow="أرشيف المسؤول العام";
+  dict.en.archive_from="FROM";
+  dict.ar.archive_from="من";
+  dict.en.archive_to="TO";
+  dict.ar.archive_to="إلى";
   dict.en.restore_visit_date_from="Visit Date / Validity (From)";
   dict.ar.restore_visit_date_from="تاريخ الزيارة / الصلاحية (من)";
   dict.en.restore_visit_date_to="Visit Date / Validity (To)";
@@ -1799,7 +1808,7 @@
   }
   function safeImg(u){return normalizeImageUrl(u)||'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'40\' height=\'40\'%3E%3Crect width=\'40\' height=\'40\' fill=\'%23333\'/%3E%3Ctext x=\'20\' y=\'24\' font-size=\'14\' text-anchor=\'middle\' fill=\'%23888\'%3E%3F%3C/text%3E%3C/svg%3E';}
 
-  const urlParams=new URLSearchParams(window.location.search);const currentRoleParam=urlParams.get('role')||'default';const SESSION_KEY='noon_session_'+currentRoleParam;const GUARD_SESSION_KEY='noon_session_guard';const SESSION_MAX_AGE_MS=12*60*60*1000;let adminSignupMode=false;let adminPasswordResetMode=false;let html5QrCode=null;let scannerFacingMode='environment';let scannerLibraryPromise=null;let scannerOperation=Promise.resolve();let currentUser=null;let currentScannedID=null;let currentScanAction='check_in';let currentAdminFilter='all';let autoRefreshTimer=null;let globalAdminData=[];let showOfficeRequests=false;let globalAdminHistory=[];let adminDataScopes={approvals:{country:'all',facility:'all'},history:{country:'all',facility:'all'},analytics:{country:'all',facility:'all'}};let myPassesData=[];let checkedPrintIds=new Set();let liveStream=null;let currentFacingMode='environment';let targetPhotoType='';let capturedImages={iqama:null,selfie:null,imeiphoto:null,vehicle:null,fmpoc:null};let teamList=[];let currentTeamCounter=1;let isProcessingScan=false;let userSecurityPin=null;let lockedPassesData=null;let pinCreateMode='submit';let currentBatchType='new';
+  const urlParams=new URLSearchParams(window.location.search);const currentRoleParam=urlParams.get('role')||'default';const SESSION_KEY='noon_session_'+currentRoleParam;const GUARD_SESSION_KEY='noon_session_guard';const SESSION_MAX_AGE_MS=12*60*60*1000;const CLIENT_ADMIN_SESSION_TTL_MS=6*60*60*1000;let adminSignupMode=false;let adminPasswordResetMode=false;let html5QrCode=null;let scannerFacingMode='environment';let scannerLibraryPromise=null;let scannerOperation=Promise.resolve();let currentUser=null;let currentScannedID=null;let currentScanAction='check_in';let currentAdminFilter='all';let autoRefreshTimer=null;let globalAdminData=[];let showOfficeRequests=false;let globalAdminHistory=[];let adminDataScopes={approvals:{country:'all',facility:'all'},history:{country:'all',facility:'all'},analytics:{country:'all',facility:'all'}};let myPassesData=[];let checkedPrintIds=new Set();let liveStream=null;let currentFacingMode='environment';let targetPhotoType='';let capturedImages={iqama:null,selfie:null,imeiphoto:null,vehicle:null,fmpoc:null};let teamList=[];let currentTeamCounter=1;let isProcessingScan=false;let userSecurityPin=null;let lockedPassesData=null;let pinCreateMode='submit';let currentBatchType='new';
   let guardSessionExpiryTimer=null;
   let historySortOrder='desc';
   let expandedHistoryGroups=new Set();
@@ -5708,7 +5717,7 @@
   function saveSession(){
     if(!currentUser)return;
     const loginTime=Date.now();
-    const defaultSessionTtlMs=currentUser.role==='admin'||currentUser.role==='superadmin' ? 6*60*60*1000 : SESSION_MAX_AGE_MS;
+    const defaultSessionTtlMs=currentUser.role==='admin'||currentUser.role==='superadmin' ? CLIENT_ADMIN_SESSION_TTL_MS : SESSION_MAX_AGE_MS;
     const storedExpiry=Number(currentUser.expiresAt) || loginTime + defaultSessionTtlMs;
     currentUser.expiresAt=String(storedExpiry);
     const sessionText=JSON.stringify({user:currentUser,time:loginTime,expiresAt:storedExpiry});
@@ -7294,16 +7303,37 @@
       section=document.createElement('section');
       section.id='admin-sec-all-passes';
       section.className='admin-card admin-section hidden';
+      section.classList.add('admin-pass-archive');
       section.style.cssText='padding:20px;min-width:0;';
+      var archiveHeader=document.createElement('div');
+      archiveHeader.className='pass-history-header';
+      var titleGroup=document.createElement('div');
+      titleGroup.className='pass-history-title-group';
+      var mark=document.createElement('div');
+      mark.className='pass-history-mark';
+      mark.setAttribute('aria-hidden','true');
+      mark.textContent='↗';
+      var titleCopy=document.createElement('div');
+      titleCopy.className='pass-history-title-copy';
+      var eyebrow=document.createElement('span');
+      eyebrow.className='pass-history-eyebrow';
+      eyebrow.textContent=t('pass_history_eyebrow');
+      eyebrow.setAttribute('data-i18n','pass_history_eyebrow');
       var heading=document.createElement('h2');
       heading.textContent=t('all_passes');
       heading.setAttribute('data-i18n','all_passes');
-      heading.className='admin-card-title';
-      var description=document.createElement('p');
-      description.textContent=t('all_passes_description');
-      description.setAttribute('data-i18n','all_passes_description');
-      description.style.cssText='color:var(--text-muted);font-size:13px;margin:0 0 16px;';
+      heading.className='pass-history-title';
+      titleCopy.appendChild(eyebrow);
+      titleCopy.appendChild(heading);
+      titleGroup.appendChild(mark);
+      titleGroup.appendChild(titleCopy);
+      archiveHeader.appendChild(titleGroup);
+      var count=document.createElement('p');
+      count.id='all-passes-count';
+      count.className='pass-history-count';
+      archiveHeader.appendChild(count);
       var toolbar=document.createElement('div');
+      toolbar.className='all-pass-toolbar';
       toolbar.style.cssText='display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;';
       var search=document.createElement('input');
       search.id='all-passes-search';
@@ -7331,27 +7361,36 @@
       });
       toolbar.appendChild(search);
       toolbar.appendChild(statusFilter);
-      var count=document.createElement('p');
-      count.id='all-passes-count';
-      count.style.cssText='color:var(--text-muted);font-size:12px;margin:0 0 12px;';
       var list=document.createElement('div');
       list.id='all-passes-list';
+      list.className='all-pass-grid';
       list.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:12px;';
-      section.appendChild(heading);
-      section.appendChild(description);
+      section.appendChild(archiveHeader);
       section.appendChild(toolbar);
-      section.appendChild(count);
       section.appendChild(list);
       dashboard.appendChild(section);
       search.addEventListener('input',renderAdminPassArchive);
       statusFilter.addEventListener('change',renderAdminPassArchive);
     }
+    if(section)section.classList.add('admin-pass-archive');
     if(section&&!canUseArchive)section.classList.add('hidden');
     if(!document.getElementById('admin-pass-archive-styles')){
       var archiveStyles=document.createElement('style');
       archiveStyles.id='admin-pass-archive-styles';
-      archiveStyles.textContent='.all-pass-card{min-width:0;padding:15px;border:1px solid rgba(148,166,190,.2);border-radius:12px;background:rgba(13,20,32,.78)}.all-pass-card-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}.all-pass-card-heading strong{overflow-wrap:anywhere;color:#fff}.all-pass-card-status{flex:0 0 auto;padding:4px 8px;border-radius:999px;background:rgba(148,166,190,.16);font-size:10px;font-weight:800;text-transform:uppercase}.all-pass-card-status[data-status="active"]{color:#34d399}.all-pass-card-status[data-status="pending"]{color:#ffd54a}.all-pass-card-status[data-status="completed"]{color:#c4b5fd}.all-pass-card-status[data-status="rejected"]{color:#fca5a5}.all-pass-card-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:8px 12px;margin-bottom:14px}.all-pass-card-field{min-width:0;font-size:12px;overflow-wrap:anywhere}.all-pass-card-field span{display:block;color:var(--text-muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em}.all-pass-card-actions{display:flex;flex-wrap:wrap;gap:7px}.all-pass-card-actions button{flex:1 1 100px}.pass-completed-popup-list{display:grid;gap:10px;margin:15px 0;max-height:55vh;overflow:auto}.pass-completed-popup-item{padding:12px;border:1px solid rgba(148,166,190,.2);border-radius:9px;background:rgba(255,255,255,.035)}.pass-completed-popup-item h4{margin:0 0 8px;color:#fff;font-size:14px}.pass-completed-popup-item p{margin:4px 0;color:var(--text-muted);font-size:12px;overflow-wrap:anywhere}';
+      archiveStyles.textContent='.admin-pass-archive{position:relative;overflow:hidden;border:1px solid rgba(255,199,0,.2);border-radius:18px;background:radial-gradient(ellipse at 8% 0%,rgba(255,199,0,.075),transparent 34%),linear-gradient(145deg,rgba(17,25,39,.98),rgba(8,12,20,.98));box-shadow:0 22px 55px rgba(0,0,0,.28)}.admin-pass-archive>.admin-card-title{padding:4px 0 14px;border-bottom:1px solid rgba(148,166,190,.16);font-size:15px;letter-spacing:.09em}.all-pass-toolbar{align-items:center;padding:11px;border:1px solid rgba(148,166,190,.14);border-radius:13px;background:rgba(5,9,16,.48)}.all-pass-toolbar .input-field{height:44px;border-radius:9px;background:rgba(8,12,20,.9)}.all-pass-toolbar .input-field:focus{box-shadow:0 0 0 3px rgba(255,199,0,.1)}#all-passes-count{display:inline-flex;align-items:center;min-height:28px;padding:5px 10px;border:1px solid rgba(255,199,0,.18);border-radius:999px;background:rgba(255,199,0,.07);color:#e8d18c!important;font-weight:700;letter-spacing:.02em}.all-pass-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr))!important;gap:14px!important}.all-pass-card{position:relative;isolation:isolate;display:flex;min-width:0;flex-direction:column;padding:17px;border:1px solid rgba(148,166,190,.17);border-radius:15px;background:linear-gradient(145deg,rgba(19,28,42,.96),rgba(10,15,24,.98));box-shadow:0 8px 22px rgba(0,0,0,.2);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}.all-pass-card:before{position:absolute;inset:0 auto 0 0;width:3px;border-radius:15px 0 0 15px;background:linear-gradient(180deg,var(--noon-yellow),rgba(255,199,0,.08));content:""}.all-pass-card[data-status="completed"]:before{background:linear-gradient(180deg,#a78bfa,rgba(167,139,250,.12))}.all-pass-card[data-status="rejected"]:before{background:linear-gradient(180deg,#fb7185,rgba(251,113,133,.12))}.all-pass-card:hover{transform:translateY(-2px);border-color:rgba(255,199,0,.38);box-shadow:0 14px 30px rgba(0,0,0,.3)}.all-pass-card-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:15px}.all-pass-card-heading strong{overflow-wrap:anywhere;color:#f5f7fb;font-size:14px;line-height:1.45}.all-pass-card-status{flex:0 0 auto;padding:5px 9px;border:1px solid rgba(148,166,190,.12);border-radius:999px;background:rgba(148,166,190,.1);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}.all-pass-card-status[data-status="active"]{color:#34d399}.all-pass-card-status[data-status="pending"]{color:#ffd54a}.all-pass-card-status[data-status="completed"]{border-color:rgba(167,139,250,.18);background:rgba(167,139,250,.11);color:#c4b5fd}.all-pass-card-status[data-status="rejected"]{border-color:rgba(251,113,133,.18);background:rgba(251,113,133,.1);color:#fda4af}.all-pass-card-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px;margin-bottom:16px}.all-pass-card-field{min-width:0;font-size:12px;font-weight:600;line-height:1.45;overflow-wrap:anywhere;color:#d9e0eb}.all-pass-card-field span{display:block;margin-bottom:3px;color:#7f8da2;font-size:9px;font-weight:700;letter-spacing:.09em;text-transform:uppercase}.all-pass-card-field:last-child:nth-child(odd){grid-column:1/-1}.all-pass-card-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;padding-top:12px;border-top:1px solid rgba(148,166,190,.1)}.all-pass-card-actions button{flex:1 1 120px;min-height:36px;border-radius:8px;font-size:10px;font-weight:800;letter-spacing:.04em}.all-pass-card-actions button:hover{filter:brightness(1.08);transform:translateY(-1px)}.all-pass-card-actions .btn-success{background:linear-gradient(135deg,#19c997,#0eaa84);box-shadow:0 5px 14px rgba(16,185,129,.16)}.pass-completed-popup-list{display:grid;gap:10px;margin:15px 0;max-height:55vh;overflow:auto}.pass-completed-popup-item{padding:12px;border:1px solid rgba(148,166,190,.2);border-radius:9px;background:rgba(255,255,255,.035)}.pass-completed-popup-item h4{margin:0 0 8px;color:#fff;font-size:14px}.pass-completed-popup-item p{margin:4px 0;color:var(--text-muted);font-size:12px;overflow-wrap:anywhere}@media(max-width:600px){.admin-pass-archive{padding:15px!important}.all-pass-grid{grid-template-columns:1fr!important}.all-pass-card{padding:14px}.all-pass-card-fields{gap:10px}}';
       document.head.appendChild(archiveStyles);
+    }
+    if(!document.getElementById('pass-history-premium-styles')){
+      var premiumStyles=document.createElement('style');
+      premiumStyles.id='pass-history-premium-styles';
+      premiumStyles.textContent='.pass-history-header{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:0 0 20px;padding:4px 2px 18px;border-bottom:1px solid rgba(148,166,190,.15)}.pass-history-title-group{display:flex;align-items:center;gap:15px;min-width:0}.pass-history-mark{display:grid;place-items:center;width:50px;height:50px;flex:0 0 50px;border:1px solid rgba(255,199,0,.32);border-radius:16px;background:linear-gradient(145deg,rgba(255,199,0,.19),rgba(255,199,0,.035));box-shadow:inset 0 1px rgba(255,255,255,.1),0 8px 22px rgba(255,199,0,.08);color:var(--noon-yellow);font-size:25px;font-weight:800}.pass-history-title-copy{display:grid;gap:4px}.pass-history-eyebrow{color:#8f9db0;font-size:9px;font-weight:800;letter-spacing:.2em}.pass-history-title{margin:0;color:#f5f7fb;font-size:clamp(20px,2.2vw,27px);font-weight:800;letter-spacing:-.04em;line-height:1.15}.pass-history-count{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-width:92px;min-height:38px;margin:0!important;padding:7px 13px;border:1px solid rgba(255,199,0,.24);border-radius:12px;background:linear-gradient(135deg,rgba(255,199,0,.13),rgba(255,199,0,.045));box-shadow:inset 0 1px rgba(255,255,255,.055);color:#ffe28a!important;font-size:12px;font-weight:800;letter-spacing:.025em}.pass-history-count:before{width:7px;height:7px;border-radius:50%;background:#ffc700;box-shadow:0 0 10px rgba(255,199,0,.8);content:""}.all-pass-toolbar{margin-bottom:13px!important}.all-pass-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,310px),1fr))!important;gap:16px!important}.all-pass-card{padding:0!important;border-color:rgba(137,157,184,.18)!important;border-radius:16px!important;background:linear-gradient(150deg,rgba(20,30,46,.99),rgba(10,15,24,.99))!important;box-shadow:0 12px 30px rgba(0,0,0,.24),inset 0 1px rgba(255,255,255,.04)!important;overflow:hidden}.all-pass-card:before{inset:0 0 auto!important;width:auto!important;height:3px!important;border-radius:16px 16px 0 0!important;background:linear-gradient(90deg,rgba(255,199,0,.08),var(--noon-yellow),rgba(255,199,0,.28))!important}.all-pass-card[data-status="completed"]:before{background:linear-gradient(90deg,rgba(167,139,250,.08),#a78bfa,rgba(167,139,250,.3))!important}.all-pass-card[data-status="rejected"]:before{background:linear-gradient(90deg,rgba(251,113,133,.08),#fb7185,rgba(251,113,133,.3))!important}.all-pass-card:hover{transform:translateY(-3px)!important;border-color:rgba(255,199,0,.32)!important;box-shadow:0 20px 38px rgba(0,0,0,.34),0 0 0 1px rgba(255,199,0,.055)!important}.all-pass-card-heading{align-items:center!important;margin:0!important;padding:19px 18px 15px!important}.all-pass-card-heading strong{font-size:14px!important;font-weight:750!important;letter-spacing:-.015em}.all-pass-card-status{padding:6px 9px!important;font-size:8px!important;letter-spacing:.1em!important}.all-pass-card-fields{gap:9px!important;margin:0 18px 13px!important}.all-pass-card-field{padding:9px 10px;border:1px solid rgba(148,166,190,.09);border-radius:9px;background:rgba(5,9,16,.33);font-size:11px!important}.all-pass-card-field span{font-size:8px!important;letter-spacing:.12em!important}.all-pass-card-field:last-child:nth-child(odd){grid-column:auto!important}.all-pass-date-range{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;margin:0 18px 16px;padding:12px 13px;border:1px solid rgba(255,199,0,.13);border-radius:11px;background:linear-gradient(110deg,rgba(255,199,0,.075),rgba(255,199,0,.025) 65%,rgba(255,255,255,.02))}.all-pass-date-point{min-width:0}.all-pass-date-point span{display:block;margin-bottom:4px;color:#8592a6;font-size:8px;font-weight:800;letter-spacing:.15em}.all-pass-date-point strong{display:block;overflow-wrap:anywhere;color:#f1f4f8;font-size:11px;font-weight:700}.all-pass-date-arrow{color:#d8aa25;font-size:15px}.all-pass-card-actions{gap:9px!important;margin:0!important;padding:13px 18px 17px!important;border-top:1px solid rgba(148,166,190,.1)!important}.all-pass-card-actions button{min-height:38px!important;border-radius:9px!important;font-size:9px!important;letter-spacing:.09em!important}.all-pass-card-actions .btn-outline{background:rgba(255,199,0,.035)!important}.all-pass-card-actions .btn-success{background:linear-gradient(115deg,#14b889,#0b9f77)!important;box-shadow:0 7px 16px rgba(16,185,129,.19)!important}.all-pass-card-actions button:hover{filter:brightness(1.1);transform:translateY(-1px)}@media(max-width:600px){.pass-history-header{align-items:flex-start}.pass-history-mark{width:44px;height:44px;flex-basis:44px;border-radius:13px}.pass-history-count{min-width:0;padding:6px 9px;font-size:10px}.all-pass-grid{grid-template-columns:1fr!important}.all-pass-card-fields{gap:7px!important;margin-inline:13px!important}.all-pass-card-heading{padding-inline:13px!important}.all-pass-date-range{margin-inline:13px!important}.all-pass-card-actions{padding-inline:13px!important}}';
+      document.head.appendChild(premiumStyles);
+    }
+    if(!document.getElementById('pass-history-card-color-styles')){
+      var cardColorStyles=document.createElement('style');
+      cardColorStyles.id='pass-history-card-color-styles';
+      cardColorStyles.textContent='.all-pass-card{background:linear-gradient(145deg,#172b43 0%,#12243a 52%,#101d30 100%)!important;border-color:rgba(111,157,207,.28)!important}.all-pass-card-fields .all-pass-card-field{background:linear-gradient(145deg,rgba(37,62,91,.76),rgba(24,43,66,.82));border-color:rgba(131,171,214,.17)}.all-pass-card[data-status="completed"]{background:linear-gradient(145deg,#252647 0%,#1d2140 52%,#171c35 100%)!important;border-color:rgba(167,139,250,.32)!important}.all-pass-card[data-status="rejected"]{background:linear-gradient(145deg,#432738 0%,#321f30 52%,#241a2b 100%)!important;border-color:rgba(251,113,133,.32)!important}.all-pass-card[data-status="completed"] .all-pass-card-field{background:linear-gradient(145deg,rgba(69,64,112,.58),rgba(42,40,76,.72));border-color:rgba(167,139,250,.19)}.all-pass-card[data-status="rejected"] .all-pass-card-field{background:linear-gradient(145deg,rgba(105,54,76,.56),rgba(68,39,58,.72));border-color:rgba(251,113,133,.18)}';
+      document.head.appendChild(cardColorStyles);
     }
     return section;
   }
@@ -7425,6 +7464,7 @@
       name.textContent=String(isContractor?(pass.CompanyName||pass.Company||pass.ProjectName):pass.VisitorName||pass.CompanyName||pass.ProjectName||'Pass holder');
       var badge=document.createElement('span');
       var status=getAdminArchiveStatus(pass);
+      card.dataset.status=status.toLowerCase();
       badge.className='all-pass-card-status';
       badge.dataset.status=status.toLowerCase();
       var statusKey='status_'+status.toLowerCase();
@@ -7434,11 +7474,46 @@
       cardHeading.appendChild(badge);
       var fields=document.createElement('div');
       fields.className='all-pass-card-fields';
-      appendAdminPassField(fields,'pass_id',pass.UniqueID);
       appendAdminPassField(fields,'type_label',pass.Type);
       appendAdminPassField(fields,'host_email',pass.HostEmail);
       appendAdminPassField(fields,'archive_location',pass.Location);
-      appendAdminPassField(fields,'visit_dates',formatToDDMMYYYY(pass.StartDate)+' - '+formatToDDMMYYYY(pass.EndDate||pass.StartDate));
+      var dateRange=document.createElement('div');
+      dateRange.className='all-pass-date-range';
+      var dateFrom=document.createElement('div');
+      dateFrom.className='all-pass-date-point';
+      var dateFromLabel=document.createElement('span');
+      dateFromLabel.textContent=t('archive_from');
+      dateFromLabel.setAttribute('data-i18n','archive_from');
+      var dateFromValue=document.createElement('strong');
+      dateFromValue.textContent=formatToDDMMYYYY(pass.StartDate);
+      dateFrom.appendChild(dateFromLabel);
+      dateFrom.appendChild(dateFromValue);
+      var dateArrow=document.createElement('span');
+      dateArrow.className='all-pass-date-arrow';
+      dateArrow.setAttribute('aria-hidden','true');
+      dateArrow.textContent='→';
+      var dateTo=document.createElement('div');
+      dateTo.className='all-pass-date-point';
+      var dateToLabel=document.createElement('span');
+      dateToLabel.textContent=t('archive_to');
+      dateToLabel.setAttribute('data-i18n','archive_to');
+      var dateToValue=document.createElement('strong');
+      dateToValue.textContent=formatToDDMMYYYY(pass.EndDate||pass.StartDate);
+      dateTo.appendChild(dateToLabel);
+      dateTo.appendChild(dateToValue);
+      dateRange.appendChild(dateFrom);
+      dateRange.appendChild(dateArrow);
+      dateRange.appendChild(dateTo);
+      var passIdField=document.createElement('div');
+      passIdField.className='all-pass-card-field all-pass-id-field';
+      var passIdLabel=document.createElement('span');
+      passIdLabel.textContent=t('pass_id');
+      passIdLabel.setAttribute('data-i18n','pass_id');
+      var passIdValue=document.createElement('div');
+      passIdValue.textContent=String(pass.UniqueID);
+      passIdField.appendChild(passIdLabel);
+      passIdField.appendChild(passIdValue);
+      fields.insertBefore(passIdField,fields.firstChild);
       var actions=document.createElement('div');
       actions.className='all-pass-card-actions';
       function addAction(labelKey,className,handler,disabled){
@@ -7456,6 +7531,7 @@
       addAction('reapprove_pass','btn-primary btn-success btn-sm',function(){openExtendPass(passId,'restore');},false);
       card.appendChild(cardHeading);
       card.appendChild(fields);
+      card.appendChild(dateRange);
       card.appendChild(actions);
       list.appendChild(card);
     });
