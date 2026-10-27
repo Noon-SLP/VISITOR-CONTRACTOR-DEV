@@ -1650,8 +1650,10 @@
   dict.ar.archive_contact="رقم التواصل";
   dict.en.approved_by="Approved by";
   dict.ar.approved_by="تمت الموافقة بواسطة";
-  dict.en.rejected_by="Rejected / revoked by";
-  dict.ar.rejected_by="تم الرفض / الإلغاء بواسطة";
+  dict.en.rejected_by="Rejected by";
+  dict.ar.rejected_by="تم الرفض بواسطة";
+  dict.en.revoked_by="Revoked by";
+  dict.ar.revoked_by="تم إلغاء التصريح بواسطة";
   dict.en.pass_decisions="PASS DECISION RECORD";
   dict.ar.pass_decisions="سجل قرارات التصريح";
   dict.en.pass_decision_history="DECISION HISTORY";
@@ -7436,6 +7438,14 @@
   function formatPassDecisionAudit(pass,prefix){
     var actor=String(pass&&pass[prefix+'By']||'').trim();
     var timestamp=pass&&pass[prefix+'At'];
+    if(prefix==='Revoked'&&!actor){
+      var gateActor=String(pass&&pass.ScannedByGuard||'').trim();
+      var legacyAdmin=gateActor.match(/^Admin:\s*(.+)$/i);
+      if(legacyAdmin){
+        actor=legacyAdmin[1].trim();
+        timestamp=pass.CheckOutTime||timestamp;
+      }
+    }
     if(!actor)return '-';
     var formattedTime=timestamp?formatHistoryDateTime(timestamp):'';
     return actor+(formattedTime?' · '+formattedTime:'');
@@ -7497,6 +7507,7 @@
       appendAdminPassField(fields,'archive_location',pass.Location);
       appendAdminPassField(fields,'approved_by',formatPassDecisionAudit(pass,'Approved'));
       appendAdminPassField(fields,'rejected_by',formatPassDecisionAudit(pass,'Rejected'));
+      appendAdminPassField(fields,'revoked_by',formatPassDecisionAudit(pass,'Revoked'));
       var dateRange=document.createElement('div');
       dateRange.className='all-pass-date-range';
       var dateFrom=document.createElement('div');
@@ -8072,15 +8083,24 @@
     var actionButton=markPortalActionBusy(null,'REVOKING...');
     if(actionButton===false)return;
     try{
-      const adminInfo=currentUser.role==='admin'?'Admin: '+currentUser.name:currentUser.name+' ('+currentUser.location+')';
-      const result=await appsScriptAction({action:'check_out',id:id,guardInfo:adminInfo,headCount:1,forceStatus:'Completed'},60000);
+      const result=await appsScriptAction({action:'revoke_pass',id:id},60000);
       if(!result.time)throw new Error('The server confirmed the gate action without returning its recorded time.');
       if(String(result.action||'').toUpperCase()!=='OUT')throw new Error('The server response did not confirm that the pass was checked out.');
       const item=globalAdminData.find(function(pass){return String(pass.UniqueID)===String(id);});
       if(item){
         item.Status='Completed';
         item.CheckOutTime=result.time;
-        item.ScannedByGuard=adminInfo;
+        item.ScannedByGuard='Admin: '+String(result.revokedBy||'');
+        item.RevokedBy=result.revokedBy||'';
+        item.RevokedAt=result.revokedAt||result.time;
+        if(!Array.isArray(item.DecisionHistory))item.DecisionHistory=[];
+        item.DecisionHistory.push({
+          passType:item.Type||'',
+          decision:'Revoked',
+          actor:result.revokedBy||'',
+          timestamp:result.revokedAt||result.time,
+          previousStatus:'Approved'
+        });
         localStorage.setItem('cached_admin_data',JSON.stringify(globalAdminData));
         renderAdminData(globalAdminData);
         if(item.HostEmail)localStorage.removeItem('cached_passes_'+String(item.HostEmail).toLowerCase().trim());
@@ -8583,12 +8603,13 @@
       h+='<div style="margin-bottom:10px;"><strong>ACCOUNT PIN</strong><div style="display:flex; gap:10px; align-items:center; margin-top:5px;"><span style="color:var(--text-muted);font-weight:bold;font-size:13px;">'+(hasAccountPin?'SET (HIDDEN)':'NOT SET')+'</span>'+actionBtn+'</div></div>';
     }
     h+='<div><strong>'+t('lbl_host_email')+'</strong>'+(r.HostEmail||'-')+'</div><div><strong>'+t('visitor_name')+'</strong>'+(r.VisitorName||'-')+'</div><div><strong>'+t('type_header')+'</strong>'+(t(rType.toLowerCase())||'-')+'</div><div><strong>'+t('location_label')+'</strong>'+(r.Location||'-')+'</div><div><strong>'+t('lbl_validity')+'</strong>'+validityPeriod+'</div><div><strong>'+t('slp_ticket')+'</strong>'+(r.SlpTicketNo||'-')+'</div><div><strong>'+t('contact_no')+'</strong>'+(r.ContactNo||'-')+'</div><div><strong>IMEI NUMBER</strong>'+(r.ImeiNumber||'-')+'</div>';
-    h+='<div style="margin:12px 0;padding:13px;border:1px solid rgba(148,166,190,.2);border-radius:11px;background:linear-gradient(135deg,rgba(30,43,61,.72),rgba(12,20,32,.8));"><strong style="display:block;margin-bottom:10px;color:#ffe17a;font-size:10px;letter-spacing:.1em;">'+t('pass_decisions')+'</strong><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;"><div><strong style="color:#9eafc5;">'+t('approved_by')+'</strong><span style="display:block;margin-top:3px;color:#f1f5fb;overflow-wrap:anywhere;">'+escapeHtmlForPrint(formatPassDecisionAudit(r,'Approved'))+'</span></div><div><strong style="color:#9eafc5;">'+t('rejected_by')+'</strong><span style="display:block;margin-top:3px;color:#f1f5fb;overflow-wrap:anywhere;">'+escapeHtmlForPrint(formatPassDecisionAudit(r,'Rejected'))+'</span></div></div></div>';
+    h+='<div style="margin:12px 0;padding:13px;border:1px solid rgba(148,166,190,.2);border-radius:11px;background:linear-gradient(135deg,rgba(30,43,61,.72),rgba(12,20,32,.8));"><strong style="display:block;margin-bottom:10px;color:#ffe17a;font-size:10px;letter-spacing:.1em;">'+t('pass_decisions')+'</strong><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;"><div><strong style="color:#9eafc5;">'+t('approved_by')+'</strong><span style="display:block;margin-top:3px;color:#f1f5fb;overflow-wrap:anywhere;">'+escapeHtmlForPrint(formatPassDecisionAudit(r,'Approved'))+'</span></div><div><strong style="color:#9eafc5;">'+t('rejected_by')+'</strong><span style="display:block;margin-top:3px;color:#f1f5fb;overflow-wrap:anywhere;">'+escapeHtmlForPrint(formatPassDecisionAudit(r,'Rejected'))+'</span></div><div><strong style="color:#9eafc5;">'+t('revoked_by')+'</strong><span style="display:block;margin-top:3px;color:#f1f5fb;overflow-wrap:anywhere;">'+escapeHtmlForPrint(formatPassDecisionAudit(r,'Revoked'))+'</span></div></div></div>';
     var decisionHistory=Array.isArray(r.DecisionHistory)?r.DecisionHistory:[];
     if(decisionHistory.length){
       h+='<div style="margin:0 0 12px;padding:12px;border:1px solid rgba(148,166,190,.17);border-radius:10px;background:rgba(4,9,16,.48);"><strong style="display:block;margin-bottom:8px;color:#cbd5e1;font-size:9px;letter-spacing:.12em;">'+t('pass_decision_history')+'</strong>';
       decisionHistory.slice().reverse().forEach(function(entry){
-        var actionLabel=String(entry.decision||'').toLowerCase()==='approved'?t('approved_by'):t('rejected_by');
+        var decision=String(entry.decision||'').toLowerCase();
+        var actionLabel=decision==='approved'?t('approved_by'):decision==='revoked'?t('revoked_by'):t('rejected_by');
         var timeLabel=entry.timestamp?formatHistoryDateTime(entry.timestamp):'';
         h+='<div style="padding:6px 0;border-top:1px solid rgba(255,255,255,.06);color:#e2e8f0;font-size:11px;line-height:1.45;"><strong>'+escapeHtmlForPrint(actionLabel)+'</strong> · '+escapeHtmlForPrint(entry.actor||'-')+(timeLabel?' · '+escapeHtmlForPrint(timeLabel):'')+'</div>';
       });
