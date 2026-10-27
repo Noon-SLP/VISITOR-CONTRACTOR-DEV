@@ -1648,6 +1648,16 @@
   dict.ar.visit_dates="تواريخ الزيارة";
   dict.en.archive_contact="Contact";
   dict.ar.archive_contact="رقم التواصل";
+  dict.en.approved_by="Approved by";
+  dict.ar.approved_by="تمت الموافقة بواسطة";
+  dict.en.rejected_by="Rejected / revoked by";
+  dict.ar.rejected_by="تم الرفض / الإلغاء بواسطة";
+  dict.en.pass_decisions="PASS DECISION RECORD";
+  dict.ar.pass_decisions="سجل قرارات التصريح";
+  dict.en.pass_decision_history="DECISION HISTORY";
+  dict.ar.pass_decision_history="سجل القرارات";
+  dict.en.pass_completed_eyebrow="PASS STATUS UPDATE";
+  dict.ar.pass_completed_eyebrow="تحديث حالة التصريح";
   dict.en.btn_ok="OK";
   dict.ar.btn_ok="حسنًا";
   dict.en.no_pass_matches="No passes match the selected search or status.";
@@ -7423,6 +7433,14 @@
     container.appendChild(field);
   }
 
+  function formatPassDecisionAudit(pass,prefix){
+    var actor=String(pass&&pass[prefix+'By']||'').trim();
+    var timestamp=pass&&pass[prefix+'At'];
+    if(!actor)return '-';
+    var formattedTime=timestamp?formatHistoryDateTime(timestamp):'';
+    return actor+(formattedTime?' · '+formattedTime:'');
+  }
+
   function renderAdminPassArchive(){
     if(!currentUser||currentUser.role!=='admin'||currentUser.accessLevel!=='superadmin')return;
     var section=ensureAdminPassArchiveUi();
@@ -7477,6 +7495,8 @@
       appendAdminPassField(fields,'type_label',pass.Type);
       appendAdminPassField(fields,'host_email',pass.HostEmail);
       appendAdminPassField(fields,'archive_location',pass.Location);
+      appendAdminPassField(fields,'approved_by',formatPassDecisionAudit(pass,'Approved'));
+      appendAdminPassField(fields,'rejected_by',formatPassDecisionAudit(pass,'Rejected'));
       var dateRange=document.createElement('div');
       dateRange.className='all-pass-date-range';
       var dateFrom=document.createElement('div');
@@ -7608,36 +7628,54 @@
 
   function showPassCompletedPopup(passes){
     var modal=document.getElementById('admin-pass-completed-modal');
+    if(!document.getElementById('admin-pass-completed-styles')){
+      var style=document.createElement('style');
+      style.id='admin-pass-completed-styles';
+      style.textContent='.popup-modal.pass-completed-modal{z-index:1000000;background:rgba(2,6,15,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:22px}.pass-completed-modal .record-modal-box{width:min(720px,96vw)!important;max-height:90vh!important;overflow:hidden!important;border:1px solid rgba(255,255,255,.16)!important;border-radius:22px!important;background:linear-gradient(155deg,#17263b 0%,#101a2b 48%,#0b1321 100%)!important;box-shadow:0 32px 100px rgba(0,0,0,.72),0 0 0 1px rgba(255,199,0,.16),0 0 55px rgba(255,199,0,.13)!important;animation:passCompleteEnter .24s cubic-bezier(.2,.8,.2,1)}.pass-completed-modal .record-modal-header{display:flex;align-items:center;gap:14px;padding:20px 23px!important;border-bottom:1px solid rgba(255,255,255,.11)!important;background:linear-gradient(110deg,rgba(255,199,0,.13),rgba(255,199,0,.025) 65%,transparent)}.pass-completed-modal .pass-completed-emblem{display:grid;flex:0 0 48px;width:48px;height:48px;place-items:center;border:1px solid rgba(255,199,0,.48);border-radius:16px;background:linear-gradient(145deg,#ffe47a,#ffbd18);color:#182033;font-size:26px;font-weight:1000;box-shadow:0 8px 25px rgba(255,199,0,.22)}.pass-completed-modal .pass-completed-title-copy{flex:1;min-width:0}.pass-completed-modal .pass-completed-eyebrow{display:block;margin-bottom:4px;color:#ffe17a;font-size:9px;font-weight:900;letter-spacing:.18em;text-transform:uppercase}.pass-completed-modal #admin-pass-completed-title{color:#fff!important;font-size:clamp(17px,3vw,23px)!important;font-weight:900;letter-spacing:.045em;line-height:1.2}.pass-completed-modal .pass-completed-close{display:grid;flex:0 0 38px;width:38px;height:38px;place-items:center;border:1px solid rgba(255,255,255,.16)!important;border-radius:12px!important;background:rgba(255,255,255,.07)!important;color:#f8fafc!important;font-size:25px!important;transition:background .15s ease,transform .15s ease}.pass-completed-modal .pass-completed-close:hover{transform:rotate(90deg);background:rgba(255,255,255,.16)!important}.pass-completed-modal #admin-pass-completed-content{padding:21px 23px 23px!important;overflow:auto;max-height:calc(90vh - 92px)}.pass-completed-modal .pass-completed-summary{display:flex;align-items:center;gap:12px;margin:0;padding:14px 16px;border:1px solid rgba(52,211,153,.22);border-radius:14px;background:linear-gradient(110deg,rgba(16,185,129,.13),rgba(16,185,129,.045));color:#e5fff5!important;font-size:14px!important;font-weight:750;line-height:1.5}.pass-completed-modal .pass-completed-summary:before{display:grid;flex:0 0 27px;width:27px;height:27px;place-items:center;border-radius:50%;background:#20c997;color:#06251d;content:\"✓\";font-size:15px;font-weight:1000}.pass-completed-modal .pass-completed-popup-list{display:grid;gap:11px;margin:15px 0 18px;max-height:48vh;overflow:auto;padding:2px 3px 4px}.pass-completed-modal .pass-completed-popup-item{position:relative;padding:16px 17px 14px 20px;border:1px solid rgba(164,184,212,.19);border-radius:15px;background:linear-gradient(135deg,rgba(35,51,73,.8),rgba(15,25,40,.88));box-shadow:inset 0 1px rgba(255,255,255,.045)}.pass-completed-modal .pass-completed-popup-item:before{position:absolute;inset:13px auto 13px 0;width:3px;border-radius:0 4px 4px 0;background:linear-gradient(#35ddb0,#118e72);content:\"\"}.pass-completed-modal .pass-completed-popup-item h4{margin:0 0 12px;color:#fff;font-size:15px;font-weight:850;line-height:1.45;overflow-wrap:anywhere}.pass-completed-modal .pass-completed-popup-item p{display:grid;grid-template-columns:minmax(95px,.55fr) minmax(0,1.45fr);gap:8px;margin:0;padding:6px 0;border-top:1px solid rgba(255,255,255,.055);color:#e1e9f4!important;font-size:12px!important;line-height:1.45;overflow-wrap:anywhere}.pass-completed-modal .pass-completed-popup-item p span:first-child{color:#98a9bf;font-size:10px;font-weight:800;letter-spacing:.045em;text-transform:uppercase}.pass-completed-modal .pass-completed-ok{min-height:46px;border:1px solid rgba(255,255,255,.17)!important;border-radius:12px!important;background:linear-gradient(110deg,#ffd448,#f2b900)!important;color:#142033!important;font-size:12px!important;font-weight:950!important;letter-spacing:.1em;box-shadow:0 8px 24px rgba(255,199,0,.2);transition:transform .15s ease,filter .15s ease}.pass-completed-modal .pass-completed-ok:hover{transform:translateY(-1px);filter:brightness(1.08)}@keyframes passCompleteEnter{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}@media(max-width:520px){.popup-modal.pass-completed-modal{padding:10px}.pass-completed-modal .record-modal-header{padding:15px!important;gap:11px}.pass-completed-modal .pass-completed-emblem{flex-basis:42px;width:42px;height:42px;border-radius:13px}.pass-completed-modal #admin-pass-completed-content{padding:15px!important}.pass-completed-modal .pass-completed-popup-item{padding:13px 12px 12px 16px}.pass-completed-modal .pass-completed-popup-item p{grid-template-columns:1fr;gap:2px}}@media(prefers-reduced-motion:reduce){.pass-completed-modal .record-modal-box{animation:none!important;transition:none!important}}';
+      document.head.appendChild(style);
+    }
     if(!modal){
       modal=document.createElement('div');
       modal.id='admin-pass-completed-modal';
-      modal.className='popup-modal hidden';
+      modal.className='popup-modal pass-completed-modal hidden';
       modal.setAttribute('role','dialog');
       modal.setAttribute('aria-modal','true');
       modal.setAttribute('aria-labelledby','admin-pass-completed-title');
       var box=document.createElement('div');
       box.className='record-modal-box';
-      box.style.cssText='width:min(620px,94vw);max-height:88vh;overflow:auto;';
       var header=document.createElement('div');
       header.className='record-modal-header';
+      var emblem=document.createElement('span');
+      emblem.className='pass-completed-emblem';
+      emblem.setAttribute('aria-hidden','true');
+      emblem.textContent='✓';
+      var titleCopy=document.createElement('div');
+      titleCopy.className='pass-completed-title-copy';
+      var eyebrow=document.createElement('span');
+      eyebrow.className='pass-completed-eyebrow';
+      eyebrow.textContent=t('pass_completed_eyebrow');
+      eyebrow.setAttribute('data-i18n','pass_completed_eyebrow');
       var title=document.createElement('h3');
       title.id='admin-pass-completed-title';
-      title.style.cssText='color:var(--noon-yellow);margin:0;font-size:16px;text-transform:uppercase;';
+      title.style.cssText='margin:0;text-transform:uppercase;';
+      titleCopy.appendChild(eyebrow);
+      titleCopy.appendChild(title);
       var close=document.createElement('button');
       close.type='button';
       close.textContent='×';
       close.setAttribute('aria-label','Close completed pass notice');
-      close.style.cssText='background:transparent;border:0;color:#fff;font-size:24px;cursor:pointer;';
+      close.className='pass-completed-close';
       close.addEventListener('click',function(){modal.classList.add('hidden');});
-      header.appendChild(title);
+      header.appendChild(emblem);
+      header.appendChild(titleCopy);
       header.appendChild(close);
       var content=document.createElement('div');
       content.id='admin-pass-completed-content';
-      content.style.cssText='padding:18px;';
       var dismiss=document.createElement('button');
       dismiss.type='button';
       dismiss.className='btn-primary btn-success';
       dismiss.textContent='OK';
+      dismiss.classList.add('pass-completed-ok');
       dismiss.style.width='100%';
       dismiss.addEventListener('click',function(){modal.classList.add('hidden');});
       content.appendChild(dismiss);
@@ -7657,10 +7695,11 @@
     title.setAttribute('data-i18n',titleKey);
     content.replaceChildren();
     var summary=document.createElement('p');
+    summary.className='pass-completed-summary';
     var summaryKey=passes.length===1?'pass_completed_summary':'passes_completed_summary';
     summary.textContent=t(summaryKey);
     summary.setAttribute('data-i18n',summaryKey);
-    summary.style.cssText='color:var(--text-muted);font-size:13px;margin:0;';
+    summary.style.cssText='margin:0;';
     var details=document.createElement('div');
     details.className='pass-completed-popup-list';
     passes.forEach(function(pass){
@@ -8544,6 +8583,17 @@
       h+='<div style="margin-bottom:10px;"><strong>ACCOUNT PIN</strong><div style="display:flex; gap:10px; align-items:center; margin-top:5px;"><span style="color:var(--text-muted);font-weight:bold;font-size:13px;">'+(hasAccountPin?'SET (HIDDEN)':'NOT SET')+'</span>'+actionBtn+'</div></div>';
     }
     h+='<div><strong>'+t('lbl_host_email')+'</strong>'+(r.HostEmail||'-')+'</div><div><strong>'+t('visitor_name')+'</strong>'+(r.VisitorName||'-')+'</div><div><strong>'+t('type_header')+'</strong>'+(t(rType.toLowerCase())||'-')+'</div><div><strong>'+t('location_label')+'</strong>'+(r.Location||'-')+'</div><div><strong>'+t('lbl_validity')+'</strong>'+validityPeriod+'</div><div><strong>'+t('slp_ticket')+'</strong>'+(r.SlpTicketNo||'-')+'</div><div><strong>'+t('contact_no')+'</strong>'+(r.ContactNo||'-')+'</div><div><strong>IMEI NUMBER</strong>'+(r.ImeiNumber||'-')+'</div>';
+    h+='<div style="margin:12px 0;padding:13px;border:1px solid rgba(148,166,190,.2);border-radius:11px;background:linear-gradient(135deg,rgba(30,43,61,.72),rgba(12,20,32,.8));"><strong style="display:block;margin-bottom:10px;color:#ffe17a;font-size:10px;letter-spacing:.1em;">'+t('pass_decisions')+'</strong><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;"><div><strong style="color:#9eafc5;">'+t('approved_by')+'</strong><span style="display:block;margin-top:3px;color:#f1f5fb;overflow-wrap:anywhere;">'+escapeHtmlForPrint(formatPassDecisionAudit(r,'Approved'))+'</span></div><div><strong style="color:#9eafc5;">'+t('rejected_by')+'</strong><span style="display:block;margin-top:3px;color:#f1f5fb;overflow-wrap:anywhere;">'+escapeHtmlForPrint(formatPassDecisionAudit(r,'Rejected'))+'</span></div></div></div>';
+    var decisionHistory=Array.isArray(r.DecisionHistory)?r.DecisionHistory:[];
+    if(decisionHistory.length){
+      h+='<div style="margin:0 0 12px;padding:12px;border:1px solid rgba(148,166,190,.17);border-radius:10px;background:rgba(4,9,16,.48);"><strong style="display:block;margin-bottom:8px;color:#cbd5e1;font-size:9px;letter-spacing:.12em;">'+t('pass_decision_history')+'</strong>';
+      decisionHistory.slice().reverse().forEach(function(entry){
+        var actionLabel=String(entry.decision||'').toLowerCase()==='approved'?t('approved_by'):t('rejected_by');
+        var timeLabel=entry.timestamp?formatHistoryDateTime(entry.timestamp):'';
+        h+='<div style="padding:6px 0;border-top:1px solid rgba(255,255,255,.06);color:#e2e8f0;font-size:11px;line-height:1.45;"><strong>'+escapeHtmlForPrint(actionLabel)+'</strong> · '+escapeHtmlForPrint(entry.actor||'-')+(timeLabel?' · '+escapeHtmlForPrint(timeLabel):'')+'</div>';
+      });
+      h+='</div>';
+    }
     if(rType==='Visitor')h+='<div><strong>'+t('invited_by')+'</strong>'+(r.InvitedBy||'-')+'</div>';
     else h+='<div><strong>'+t('project_name')+'</strong>'+(r.ProjectName||'-')+'</div><div><strong>'+t('company_name')+'</strong>'+(r.CompanyName||'-')+'</div><div><strong>'+t('project_manager')+'</strong>'+(r.ProjectManager||'-')+'</div><div><strong>'+t('fm_poc')+'</strong>'+(r.FmPoc||'-')+'</div>';
     let fmpocStr=String(r.FmPoc||'');
