@@ -1611,10 +1611,16 @@
   dict.ar.office_mode="المكتب (السعودية فقط)";
   dict.en.country_not_set="Country not set";
   dict.ar.country_not_set="لم يتم تحديد الدولة";
-  dict.en.all_passes="All Passes";
-  dict.ar.all_passes="كل التصاريح";
-  dict.en.all_passes_description="Review every pass, including completed and rejected passes. Approving a pass starts a new visit with new dates.";
-  dict.ar.all_passes_description="راجع جميع التصاريح، بما فيها المكتملة والمرفوضة. الموافقة على التصريح تبدأ زيارة جديدة بتواريخ جديدة.";
+  dict.en.all_passes="Rejected & Completed";
+  dict.ar.all_passes="المرفوضة والمكتملة";
+  dict.en.all_passes_description="Review rejected and completed passes. Reapproving a pass starts a new visit with new dates.";
+  dict.ar.all_passes_description="راجع التصاريح المرفوضة والمكتملة. إعادة الموافقة على التصريح تبدأ زيارة جديدة بتواريخ جديدة.";
+  dict.en.restore_visit_date_from="Visit Date / Validity (From)";
+  dict.ar.restore_visit_date_from="تاريخ الزيارة / الصلاحية (من)";
+  dict.en.restore_visit_date_to="Visit Date / Validity (To)";
+  dict.ar.restore_visit_date_to="تاريخ الزيارة / الصلاحية (إلى)";
+  dict.en.archived_statuses="Rejected & completed";
+  dict.ar.archived_statuses="المرفوضة والمكتملة";
   dict.en.all_passes_search="Search name, pass ID, email, type, or location";
   dict.ar.all_passes_search="ابحث بالاسم أو رقم التصريح أو البريد الإلكتروني أو النوع أو الموقع";
   dict.en.all_statuses="All statuses";
@@ -1647,6 +1653,8 @@
   dict.ar.view_pass_details="عرض التفاصيل";
   dict.en.approve_new_visit="APPROVE / NEW VISIT";
   dict.ar.approve_new_visit="موافقة / زيارة جديدة";
+  dict.en.reapprove_pass="REAPPROVE";
+  dict.ar.reapprove_pass="إعادة الموافقة";
   dict.en.set_pending="SET PENDING";
   dict.ar.set_pending="إعادة إلى قيد الانتظار";
   dict.en.pass_completed_title="PASS COMPLETED";
@@ -7310,9 +7318,7 @@
       statusFilter.setAttribute('aria-label','Filter passes by status');
       statusFilter.style.cssText='flex:0 1 190px;min-width:160px;';
       [
-        ['all','all_statuses'],
-        ['active','status_active'],
-        ['pending','status_pending'],
+        ['all','archived_statuses'],
         ['completed','status_completed'],
         ['rejected','status_rejected']
       ].forEach(function(optionData){
@@ -7390,6 +7396,7 @@
     var passes=(Array.isArray(globalAdminData)?globalAdminData:[]).filter(function(pass){
       if(!pass||!pass.UniqueID)return false;
       var status=getAdminArchiveStatus(pass).toLowerCase();
+      if(status!=='rejected'&&status!=='completed')return false;
       if(filter!=='all'&&status!==filter)return false;
       var haystack=[
         pass.UniqueID,pass.VisitorName,pass.CompanyName,pass.Company,pass.ProjectName,
@@ -7445,9 +7452,7 @@
       }
       var passId=String(pass.UniqueID);
       addAction('view_pass_details','btn-primary btn-outline btn-sm',function(){openViewRecord(passId);},false);
-      addAction('approve_new_visit','btn-primary btn-success btn-sm',function(){openExtendPass(passId,'restore');},false);
-      addAction('set_pending','btn-primary btn-outline btn-sm',function(){updateStatus(passId,'Pending');},status==='Pending');
-      addAction('btn_reject','btn-primary btn-danger btn-sm',function(){updateStatus(passId,'Rejected');},status==='Rejected');
+      addAction('reapprove_pass','btn-primary btn-success btn-sm',function(){openExtendPass(passId,'restore');},false);
       card.appendChild(cardHeading);
       card.appendChild(fields);
       card.appendChild(actions);
@@ -7978,6 +7983,7 @@
     const ei=document.getElementById('extend-id'),et=document.getElementById('extend-type'),eg=document.getElementById('extend-end-group'),em=document.getElementById('extend-pass-modal');
     const start=document.getElementById('extend-start'),end=document.getElementById('extend-end');
     const title=document.querySelector('#extend-pass-modal .record-modal-header h3'),button=document.getElementById('btn-submit-extend');
+    const startLabel=document.querySelector('#extend-start-group label'),endLabel=document.querySelector('#extend-end-group label');
     const restoring=type==='restore';
     if(ei)ei.value=id;
     if(et)et.value=type||'';
@@ -7985,9 +7991,13 @@
     if(restoring){
       if(start)start.value='';
       if(end)end.value='';
+      if(startLabel){startLabel.textContent=t('restore_visit_date_from');startLabel.setAttribute('data-i18n','restore_visit_date_from');}
+      if(endLabel){endLabel.textContent=t('restore_visit_date_to');endLabel.setAttribute('data-i18n','restore_visit_date_to');}
       if(title)title.textContent=t('restore_pass_title');
       if(button)button.textContent=t('restore_pass_button');
     }else{
+      if(startLabel){startLabel.textContent=t('new_start_date');startLabel.setAttribute('data-i18n','new_start_date');}
+      if(endLabel){endLabel.textContent=t('new_end_date');endLabel.setAttribute('data-i18n','new_end_date');}
       if(title)title.textContent=t('extend_pass');
       if(button)button.textContent=t('save_extension');
     }
