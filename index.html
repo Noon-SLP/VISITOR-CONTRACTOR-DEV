@@ -5836,6 +5836,7 @@
     document.querySelectorAll('.dashboard').forEach(function(e){e.classList.add('hidden');});
     const tv=document.getElementById('dashboard-'+vId);
     if(tv)tv.classList.remove('hidden');
+    if(vId==='admin')switchAdminTab('approvals');
     document.querySelectorAll('.sidebar-nav a').forEach(function(a){a.classList.remove('active');});
     const an=document.getElementById('nav-sidebar-'+vId);
     if(an)an.classList.add('active');
@@ -9664,3 +9665,4 @@
   })();
   </script>
   </body></html>
+  
