@@ -79,6 +79,7 @@
     #dashboard-ops #req-type-current.request-type-current-office{border-color:rgba(129,140,248,.48);background:linear-gradient(145deg,rgba(79,70,229,.22),rgba(67,56,202,.12));color:#c7d2fe}
     #dashboard-ops #req-type-current svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
     #dashboard-ops .ops-grid>.ops-card:first-child.request-type-unselected>#req-type-group::after{margin-top:14px}
+    @media(min-width:1280px){#dashboard-ops .ops-grid>.ops-card:first-child.request-type-unselected{justify-self:start;margin-left:clamp(110px,10vw,150px)}}
     #dashboard-ops .ops-grid>.ops-card:first-child.office-request-mode>:not(#request-form-heading-row):not(#req-type-group):not(#admin-email-group):not(#req-country-facility-row):not(#req-office-request-fields):not(#btn-submit-req){display:none!important}
     #dashboard-ops .ops-grid>.ops-card:first-child.request-type-unselected>#req-type-group>label{margin-bottom:14px}
     @media(max-width:480px){#dashboard-ops #req-type-actions{gap:9px}#dashboard-ops #req-type-actions .request-type-choice{min-height:94px;padding:14px 8px;font-size:14px}}
@@ -1289,7 +1290,7 @@
     <script>
       async function adminApproveLeadDeviceAdd(passId,button){if(!confirm('Approve the lead additional device?'))return;if(button)button.disabled=true;try{await appsScriptAction({action:'approve_lead_device_add',id:passId});localStorage.removeItem('cached_admin_data');refreshMemberView(passId,'device-add');}catch(error){alert('Lead device approval failed: '+error.message);if(button)button.disabled=false;}}
       async function adminRejectLeadDeviceAdd(passId,button){if(!confirm('Reject the lead additional device request?'))return;if(button)button.disabled=true;try{await appsScriptAction({action:'reject_lead_device_add',id:passId});localStorage.removeItem('cached_admin_data');refreshMemberView(passId,'device-add');}catch(error){alert('Lead device rejection failed: '+error.message);if(button)button.disabled=false;}}
-    const SCRIPT_URL='https://script.google.com/macros/s/AKfycbx-ea82luraUQ5tPL5Oc4IrBjO9WSQExSGLHDizQWEHZLFn2OrYHY_1jKLPkjjLRU5w/exec';
+    const SCRIPT_URL='https://script.google.com/macros/s/AKfycbxyQ4kGKgsNS076UvKCk0ezCVSzp2DlqYobiprd8Qrvt5oJBWrVlszD7-jm2mOYtsTUvg/exec';
     function freshScriptUrl(){return SCRIPT_URL+'?cacheBust='+Date.now()+'-'+Math.random().toString(36).slice(2);}
     function showRequestEmailFailure(result){
       if(result&&result.notificationSent===true)return;
